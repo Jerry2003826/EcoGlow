@@ -1,0 +1,32 @@
+/*
+ * Eco Glow Lighting site styles (Bootstrap 5 additions)
+ */
+
+.hero {
+    background: linear-gradient(135deg, #1c1c28 0%, #2b2b45 55%, #4a3f35 100%);
+    color: #fff;
+    border-radius: 1rem;
+}
+
+.hero .lead {
+    color: #d8d8e6;
+}
+
+.category-icon {
+    font-size: 2rem;
+    line-height: 1;
+}
+
+.category-card {
+    transition: transform 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.category-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+.glow-badge {
+    background-color: #ffc107;
+    color: #212529;
+}
