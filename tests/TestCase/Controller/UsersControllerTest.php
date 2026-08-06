@@ -65,7 +65,7 @@ class UsersControllerTest extends TestCase
         $this->get('/login');
 
         $this->assertResponseOk();
-        $this->assertResponseContains('Eco Glow Admin');
+        $this->assertResponseContains('Welcome back');
     }
 
     /**
