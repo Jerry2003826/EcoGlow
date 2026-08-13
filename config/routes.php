@@ -74,6 +74,13 @@ return function (RouteBuilder $routes): void {
         $builder->connect('/logout', ['controller' => 'Users', 'action' => 'logout']);
 
         /*
+         * Self-service password reset. The trailing `*` carries the token
+         * from the emailed link as a passed argument.
+         */
+        $builder->connect('/forgot-password', ['controller' => 'Users', 'action' => 'forgotPassword']);
+        $builder->connect('/reset-password/*', ['controller' => 'Users', 'action' => 'resetPassword']);
+
+        /*
          * Connect catchall routes for all controllers.
          *
          * The `fallbacks` method is a shortcut for

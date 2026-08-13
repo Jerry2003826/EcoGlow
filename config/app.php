@@ -4,8 +4,34 @@ use Cake\Cache\Engine\FileEngine;
 use Cake\Database\Connection;
 use Cake\Database\Driver\Mysql;
 use Cake\Log\Engine\FileLog;
+use Cake\Mailer\Transport\DebugTransport;
 use Cake\Mailer\Transport\MailTransport;
+use Cake\Mailer\Transport\SmtpTransport;
 use function Cake\Core\env;
+
+/*
+ * Delivery mechanism for outgoing email (see the EmailTransport block below).
+ *
+ * Defaults to `Debug`, which renders messages without sending them, so a fresh
+ * checkout can exercise the password reset flow with no mail server at all.
+ * Production sets EMAIL_TRANSPORT=Smtp and fills in the cPanel credentials.
+ */
+$emailTransport = (string)env('EMAIL_TRANSPORT', 'Debug');
+
+/*
+ * Mirror rendered messages into logs/debug.log while nothing is actually being
+ * delivered — that is how local development reads the password reset link.
+ * Deliberately empty for real transports: a reset link is a credential and has
+ * no business being written to disk.
+ *
+ * `scope` has to be blanked out. CakePHP tags mail delivery with the
+ * `cake.mailer` scope by default, and the `debug` engine below is configured
+ * with `scopes => null`, which means "unscoped messages only" — so the default
+ * would be filtered out and never reach a log file.
+ */
+$emailLogging = $emailTransport === 'Debug'
+    ? ['log' => ['level' => 'debug', 'scope' => []]]
+    : [];
 
 return [
     /*
@@ -234,21 +260,29 @@ return [
      */
     'EmailTransport' => [
         'default' => [
-            'className' => MailTransport::class,
+            'className' => match ($emailTransport) {
+                'Smtp' => SmtpTransport::class,
+                'Mail' => MailTransport::class,
+                default => DebugTransport::class,
+            },
             /*
              * The keys host, port, timeout, username, password, client and tls
-             * are used in SMTP transports
+             * are used in SMTP transports.
+             *
+             * On cPanel these come from "Email Accounts > Connect Devices":
+             * host is usually mail.<your-domain>, port 587 with TLS, and the
+             * username is the full mailbox address.
              */
-            'host' => 'localhost',
-            'port' => 25,
+            'host' => env('EMAIL_HOST', 'localhost'),
+            'port' => (int)env('EMAIL_PORT', '587'),
             'timeout' => 30,
             /*
              * It is recommended to set these options through your environment or app_local.php
              */
-            //'username' => null,
-            //'password' => null,
+            'username' => env('EMAIL_USERNAME', null),
+            'password' => env('EMAIL_PASSWORD', null),
             'client' => null,
-            'tls' => false,
+            'tls' => filter_var(env('EMAIL_TLS', 'true'), FILTER_VALIDATE_BOOLEAN),
             'url' => env('EMAIL_TRANSPORT_DEFAULT_URL', null),
         ],
     ],
@@ -265,13 +299,19 @@ return [
     'Email' => [
         'default' => [
             'transport' => 'default',
-            'from' => 'you@localhost',
+            /*
+             * cPanel mail servers reject a From address they do not host, so
+             * this should match the mailbox in EMAIL_USERNAME once SMTP is on.
+             */
+            'from' => [
+                env('EMAIL_FROM', 'no-reply@localhost') => env('EMAIL_FROM_NAME', 'Eco Glow Lighting'),
+            ],
             /*
              * Will by default be set to config value of App.encoding, if that exists otherwise to UTF-8.
              */
             //'charset' => 'utf-8',
             //'headerCharset' => 'utf-8',
-        ],
+        ] + $emailLogging,
     ],
 
     /*

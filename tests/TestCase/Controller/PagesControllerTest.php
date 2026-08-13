@@ -50,6 +50,11 @@ class PagesControllerTest extends TestCase
     public function testMissingTemplate()
     {
         Configure::write('debug', false);
+        // Turning debug off is also what mounts HttpsEnforcerMiddleware, so the
+        // request has to arrive over HTTPS like it would in production.
+        // Otherwise the enforcer answers 301 and the missing-template handling
+        // under test never runs.
+        $this->configRequest(['environment' => ['HTTPS' => 'on']]);
         $this->get('/pages/not_existing');
 
         $this->assertResponseError();

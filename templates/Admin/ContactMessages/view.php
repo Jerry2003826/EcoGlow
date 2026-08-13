@@ -21,7 +21,7 @@ $this->assign('title', 'Message: ' . $contactMessage->subject);
                 [
                     'confirm' => __('Are you sure you want to delete this message?'),
                     'class' => 'btn btn-outline-danger',
-                ]
+                ],
             ) ?>
         </div>
     </div>

@@ -53,7 +53,7 @@ $this->assign('title', 'Contact Us');
                     </div>
                 </div>
 
-                <p class="mb-0 mt-auto" style="color: var(--eg-text-faint); font-size: 0.9rem;">
+                <p class="mb-0 mt-auto" style="color: var(--eg-text-dim); font-size: 0.9rem;">
                     Every message lands directly with Jordan — no call centres, no bots.
                 </p>
             </div>
@@ -120,8 +120,9 @@ $this->assign('title', 'Contact Us');
                     <?php endif; ?>
                 <?php endif; ?>
 
-                <div class="d-grid">
-                    <?= $this->Form->button(__('Light up my inbox'), ['class' => 'btn btn-glow btn-lg']) ?>
+                <div class="d-grid gap-2 d-sm-flex">
+                    <?= $this->Form->button(__('Light up my inbox'), ['class' => 'btn btn-glow btn-lg flex-sm-fill']) ?>
+                    <button type="reset" class="btn btn-ghost-glow btn-lg"><?= __('Clear') ?></button>
                 </div>
                 <?= $this->Form->end() ?>
             </div>

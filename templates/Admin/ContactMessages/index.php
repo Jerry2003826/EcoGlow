@@ -37,6 +37,7 @@ $this->assign('title', 'Contact Messages');
                             <th><?= $this->Paginator->sort('name') ?></th>
                             <th><?= $this->Paginator->sort('email') ?></th>
                             <th><?= $this->Paginator->sort('subject') ?></th>
+                            <th>Message</th>
                             <th>Status</th>
                             <th class="text-end">Actions</th>
                         </tr>
@@ -54,6 +55,7 @@ $this->assign('title', 'Contact Messages');
                                         <?= h($message->subject) ?>
                                     <?php endif; ?>
                                 </td>
+                                <td class="cell-message"><?= h($this->Text->truncate($message->message, 60)) ?></td>
                                 <td>
                                     <?php if ($message->is_read) : ?>
                                         <span class="pill pill-read">Read</span>
@@ -69,7 +71,7 @@ $this->assign('title', 'Contact Messages');
                                         [
                                             'confirm' => __('Are you sure you want to delete this message?'),
                                             'class' => 'btn btn-sm btn-outline-danger',
-                                        ]
+                                        ],
                                     ) ?>
                                 </td>
                             </tr>
@@ -88,6 +90,6 @@ $this->assign('title', 'Contact Messages');
                 <?= $this->Paginator->last('Last »', ['class' => 'page-link']) ?>
             </ul>
         </nav>
-        <p class="text-center small" style="color: var(--eg-text-faint);"><?= $this->Paginator->counter('Page {{page}} of {{pages}}, showing {{current}} of {{count}} messages') ?></p>
+        <p class="text-center small" style="color: var(--eg-text-dim);"><?= $this->Paginator->counter('Page {{page}} of {{pages}}, showing {{current}} of {{count}} messages') ?></p>
     <?php endif; ?>
 </div>

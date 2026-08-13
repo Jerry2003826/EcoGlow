@@ -85,15 +85,16 @@ $steps = [
             <div class="compare-dark"></div>
             <span class="compare-tag compare-tag-dark">Before</span>
             <span class="compare-tag compare-tag-light">After</span>
-            <div class="compare-divider" role="slider" aria-label="Drag to compare before and after"
-                 aria-valuemin="0" aria-valuemax="100"></div>
+            <div class="compare-divider" role="slider" tabindex="0"
+                 aria-label="Drag to compare before and after"
+                 aria-valuemin="0" aria-valuemax="100" aria-valuenow="50"></div>
         </div>
     </div>
 </section>
 
 <section class="section-eg pt-0">
     <div class="container">
-        <div class="row g-5 align-items-center">
+        <div class="row g-4 g-lg-5 align-items-center">
             <div class="col-lg-6 reveal">
                 <div class="section-eyebrow">Services</div>
                 <h2 class="section-title mb-4">Installation &amp; Repair Services</h2>
@@ -135,7 +136,7 @@ $steps = [
 
 <section class="section-eg pt-0">
     <div class="container">
-        <div class="row g-5">
+        <div class="row g-4 g-lg-5">
             <div class="col-lg-5 reveal">
                 <div class="section-eyebrow">How It Works</div>
                 <h2 class="section-title mb-4">From Hello to Glow</h2>

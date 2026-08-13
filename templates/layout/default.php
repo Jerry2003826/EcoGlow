@@ -5,11 +5,13 @@
  * @var \App\View\AppView $this
  */
 
+use Cake\Datasource\FactoryLocator;
+
 $identity = $this->getRequest()->getAttribute('identity');
 
 $unreadCount = 0;
 if ($identity) {
-    $unreadCount = \Cake\Datasource\FactoryLocator::get('Table')
+    $unreadCount = FactoryLocator::get('Table')
         ->get('ContactMessages')
         ->find()
         ->where(['is_read' => false])
@@ -34,6 +36,7 @@ if ($identity) {
     <?= $this->fetch('script') ?>
 </head>
 <body class="d-flex flex-column min-vh-100">
+    <a class="skip-link" href="#main-content">Skip to main content</a>
     <div id="glow-spot" aria-hidden="true"></div>
     <div id="power-on" aria-hidden="true"></div>
 
@@ -83,15 +86,18 @@ if ($identity) {
         </div>
     </nav>
 
-    <main class="flex-grow-1" style="padding-top: 4.5rem;">
-        <?= $this->Flash->render() ?>
+    <main id="main-content" class="flex-grow-1" tabindex="-1" style="padding-top: 4.5rem;">
+        <?php $flash = $this->Flash->render(); ?>
+        <?php if ($flash) : ?>
+            <div class="container flash-stack"><?= $flash ?></div>
+        <?php endif; ?>
         <?= $this->fetch('content') ?>
     </main>
 
     <footer class="footer-eg">
         <div class="container d-flex flex-column flex-md-row justify-content-between align-items-center gap-2">
             <span>&copy; <?= date('Y') ?> Eco Glow Lighting. All rights reserved.</span>
-            <span class="small" style="color: var(--eg-text-faint);">Modern lighting &amp; smart home illumination, Australia-wide.</span>
+            <span class="small" style="color: var(--eg-text-dim);">Modern lighting &amp; smart home illumination, Australia-wide.</span>
         </div>
     </footer>
 

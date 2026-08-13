@@ -98,20 +98,34 @@ return [
     ],
 
     /*
-     * Email configuration.
+     * Email configuration, used by the "forgot password" flow.
      *
-     * Host and credential configuration in case you are using SmtpTransport
+     * Leave this block commented out for local development: app.php defaults
+     * to the Debug transport, which sends nothing and instead writes the
+     * rendered message (reset link included) to logs/debug.log.
+     *
+     * To go live on cPanel, uncomment it and fill in the values from
+     * "Email Accounts > Connect Devices" in the cPanel dashboard. `from` has
+     * to be a mailbox the server hosts, otherwise delivery is rejected.
      *
      * See app.php for more configuration options.
      */
-    'EmailTransport' => [
-        'default' => [
-            'host' => 'localhost',
-            'port' => 25,
-            'username' => null,
-            'password' => null,
-            'client' => null,
-            'url' => env('EMAIL_TRANSPORT_DEFAULT_URL', null),
-        ],
-    ],
+    //'EmailTransport' => [
+    //    'default' => [
+    //        'className' => \Cake\Mailer\Transport\SmtpTransport::class,
+    //        'host' => 'mail.your-domain.com',
+    //        'port' => 587,
+    //        'username' => 'no-reply@your-domain.com',
+    //        'password' => 'the-mailbox-password',
+    //        'tls' => true,
+    //        'client' => null,
+    //        'url' => env('EMAIL_TRANSPORT_DEFAULT_URL', null),
+    //    ],
+    //],
+    //'Email' => [
+    //    'default' => [
+    //        'transport' => 'default',
+    //        'from' => ['no-reply@your-domain.com' => 'Eco Glow Lighting'],
+    //    ],
+    //],
 ];

@@ -4,7 +4,7 @@
  * - Cursor glow spot that follows the pointer
  * - One-time "power on" intro per session
  * - Staggered scroll-in reveal via IntersectionObserver
- * - Draggable before/after comparison divider
+ * - Before/after comparison divider, draggable by pointer or arrow keys
  * - Navbar deepening on scroll
  *
  * Everything degrades gracefully when prefers-reduced-motion is set.
@@ -94,11 +94,24 @@
 
     /* ---------- Before / After compare slider ---------- */
     document.querySelectorAll('[data-compare]').forEach(function (band) {
-        var setSplit = function (clientX) {
+        var handle = band.querySelector('[role="slider"]');
+        var split = handle ? parseFloat(handle.getAttribute('aria-valuenow')) : 50;
+        if (isNaN(split)) {
+            split = 50;
+        }
+
+        // Stops short of the edges so the round grab handle stays on screen.
+        var applySplit = function (pct) {
+            split = Math.max(2, Math.min(98, pct));
+            band.style.setProperty('--split', split + '%');
+            if (handle) {
+                handle.setAttribute('aria-valuenow', String(Math.round(split)));
+            }
+        };
+
+        var setSplitFromPointer = function (clientX) {
             var rect = band.getBoundingClientRect();
-            var pct = ((clientX - rect.left) / rect.width) * 100;
-            pct = Math.max(2, Math.min(98, pct));
-            band.style.setProperty('--split', pct + '%');
+            applySplit(((clientX - rect.left) / rect.width) * 100);
         };
 
         var dragging = false;
@@ -106,12 +119,12 @@
         band.addEventListener('pointerdown', function (event) {
             dragging = true;
             band.setPointerCapture(event.pointerId);
-            setSplit(event.clientX);
+            setSplitFromPointer(event.clientX);
         });
 
         band.addEventListener('pointermove', function (event) {
             if (dragging) {
-                setSplit(event.clientX);
+                setSplitFromPointer(event.clientX);
             }
         });
 
@@ -122,6 +135,42 @@
         band.addEventListener('pointercancel', function () {
             dragging = false;
         });
+
+        if (handle) {
+            handle.addEventListener('keydown', function (event) {
+                var next;
+
+                switch (event.key) {
+                    case 'ArrowLeft':
+                    case 'ArrowDown':
+                        next = split - (event.shiftKey ? 10 : 2);
+                        break;
+                    case 'ArrowRight':
+                    case 'ArrowUp':
+                        next = split + (event.shiftKey ? 10 : 2);
+                        break;
+                    case 'PageDown':
+                        next = split - 10;
+                        break;
+                    case 'PageUp':
+                        next = split + 10;
+                        break;
+                    case 'Home':
+                        next = 0;
+                        break;
+                    case 'End':
+                        next = 100;
+                        break;
+                    default:
+                        return;
+                }
+
+                event.preventDefault();
+                applySplit(next);
+            });
+        }
+
+        applySplit(split);
     });
 
     /* ---------- Navbar deepening on scroll ---------- */

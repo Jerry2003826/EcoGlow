@@ -29,10 +29,29 @@
     --eg-glow: rgba(255, 190, 92, 0.3);
     --eg-glow-strong: rgba(255, 190, 92, 0.55);
 
-    /* Text */
+    /* Text. Dim is the floor for anything readable: it clears WCAG AA on every
+       surface here (8.2:1 to 8.8:1), while faint peaks at 4.17:1 and fails the
+       4.5:1 minimum everywhere. Faint is reserved for inactive controls, which
+       1.4.3 exempts -- do not reach for it for body copy, labels or hints. */
     --eg-text: #f0f0f8;
     --eg-text-dim: #a9a9c0;
     --eg-text-faint: #6f6f88;
+
+    /* Validation failure. A red rather than a dimmed amber: amber is this
+       site's "working as intended" colour, so a field in error needs a hue
+       nothing else here uses. Measured 8.55:1 against the glass form card it
+       sits on, clearing WCAG AA 1.4.3. Against body copy it is only 2:1, which
+       is why the error styles below never rely on colour alone. */
+    --eg-error: #ff8a8a;
+    --eg-error-soft: rgba(255, 138, 138, 0.09);
+
+    /* Success. Green for the same reason error is red: amber already means
+       "brand furniture" here — every link, button and badge is amber — so an
+       amber success banner would read as decoration rather than as something
+       that just happened. Measured 12.24:1 on the page background and 11.67:1
+       on the glass card. */
+    --eg-success: #5ce0a0;
+    --eg-success-soft: rgba(92, 224, 160, 0.09);
 
     /* Shape & motion */
     --eg-radius: 1.25rem;
@@ -93,6 +112,36 @@ a:hover {
 
 .text-muted {
     color: var(--eg-text-dim) !important;
+}
+
+/* ---------- Skip to main content (WCAG 2.4.1) ---------- */
+/* Parked off-screen rather than hidden: display:none or visibility:hidden
+   would make the link unreachable by keyboard, which defeats the purpose. */
+.skip-link {
+    position: fixed;
+    top: -6rem;
+    left: 1rem;
+    z-index: 2100;
+    padding: 0.75rem 1.25rem;
+    border-radius: 0 0 var(--eg-radius-sm) var(--eg-radius-sm);
+    background: linear-gradient(120deg, var(--eg-amber), var(--eg-gold));
+    color: #201608;
+    font-weight: 700;
+    box-shadow: 0 0 26px var(--eg-glow-strong);
+    transition: top 0.2s var(--eg-ease);
+}
+
+.skip-link:focus {
+    top: 0;
+    color: #201608;
+    outline: 2px solid #fff;
+    outline-offset: 2px;
+}
+
+/* The landmark only takes focus so the skip link can hand off to it — an
+   outline around the whole page would be more confusing than helpful. */
+#main-content:focus {
+    outline: none;
 }
 
 /* ---------- Cursor glow spot ---------- */
@@ -207,6 +256,10 @@ body.glow-active #glow-spot {
 
 .navbar-eg .nav-link {
     position: relative;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    min-height: 44px;
     color: var(--eg-text-dim);
     font-weight: 500;
     padding: 0.5rem 1rem;
@@ -236,7 +289,13 @@ body.glow-active #glow-spot {
     transform: scaleX(1);
 }
 
+/* Left unscoped on purpose: Bootstrap's `.navbar-expand-lg .navbar-toggler`
+   must stay more specific so the toggler still hides on desktop. Its default
+   padding computes to a 40px box, under the 44px minimum touch target. */
 .navbar-toggler {
+    --bs-navbar-toggler-padding-y: 0.375rem;
+    min-height: 44px;
+    min-width: 44px;
     border-color: var(--eg-border);
 }
 
@@ -610,6 +669,16 @@ body.glow-active #glow-spot {
     box-shadow: 0 0 24px var(--eg-glow-strong);
 }
 
+/* The divider itself is only 2px wide, so the focus ring goes on the knob. */
+.compare-divider:focus-visible {
+    outline: none;
+}
+
+.compare-divider:focus-visible::after {
+    border-color: #fff;
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.85), 0 0 30px var(--eg-glow-strong);
+}
+
 .compare-tag {
     position: absolute;
     top: 1.2rem;
@@ -731,8 +800,10 @@ body.glow-active #glow-spot {
     transition: border-color 0.25s var(--eg-ease), box-shadow 0.25s var(--eg-ease), background-color 0.25s var(--eg-ease);
 }
 
+/* --eg-text-dim, not --eg-text-faint: faint only reaches 3.98:1 on the field
+   background and fails WCAG 1.4.3 AA. */
 .form-control::placeholder {
-    color: var(--eg-text-faint);
+    color: var(--eg-text-dim);
 }
 
 .form-control:focus,
@@ -750,7 +821,56 @@ body.glow-active #glow-spot {
 }
 
 .form-text {
-    color: var(--eg-text-faint);
+    color: var(--eg-text-dim);
+}
+
+/* ---------- Form validation errors ---------- */
+/* CakePHP's default FormHelper templates flag a failed control three ways: the
+   wrapper gains `.error`, the widget gains `.form-error`, and the message is
+   emitted as `<div class="error-message" id="{field}-error">`. cake.css colours
+   `.error-message`, but this layout only loads bootstrap/fonts/site, so without
+   the rules below an error renders in plain body copy and reads as an ordinary
+   caption rather than a problem.
+
+   Colour is not the only cue (WCAG 1.4.1): the message is smaller and bolder
+   than body copy and led by a warning glyph, and the field itself gains a
+   second ring. All three survive greyscale. */
+.error-message {
+    display: flex;
+    align-items: baseline;
+    gap: 0.4rem;
+    margin-top: 0.4rem;
+    color: var(--eg-error);
+    font-size: 0.9rem;
+    font-weight: 600;
+    line-height: 1.5;
+}
+
+/* Variation selector-15 keeps this as a glyph in the page's own colour; without
+   it Apple platforms substitute the colour emoji, which ignores `color`. */
+.error-message::before {
+    content: '\26A0\FE0E';
+    flex: none;
+    font-weight: 700;
+}
+
+.form-control.form-error,
+.form-select.form-error {
+    border-color: var(--eg-error);
+    background-color: var(--eg-error-soft);
+    /* An inset ring rather than border-width: 2px — it doubles the outline
+       without shrinking the content box, so the field does not reflow when it
+       flips into error. */
+    box-shadow: inset 0 0 0 1px var(--eg-error);
+}
+
+/* The rule above ties with `.form-control:focus` on specificity and beats it on
+   source order, so without this a focused invalid field would lose its focus
+   ring entirely. Restated here in the error colour. */
+.form-control.form-error:focus,
+.form-select.form-error:focus {
+    border-color: var(--eg-error);
+    box-shadow: 0 0 0 0.2rem rgba(255, 138, 138, 0.22), inset 0 0 0 1px var(--eg-error);
 }
 
 /* ---------- Alerts / flash ---------- */
@@ -785,6 +905,90 @@ body.glow-active #glow-spot {
     color: #a8e4f9;
 }
 
+/* ---------- Page-level flash messages ---------- */
+/* `templates/element/flash/*.php` emit `<div class="message">` plus `success`,
+   `warning` or `error`. `info.php` and `default.php` emit the bare `.message`,
+   so the base rule here *is* the informational state and the three modifiers
+   below override it. cake.css styles all of this, but the layout only loads
+   bootstrap/fonts/site — so until now a flash rendered as plain body copy with
+   no box at all, and TC4's "green confirmation" was neither green nor a banner.
+
+   Colour is not the only cue (WCAG 1.4.1): every state carries its own leading
+   glyph as well. That matters more here than it does for field errors, because
+   success and error sit only 1.36:1 apart in luminance — desaturate the page
+   and the two banners are near-identical greys, leaving the glyph to carry the
+   whole distinction. */
+.message {
+    display: flex;
+    align-items: baseline;
+    gap: 0.65rem;
+    margin: 0 0 1rem;
+    padding: 0.9rem 1.25rem;
+    border: 1px solid var(--eg-border);
+    border-left: 3px solid var(--eg-cyan);
+    border-radius: var(--eg-radius-sm);
+    background: rgba(76, 201, 240, 0.09);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    box-shadow: 0 1rem 2rem rgba(0, 0, 0, 0.45);
+    color: var(--eg-cyan);
+    font-weight: 500;
+    /* The flash templates dismiss on click, so advertise that it is clickable. */
+    cursor: pointer;
+}
+
+/* What that click does — the templates only add the class. */
+.message.hidden {
+    display: none;
+}
+
+/* Variation selector-15 keeps these as glyphs in the banner's own colour;
+   without it Apple platforms substitute the colour emoji, which ignores
+   `color` and would put the one cue that survives greyscale back into hue. */
+.message::before {
+    content: '\2139\FE0E';
+    flex: none;
+    font-weight: 700;
+}
+
+.message.success {
+    border-left-color: var(--eg-success);
+    background: var(--eg-success-soft);
+    color: var(--eg-success);
+}
+
+.message.success::before {
+    content: '\2714\FE0E';
+}
+
+.message.warning {
+    border-left-color: var(--eg-gold);
+    background: rgba(255, 209, 102, 0.09);
+    color: var(--eg-gold);
+}
+
+.message.warning::before {
+    content: '\26A0\FE0E';
+}
+
+.message.error {
+    border-left-color: var(--eg-error);
+    background: var(--eg-error-soft);
+    color: var(--eg-error);
+}
+
+.message.error::before {
+    content: '\2716\FE0E';
+}
+
+/* Flash renders first inside <main>, which is full-bleed, so without a wrapper
+   the banner sat flush against the top-left of the viewport. The layout wraps
+   it in `.container` to line it up with the page content; this adds the gap
+   below the fixed navbar. */
+.flash-stack {
+    padding-top: 1.75rem;
+}
+
 /* ---------- Badges / pills ---------- */
 .pill {
     display: inline-block;
@@ -804,7 +1008,7 @@ body.glow-active #glow-spot {
 
 .pill-read {
     background: rgba(255, 255, 255, 0.05);
-    color: var(--eg-text-faint);
+    color: var(--eg-text-dim);
     border: 1px solid var(--eg-border);
 }
 
@@ -828,7 +1032,7 @@ body.glow-active #glow-spot {
 }
 
 .table-eg thead th {
-    color: var(--eg-text-faint);
+    color: var(--eg-text-dim);
     font-size: 0.78rem;
     letter-spacing: 0.1em;
     text-transform: uppercase;
@@ -837,7 +1041,7 @@ body.glow-active #glow-spot {
 }
 
 .table-eg thead th a {
-    color: var(--eg-text-faint);
+    color: var(--eg-text-dim);
 }
 
 .table-eg thead th a:hover {
@@ -847,6 +1051,12 @@ body.glow-active #glow-spot {
 .table-eg tbody td {
     padding: 1rem 0.75rem;
     vertical-align: middle;
+}
+
+.table-eg .cell-message {
+    max-width: 22rem;
+    min-width: 12rem;
+    color: var(--eg-text-dim);
 }
 
 .table-eg tbody tr.row-unread td:first-child {
@@ -885,6 +1095,11 @@ body.glow-active #glow-spot {
     box-shadow: 0 0 16px var(--eg-glow);
 }
 
+/* Deliberately still --eg-text-faint. WCAG 1.4.3 exempts inactive controls,
+   and the enabled .page-link above is already --eg-text-dim: promoting this to
+   dim too would make the two states share one colour, leaving the 4%-white fill
+   as the only cue that "Previous" is dead on page 1. Faint against dim reads as
+   2.12:1, which is the distinction worth keeping here. */
 .page-item.disabled .page-link {
     background: transparent;
     color: var(--eg-text-faint);
@@ -920,7 +1135,7 @@ body.glow-active #glow-spot {
 }
 
 .kv .kv-label {
-    color: var(--eg-text-faint);
+    color: var(--eg-text-dim);
     font-size: 0.78rem;
     letter-spacing: 0.08em;
     text-transform: uppercase;
@@ -969,18 +1184,32 @@ body.glow-active #glow-spot {
     filter: drop-shadow(0 0 14px var(--eg-glow-strong));
 }
 
+.auth-link {
+    display: inline-block;
+    min-height: 44px;
+    padding: 0.7rem 0.75rem;
+}
+
 .input-icon {
     position: relative;
 }
 
+/* These icons are aria-hidden and duplicate their field's label, so 1.4.11 does
+   not apply. Raised to dim anyway to match the placeholder they sit beside, and
+   because the icon is the only glyph left in the field once text is typed. */
+/* Pinned to the middle of the field rather than the middle of .input-icon:
+   FormHelper appends the validation message *inside* this wrapper, so centring
+   on the wrapper drops the icon halfway into the message whenever the field is
+   in error. The offset is half a field — top border, top padding, half a line
+   box — which is where 50% lands anyway while no message is present. */
 .input-icon svg {
     position: absolute;
     left: 1rem;
-    top: 50%;
+    top: calc(1px + 0.75rem + 0.75em);
     transform: translateY(-50%);
     width: 1.05rem;
     height: 1.05rem;
-    color: var(--eg-text-faint);
+    color: var(--eg-text-dim);
     pointer-events: none;
 }
 

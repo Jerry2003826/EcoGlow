@@ -5,6 +5,14 @@
         <exclude-pattern>*/src/Controller/*</exclude-pattern>
     </rule>
 
+    <!-- Markup lines legitimately run long: inline SVG path data and Bootstrap
+         utility-class chains cannot be wrapped without changing the rendered
+         output. Every other sniff still applies to templates. -->
+    <rule ref="Generic.Files.LineLength.TooLong">
+        <exclude-pattern>*/templates/*</exclude-pattern>
+    </rule>
+
     <file>src/</file>
     <file>tests/</file>
+    <file>templates/</file>
 </ruleset>

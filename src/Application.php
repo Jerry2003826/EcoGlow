@@ -30,6 +30,7 @@ use Cake\Event\EventManagerInterface;
 use Cake\Http\BaseApplication;
 use Cake\Http\Middleware\BodyParserMiddleware;
 use Cake\Http\Middleware\CsrfProtectionMiddleware;
+use Cake\Http\Middleware\HttpsEnforcerMiddleware;
 use Cake\Http\Middleware\SecurityHeadersMiddleware;
 use Cake\Http\MiddlewareQueue;
 use Cake\ORM\Locator\TableContainer;
@@ -89,8 +90,34 @@ class Application extends BaseApplication implements AuthenticationServiceProvid
             ->add((new SecurityHeadersMiddleware())
                 ->setReferrerPolicy()
                 ->setXFrameOptions('sameorigin')
-                ->noSniff())
+                ->noSniff());
 
+        // Force HTTPS in production only; enabling it locally would redirect
+        // the dev server at http://localhost:8765 away. It sits behind
+        // HostHeaderMiddleware so only a validated Host can be redirected to,
+        // and behind SecurityHeadersMiddleware so the 301 still carries the
+        // hardening headers.
+        if (!Configure::read('debug')) {
+            $middlewareQueue->add(new HttpsEnforcerMiddleware([
+                // cPanel terminates TLS at its reverse proxy, so PHP only ever
+                // sees plain HTTP and would redirect forever. An empty list
+                // trusts X-Forwarded-Proto without pinning proxy IPs, which are
+                // not fixed on shared hosting; ServerRequest::clientIp() then
+                // reads the last X-Forwarded-For entry, the one the fronting
+                // proxy appends, so LoginThrottleMiddleware cannot be bypassed
+                // with a forged header.
+                'trustedProxies' => [],
+                // Sibling subdomains on the shared host are not ours to pin,
+                // and preload is effectively irreversible.
+                'hsts' => [
+                    'maxAge' => 31536000,
+                    'includeSubDomains' => false,
+                    'preload' => false,
+                ],
+            ]));
+        }
+
+        $middlewareQueue
             // Handle plugin/theme assets like CakePHP normally does.
             ->add(new AssetMiddleware([
                 'cacheTime' => Configure::read('Asset.cacheTime'),

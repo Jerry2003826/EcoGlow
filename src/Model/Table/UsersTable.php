@@ -27,6 +27,13 @@ use Cake\Validation\Validator;
 class UsersTable extends Table
 {
     /**
+     * Minimum length accepted for a password chosen through a reset link.
+     *
+     * @var int
+     */
+    public const MIN_PASSWORD_LENGTH = 8;
+
+    /**
      * Initialize method
      *
      * @param array<string, mixed> $config The configuration for the Table.
@@ -65,6 +72,36 @@ class UsersTable extends Table
             ->maxLength('password', 255)
             ->requirePresence('password', 'create')
             ->notEmptyString('password');
+
+        return $validator;
+    }
+
+    /**
+     * Validation rules for choosing a new password from a reset link.
+     *
+     * Only the password pair is validated: the email address is never part of
+     * that form, so it must not be required (or writable) here.
+     *
+     * @param \Cake\Validation\Validator $validator Validator instance.
+     * @return \Cake\Validation\Validator
+     */
+    public function validationResetPassword(Validator $validator): Validator
+    {
+        $validator
+            ->scalar('password')
+            ->requirePresence('password')
+            ->notEmptyString('password', __('Please enter a new password.'))
+            ->minLength('password', self::MIN_PASSWORD_LENGTH, __(
+                'Passwords must be at least {0} characters long.',
+                self::MIN_PASSWORD_LENGTH,
+            ))
+            ->maxLength('password', 255);
+
+        $validator
+            ->scalar('confirm_password')
+            ->requirePresence('confirm_password')
+            ->notEmptyString('confirm_password', __('Please confirm your new password.'))
+            ->sameAs('confirm_password', 'password', __('The two passwords do not match.'));
 
         return $validator;
     }

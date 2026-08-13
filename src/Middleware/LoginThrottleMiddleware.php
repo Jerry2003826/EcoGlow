@@ -24,6 +24,10 @@ use Psr\Http\Server\RequestHandlerInterface;
  * Failure counting lives in App\Controller\UsersController, which knows the
  * authentication result; this middleware only reads the counter to decide
  * whether to block. Both share the helpers below.
+ *
+ * The same counters also back the "forgot password" throttle under a separate
+ * scope (see SCOPE_PASSWORD_RESET); that flow needs no middleware because no
+ * identity is established, so the controller enforces it directly.
  */
 class LoginThrottleMiddleware implements MiddlewareInterface
 {
@@ -40,6 +44,24 @@ class LoginThrottleMiddleware implements MiddlewareInterface
      * @var string
      */
     public const CACHE_CONFIG = 'login_throttle';
+
+    /**
+     * Counter scope for failed sign-in attempts.
+     *
+     * @var string
+     */
+    public const SCOPE_LOGIN = 'login';
+
+    /**
+     * Counter scope for "forgot password" submissions.
+     *
+     * Reset requests are throttled with the same counters so that the flow
+     * cannot be abused to mail-bomb an inbox or to probe for valid addresses;
+     * a separate scope keeps it from interfering with the login lockout.
+     *
+     * @var string
+     */
+    public const SCOPE_PASSWORD_RESET = 'password_reset';
 
     /**
      * Short-circuit locked-out login submissions before authentication runs.
@@ -94,54 +116,70 @@ class LoginThrottleMiddleware implements MiddlewareInterface
      * Cache key for a client IP (hashed so it is a safe key).
      *
      * @param string $ip The client IP.
+     * @param string $scope Counter scope, one of the SCOPE_* constants.
      * @return string
      */
-    public static function throttleKey(string $ip): string
+    public static function throttleKey(string $ip, string $scope = self::SCOPE_LOGIN): string
     {
-        return 'login_' . hash('sha256', $ip !== '' ? $ip : 'unknown');
+        return $scope . '_' . hash('sha256', $ip !== '' ? $ip : 'unknown');
     }
 
     /**
-     * Current failed-attempt count for a client IP.
+     * Current attempt count for a client IP.
      *
      * @param string $ip The client IP.
+     * @param string $scope Counter scope, one of the SCOPE_* constants.
      * @return int
      */
-    public static function attempts(string $ip): int
+    public static function attempts(string $ip, string $scope = self::SCOPE_LOGIN): int
     {
-        return (int)Cache::read(self::throttleKey($ip), self::CACHE_CONFIG);
+        return (int)Cache::read(self::throttleKey($ip, $scope), self::CACHE_CONFIG);
     }
 
     /**
      * Whether the given client IP is currently locked out.
      *
      * @param string $ip The client IP.
+     * @param string $scope Counter scope, one of the SCOPE_* constants.
      * @return bool
      */
-    public static function isLockedOut(string $ip): bool
+    public static function isLockedOut(string $ip, string $scope = self::SCOPE_LOGIN): bool
     {
-        return self::attempts($ip) >= self::MAX_ATTEMPTS;
+        return self::attempts($ip, $scope) >= self::MAX_ATTEMPTS;
     }
 
     /**
-     * Record one more failed attempt for a client IP.
+     * Record one more attempt for a client IP.
+     *
+     * @param string $ip The client IP.
+     * @param string $scope Counter scope, one of the SCOPE_* constants.
+     * @return void
+     */
+    public static function registerAttempt(string $ip, string $scope = self::SCOPE_LOGIN): void
+    {
+        Cache::write(self::throttleKey($ip, $scope), self::attempts($ip, $scope) + 1, self::CACHE_CONFIG);
+    }
+
+    /**
+     * Record one more failed sign-in attempt for a client IP.
      *
      * @param string $ip The client IP.
      * @return void
      */
     public static function registerFailure(string $ip): void
     {
-        Cache::write(self::throttleKey($ip), self::attempts($ip) + 1, self::CACHE_CONFIG);
+        self::registerAttempt($ip, self::SCOPE_LOGIN);
     }
 
     /**
      * Reset the counter for a client IP (called on successful login).
      *
      * @param string $ip The client IP.
+     * @param string $scope Counter scope, one of the SCOPE_* constants.
      * @return void
      */
-    public static function clear(string $ip): void
+    public static function clear(string $ip, string $scope = self::SCOPE_LOGIN): void
     {
-        Cache::delete(self::throttleKey($ip), self::CACHE_CONFIG);
+        Cache::delete(self::throttleKey($ip, $scope), self::CACHE_CONFIG);
     }
 }
