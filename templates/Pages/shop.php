@@ -10,8 +10,10 @@
  * the markup stay as they are.
  *
  * Filtering, sorting and paging run in the browser over the rendered grid (see
- * webroot/js/glow.js) rather than through query strings, so this template holds
- * no selection logic that a controller will later have to take back. Every
+ * webroot/js/glow.js), so this template holds no selection logic that a
+ * controller will later have to take back. A ?category= or ?style= in the
+ * address bar is read there too, which is how a link from another page hands a
+ * filter over; either way this template renders the whole catalogue. Every
  * control on the page does what its label says.
  *
  * @var \App\View\AppView $this
@@ -23,12 +25,20 @@ $this->assign('title', 'Shop All Lighting');
  * `price` is a number rather than a formatted string: it is what a DECIMAL
  * column holds, it is what the sort control compares, and it is what the cart
  * does arithmetic on. Formatting happens at the point of output.
+ *
+ * `image` replaces the `icon` key the line-art marks used to be chosen by, and
+ * `alt` travels with it: on a catalogue page the photograph is the product's own
+ * picture and the thing a visitor is scanning, so it describes the fitting
+ * rather than sitting empty. `meta` states the fitting, the size and the colour
+ * temperature instead of an adjective, which is also what makes two similar
+ * sconces tellable apart without opening either.
  */
 $products = [
     [
-        'icon' => 'floor',
+        'image' => 'marlow-floor-lamp.webp',
+        'alt' => 'Marlow floor lamp lit against a plaster wall, oak column under a linen drum shade',
         'name' => 'Marlow Floor Lamp',
-        'meta' => 'Oak & linen shade',
+        'meta' => 'Turned oak, linen shade, 1.45 m',
         'price' => 249.00,
         'flag' => 'New',
         'category' => 'Ambient Floor Lamps',
@@ -36,9 +46,10 @@ $products = [
         'swatches' => [['Oak', '#C9BCA9'], ['Charcoal', '#2F2E2C'], ['Terracotta', '#E2925E']],
     ],
     [
-        'icon' => 'ceiling',
+        'image' => 'halden-pendant.webp',
+        'alt' => 'Halden pendant hanging on a slim brass stem, its opal glass globe lit',
         'name' => 'Halden Pendant',
-        'meta' => 'Opal glass, dimmable LED',
+        'meta' => 'Opal glass globe, 20 cm, E27',
         'price' => 189.00,
         'flag' => null,
         'category' => 'LED Ceiling Lights',
@@ -46,9 +57,10 @@ $products = [
         'swatches' => [['Opal', '#E2DED2'], ['Forest', '#124C24']],
     ],
     [
-        'icon' => 'smart',
+        'image' => 'aura-smart-bulbs.webp',
+        'alt' => 'Four Aura globes laid in a row on brass screw bases, two of them lit',
         'name' => 'Aura Smart Bulb Set',
-        'meta' => 'Four bulbs, warm to cool',
+        'meta' => 'Four E27 globes, 2200–6500K',
         'price' => 79.00,
         'flag' => 'Best seller',
         'category' => 'Smart Bulbs',
@@ -56,9 +68,10 @@ $products = [
         'swatches' => [['Warm white', '#FBF9F5']],
     ],
     [
-        'icon' => 'solar',
+        'image' => 'fernway-solar-path.webp',
+        'alt' => 'Three Fernway path lights spiked along a gravel path, lit at dusk',
         'name' => 'Fernway Solar Path Light',
-        'meta' => 'Set of six, weatherproof',
+        'meta' => 'Set of six spikes, IP65, 3000K',
         'price' => 129.00,
         'flag' => null,
         'category' => 'Outdoor Solar Lights',
@@ -66,19 +79,24 @@ $products = [
         'swatches' => [['Charcoal', '#2F2E2C'], ['Sand', '#C9BCA9']],
     ],
     [
-        'icon' => 'wall',
+        /* The photograph is an opal glass dome with no brass anywhere on it, so
+           the finish in this line reads off the picture. It said "brushed brass"
+           while the well held a line drawing, which nothing contradicted. */
+        'image' => 'brindle-wall-sconce.webp',
+        'alt' => 'Brindle wall sconce, an opal glass dome lit flush against a plaster wall',
         'name' => 'Brindle Wall Sconce',
-        'meta' => 'Brushed brass, E14 fitting',
+        'meta' => 'Opal glass dome, 18 cm, E14',
         'price' => 99.00,
         'flag' => null,
         'category' => 'Wall Sconces',
         'style' => 'Heritage',
-        'swatches' => [['Brass', '#C9BCA9'], ['Charcoal', '#2F2E2C']],
+        'swatches' => [['Opal', '#E2DED2'], ['Charcoal', '#2F2E2C']],
     ],
     [
-        'icon' => 'decor',
+        'image' => 'linen-drum-shade.webp',
+        'alt' => 'Linen drum shade standing on its own, an undyed cylinder with a visible weave',
         'name' => 'Linen Drum Shade',
-        'meta' => 'Natural linen, 45 cm',
+        'meta' => 'Undyed linen, 45 cm, E27 ring',
         'price' => 59.00,
         'flag' => null,
         'category' => 'Decorative Accessories',
@@ -86,9 +104,10 @@ $products = [
         'swatches' => [['Natural', '#E2DED2'], ['Clay', '#E2925E']],
     ],
     [
-        'icon' => 'ceiling',
+        'image' => 'corva-ceiling-disc.webp',
+        'alt' => 'Corva ceiling disc mounted flush, an opal diffuser inside a brushed brass rim',
         'name' => 'Corva Ceiling Disc',
-        'meta' => 'Flush mount, 3000 K',
+        'meta' => 'Flush mount, 40 cm, 3000K',
         'price' => 219.00,
         'flag' => null,
         'category' => 'LED Ceiling Lights',
@@ -96,9 +115,10 @@ $products = [
         'swatches' => [['Warm white', '#FBF9F5'], ['Charcoal', '#2F2E2C']],
     ],
     [
-        'icon' => 'floor',
+        'image' => 'odette-arc-lamp.webp',
+        'alt' => 'Odette arc lamp curving out of a marble base over an oak floor',
         'name' => 'Odette Arc Lamp',
-        'meta' => 'Curved steel, marble base',
+        'meta' => 'Brass arc, marble base, 2.1 m',
         'price' => 329.00,
         'flag' => 'New',
         'category' => 'Ambient Floor Lamps',
@@ -106,9 +126,10 @@ $products = [
         'swatches' => [['Charcoal', '#2F2E2C'], ['Brass', '#C9BCA9']],
     ],
     [
-        'icon' => 'smart',
+        'image' => 'nimbus-smart-downlight.webp',
+        'alt' => 'Two Nimbus downlights recessed in a ceiling, throwing overlapping pools of warm light',
         'name' => 'Nimbus Smart Downlight',
-        'meta' => 'Tunable white, app control',
+        'meta' => 'Tunable 2700–5000K, 90 mm cut-out',
         'price' => 45.00,
         'flag' => null,
         'category' => 'Smart Bulbs',
@@ -116,9 +137,10 @@ $products = [
         'swatches' => [['Warm white', '#FBF9F5']],
     ],
     [
-        'icon' => 'solar',
+        'image' => 'kelso-solar-bollard.webp',
+        'alt' => 'Kelso solar bollard lighting a sand path beside dry grasses',
         'name' => 'Kelso Solar Bollard',
-        'meta' => 'Powder-coated, 40 cm',
+        'meta' => 'Powder-coated, 40 cm, IP65',
         'price' => 179.00,
         'flag' => null,
         'category' => 'Outdoor Solar Lights',
@@ -126,9 +148,10 @@ $products = [
         'swatches' => [['Charcoal', '#2F2E2C'], ['Sand', '#C9BCA9']],
     ],
     [
-        'icon' => 'wall',
+        'image' => 'ashby-twin-sconce.webp',
+        'alt' => 'Ashby twin sconce on a plaster wall, two brass arms under small linen shades',
         'name' => 'Ashby Twin Sconce',
-        'meta' => 'Twin arm, fabric shades',
+        'meta' => 'Twin brass arms, linen shades, E14',
         'price' => 145.00,
         'flag' => null,
         'category' => 'Wall Sconces',
@@ -136,9 +159,10 @@ $products = [
         'swatches' => [['Brass', '#C9BCA9'], ['Natural', '#E2DED2']],
     ],
     [
-        'icon' => 'decor',
+        'image' => 'rowan-rotary-dimmer.webp',
+        'alt' => 'Rowan rotary dimmer, a brushed brass plate with a knurled knob',
         'name' => 'Rowan Rotary Dimmer',
-        'meta' => 'Trailing-edge, 250 W',
+        'meta' => 'Trailing-edge rotary, 250 W, brass',
         'price' => 39.00,
         'flag' => null,
         'category' => 'Decorative Accessories',
@@ -167,17 +191,81 @@ $productUrl = $this->Url->build('/shop/product');
         <span class="eg-eyebrow">Our range</span>
         <h1 class="section-title">All lighting</h1>
         <p class="section-lead mx-auto mt-3">
-            Every fixture we stock, from statement ceilings to solar gardens. Each one is
-            energy-rated, and our licensed team can install anything on this page.
+            Twelve fittings in oak, undyed linen, opal glass, brushed brass and powder-coated
+            aluminium. Everything indoors runs at 2700&ndash;3000K and dims on a trailing-edge
+            circuit; everything outdoors is IP65. Our licensed electricians install any of it.
         </p>
     </div>
 
     <div data-shop>
         <div class="eg-shop-bar reveal">
+            <?php
+            /* Collapsed by default, like the Nook reference the client
+               supplied: eleven chips laid flat read as a tag cloud rather than
+               as a filter.
+
+               <details> rather than a scripted panel, so the trigger arrives
+               with keyboard operation and the right expanded state already in
+               place, and so the panel still opens when scripting does not run.
+               Whatever is applied also shows as a removable tag below, because
+               a shut panel would otherwise be the only record of it. */
+            ?>
+            <details class="eg-filters" data-shop-filters>
+                <summary class="eg-filter-toggle">
+                    <svg class="eg-filter-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h8"/><path d="M16 7h4"/><circle cx="12" cy="7" r="2.2"/><path d="M4 17h4"/><path d="M12 17h8"/><circle cx="8" cy="17" r="2.2"/></svg>
+                    Filters<span class="eg-filter-tally" data-shop-tally hidden></span>
+                    <svg class="eg-filter-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+                </summary>
+
+                <div class="eg-filter-panel">
+                    <div class="eg-filter-group" role="group" aria-labelledby="filter-category">
+                        <span class="eg-eyebrow" id="filter-category">Category</span>
+                        <div class="eg-chip-row">
+                            <button type="button" class="eg-chip is-active" aria-pressed="true"
+                                    data-shop-filter="category" data-value="">All categories</button>
+                            <?php foreach ($categories as $category) : ?>
+                                <button type="button" class="eg-chip" aria-pressed="false"
+                                        data-shop-filter="category" data-value="<?= h($category) ?>">
+                                    <?= h($category) ?>
+                                </button>
+                            <?php endforeach; ?>
+                        </div>
+                    </div>
+
+                    <div class="eg-filter-group" role="group" aria-labelledby="filter-style">
+                        <span class="eg-eyebrow" id="filter-style">Style</span>
+                        <div class="eg-chip-row">
+                            <button type="button" class="eg-chip is-active" aria-pressed="true"
+                                    data-shop-filter="style" data-value="">All styles</button>
+                            <?php foreach ($styles as $style) : ?>
+                                <button type="button" class="eg-chip" aria-pressed="false"
+                                        data-shop-filter="style" data-value="<?= h($style) ?>">
+                                    <?= h($style) ?>
+                                </button>
+                            <?php endforeach; ?>
+                        </div>
+                    </div>
+                </div>
+            </details>
+
+            <?php
+            /* Straight after the disclosure, so it is the next thing read out
+               and the next thing seen once the bar stacks. Empty and hidden
+               until something is applied: the tags are the one part of this bar
+               that mirrors browser-side state, so webroot/js/glow.js fills the
+               list and unhides the row. */
+            ?>
+            <div class="eg-active" data-shop-active hidden>
+                <span class="eg-eyebrow">Filtering by</span>
+                <ul class="eg-tag-row" data-shop-tags></ul>
+                <button type="button" class="eg-active-clear" data-shop-clear>Clear all filters</button>
+            </div>
+
             <p class="eg-shop-count" aria-live="polite">
                 Showing <span data-shop-shown><?= count($products) ?></span>
                 of <span data-shop-total><?= count($products) ?></span> products
             </p>
+
             <div class="eg-sort">
                 <label for="shop-sort">Sort by</label>
                 <select class="form-select" id="shop-sort" data-shop-sort>
@@ -186,36 +274,6 @@ $productUrl = $this->Url->build('/shop/product');
                     <option value="price-desc">Price: high to low</option>
                     <option value="name-asc">Name: A &ndash; Z</option>
                 </select>
-            </div>
-        </div>
-
-        <div class="eg-filters reveal">
-            <div class="eg-filter-group" role="group" aria-labelledby="filter-category">
-                <span class="eg-eyebrow" id="filter-category">Category</span>
-                <div class="eg-chip-row">
-                    <button type="button" class="eg-chip is-active" aria-pressed="true"
-                            data-shop-filter="category" data-value="">All categories</button>
-                    <?php foreach ($categories as $category) : ?>
-                        <button type="button" class="eg-chip" aria-pressed="false"
-                                data-shop-filter="category" data-value="<?= h($category) ?>">
-                            <?= h($category) ?>
-                        </button>
-                    <?php endforeach; ?>
-                </div>
-            </div>
-
-            <div class="eg-filter-group" role="group" aria-labelledby="filter-style">
-                <span class="eg-eyebrow" id="filter-style">Style</span>
-                <div class="eg-chip-row">
-                    <button type="button" class="eg-chip is-active" aria-pressed="true"
-                            data-shop-filter="style" data-value="">All styles</button>
-                    <?php foreach ($styles as $style) : ?>
-                        <button type="button" class="eg-chip" aria-pressed="false"
-                                data-shop-filter="style" data-value="<?= h($style) ?>">
-                            <?= h($style) ?>
-                        </button>
-                    <?php endforeach; ?>
-                </div>
             </div>
         </div>
 
@@ -232,7 +290,20 @@ $productUrl = $this->Url->build('/shop/product');
                             <?php if ($product['flag'] !== null) : ?>
                                 <span class="product-flag"><?= h($product['flag']) ?></span>
                             <?php endif; ?>
-                            <?= $this->element('lamp_icon', ['name' => $product['icon']]) ?>
+                            <?php
+                            /* The first row is above the fold on every viewport this
+                               grid has, so those four load eagerly and the rest wait.
+                               `width`/`height` are the intrinsic pixel size: the well
+                               has its own aspect-ratio, but the attributes are what
+                               reserve the box before the stylesheet arrives. */
+                            ?>
+                            <?= $this->Html->image('products/' . $product['image'], [
+                                'alt' => $product['alt'],
+                                'width' => 800,
+                                'height' => 800,
+                                'loading' => $index < 4 ? 'eager' : 'lazy',
+                                'decoding' => 'async',
+                            ]) ?>
                         </span>
                         <span class="product-body">
                             <span class="product-name"><?= h($product['name']) ?></span>

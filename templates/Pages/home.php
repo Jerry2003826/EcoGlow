@@ -6,60 +6,107 @@
  * are local placeholder arrays, exactly as the category list was before. When
  * the products table lands these two loops become the only things that change.
  *
- * The tiles and cards used to point at anchors further down this page because
- * there was nowhere else to send anyone. They now link to /shop and
- * /shop/product. Category tiles all land on the unfiltered listing: filtering
- * is applied in the browser there, so there is no /shop?category=… URL to
- * deep-link to until the products table makes one real.
+ * `image` names a file in webroot/img/products and replaces the `icon` key the
+ * line-art marks used to be chosen by: the client's board is photographic
+ * throughout, and a monochrome lamp outline read as a placeholder rather than as
+ * a product. It is still the shape a column would take — a filename resolved at
+ * render time — so the swap costs the future controller nothing.
+ *
+ * `text` states materials, colour temperature and dimming type instead of
+ * adjectives, after the Lighting Collective page on the board. Nothing here
+ * claims a certification, a licence number or a street address; what is
+ * asserted is what the fittings are made of and how they behave on a circuit.
+ *
+ * On layout: like items are the same size and sit on the same baselines. Both of
+ * the real storefronts on the client's board — Nook Collections and Lighting
+ * Collective — lay their product and collection grids out regularly, because a
+ * visitor comparing six prices across a row should not also have to work out why
+ * one card is bigger. The unequal, overlapping arrangements on the board belong
+ * to LUMINOTTI's editorial displays, not to its product lists.
+ *
+ * The rhythm therefore comes from between the bands rather than from inside
+ * them: a full-bleed photograph, then a greige band, then a warm white statement
+ * band, then a charcoal services band, with the text-to-grid ratio changing from
+ * one to the next.
+ *
+ * Each band also has to say something the others do not. `$steps` used to be
+ * rendered twice — as the numbered list in the services band and again as a
+ * timeline in the about band, same four titles, near enough the same sentences —
+ * which is the clearest sign a column was filled rather than written. The steps
+ * now appear once, in the services band that they describe, and the about band
+ * carries `$materials` instead: the five things every fitting on the site is
+ * made from, and what each one is doing there.
  *
  * @var \App\View\AppView $this
  */
 $this->assign('title', 'Modern Lighting & Smart Home Illumination');
 
-/**
- * The lamp marks live in templates/element/lamp_icon.php so that the six
- * drawings are declared once rather than in each of the five storefront
- * templates. `icon` therefore holds a key, and `price` a number — the shapes an
- * `icon`/`price` column would have — with formatting done at output.
- */
 $collections = [
-    ['icon' => 'ceiling', 'name' => 'LED Ceiling Lights', 'text' => 'Energy-efficient ceiling fixtures for every room.'],
-    ['icon' => 'floor', 'name' => 'Ambient Floor Lamps', 'text' => 'Warm, sculptural floor lamps that set the mood.'],
-    ['icon' => 'smart', 'name' => 'Smart Bulbs', 'text' => 'App and voice controlled smart lighting.'],
-    ['icon' => 'solar', 'name' => 'Outdoor Solar Lights', 'text' => 'Solar-powered garden and pathway lighting.'],
-    ['icon' => 'decor', 'name' => 'Decorative Accessories', 'text' => 'Shades, dimmers and finishing touches.'],
-    ['icon' => 'wall', 'name' => 'Wall Sconces', 'text' => 'Soft, indirect light for halls and bedsides.'],
+    [
+        'image' => 'corva-ceiling-disc.webp',
+        'name' => 'LED Ceiling Lights',
+        'text' => 'Flush and semi-flush discs in opal glass and brushed brass. 3000K, dimmable on trailing-edge.',
+    ],
+    [
+        'image' => 'marlow-floor-lamp.webp',
+        'name' => 'Ambient Floor Lamps',
+        'text' => 'Turned oak columns under undyed linen shades. E27 fittings on a 2 m cable with an in-line rotary dimmer.',
+    ],
+    [
+        'image' => 'aura-smart-bulbs.webp',
+        'name' => 'Smart Bulbs',
+        'text' => 'E27 and E14 globes, tunable 2200–6500K. Dimmed from an app or the wall dial, no hub needed.',
+    ],
+    [
+        'image' => 'fernway-solar-path.webp',
+        'name' => 'Outdoor Solar Lights',
+        'text' => 'Powder-coated aluminium spikes and bollards, IP65, 3000K, on dusk-to-dawn sensors.',
+    ],
+    [
+        'image' => 'linen-drum-shade.webp',
+        'name' => 'Decorative Accessories',
+        'text' => 'Undyed linen drum shades from 30 to 50 cm, braided cloth flex and trailing-edge rotary dimmers.',
+    ],
+    [
+        'image' => 'ashby-twin-sconce.webp',
+        'name' => 'Wall Sconces',
+        'text' => 'Twin-arm brass frames and opal glass domes. E14 fittings, wired to a box or plug-in on a cloth flex.',
+    ],
 ];
 
 $bestSellers = [
     [
-        'icon' => 'floor',
+        'image' => 'marlow-floor-lamp.webp',
+        'alt' => 'Marlow floor lamp lit against a plaster wall, oak column under a linen drum shade',
         'name' => 'Marlow Floor Lamp',
-        'meta' => 'Oak & linen shade',
+        'meta' => 'Turned oak, linen shade, 1.45 m',
         'price' => 249.00,
         'flag' => 'New',
         'swatches' => [['Oak', '#C9BCA9'], ['Charcoal', '#2F2E2C'], ['Terracotta', '#E2925E']],
     ],
     [
-        'icon' => 'ceiling',
+        'image' => 'halden-pendant.webp',
+        'alt' => 'Halden pendant hanging on a slim brass stem, its opal glass globe lit',
         'name' => 'Halden Pendant',
-        'meta' => 'Opal glass, dimmable LED',
+        'meta' => 'Opal glass globe, 20 cm, E27',
         'price' => 189.00,
         'flag' => null,
         'swatches' => [['Opal', '#E2DED2'], ['Forest', '#124C24']],
     ],
     [
-        'icon' => 'smart',
+        'image' => 'aura-smart-bulbs.webp',
+        'alt' => 'Four Aura globes laid in a row on brass screw bases, two of them lit',
         'name' => 'Aura Smart Bulb Set',
-        'meta' => 'Four bulbs, warm to cool',
+        'meta' => 'Four E27 globes, 2200–6500K',
         'price' => 79.00,
         'flag' => 'Best seller',
         'swatches' => [['Warm white', '#FBF9F5']],
     ],
     [
-        'icon' => 'solar',
+        'image' => 'fernway-solar-path.webp',
+        'alt' => 'Three Fernway path lights spiked along a gravel path, lit at dusk',
         'name' => 'Fernway Solar Path Light',
-        'meta' => 'Set of six, weatherproof',
+        'meta' => 'Set of six spikes, IP65, 3000K',
         'price' => 129.00,
         'flag' => null,
         'swatches' => [['Charcoal', '#2F2E2C'], ['Sand', '#C9BCA9']],
@@ -67,113 +114,229 @@ $bestSellers = [
 ];
 
 $steps = [
-    ['title' => 'Consultation', 'text' => 'Tell us about your space and the mood you want.'],
-    ['title' => 'On-site assessment', 'text' => 'We measure, plan circuits and design the lighting layout.'],
-    ['title' => 'Installation & setup', 'text' => 'Licensed electricians install and configure every fixture.'],
-    ['title' => 'Aftercare & repairs', 'text' => 'Fast repairs, replacements and smart-home tune-ups.'],
+    [
+        'title' => 'Consultation',
+        'text' => 'A room-by-room list: what is on each circuit now, what it should run at, and where a dimmer has to go.',
+    ],
+    [
+        'title' => 'On-site assessment',
+        'text' => 'We measure ceiling voids and cut-outs, read the switchboard, and mark sconce and downlight positions.',
+    ],
+    [
+        'title' => 'Installation & setup',
+        'text' => 'Licensed electricians mount and wire each fitting, then set the dimmer curve and the smart-globe scenes.',
+    ],
+    [
+        'title' => 'Aftercare & repairs',
+        'text' => 'Re-lamping, driver and transformer swaps, buzzing dimmers, and smart-globe firmware.',
+    ],
 ];
+
+/* What the about band shows instead of a second copy of $steps. Each entry
+   states where the material is used and how it behaves — a property of the
+   material or of the finish on it, which is checkable and stays true. Nothing
+   here is a claim about the business. */
+$materials = [
+    [
+        'name' => 'Turned oak',
+        'text' => 'Floor-lamp columns and side-table bases, turned solid and finished in oil rather than lacquer, so the grain stays open and a scuff rubs back instead of chipping.',
+    ],
+    [
+        'name' => 'Undyed linen',
+        'text' => 'Drum and cone shades from 30 to 50 cm. Left undyed because a dyed weave tints whatever passes through it, and the globe behind it is already set at 2700–3000K.',
+    ],
+    [
+        'name' => 'Opal glass',
+        'text' => 'Pendant globes, sconce domes and flush ceiling discs. Opal scatters across the whole surface rather than leaving one bright spot, which keeps a bare LED out of your eye line.',
+    ],
+    [
+        'name' => 'Brushed brass',
+        'text' => 'Stems, canopies and sconce arms. Left unlacquered, so it darkens slowly and evenly instead of wearing through a clear coat in the places a hand touches it.',
+    ],
+    [
+        'name' => 'Powder-coated aluminium',
+        'text' => 'Outdoor spikes, bollards and IP65 housings. The coating is baked on and is the weatherproofing itself, so there is no paint film to lift at an edge.',
+    ],
+];
+
+$shopUrl = $this->Url->build('/shop');
+$productUrl = $this->Url->build('/shop/product');
+$contactUrl = $this->Url->build('/contact');
+?>
+<?php
+/* The photograph runs edge to edge: no container, no gutter, no radius. It is
+   the first thing on the page and the only full-bleed element on the site, which
+   is what makes it read as a photograph of a room rather than as an illustration
+   in a box.
+
+   From 992px the copy is laid over its left side. The panel behind that copy is a
+   flat 0.94 alpha of the warm white ground and it bleeds off the left edge on a
+   pseudo-element, so every glyph sits on exactly that alpha whatever the
+   photograph is doing underneath — the contrast cannot drift as the crop changes
+   with the viewport. Below 992px the copy stacks under the photograph on the
+   page ground instead. */
 ?>
 <section class="hero-eg">
-    <div class="container py-5">
-        <div class="row g-5 align-items-center">
-            <div class="col-lg-6 reveal">
-                <span class="eg-eyebrow">Australian owned &amp; operated</span>
-                <h1 class="hero-title">Light that feels like home.</h1>
-                <p class="hero-lead mt-3">
-                    Modern lighting fixtures and smart home illumination, chosen for warmth
-                    and efficiency &mdash; with licensed installation and repairs included.
-                </p>
-                <div class="d-flex flex-wrap gap-2 mt-4">
-                    <a class="btn btn-eg-primary" href="<?= $this->Url->build('/shop') ?>">
-                        Shop collections
-                        <svg class="btn-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg>
-                    </a>
-                    <a class="btn btn-eg-ghost" href="<?= $this->Url->build('/contact') ?>">Book a consultation</a>
-                </div>
-                <div class="hero-stats">
-                    <div>
-                        <span class="stat-num">12 yrs</span>
-                        <span class="stat-label">Lighting Melbourne homes</span>
+    <div class="hero-collage reveal">
+        <figure class="hero-shot">
+            <?= $this->Html->image('hero-interior.webp', [
+                'alt' => 'A lit floor lamp beside a boucle armchair and an oak side table in a bare, sunlit room',
+                'width' => 1024,
+                'height' => 683,
+                'fetchpriority' => 'high',
+                'decoding' => 'async',
+            ]) ?>
+        </figure>
+
+        <div class="hero-overlay">
+            <div class="container">
+                <div class="hero-copy">
+                    <span class="eg-eyebrow">Melbourne &mdash; supply, install &amp; repair</span>
+                    <h1 class="hero-title">Light that feels like home.</h1>
+                    <p class="hero-lead mt-3">
+                        Oak, linen, opal glass and brushed brass, specified at 2700&ndash;3000K so rooms
+                        stay warm after dark. Our licensed electricians mount, wire and repair
+                        everything on these pages.
+                    </p>
+                    <div class="d-flex flex-wrap gap-2 mt-4">
+                        <a class="btn btn-eg-primary" href="<?= h($shopUrl) ?>">
+                            Shop collections
+                            <svg class="btn-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg>
+                        </a>
+                        <a class="btn btn-eg-ghost" href="<?= h($contactUrl) ?>">Book a consultation</a>
                     </div>
-                    <div>
-                        <span class="stat-num">6</span>
-                        <span class="stat-label">Curated collections</span>
-                    </div>
-                    <div>
-                        <span class="stat-num">A+</span>
-                        <span class="stat-label">Energy-rated range</span>
-                    </div>
-                </div>
-            </div>
-            <div class="col-lg-6 reveal" data-reveal-step="2">
-                <div class="hero-figure">
-                    <span class="eg-wash" aria-hidden="true"></span>
-                    <svg class="hero-lamp" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="0.7"
-                         stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                        <path d="M12 1.5v4"/>
-                        <path d="M3.5 13.5a8.5 8.5 0 0 1 17 0z"/>
-                        <path d="M8.6 13.5a3.4 3.4 0 0 0 6.8 0"/>
-                        <path d="M6 18.5h12"/>
-                        <path d="M7.5 21h9"/>
-                    </svg>
                 </div>
             </div>
         </div>
+    </div>
+
+    <div class="container">
+        <p class="hero-caption reveal">
+            Shown: Marlow Floor Lamp in oiled oak with a 45 cm linen shade, on a 9 W 2700K globe.
+        </p>
     </div>
 </section>
 
 <section class="section-eg eg-band-alt" id="collections">
     <div class="container">
-        <div class="text-center mb-5 reveal">
-            <span class="eg-eyebrow">Our range</span>
-            <h2 class="section-title">Shop by collection</h2>
-            <p class="section-lead mx-auto mt-3">
-                Six curated collections, from statement ceilings to solar gardens.
-            </p>
+        <?php
+        /* Left-aligned rather than centred, with the "view all" opposite it on
+           the same line: it puts the heading over the first tile's left edge and
+           keeps the band from reading as a poster. */
+        ?>
+        <div class="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-4 mb-lg-5 reveal">
+            <div>
+                <span class="eg-eyebrow">Our range</span>
+                <h2 class="section-title">Shop by collection</h2>
+                <p class="section-lead mt-3 mb-0">
+                    Six collections, all specified at 2700&ndash;3000K and dimmable on a trailing-edge
+                    circuit, so a ceiling disc and a bedside sconce behave the same way on the wall dial.
+                </p>
+            </div>
+            <a class="btn btn-eg-ghost btn-sm" href="<?= h($shopUrl) ?>">
+                All lighting
+                <svg class="btn-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg>
+            </a>
         </div>
-        <div class="row g-3 g-lg-4">
-            <?php foreach ($collections as $index => $collection) : ?>
-                <div class="col-sm-6 col-lg-4 reveal" data-reveal-step="<?= $index % 3 ?>">
-                    <a class="category-tile h-100" href="<?= $this->Url->build('/shop') ?>">
-                        <?= $this->element('lamp_icon', ['name' => $collection['icon']]) ?>
+
+        <?php
+        /* Six tiles, one size, three to a row. The photographs are decorative:
+           each tile's own name and description already say everything the picture
+           says, and a described copy inside the link would only lengthen the
+           link's accessible name for no new information. The whole tile is the
+           link, so every target clears 44px several times over. */
+        ?>
+        <div class="eg-tile-grid reveal">
+            <?php foreach ($collections as $collection) : ?>
+                <a class="category-tile" href="<?= h($this->Url->build('/shop', ['?' => ['category' => $collection['name']]])) ?>">
+                    <span class="tile-media">
+                        <?= $this->Html->image('products/' . $collection['image'], [
+                            'alt' => '',
+                            'width' => 800,
+                            'height' => 800,
+                            'loading' => 'lazy',
+                            'decoding' => 'async',
+                        ]) ?>
+                    </span>
+                    <span class="tile-body">
                         <span class="tile-name"><?= h($collection['name']) ?></span>
-                        <p class="tile-text"><?= h($collection['text']) ?></p>
-                    </a>
-                </div>
+                        <span class="tile-text"><?= h($collection['text']) ?></span>
+                    </span>
+                </a>
             <?php endforeach; ?>
+        </div>
+    </div>
+</section>
+
+<?php
+/* The board's centred statement, short rules above and below. The grainy wash
+   is kept here rather than behind a photograph: laid over a real product shot it
+   only made the photograph look dirty, and on a plain ground it is what the
+   board's cover actually does. */
+?>
+<section class="section-eg eg-manifesto">
+    <span class="eg-wash" aria-hidden="true"></span>
+    <div class="container">
+        <p class="eg-manifesto-line reveal">
+            We work from a short list of materials &mdash; turned oak, undyed linen, opal glass,
+            brushed brass, powder-coated aluminium &mdash; and wire every fitting ourselves.
+        </p>
+        <div class="text-center reveal">
+            <a class="btn btn-eg-ghost btn-sm" href="<?= h($contactUrl) ?>">Talk to us about a room</a>
         </div>
     </div>
 </section>
 
 <section class="section-eg" id="bestsellers">
     <div class="container">
-        <div class="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-4 reveal">
-            <div>
+        <?php
+        /* The heading, its lead and the collection shortcuts sit in a column of
+           their own to the left, and the four products in a regular two-by-two
+           grid to the right. The asymmetry is between the text column and the
+           grid — the products themselves are the same size on the same
+           baselines, because they are four things a visitor is comparing. */
+        ?>
+        <div class="eg-lineup">
+            <div class="eg-lineup-intro reveal">
                 <span class="eg-eyebrow">Loved this season</span>
                 <h2 class="section-title">Best sellers</h2>
+                <p class="section-lead mt-3">
+                    The four we re-order most often. Fitting, colour temperature and shade size
+                    are on every card, so nothing has to be guessed from the photograph.
+                </p>
+                <a class="btn btn-eg-ghost btn-sm mt-2" href="<?= h($shopUrl) ?>">
+                    View all
+                    <svg class="btn-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg>
+                </a>
+
+                <div class="eg-chip-row mt-4">
+                    <?php
+                    /* These carry a ?category= that webroot/js/glow.js reads on
+                       /shop, so a chip now applies the filter it names instead
+                       of dropping the visitor on the unfiltered catalogue. */
+                    ?>
+                    <?php foreach (array_slice($collections, 0, 3) as $collection) : ?>
+                        <a class="eg-chip" href="<?= h($this->Url->build('/shop', ['?' => ['category' => $collection['name']]])) ?>">
+                            <?= h($collection['name']) ?>
+                        </a>
+                    <?php endforeach; ?>
+                </div>
             </div>
-            <a class="btn btn-eg-ghost btn-sm" href="<?= $this->Url->build('/shop') ?>">
-                View all
-                <svg class="btn-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg>
-            </a>
-        </div>
 
-        <div class="eg-chip-row mb-4 reveal">
-            <a class="eg-chip is-active" href="#bestsellers">All</a>
-            <?php foreach (array_slice($collections, 0, 4) as $collection) : ?>
-                <a class="eg-chip" href="<?= $this->Url->build('/shop') ?>"><?= h($collection['name']) ?></a>
-            <?php endforeach; ?>
-        </div>
-
-        <div class="row g-4">
             <?php foreach ($bestSellers as $index => $product) : ?>
-                <div class="col-6 col-lg-3 reveal" data-reveal-step="<?= $index ?>">
-                    <a class="product-card" href="<?= $this->Url->build('/shop/product') ?>">
+                <div class="eg-lineup-cell reveal" data-reveal-step="<?= $index ?>">
+                    <a class="product-card" href="<?= h($productUrl) ?>">
                         <span class="product-media">
                             <?php if ($product['flag'] !== null) : ?>
                                 <span class="product-flag"><?= h($product['flag']) ?></span>
                             <?php endif; ?>
-                            <?= $this->element('lamp_icon', ['name' => $product['icon']]) ?>
+                            <?= $this->Html->image('products/' . $product['image'], [
+                                'alt' => $product['alt'],
+                                'width' => 800,
+                                'height' => 800,
+                                'loading' => 'lazy',
+                                'decoding' => 'async',
+                            ]) ?>
                         </span>
                         <span class="product-body">
                             <span class="product-name"><?= h($product['name']) ?></span>
@@ -202,9 +365,9 @@ $steps = [
                 <span class="eg-eyebrow">Services</span>
                 <h2 class="section-title mb-3">Installation &amp; repair</h2>
                 <p>
-                    More than a store &mdash; our licensed team installs and repairs
-                    everything we sell. From a single smart bulb to a whole-home
-                    lighting plan, we handle the wiring.
+                    Our licensed electricians mount, wire and commission everything on these
+                    pages: trailing-edge dimmer circuits, 90 mm downlight cut-outs, sconce
+                    boxes and outdoor spurs. Re-lamping and repairs too.
                 </p>
                 <div class="mt-4">
                     <?php foreach ($steps as $index => $step) : ?>
@@ -217,15 +380,46 @@ $steps = [
                         </div>
                     <?php endforeach; ?>
                 </div>
-                <a class="btn btn-eg-primary mt-4" href="<?= $this->Url->build('/contact') ?>">
+                <a class="btn btn-eg-primary mt-4" href="<?= h($contactUrl) ?>">
                     Book a service
                     <svg class="btn-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg>
                 </a>
             </div>
             <div class="col-lg-7 reveal" data-reveal-step="2">
+                <?php
+                /* Two photographs of one room. This used to be a pair of CSS
+                   gradients with a charcoal wash clipped over half of them,
+                   under a caption naming a specific job — one 4 m living room
+                   on a single batten holder, then on four dimmable downlights
+                   and a floor lamp. A caption that precise over two abstract
+                   rectangles reads worse than no demo at all.
+
+                   The "after" is the ground and the "before" is clipped over
+                   it, so the divider at 0% is the finished room and at 100% the
+                   original, which is the direction its aria-valuenow already
+                   described. Both are photographs and both carry an alt that
+                   says what the lighting is doing, because the difference
+                   between them is the content of this block, not decoration —
+                   read in order the two alts describe the comparison on their
+                   own, for anyone who cannot work the divider. */
+                ?>
                 <div class="compare-band" data-compare style="--split: 50%;">
-                    <div class="compare-scene"></div>
-                    <div class="compare-dark"></div>
+                    <?= $this->Html->image('after-lighting.webp', [
+                        'class' => 'compare-shot',
+                        'alt' => 'After: four dimmable downlights wash overlapping pools of warm light down the wall of a living room corner, with a linen-shaded floor lamp lighting the armchair from the right.',
+                        'width' => 1024,
+                        'height' => 683,
+                        'loading' => 'lazy',
+                        'decoding' => 'async',
+                    ]) ?>
+                    <?= $this->Html->image('before-lighting.webp', [
+                        'class' => 'compare-shot compare-shot-before',
+                        'alt' => 'Before: the same corner on one bare ceiling fitting — flat grey light, no shape on the wall, and the armchair and the corner behind it left in shadow.',
+                        'width' => 1024,
+                        'height' => 683,
+                        'loading' => 'lazy',
+                        'decoding' => 'async',
+                    ]) ?>
                     <span class="compare-tag compare-tag-dark">Before</span>
                     <span class="compare-tag compare-tag-light">After</span>
                     <div class="compare-divider" role="slider" tabindex="0"
@@ -233,8 +427,8 @@ $steps = [
                          aria-valuemin="0" aria-valuemax="100" aria-valuenow="50"></div>
                 </div>
                 <p class="small mt-3 mb-0">
-                    The same living room, before and after an Eco Glow makeover.
-                    Drag the handle, or focus it and use the arrow keys.
+                    One 4 m living room on a single batten holder, then on four dimmable
+                    downlights and a floor lamp. Drag the handle, or focus it and use the arrow keys.
                 </p>
             </div>
         </div>
@@ -248,22 +442,28 @@ $steps = [
                 <span class="eg-eyebrow">About us</span>
                 <h2 class="section-title mb-3">From hello to glow</h2>
                 <p class="section-lead">
-                    Eco Glow Lighting is a small Melbourne team with a simple idea:
-                    good light should be warm, efficient and easy to live with. A
-                    transparent process from the first call to the final switch-on.
+                    Eco Glow Lighting is a small Melbourne team, and five materials cover
+                    everything on these pages. Keeping the list that short is the deliberate
+                    part: it is what lets a wall sconce and a floor lamp bought a year apart
+                    sit in one room without either looking like the odd one out.
                 </p>
-                <a class="btn btn-eg-ghost mt-2" href="<?= $this->Url->build('/contact') ?>">Talk to us</a>
+                <a class="btn btn-eg-ghost mt-2" href="<?= h($contactUrl) ?>">Talk to us</a>
             </div>
             <div class="col-lg-7 reveal" data-reveal-step="2">
-                <ul class="timeline">
-                    <?php foreach ($steps as $step) : ?>
-                        <li>
-                            <span class="node" aria-hidden="true"></span>
-                            <h4><?= h($step['title']) ?></h4>
-                            <p><?= h($step['text']) ?></p>
-                        </li>
+                <?php
+                /* A definition list, not a set of headings: each row really is
+                   a term and its definition, and a <dl> keeps five material
+                   names out of the heading outline, where they would have to
+                   sit under this section's own h2. */
+                ?>
+                <dl class="eg-materials">
+                    <?php foreach ($materials as $material) : ?>
+                        <div class="eg-material">
+                            <dt><?= h($material['name']) ?></dt>
+                            <dd><?= h($material['text']) ?></dd>
+                        </div>
                     <?php endforeach; ?>
-                </ul>
+                </dl>
             </div>
         </div>
     </div>
@@ -274,9 +474,10 @@ $steps = [
         <span class="eg-eyebrow">Ready when you are</span>
         <h2 class="section-title">Ready to transform your space?</h2>
         <p class="section-lead mx-auto mt-3">
-            Tell us what you need and Jordan will get back to you personally.
+            Send a room, a photo, or a switchboard question. Jordan will come back with a
+            fitting list, the colour temperature to run it at, and an install estimate.
         </p>
-        <a class="btn btn-eg-primary btn-lg mt-3" href="<?= $this->Url->build('/contact') ?>">
+        <a class="btn btn-eg-primary btn-lg mt-3" href="<?= h($contactUrl) ?>">
             Contact us
             <svg class="btn-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg>
         </a>

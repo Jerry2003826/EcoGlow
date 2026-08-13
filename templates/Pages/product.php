@@ -14,16 +14,21 @@
  * "Add to basket" and the basket count. Everything else is live — the finish
  * and globe pickers are real radio groups, and the quantity stepper works.
  *
- * The image well is a line drawing rather than a photograph: the client's
- * product photography is not in the asset pack yet. It is the same
- * `.product-media` well the listing grid uses, at a larger size.
+ * The image well now holds the product photograph. It used to hold a line
+ * drawing, and the well was tinted towards the selected finish with
+ * `color-mix()` so that the swatch picker had something to show for itself. That
+ * tint is gone: a colour wash over a photograph reads as a dirty print rather
+ * than as a finish, and it would have sat on top of the photograph's own warm
+ * greys. The picker instead names the chosen finish in text beside its legend,
+ * which is legible, survives greyscale, and does not depend on the image.
  *
  * @var \App\View\AppView $this
  */
 $product = [
-    'icon' => 'floor',
+    'image' => 'marlow-floor-lamp.webp',
+    'alt' => 'Marlow floor lamp lit against a plaster wall, a turned oak column under a linen drum shade',
     'name' => 'Marlow Floor Lamp',
-    'meta' => 'Oak & linen shade',
+    'meta' => 'Turned oak, linen shade, 1.45 m',
     'price' => 249.00,
     'flag' => 'New',
     'category' => 'Ambient Floor Lamps',
@@ -49,33 +54,37 @@ $specs = [
     'Cable' => '2.0 m, in-line rotary dimmer',
 ];
 
-/** Reuses the listing page's card component, so the grid at the foot needs only these five fields. */
+/** Reuses the listing page's card component, so the grid at the foot needs only these six fields. */
 $related = [
     [
-        'icon' => 'floor',
+        'image' => 'odette-arc-lamp.webp',
+        'alt' => 'Odette arc lamp curving out of a marble base over an oak floor',
         'name' => 'Odette Arc Lamp',
-        'meta' => 'Curved steel, marble base',
+        'meta' => 'Brass arc, marble base, 2.1 m',
         'price' => 329.00,
         'swatches' => [['Charcoal', '#2F2E2C'], ['Brass', '#C9BCA9']],
     ],
     [
-        'icon' => 'decor',
+        'image' => 'linen-drum-shade.webp',
+        'alt' => 'Linen drum shade standing on its own, an undyed cylinder with a visible weave',
         'name' => 'Linen Drum Shade',
-        'meta' => 'Natural linen, 45 cm',
+        'meta' => 'Undyed linen, 45 cm, E27 ring',
         'price' => 59.00,
         'swatches' => [['Natural', '#E2DED2'], ['Clay', '#E2925E']],
     ],
     [
-        'icon' => 'smart',
+        'image' => 'aura-smart-bulbs.webp',
+        'alt' => 'Four Aura globes laid in a row on brass screw bases, two of them lit',
         'name' => 'Aura Smart Bulb Set',
-        'meta' => 'Four bulbs, warm to cool',
+        'meta' => 'Four E27 globes, 2200–6500K',
         'price' => 79.00,
         'swatches' => [['Warm white', '#FBF9F5']],
     ],
     [
-        'icon' => 'decor',
+        'image' => 'rowan-rotary-dimmer.webp',
+        'alt' => 'Rowan rotary dimmer, a brushed brass plate with a knurled knob',
         'name' => 'Rowan Rotary Dimmer',
-        'meta' => 'Trailing-edge, 250 W',
+        'meta' => 'Trailing-edge rotary, 250 W, brass',
         'price' => 39.00,
         'swatches' => [['Charcoal', '#2F2E2C'], ['Natural', '#E2DED2']],
     ],
@@ -95,12 +104,22 @@ $productUrl = $this->Url->build('/shop/product');
 
     <div class="row g-4 g-lg-5">
         <div class="col-lg-7 reveal">
-            <span class="product-media eg-gallery-media" data-finish-preview>
-                <span class="eg-wash" aria-hidden="true"></span>
+            <span class="product-media">
                 <?php if ($product['flag'] !== null) : ?>
                     <span class="product-flag"><?= h($product['flag']) ?></span>
                 <?php endif; ?>
-                <?= $this->element('lamp_icon', ['name' => $product['icon'], 'class' => 'eg-gallery-mark']) ?>
+                <?php
+                /* Above the fold on every viewport, so it loads eagerly and asks
+                   for priority: it is the largest element on the page and
+                   therefore the one Largest Contentful Paint is measured on. */
+                ?>
+                <?= $this->Html->image('products/' . $product['image'], [
+                    'alt' => $product['alt'],
+                    'width' => 800,
+                    'height' => 800,
+                    'fetchpriority' => 'high',
+                    'decoding' => 'async',
+                ]) ?>
             </span>
         </div>
 
@@ -114,18 +133,26 @@ $productUrl = $this->Url->build('/shop/product');
             <p class="text-muted small">Includes GST. Free delivery Australia-wide over $150.</p>
 
             <p class="mt-4">
-                A slim oak column under a hand-sewn linen shade, throwing soft light
-                sideways rather than down &mdash; the lamp to put beside a reading chair.
-                Dimmable in line, so it can drop to a low evening glow.
+                A 1.45 m oak column, turned and oiled rather than lacquered, under a 45 cm
+                shade sewn from undyed linen. The shade is open top and bottom, so the light
+                goes up the wall as well as onto the page &mdash; the lamp for a reading chair.
+                The in-line rotary dimmer takes it down to about 10 per cent.
             </p>
 
+            <?php
+            /* The chosen finish is named in text next to the legend as well as
+               drawn as a ring on the dot. The dot's own colour is the thing being
+               chosen and so cannot also carry the state, and the well beside it
+               is a photograph that no longer changes with the choice. */
+            ?>
             <fieldset class="eg-option">
-                <legend class="eg-eyebrow">Finish</legend>
+                <legend class="eg-eyebrow">
+                    Finish &mdash; <span data-finish-name><?= h($product['swatches'][0][0]) ?></span>
+                </legend>
                 <div class="eg-swatch-row">
                     <?php foreach ($product['swatches'] as $swatchIndex => [$swatchName, $swatchHex]) : ?>
                         <input class="eg-choice-input" type="radio" name="finish"
                                id="finish-<?= $swatchIndex ?>" value="<?= h($swatchName) ?>"
-                               data-hex="<?= h($swatchHex) ?>"
                                <?= $swatchIndex === 0 ? 'checked' : '' ?>>
                         <label class="eg-swatch-label" for="finish-<?= $swatchIndex ?>">
                             <span class="eg-swatch-dot" style="background: <?= h($swatchHex) ?>;" aria-hidden="true"></span>
@@ -290,7 +317,13 @@ $productUrl = $this->Url->build('/shop/product');
                 <div class="col-6 col-lg-3">
                     <a class="product-card" href="<?= h($productUrl) ?>">
                         <span class="product-media">
-                            <?= $this->element('lamp_icon', ['name' => $item['icon']]) ?>
+                            <?= $this->Html->image('products/' . $item['image'], [
+                                'alt' => $item['alt'],
+                                'width' => 800,
+                                'height' => 800,
+                                'loading' => 'lazy',
+                                'decoding' => 'async',
+                            ]) ?>
                         </span>
                         <span class="product-body">
                             <span class="product-name"><?= h($item['name']) ?></span>

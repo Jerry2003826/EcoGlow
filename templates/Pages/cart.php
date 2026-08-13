@@ -21,27 +21,32 @@
  */
 $this->assign('title', 'Your Basket');
 
+/**
+ * The thumbnails carry `alt=""`: each one sits beside the product name, the
+ * fitting line and the finish, so a described copy of the photograph would only
+ * repeat what is already read out on the line next to it.
+ */
 $cartLines = [
     [
-        'icon' => 'decor',
+        'image' => 'linen-drum-shade.webp',
         'name' => 'Linen Drum Shade',
-        'meta' => 'Natural linen, 45 cm',
+        'meta' => 'Undyed linen, 45 cm, E27 ring',
         'variant' => 'Natural',
         'price' => 59.00,
         'qty' => 1,
     ],
     [
-        'icon' => 'smart',
+        'image' => 'nimbus-smart-downlight.webp',
         'name' => 'Nimbus Smart Downlight',
-        'meta' => 'Tunable white, app control',
+        'meta' => 'Tunable 2700–5000K, 90 mm cut-out',
         'variant' => 'Warm white',
         'price' => 45.00,
         'qty' => 1,
     ],
     [
-        'icon' => 'decor',
+        'image' => 'rowan-rotary-dimmer.webp',
         'name' => 'Rowan Rotary Dimmer',
-        'meta' => 'Trailing-edge, 250 W',
+        'meta' => 'Trailing-edge rotary, 250 W, brass',
         'variant' => 'Charcoal',
         'price' => 39.00,
         'qty' => 1,
@@ -86,8 +91,14 @@ $productUrl = $this->Url->build('/shop/product');
             <ul class="eg-cart-list" data-cart-list>
                 <?php foreach ($cartLines as $lineIndex => $line) : ?>
                     <li class="eg-cart-line" data-cart-line data-price="<?= h((string)$line['price']) ?>">
-                        <span class="eg-cart-thumb" aria-hidden="true">
-                            <?= $this->element('lamp_icon', ['name' => $line['icon']]) ?>
+                        <span class="eg-cart-thumb">
+                            <?= $this->Html->image('products/' . $line['image'], [
+                                'alt' => '',
+                                'width' => 800,
+                                'height' => 800,
+                                'loading' => $lineIndex === 0 ? 'eager' : 'lazy',
+                                'decoding' => 'async',
+                            ]) ?>
                         </span>
 
                         <div class="eg-cart-name">
