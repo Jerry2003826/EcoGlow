@@ -1,0 +1,45 @@
+{
+  "products": [
+    {
+      "image": "marlow-floor-lamp.webp",
+      "alt": "REPLACE_FROM_REAL_JSON",
+      "name": "Marlow Floor Lamp",
+      "meta": "REPLACE_FROM_REAL_JSON",
+      "price": null,
+      "flag": null,
+      "category": "Ambient Floor Lamps",
+      "style": "REPLACE_FROM_REAL_JSON",
+      "swatches": [
+        [
+          "REPLACE_FROM_REAL_JSON",
+          "#000000"
+        ]
+      ]
+    }
+  ],
+  "collections": [
+    {
+      "image": "REPLACE_FROM_REAL_JSON.webp",
+      "name": "LED Ceiling Lights",
+      "text": "REPLACE_FROM_REAL_JSON"
+    }
+  ],
+  "materials": [
+    {
+      "image": "oak.webp",
+      "name": "Turned oak",
+      "text": "REPLACE_FROM_REAL_JSON"
+    }
+  ],
+  "steps": [
+    {
+      "title": "REPLACE_FROM_REAL_JSON",
+      "text": "REPLACE_FROM_REAL_JSON"
+    }
+  ],
+  "settings": {
+    "freeShippingThreshold": 150.0,
+    "standardShipping": 14.95,
+    "gstRate": 0.1
+  }
+}

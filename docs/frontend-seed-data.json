@@ -1,0 +1,535 @@
+{
+    "shop.php": {
+        "products": [
+            {
+                "image": "marlow-floor-lamp.webp",
+                "alt": "Marlow floor lamp lit against a plaster wall, oak column under a linen drum shade",
+                "name": "Marlow Floor Lamp",
+                "meta": "Turned oak, linen shade, 1.45 m",
+                "price": 249,
+                "flag": "New",
+                "category": "Ambient Floor Lamps",
+                "style": "Warm Minimal",
+                "swatches": [
+                    [
+                        "Oak",
+                        "#C9BCA9"
+                    ],
+                    [
+                        "Charcoal",
+                        "#2F2E2C"
+                    ],
+                    [
+                        "Terracotta",
+                        "#E2925E"
+                    ]
+                ]
+            },
+            {
+                "image": "halden-pendant.webp",
+                "alt": "Halden pendant hanging on a slim brass stem, its opal glass globe lit",
+                "name": "Halden Pendant",
+                "meta": "Opal glass globe, 20 cm, E27",
+                "price": 189,
+                "flag": null,
+                "category": "LED Ceiling Lights",
+                "style": "Sculptural",
+                "swatches": [
+                    [
+                        "Opal",
+                        "#E2DED2"
+                    ],
+                    [
+                        "Forest",
+                        "#124C24"
+                    ]
+                ]
+            },
+            {
+                "image": "aura-smart-bulbs.webp",
+                "alt": "Four Aura globes laid in a row on brass screw bases, two of them lit",
+                "name": "Aura Smart Bulb Set",
+                "meta": "Four E27 globes, 2200–6500K",
+                "price": 79,
+                "flag": "Best seller",
+                "category": "Smart Bulbs",
+                "style": "Smart & Connected",
+                "swatches": [
+                    [
+                        "Warm white",
+                        "#FBF9F5"
+                    ]
+                ]
+            },
+            {
+                "image": "fernway-solar-path.webp",
+                "alt": "Three Fernway path lights spiked along a gravel path, lit at dusk",
+                "name": "Fernway Solar Path Light",
+                "meta": "Set of six spikes, IP65, 3000K",
+                "price": 129,
+                "flag": null,
+                "category": "Outdoor Solar Lights",
+                "style": "Warm Minimal",
+                "swatches": [
+                    [
+                        "Charcoal",
+                        "#2F2E2C"
+                    ],
+                    [
+                        "Sand",
+                        "#C9BCA9"
+                    ]
+                ]
+            },
+            {
+                "image": "brindle-wall-sconce.webp",
+                "alt": "Brindle wall sconce, an opal glass dome lit flush against a plaster wall",
+                "name": "Brindle Wall Sconce",
+                "meta": "Opal glass dome, 18 cm, E14",
+                "price": 99,
+                "flag": null,
+                "category": "Wall Sconces",
+                "style": "Heritage",
+                "swatches": [
+                    [
+                        "Opal",
+                        "#E2DED2"
+                    ],
+                    [
+                        "Charcoal",
+                        "#2F2E2C"
+                    ]
+                ]
+            },
+            {
+                "image": "linen-drum-shade.webp",
+                "alt": "Linen drum shade standing on its own, an undyed cylinder with a visible weave",
+                "name": "Linen Drum Shade",
+                "meta": "Undyed linen, 45 cm, E27 ring",
+                "price": 59,
+                "flag": null,
+                "category": "Decorative Accessories",
+                "style": "Warm Minimal",
+                "swatches": [
+                    [
+                        "Natural",
+                        "#E2DED2"
+                    ],
+                    [
+                        "Clay",
+                        "#E2925E"
+                    ]
+                ]
+            },
+            {
+                "image": "corva-ceiling-disc.webp",
+                "alt": "Corva ceiling disc mounted flush, an opal diffuser inside a brushed brass rim",
+                "name": "Corva Ceiling Disc",
+                "meta": "Flush mount, 40 cm, 3000K",
+                "price": 219,
+                "flag": null,
+                "category": "LED Ceiling Lights",
+                "style": "Warm Minimal",
+                "swatches": [
+                    [
+                        "Warm white",
+                        "#FBF9F5"
+                    ],
+                    [
+                        "Charcoal",
+                        "#2F2E2C"
+                    ]
+                ]
+            },
+            {
+                "image": "odette-arc-lamp.webp",
+                "alt": "Odette arc lamp curving out of a marble base over an oak floor",
+                "name": "Odette Arc Lamp",
+                "meta": "Brass arc, marble base, 2.1 m",
+                "price": 329,
+                "flag": "New",
+                "category": "Ambient Floor Lamps",
+                "style": "Sculptural",
+                "swatches": [
+                    [
+                        "Charcoal",
+                        "#2F2E2C"
+                    ],
+                    [
+                        "Brass",
+                        "#C9BCA9"
+                    ]
+                ]
+            },
+            {
+                "image": "nimbus-smart-downlight.webp",
+                "alt": "Two Nimbus downlights recessed in a ceiling, throwing overlapping pools of warm light",
+                "name": "Nimbus Smart Downlight",
+                "meta": "Tunable 2700–5000K, 90 mm cut-out",
+                "price": 45,
+                "flag": null,
+                "category": "Smart Bulbs",
+                "style": "Smart & Connected",
+                "swatches": [
+                    [
+                        "Warm white",
+                        "#FBF9F5"
+                    ]
+                ]
+            },
+            {
+                "image": "kelso-solar-bollard.webp",
+                "alt": "Kelso solar bollard lighting a sand path beside dry grasses",
+                "name": "Kelso Solar Bollard",
+                "meta": "Powder-coated, 40 cm, IP65",
+                "price": 179,
+                "flag": null,
+                "category": "Outdoor Solar Lights",
+                "style": "Sculptural",
+                "swatches": [
+                    [
+                        "Charcoal",
+                        "#2F2E2C"
+                    ],
+                    [
+                        "Sand",
+                        "#C9BCA9"
+                    ]
+                ]
+            },
+            {
+                "image": "ashby-twin-sconce.webp",
+                "alt": "Ashby twin sconce on a plaster wall, two brass arms under small linen shades",
+                "name": "Ashby Twin Sconce",
+                "meta": "Twin brass arms, linen shades, E14",
+                "price": 145,
+                "flag": null,
+                "category": "Wall Sconces",
+                "style": "Heritage",
+                "swatches": [
+                    [
+                        "Brass",
+                        "#C9BCA9"
+                    ],
+                    [
+                        "Natural",
+                        "#E2DED2"
+                    ]
+                ]
+            },
+            {
+                "image": "rowan-rotary-dimmer.webp",
+                "alt": "Rowan rotary dimmer, a brushed brass plate with a knurled knob",
+                "name": "Rowan Rotary Dimmer",
+                "meta": "Trailing-edge rotary, 250 W, brass",
+                "price": 39,
+                "flag": null,
+                "category": "Decorative Accessories",
+                "style": "Smart & Connected",
+                "swatches": [
+                    [
+                        "Charcoal",
+                        "#2F2E2C"
+                    ],
+                    [
+                        "Natural",
+                        "#E2DED2"
+                    ]
+                ]
+            }
+        ]
+    },
+    "home.php": {
+        "collections": [
+            {
+                "image": "corva-ceiling-disc.webp",
+                "name": "LED Ceiling Lights",
+                "text": "Flush and semi-flush discs in opal glass and brushed brass. 3000K, dimmable on trailing-edge."
+            },
+            {
+                "image": "marlow-floor-lamp.webp",
+                "name": "Ambient Floor Lamps",
+                "text": "Turned oak columns under undyed linen shades. E27 fittings on a 2 m cable with an in-line rotary dimmer."
+            },
+            {
+                "image": "aura-smart-bulbs.webp",
+                "name": "Smart Bulbs",
+                "text": "E27 and E14 globes, tunable 2200–6500K. Dimmed from an app or the wall dial, no hub needed."
+            },
+            {
+                "image": "fernway-solar-path.webp",
+                "name": "Outdoor Solar Lights",
+                "text": "Powder-coated aluminium spikes and bollards, IP65, 3000K, on dusk-to-dawn sensors."
+            },
+            {
+                "image": "linen-drum-shade.webp",
+                "name": "Decorative Accessories",
+                "text": "Undyed linen drum shades from 30 to 50 cm, braided cloth flex and trailing-edge rotary dimmers."
+            },
+            {
+                "image": "ashby-twin-sconce.webp",
+                "name": "Wall Sconces",
+                "text": "Twin-arm brass frames and opal glass domes. E14 fittings, wired to a box or plug-in on a cloth flex."
+            }
+        ],
+        "bestSellers": [
+            {
+                "image": "marlow-floor-lamp.webp",
+                "alt": "Marlow floor lamp lit against a plaster wall, oak column under a linen drum shade",
+                "name": "Marlow Floor Lamp",
+                "meta": "Turned oak, linen shade, 1.45 m",
+                "price": 249,
+                "flag": "New",
+                "swatches": [
+                    [
+                        "Oak",
+                        "#C9BCA9"
+                    ],
+                    [
+                        "Charcoal",
+                        "#2F2E2C"
+                    ],
+                    [
+                        "Terracotta",
+                        "#E2925E"
+                    ]
+                ]
+            },
+            {
+                "image": "halden-pendant.webp",
+                "alt": "Halden pendant hanging on a slim brass stem, its opal glass globe lit",
+                "name": "Halden Pendant",
+                "meta": "Opal glass globe, 20 cm, E27",
+                "price": 189,
+                "flag": null,
+                "swatches": [
+                    [
+                        "Opal",
+                        "#E2DED2"
+                    ],
+                    [
+                        "Forest",
+                        "#124C24"
+                    ]
+                ]
+            },
+            {
+                "image": "aura-smart-bulbs.webp",
+                "alt": "Four Aura globes laid in a row on brass screw bases, two of them lit",
+                "name": "Aura Smart Bulb Set",
+                "meta": "Four E27 globes, 2200–6500K",
+                "price": 79,
+                "flag": "Best seller",
+                "swatches": [
+                    [
+                        "Warm white",
+                        "#FBF9F5"
+                    ]
+                ]
+            },
+            {
+                "image": "fernway-solar-path.webp",
+                "alt": "Three Fernway path lights spiked along a gravel path, lit at dusk",
+                "name": "Fernway Solar Path Light",
+                "meta": "Set of six spikes, IP65, 3000K",
+                "price": 129,
+                "flag": null,
+                "swatches": [
+                    [
+                        "Charcoal",
+                        "#2F2E2C"
+                    ],
+                    [
+                        "Sand",
+                        "#C9BCA9"
+                    ]
+                ]
+            }
+        ],
+        "materials": [
+            {
+                "image": "oak.webp",
+                "name": "Turned oak",
+                "text": "Floor-lamp columns and side-table bases, turned solid and finished in oil rather than lacquer, so the grain stays open and a scuff rubs back instead of chipping."
+            },
+            {
+                "image": "linen.webp",
+                "name": "Undyed linen",
+                "text": "Drum and cone shades from 30 to 50 cm. Left undyed because a dyed weave tints whatever passes through it, and the globe behind it is already set at 2700–3000K."
+            },
+            {
+                "image": "opal.webp",
+                "name": "Opal glass",
+                "text": "Pendant globes, sconce domes and flush ceiling discs. Opal scatters across the whole surface rather than leaving one bright spot, which keeps a bare LED out of your eye line."
+            },
+            {
+                "image": "brass.webp",
+                "name": "Brushed brass",
+                "text": "Stems, canopies and sconce arms. Left unlacquered, so it darkens slowly and evenly instead of wearing through a clear coat in the places a hand touches it."
+            },
+            {
+                "image": "powder.webp",
+                "name": "Powder-coated aluminium",
+                "text": "Outdoor spikes, bollards and IP65 housings. The coating is baked on and is the weatherproofing itself, so there is no paint film to lift at an edge."
+            }
+        ],
+        "steps": [
+            {
+                "title": "Consultation",
+                "text": "A room-by-room list: what is on each circuit now, what it should run at, and where a dimmer has to go."
+            },
+            {
+                "title": "On-site assessment",
+                "text": "We measure ceiling voids and cut-outs, read the switchboard, and mark sconce and downlight positions."
+            },
+            {
+                "title": "Installation & setup",
+                "text": "Licensed electricians mount and wire each fitting, then set the dimmer curve and the smart-globe scenes."
+            },
+            {
+                "title": "Aftercare & repairs",
+                "text": "Re-lamping, driver and transformer swaps, buzzing dimmers, and smart-globe firmware."
+            }
+        ]
+    },
+    "product.php": {
+        "product": {
+            "image": "marlow-detail-wide.webp",
+            "alt": "Marlow floor lamp lit against a plaster wall, a turned oak column under a linen drum shade",
+            "name": "Marlow Floor Lamp",
+            "meta": "Turned oak, linen shade, 1.45 m",
+            "price": 249,
+            "flag": "New",
+            "category": "Ambient Floor Lamps",
+            "style": "Warm Minimal",
+            "swatches": [
+                [
+                    "Oak",
+                    "#C9BCA9"
+                ],
+                [
+                    "Charcoal",
+                    "#2F2E2C"
+                ],
+                [
+                    "Terracotta",
+                    "#E2925E"
+                ]
+            ]
+        },
+        "globes": [
+            "Warm white, 2700 K",
+            "Smart tunable white",
+            "Fitting only"
+        ],
+        "specs": {
+            "Height": "1.45 m",
+            "Shade diameter": "38 cm",
+            "Materials": "Solid oak, natural linen",
+            "Fitting": "E27, max 60 W equivalent",
+            "Globe included": "Yes, 9 W LED (2700 K)",
+            "Energy rating": "A+",
+            "Cable": "2.0 m, in-line rotary dimmer"
+        },
+        "related": [
+            {
+                "image": "odette-arc-lamp.webp",
+                "alt": "Odette arc lamp curving out of a marble base over an oak floor",
+                "name": "Odette Arc Lamp",
+                "meta": "Brass arc, marble base, 2.1 m",
+                "price": 329,
+                "swatches": [
+                    [
+                        "Charcoal",
+                        "#2F2E2C"
+                    ],
+                    [
+                        "Brass",
+                        "#C9BCA9"
+                    ]
+                ]
+            },
+            {
+                "image": "linen-drum-shade.webp",
+                "alt": "Linen drum shade standing on its own, an undyed cylinder with a visible weave",
+                "name": "Linen Drum Shade",
+                "meta": "Undyed linen, 45 cm, E27 ring",
+                "price": 59,
+                "swatches": [
+                    [
+                        "Natural",
+                        "#E2DED2"
+                    ],
+                    [
+                        "Clay",
+                        "#E2925E"
+                    ]
+                ]
+            },
+            {
+                "image": "aura-smart-bulbs.webp",
+                "alt": "Four Aura globes laid in a row on brass screw bases, two of them lit",
+                "name": "Aura Smart Bulb Set",
+                "meta": "Four E27 globes, 2200–6500K",
+                "price": 79,
+                "swatches": [
+                    [
+                        "Warm white",
+                        "#FBF9F5"
+                    ]
+                ]
+            },
+            {
+                "image": "rowan-rotary-dimmer.webp",
+                "alt": "Rowan rotary dimmer, a brushed brass plate with a knurled knob",
+                "name": "Rowan Rotary Dimmer",
+                "meta": "Trailing-edge rotary, 250 W, brass",
+                "price": 39,
+                "swatches": [
+                    [
+                        "Charcoal",
+                        "#2F2E2C"
+                    ],
+                    [
+                        "Natural",
+                        "#E2DED2"
+                    ]
+                ]
+            }
+        ]
+    },
+    "cart.php": {
+        "cartLines": [
+            {
+                "image": "linen-drum-shade.webp",
+                "name": "Linen Drum Shade",
+                "meta": "Undyed linen, 45 cm, E27 ring",
+                "variant": "Natural",
+                "price": 59,
+                "qty": 1
+            },
+            {
+                "image": "nimbus-smart-downlight.webp",
+                "name": "Nimbus Smart Downlight",
+                "meta": "Tunable 2700–5000K, 90 mm cut-out",
+                "variant": "Warm white",
+                "price": 45,
+                "qty": 1
+            },
+            {
+                "image": "rowan-rotary-dimmer.webp",
+                "name": "Rowan Rotary Dimmer",
+                "meta": "Trailing-edge rotary, 250 W, brass",
+                "variant": "Charcoal",
+                "price": 39,
+                "qty": 1
+            }
+        ],
+        "_pricingRules": {
+            "freeDeliveryFrom": 150,
+            "deliveryFlat": 14.95,
+            "gstDivisor": 11,
+            "note": "GST is 1/11 of the GST-inclusive total (Australian 10% GST). Delivery is free at or above the threshold, otherwise flat."
+        }
+    }
+}
