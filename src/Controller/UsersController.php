@@ -6,6 +6,8 @@ namespace App\Controller;
 use App\Middleware\LoginThrottleMiddleware;
 use App\Model\Entity\User;
 use App\Model\Table\UsersTable;
+use App\Service\Cart\CartService;
+use Cake\Datasource\ConnectionInterface;
 use Cake\Http\Response;
 use Cake\I18n\DateTime;
 use Cake\Log\Log;
@@ -64,6 +66,8 @@ class UsersController extends AppController
         // the visitor cannot sign in.
         $this->Authentication->allowUnauthenticated([
             'login',
+            'customerLogin',
+            'register',
             'logout',
             'forgotPassword',
             'resetPassword',
@@ -110,9 +114,21 @@ class UsersController extends AppController
                 }
             }
 
-            $target = $this->Authentication->getLoginRedirect() ?? '/admin';
+            $identity = $this->Authentication->getIdentity();
+            $user = $identity !== null
+                ? $this->Users->get((int)$identity->getIdentifier())
+                : null;
+            $this->mergeCartAfterLogin($user);
+            $fallback = $user !== null ? $this->afterLoginPath($user) : '/admin';
+            $target = $this->Authentication->getLoginRedirect() ?? $fallback;
             // Only allow relative redirect targets to prevent open redirects.
             if (str_starts_with($target, 'http') || str_starts_with($target, '//')) {
+                $target = $fallback;
+            }
+            if ($user !== null && $this->isCustomerUser($user) && str_starts_with($target, '/admin')) {
+                $target = '/account';
+            }
+            if ($user !== null && $this->isStaffUser($user) && str_starts_with($target, '/account')) {
                 $target = '/admin';
             }
 
@@ -138,15 +154,125 @@ class UsersController extends AppController
     }
 
     /**
+     * Customer sign-in. Same authenticator as /login; destination is /account.
+     *
+     * @return \Cake\Http\Response|null
+     */
+    public function customerLogin(): ?Response
+    {
+        $this->viewBuilder()->setTemplate('customer_login');
+
+        return $this->login();
+    }
+
+    /**
+     * Create a customer user + customers row. Role is set() after newEntity.
+     *
+     * @return \Cake\Http\Response|null
+     */
+    public function register(): ?Response
+    {
+        $this->viewBuilder()->setTemplatePath('Pages');
+        $this->viewBuilder()->setTemplate('register');
+
+        $result = $this->Authentication->getResult();
+        if ($result->isValid()) {
+            $identity = $this->Authentication->getIdentity();
+            $user = $identity !== null
+                ? $this->Users->get((int)$identity->getIdentifier())
+                : null;
+
+            return $this->redirect($user !== null ? $this->afterLoginPath($user) : '/account');
+        }
+
+        if (!$this->request->is('post')) {
+            $this->set('user', $this->Users->newEmptyEntity());
+
+            return null;
+        }
+
+        $name = trim((string)$this->request->getData('name'));
+        $phone = trim((string)$this->request->getData('phone'));
+        $email = trim((string)$this->request->getData('email'));
+
+        $user = $this->Users->newEntity(
+            [
+                'email' => $email,
+                'password' => (string)$this->request->getData('password'),
+                'confirm_password' => (string)$this->request->getData('password_confirm'),
+            ],
+            [
+                'validate' => 'register',
+                'fields' => ['email', 'password', 'confirm_password'],
+            ],
+        );
+
+        if ($name === '') {
+            $user->setError('name', ['_empty' => __('Please enter your name.')]);
+        }
+        if ($phone === '') {
+            $user->setError('phone', ['_empty' => __('Please enter a phone number.')]);
+        }
+
+        if ($user->hasErrors()) {
+            $this->Flash->error(__('Your account could not be created. Please check the form and try again.'));
+            $this->set(compact('user'));
+
+            return null;
+        }
+
+        [$firstName, $lastName] = $this->splitName($name);
+
+        try {
+            $this->connection()->transactional(function () use ($user, $firstName, $lastName, $phone, $email) {
+                $user->set('first_name', $firstName);
+                $user->set('last_name', $lastName);
+                $user->set('phone', $phone);
+                $user->set('role', 'customer');
+                $user->set('status', 'active');
+                $this->Users->saveOrFail($user);
+
+                $customers = $this->fetchTable('Customers');
+                $customer = $customers->newEmptyEntity();
+                $customer->set('user_id', $user->id);
+                $customer->set('email', $email);
+                $customer->set('phone', $phone);
+                $customer->set('first_name', $firstName);
+                $customer->set('last_name', $lastName !== '' ? $lastName : null);
+                $customer->set('status', 'active');
+                $customer->set('source', 'web');
+                $customers->saveOrFail($customer);
+            });
+        } catch (Throwable $exception) {
+            Log::error('Customer registration failed: ' . $exception->getMessage());
+            $this->Flash->error(__('Your account could not be created. Please check the form and try again.'));
+
+            return null;
+        }
+
+        $this->Authentication->setIdentity($user);
+        $this->mergeCartAfterLogin($user);
+        $this->Flash->success(__('Your account is ready. Welcome to Eco Glow Lighting.'));
+
+        return $this->redirect('/account');
+    }
+
+    /**
      * Logout method.
      *
      * @return \Cake\Http\Response|null
      */
     public function logout(): ?Response
     {
+        $identity = $this->Authentication->getIdentity();
+        $wasCustomer = false;
+        if ($identity !== null) {
+            $user = $this->Users->get((int)$identity->getIdentifier());
+            $wasCustomer = $this->isCustomerUser($user);
+        }
         $this->Authentication->logout();
 
-        return $this->redirect(['action' => 'login']);
+        return $this->redirect($wasCustomer ? '/account/login' : ['action' => 'login']);
     }
 
     /**
@@ -321,5 +447,43 @@ class UsersController extends AppController
             ->first();
 
         return $user;
+    }
+
+    /**
+     * @param string $name Full name from the form.
+     * @return array{0: string, 1: string}
+     */
+    private function splitName(string $name): array
+    {
+        $name = trim((string)preg_replace('/\s+/', ' ', $name));
+        $parts = explode(' ', $name, 2);
+
+        return [$parts[0], $parts[1] ?? ''];
+    }
+
+    /**
+     * Fold the anonymous session basket into the signed-in customer.
+     *
+     * @param \App\Model\Entity\User|null $user Signed-in user.
+     * @return void
+     */
+    private function mergeCartAfterLogin(?User $user): void
+    {
+        if ($user === null) {
+            return;
+        }
+        $token = (string)$this->request->getSession()->read(CartService::SESSION_KEY);
+        if ($token === '') {
+            return;
+        }
+        (new CartService())->mergeOnLogin((int)$user->id, $token);
+    }
+
+    /**
+     * @return \Cake\Datasource\ConnectionInterface
+     */
+    private function connection(): ConnectionInterface
+    {
+        return $this->Users->getConnection();
     }
 }

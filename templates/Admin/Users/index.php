@@ -30,7 +30,7 @@ $this->assign('breadcrumb', $this->element('admin/breadcrumb', [
 
 <p class="admin-note mb-4">
     Master access and Elevated staff are protected system roles and cannot be deleted.
-    You cannot remove your own <code>access.manage</code> grant — that would lock you out.
+    You cannot remove your own <code class="permission-key">access.manage</code> grant — that would lock you out.
     Per-user overrides: <strong>deny always wins over allow</strong>, and allow wins over a role grant.
 </p>
 
@@ -72,21 +72,16 @@ $this->assign('breadcrumb', $this->element('admin/breadcrumb', [
                             <td><?= h($user->email) ?></td>
                             <td><?= h($name !== '' ? $name : '—') ?></td>
                             <td>
-                                <?= $this->Form->create(null, [
-                                    'url' => ['action' => 'updateRoles', $user->id],
-                                    'class' => 'admin-role-form',
-                                ]) ?>
                                 <?php foreach ($roles as $role) : ?>
                                     <label class="admin-check">
                                         <input type="checkbox"
+                                               form="roles-<?= (int)$user->id ?>"
                                                name="role_ids[]"
                                                value="<?= (int)$role->id ?>"
                                             <?= in_array((int)$role->id, $activeIds, true) ? ' checked' : '' ?>>
                                         <?= h($role->name) ?>
                                     </label>
                                 <?php endforeach; ?>
-                                <?= $this->Form->button('Save roles', ['class' => 'btn btn-sm btn-eg-ghost']) ?>
-                                <?= $this->Form->end() ?>
                             </td>
                             <td>
                                 <?= $this->element('admin/status_pill', [
@@ -101,16 +96,25 @@ $this->assign('breadcrumb', $this->element('admin/breadcrumb', [
                                     : 'Never' ?>
                             </td>
                             <td class="text-end">
-                                <?= $this->Form->postButton(
-                                    $status === 'active' ? 'Deactivate' : 'Activate',
-                                    ['action' => 'toggleActive', $user->id],
-                                    [
-                                        'class' => $status === 'active' ? 'btn btn-sm btn-eg-danger' : 'btn btn-sm btn-eg-ghost',
-                                        'confirm' => $status === 'active'
-                                            ? 'Deactivate this account? They will not be able to sign in.'
-                                            : null,
-                                    ],
-                                ) ?>
+                                <div class="admin-account-actions">
+                                    <?= $this->Form->create(null, [
+                                        'url' => ['action' => 'updateRoles', $user->id],
+                                        'id' => 'roles-' . (int)$user->id,
+                                        'class' => 'admin-role-form',
+                                    ]) ?>
+                                    <?= $this->Form->button('Save roles', ['class' => 'btn btn-sm btn-eg-ghost']) ?>
+                                    <?= $this->Form->end() ?>
+                                    <?= $this->Form->postButton(
+                                        $status === 'active' ? 'Deactivate' : 'Activate',
+                                        ['action' => 'toggleActive', $user->id],
+                                        [
+                                            'class' => $status === 'active' ? 'btn btn-sm btn-eg-danger' : 'btn btn-sm btn-eg-ghost',
+                                            'confirm' => $status === 'active'
+                                                ? 'Deactivate this account? They will not be able to sign in.'
+                                                : null,
+                                        ],
+                                    ) ?>
+                                </div>
                             </td>
                         </tr>
                     <?php endforeach; ?>
@@ -126,7 +130,7 @@ $this->assign('breadcrumb', $this->element('admin/breadcrumb', [
             <h2 id="matrix-heading">Permission matrix</h2>
         </div>
         <p class="admin-note mb-3">
-            Ticking a cell writes <code>role_permissions</code>. Unticking removes the grant.
+            Ticking a cell writes <code class="permission-key">role_permissions</code>. Unticking removes the grant.
             Master access and Elevated staff are protected presets — they cannot be deleted from this screen.
         </p>
         <?= $this->Form->create(null, ['url' => ['action' => 'updateMatrix']]) ?>
@@ -149,7 +153,7 @@ $this->assign('breadcrumb', $this->element('admin/breadcrumb', [
                     <?php foreach ($permissions as $permission) : ?>
                         <tr>
                             <td>
-                                <code><?= h($permission->permission_key) ?></code>
+                                <code class="permission-key"><?= h($permission->permission_key) ?></code>
                                 <div class="small text-muted"><?= h($permission->name) ?></div>
                             </td>
                             <?php foreach ($roles as $role) : ?>
@@ -219,8 +223,8 @@ $this->assign('breadcrumb', $this->element('admin/breadcrumb', [
 
         <?php if ($overrides === []) : ?>
             <?= $this->element('admin/empty', [
-                'title' => 'No open overrides',
-                'body' => 'A deny or extra allow for one person will list here until it is cleared or it expires.',
+                'title' => 'No open overrides.',
+                'body' => 'A deny or extra allow will list here.',
             ]) ?>
         <?php else : ?>
             <div class="table-responsive mt-3">

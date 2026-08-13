@@ -73,10 +73,32 @@ return function (RouteBuilder $routes): void {
          * `/shop/product` grows a slug segment (`/shop/product/*`) once there
          * is a record to look up.
          */
-        $builder->connect('/shop', ['controller' => 'Pages', 'action' => 'display', 'shop']);
-        $builder->connect('/shop/product', ['controller' => 'Pages', 'action' => 'display', 'product']);
-        $builder->connect('/cart', ['controller' => 'Pages', 'action' => 'display', 'cart']);
-        $builder->connect('/register', ['controller' => 'Pages', 'action' => 'display', 'register']);
+        $builder->connect('/shop', ['controller' => 'Shop', 'action' => 'index']);
+        $builder->connect('/shop/product', ['controller' => 'Shop', 'action' => 'product']);
+        $builder->connect(
+            '/shop/product/{slug}',
+            ['controller' => 'Shop', 'action' => 'product'],
+        )
+            ->setPass(['slug'])
+            ->setPatterns(['slug' => '[a-z0-9-]+']);
+        $builder->connect('/cart', ['controller' => 'Carts', 'action' => 'index']);
+        $builder->connect('/cart/add', ['controller' => 'Carts', 'action' => 'add']);
+        $builder->connect('/cart/update', ['controller' => 'Carts', 'action' => 'update']);
+        $builder->connect('/cart/remove', ['controller' => 'Carts', 'action' => 'remove']);
+        $builder->connect('/cart/save-later', ['controller' => 'Carts', 'action' => 'saveLater']);
+        $builder->connect('/cart/move-to-cart', ['controller' => 'Carts', 'action' => 'moveToCart']);
+        $builder->connect('/register', ['controller' => 'Users', 'action' => 'register']);
+        $builder->connect('/account/login', ['controller' => 'Users', 'action' => 'customerLogin']);
+        $builder->connect('/account', ['controller' => 'Account', 'action' => 'index']);
+        $builder->connect('/account/addresses', ['controller' => 'Account', 'action' => 'addresses']);
+        $builder->connect('/account/addresses/add', ['controller' => 'Account', 'action' => 'addAddress']);
+        $builder->connect('/account/addresses/delete/{id}', ['controller' => 'Account', 'action' => 'deleteAddress'])
+            ->setPass(['id'])
+            ->setPatterns(['id' => '\d+']);
+        $builder->connect('/account/orders', ['controller' => 'Account', 'action' => 'orders']);
+        $builder->connect('/account/orders/{id}', ['controller' => 'Account', 'action' => 'order'])
+            ->setPass(['id'])
+            ->setPatterns(['id' => '\d+']);
 
         /*
          * Public contact form.

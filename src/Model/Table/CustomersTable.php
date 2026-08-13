@@ -34,6 +34,7 @@ class CustomersTable extends Table
         ]);
         $this->hasMany('Invoices', ['foreignKey' => 'customer_id']);
         $this->hasMany('ContactMessages', ['foreignKey' => 'customer_id']);
+        $this->belongsTo('Users', ['foreignKey' => 'user_id']);
         $this->mapJsonColumns(['tags', 'metadata']);
     }
 }

@@ -186,14 +186,18 @@ class Application extends BaseApplication implements
             'password' => 'password',
         ];
 
+        $path = $request->getUri()->getPath();
+        $customerArea = str_starts_with($path, '/account') || $path === '/register';
         $authenticationService = new AuthenticationService([
-            'unauthenticatedRedirect' => '/login',
+            'unauthenticatedRedirect' => $customerArea ? '/account/login' : '/login',
             'queryParam' => 'redirect',
             'authenticators' => [
                 'Authentication.Session',
                 'Authentication.Form' => [
                     'fields' => $fields,
-                    'loginUrl' => '/login',
+                    // DefaultUrlChecker only accepts one URL. Both staff and
+                    // customer forms share this authenticator, so do not pin it.
+                    'loginUrl' => null,
                     'identifier' => [
                         'className' => 'Authentication.Password',
                         'fields' => $fields,

@@ -18,54 +18,28 @@
  * it, so Total = Subtotal + Delivery, and the GST line reports Total ÷ 11.
  *
  * @var \App\View\AppView $this
+ * @var list<array<string, mixed>> $cartLines
+ * @var list<array<string, mixed>> $savedLines
+ * @var float $freeDeliveryFrom
+ * @var float $deliveryFlat
+ * @var float $subtotal
+ * @var float $delivery
+ * @var float $total
+ * @var float $gstIncluded
+ * @var float $awayFromFree
  */
 $this->assign('title', 'Your Basket');
 
-/**
- * The thumbnails carry `alt=""`: each one sits beside the product name, the
- * fitting line and the finish, so a described copy of the photograph would only
- * repeat what is already read out on the line next to it.
- */
-$cartLines = [
-    [
-        'image' => 'linen-drum-shade.webp',
-        'name' => 'Linen Drum Shade',
-        'meta' => 'Undyed linen, 45 cm, E27 ring',
-        'variant' => 'Natural',
-        'price' => 59.00,
-        'qty' => 1,
-    ],
-    [
-        'image' => 'nimbus-smart-downlight.webp',
-        'name' => 'Nimbus Smart Downlight',
-        'meta' => 'Tunable 2700–5000K, 90 mm cut-out',
-        'variant' => 'Warm white',
-        'price' => 45.00,
-        'qty' => 1,
-    ],
-    [
-        'image' => 'rowan-rotary-dimmer.webp',
-        'name' => 'Rowan Rotary Dimmer',
-        'meta' => 'Trailing-edge rotary, 250 W, brass',
-        'variant' => 'Charcoal',
-        'price' => 39.00,
-        'qty' => 1,
-    ],
-];
-
-/** Matches the delivery promise in the announcement bar in templates/layout/default.php. */
-$freeDeliveryFrom = 150.00;
-$deliveryFlat = 14.95;
-
-$subtotal = 0.0;
-foreach ($cartLines as $line) {
-    $subtotal += $line['price'] * $line['qty'];
-}
-
-$delivery = $subtotal >= $freeDeliveryFrom ? 0.0 : $deliveryFlat;
-$total = $subtotal + $delivery;
-$gstIncluded = $total / 11;
-$awayFromFree = $freeDeliveryFrom - $subtotal;
+$cartLines = $cartLines ?? [];
+$savedLines = $savedLines ?? [];
+$freeDeliveryFrom = $freeDeliveryFrom ?? 150.00;
+$deliveryFlat = $deliveryFlat ?? 14.95;
+$subtotal = $subtotal ?? 0.0;
+$delivery = $delivery ?? 0.0;
+$total = $total ?? 0.0;
+$gstIncluded = $gstIncluded ?? 0.0;
+$awayFromFree = $awayFromFree ?? 0.0;
+$isEmpty = $cartLines === [];
 
 $shopUrl = $this->Url->build('/shop');
 $productUrl = $this->Url->build('/shop/product');
@@ -88,8 +62,13 @@ $productUrl = $this->Url->build('/shop/product');
          data-free-from="<?= h((string)$freeDeliveryFrom) ?>"
          data-delivery="<?= h((string)$deliveryFlat) ?>">
         <div class="col-lg-8 reveal">
-            <ul class="eg-cart-list" data-cart-list>
+            <ul class="eg-cart-list" data-cart-list <?= $isEmpty ? 'hidden' : '' ?>>
                 <?php foreach ($cartLines as $lineIndex => $line) : ?>
+                    <?php
+                    $lineHref = !empty($line['slug'])
+                        ? $this->Url->build('/shop/product/' . $line['slug'])
+                        : $productUrl;
+                    ?>
                     <li class="eg-cart-line" data-cart-line data-price="<?= h((string)$line['price']) ?>">
                         <span class="eg-cart-thumb">
                             <?= $this->Html->image('products/' . $line['image'], [
@@ -102,12 +81,21 @@ $productUrl = $this->Url->build('/shop/product');
                         </span>
 
                         <div class="eg-cart-name">
-                            <a class="eg-cart-title" href="<?= h($productUrl) ?>"><?= h($line['name']) ?></a>
+                            <a class="eg-cart-title" href="<?= h($lineHref) ?>"><?= h($line['name']) ?></a>
                             <p class="product-meta mb-0"><?= h($line['meta']) ?></p>
                             <p class="product-meta mb-0">Finish: <?= h($line['variant']) ?></p>
-                            <button type="button" class="eg-cart-remove" data-cart-remove>
+                            <?= $this->Form->create(null, ['url' => '/cart/remove']) ?>
+                            <?= $this->Form->hidden('item_id', ['value' => (int)($line['id'] ?? 0)]) ?>
+                            <button type="submit" class="eg-cart-remove">
                                 Remove<span class="visually-hidden"> <?= h($line['name']) ?> from basket</span>
                             </button>
+                            <?= $this->Form->end() ?>
+                            <?= $this->Form->create(null, ['url' => '/cart/save-later']) ?>
+                            <?= $this->Form->hidden('item_id', ['value' => (int)($line['id'] ?? 0)]) ?>
+                            <button type="submit" class="eg-cart-remove">
+                                Save for later<span class="visually-hidden"> <?= h($line['name']) ?></span>
+                            </button>
+                            <?= $this->Form->end() ?>
                         </div>
 
                         <p class="eg-cart-unit">
@@ -115,18 +103,23 @@ $productUrl = $this->Url->build('/shop/product');
                             $<?= h(number_format($line['price'], 2)) ?>
                         </p>
 
-                        <div class="eg-cart-qty">
+                        <?= $this->Form->create(null, [
+                            'url' => '/cart/update',
+                            'class' => 'eg-cart-qty',
+                            'data-cart-persist' => '1',
+                        ]) ?>
+                        <?= $this->Form->hidden('item_id', ['value' => (int)($line['id'] ?? 0)]) ?>
                             <label class="eg-cart-label" for="cart-qty-<?= $lineIndex ?>">Quantity</label>
                             <div class="eg-qty" data-qty>
                                 <button type="button" data-qty-step="-1"
                                         aria-label="Decrease quantity of <?= h($line['name']) ?>">&minus;</button>
-                                <input type="number" id="cart-qty-<?= $lineIndex ?>"
+                                <input type="number" id="cart-qty-<?= $lineIndex ?>" name="quantity"
                                        value="<?= h((string)$line['qty']) ?>" min="1" max="99"
                                        inputmode="numeric" autocomplete="off" data-qty-input>
                                 <button type="button" data-qty-step="1"
                                         aria-label="Increase quantity of <?= h($line['name']) ?>">+</button>
                             </div>
-                        </div>
+                        <?= $this->Form->end() ?>
 
                         <p class="eg-cart-total">
                             <span class="eg-cart-label">Subtotal</span>
@@ -138,13 +131,49 @@ $productUrl = $this->Url->build('/shop/product');
                 <?php endforeach; ?>
             </ul>
 
-            <div class="eg-card p-4 text-center" data-cart-empty hidden>
+            <div class="eg-card p-4 text-center" data-cart-empty <?= $isEmpty ? '' : 'hidden' ?>>
                 <p class="mb-3">Your basket is empty.</p>
                 <a class="btn btn-eg-primary" href="<?= h($shopUrl) ?>">
                     Browse the range
                     <svg class="btn-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg>
                 </a>
             </div>
+
+            <?php if ($savedLines !== []) : ?>
+                <h2 class="section-title h4 mt-5 mb-3">Saved for later</h2>
+                <ul class="eg-cart-list">
+                    <?php foreach ($savedLines as $saved) : ?>
+                        <li class="eg-cart-line">
+                            <span class="eg-cart-thumb">
+                                <?= $this->Html->image('products/' . $saved['image'], [
+                                    'alt' => '',
+                                    'width' => 800,
+                                    'height' => 800,
+                                    'loading' => 'lazy',
+                                    'decoding' => 'async',
+                                ]) ?>
+                            </span>
+                            <div class="eg-cart-name">
+                                <span class="eg-cart-title"><?= h($saved['name']) ?></span>
+                                <p class="product-meta mb-0"><?= h($saved['meta']) ?></p>
+                                <p class="product-meta mb-0">Finish: <?= h($saved['variant']) ?></p>
+                                <?= $this->Form->create(null, ['url' => '/cart/move-to-cart']) ?>
+                                <?= $this->Form->hidden('saved_id', ['value' => (int)$saved['id']]) ?>
+                                <button type="submit" class="eg-cart-remove">Move to basket</button>
+                                <?= $this->Form->end() ?>
+                            </div>
+                            <p class="eg-cart-unit">
+                                <span class="eg-cart-label">Each</span>
+                                $<?= h(number_format($saved['price'], 2)) ?>
+                            </p>
+                            <p class="eg-cart-qty">
+                                <span class="eg-cart-label">Quantity</span>
+                                <?= (int)$saved['qty'] ?>
+                            </p>
+                        </li>
+                    <?php endforeach; ?>
+                </ul>
+            <?php endif; ?>
 
             <a class="eg-cart-continue" href="<?= h($shopUrl) ?>">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5"/><path d="m11 18-6-6 6-6"/></svg>
@@ -189,8 +218,8 @@ $productUrl = $this->Url->build('/shop/product');
                     </button>
                 </div>
                 <p class="eg-note" id="checkout-pending">
-                    Checkout and payment go live with the orders backend. The basket above
-                    is a working preview of the layout, not a real order.
+                    Checkout and payment land next. This basket is saved, including when you
+                    come back later.
                 </p>
 
                 <p class="eg-summary-account mb-0">
@@ -202,3 +231,21 @@ $productUrl = $this->Url->build('/shop/product');
         </div>
     </div>
 </div>
+<?php $this->append('scriptBottom'); ?>
+<script>
+document.querySelector('[data-cart]')?.addEventListener('eg:qty', function (event) {
+    var form = event.target.closest('form[data-cart-persist]');
+    if (form) {
+        form.submit();
+    }
+});
+document.querySelector('[data-cart]')?.addEventListener('change', function (event) {
+    if (event.target.matches('[data-qty-input]')) {
+        var form = event.target.closest('form[data-cart-persist]');
+        if (form) {
+            form.submit();
+        }
+    }
+});
+</script>
+<?php $this->end(); ?>

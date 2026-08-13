@@ -17,6 +17,11 @@
     background: var(--eg-bg);
     color: var(--eg-text);
     overflow-x: hidden;
+    --bs-code-color: var(--eg-text);
+    --bs-primary: var(--eg-brand);
+    --bs-link-color: var(--eg-brand);
+    --bs-link-hover-color: var(--eg-brand-hover);
+    --bs-focus-ring-color: rgba(18, 76, 36, 0.35);
 }
 
 /* Serif is reserved for the page title (h1). Every other heading, panel
@@ -69,6 +74,7 @@
 .admin-brand {
     display: flex;
     align-items: center;
+    gap: 0.4rem;
     min-height: 44px;
     padding: 0 1.25rem 1.5rem;
     font-family: var(--eg-font-title);
@@ -329,23 +335,24 @@
 }
 
 .admin-empty-state {
-    padding: 2.5rem 1.25rem;
-    text-align: center;
+    padding: 0.2rem 0 0.55rem;
+    text-align: left;
 }
 
 .admin-empty-state h2,
-.admin-empty-state .admin-empty-title {
+.admin-empty-state .admin-empty-title,
+.admin-empty-state p {
     margin: 0;
+    max-width: none;
     font-family: var(--eg-font-body);
-    font-size: 1rem;
-    font-weight: 600;
-    color: var(--eg-text);
+    font-size: 0.85rem;
+    font-weight: 400;
+    line-height: 1.4;
+    color: var(--eg-text-muted);
 }
 
-.admin-empty-state p {
-    margin: 0.4rem auto 0;
-    max-width: 28rem;
-    color: var(--eg-text-muted);
+.admin-empty-state .admin-empty-title + p {
+    margin-top: 0.15rem;
 }
 
 .admin-need-list {
@@ -414,8 +421,20 @@ body:has(.admin-app) {
 
 .admin-app .table-eg .cell-id,
 .admin-app .table-eg .cell-sku,
-.admin-app .table-eg .cell-ref {
+.admin-app .table-eg .cell-ref,
+.admin-app .table-eg .cell-date {
     white-space: nowrap;
+}
+
+.admin-app .table-eg .cell-date {
+    min-width: 9.5rem;
+}
+
+.admin-app .table-eg .cell-customer {
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    max-width: 12rem;
 }
 
 .admin-overdue-flag {
@@ -698,6 +717,68 @@ body:has(.admin-app) {
     left: 0;
     background: var(--eg-bg);
     z-index: 1;
+}
+
+.admin-app code,
+.admin-app kbd,
+.admin-app samp,
+.admin-app .permission-key {
+    color: var(--eg-text);
+    background: var(--eg-bg-alt);
+    border-radius: var(--eg-radius-sm);
+    padding: 0.12em 0.4em;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.85em;
+}
+
+.admin-app input[type="checkbox"],
+.admin-app input[type="radio"] {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 1.15rem;
+    height: 1.15rem;
+    margin: 0;
+    flex: none;
+    border: 1.5px solid var(--eg-border);
+    background: var(--eg-bg);
+    accent-color: var(--eg-brand);
+    cursor: pointer;
+}
+
+.admin-app input[type="checkbox"] {
+    border-radius: var(--eg-radius-sm);
+}
+
+.admin-app input[type="radio"] {
+    border-radius: 50%;
+}
+
+.admin-app input[type="checkbox"]:checked {
+    background-color: var(--eg-brand);
+    border-color: var(--eg-brand);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='none' stroke='%23FBF9F5' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' d='M3.5 8.5l3 3 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 0.85rem;
+}
+
+.admin-app input[type="radio"]:checked {
+    background-color: var(--eg-bg);
+    border-color: var(--eg-brand);
+    box-shadow: inset 0 0 0 0.28rem var(--eg-brand);
+}
+
+.admin-app input[type="checkbox"]:focus-visible,
+.admin-app input[type="radio"]:focus-visible {
+    outline: 2px solid var(--eg-brand);
+    outline-offset: 2px;
+}
+
+.admin-account-actions {
+    display: inline-flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 0.4rem;
 }
 
 .admin-matrix td label {

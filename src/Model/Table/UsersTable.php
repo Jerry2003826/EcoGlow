@@ -49,6 +49,7 @@ class UsersTable extends Table
 
         $this->addBehavior('Timestamp');
         $this->hasMany('UserRoles', ['foreignKey' => 'user_id']);
+        $this->hasOne('Customers', ['foreignKey' => 'user_id']);
     }
 
     /**
@@ -102,6 +103,44 @@ class UsersTable extends Table
             ->scalar('confirm_password')
             ->requirePresence('confirm_password')
             ->notEmptyString('confirm_password', __('Please confirm your new password.'))
+            ->sameAs('confirm_password', 'password', __('The two passwords do not match.'));
+
+        return $validator;
+    }
+
+    /**
+     * Customer registration. Role and status are not validated here and must
+     * be set() after newEntity so they cannot be mass-assigned.
+     *
+     * @param \Cake\Validation\Validator $validator Validator instance.
+     * @return \Cake\Validation\Validator
+     */
+    public function validationRegister(Validator $validator): Validator
+    {
+        $validator
+            ->email('email', false, __('Please enter a valid email address.'))
+            ->requirePresence('email', 'create')
+            ->notEmptyString('email', __('Please enter a valid email address.'))
+            ->add('email', 'unique', [
+                'rule' => 'validateUnique',
+                'provider' => 'table',
+                'message' => __('An account with that email already exists.'),
+            ]);
+
+        $validator
+            ->scalar('password')
+            ->requirePresence('password', 'create')
+            ->notEmptyString('password', __('Please enter a password.'))
+            ->minLength('password', self::MIN_PASSWORD_LENGTH, __(
+                'Passwords must be at least {0} characters long.',
+                self::MIN_PASSWORD_LENGTH,
+            ))
+            ->maxLength('password', 255);
+
+        $validator
+            ->scalar('confirm_password')
+            ->requirePresence('confirm_password', 'create')
+            ->notEmptyString('confirm_password', __('Please confirm your password.'))
             ->sameAs('confirm_password', 'password', __('The two passwords do not match.'));
 
         return $validator;

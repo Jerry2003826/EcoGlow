@@ -2,12 +2,8 @@
 /**
  * Product listing page — warm-earth storefront theme.
  *
- * Static page: `PagesController::display()` renders this through the explicit
- * `/shop` route in config/routes.php. There is no products table yet, so the
- * catalogue below is a local placeholder array, exactly as the home page's
- * $bestSellers is. It uses the same field names, so when the table lands the
- * only thing that changes here is where $products comes from — the foreach and
- * the markup stay as they are.
+ * Catalogue rows arrive from CatalogService. Filtering, sorting and paging
+ * stay in the browser (webroot/js/glow.js). The foreach and markup are unchanged.
  *
  * Filtering, sorting and paging run in the browser over the rendered grid (see
  * webroot/js/glow.js), so this template holds no selection logic that a
@@ -21,155 +17,12 @@
 $this->assign('title', 'Shop All Lighting');
 
 /**
- * Same shape as home.php's $bestSellers, plus the two facets the filters need.
- * `price` is a number rather than a formatted string: it is what a DECIMAL
- * column holds, it is what the sort control compares, and it is what the cart
- * does arithmetic on. Formatting happens at the point of output.
+ * $products is supplied by CatalogService via ShopController.
+ * The foreach and markup below are unchanged.
  *
- * `image` replaces the `icon` key the line-art marks used to be chosen by, and
- * `alt` travels with it: on a catalogue page the photograph is the product's own
- * picture and the thing a visitor is scanning, so it describes the fitting
- * rather than sitting empty. `meta` states the fitting, the size and the colour
- * temperature instead of an adjective, which is also what makes two similar
- * sconces tellable apart without opening either.
+ * @var list<array<string, mixed>> $products
  */
-$products = [
-    [
-        'image' => 'marlow-floor-lamp.webp',
-        'alt' => 'Marlow floor lamp lit against a plaster wall, oak column under a linen drum shade',
-        'name' => 'Marlow Floor Lamp',
-        'meta' => 'Turned oak, linen shade, 1.45 m',
-        'price' => 249.00,
-        'flag' => 'New',
-        'category' => 'Ambient Floor Lamps',
-        'style' => 'Warm Minimal',
-        'swatches' => [['Oak', '#C9BCA9'], ['Charcoal', '#2F2E2C'], ['Terracotta', '#E2925E']],
-    ],
-    [
-        'image' => 'halden-pendant.webp',
-        'alt' => 'Halden pendant hanging on a slim brass stem, its opal glass globe lit',
-        'name' => 'Halden Pendant',
-        'meta' => 'Opal glass globe, 20 cm, E27',
-        'price' => 189.00,
-        'flag' => null,
-        'category' => 'LED Ceiling Lights',
-        'style' => 'Sculptural',
-        'swatches' => [['Opal', '#E2DED2'], ['Forest', '#124C24']],
-    ],
-    [
-        'image' => 'aura-smart-bulbs.webp',
-        'alt' => 'Four Aura globes laid in a row on brass screw bases, two of them lit',
-        'name' => 'Aura Smart Bulb Set',
-        'meta' => 'Four E27 globes, 2200–6500K',
-        'price' => 79.00,
-        'flag' => 'Best seller',
-        'category' => 'Smart Bulbs',
-        'style' => 'Smart & Connected',
-        'swatches' => [['Warm white', '#FBF9F5']],
-    ],
-    [
-        'image' => 'fernway-solar-path.webp',
-        'alt' => 'Three Fernway path lights spiked along a gravel path, lit at dusk',
-        'name' => 'Fernway Solar Path Light',
-        'meta' => 'Set of six spikes, IP65, 3000K',
-        'price' => 129.00,
-        'flag' => null,
-        'category' => 'Outdoor Solar Lights',
-        'style' => 'Warm Minimal',
-        'swatches' => [['Charcoal', '#2F2E2C'], ['Sand', '#C9BCA9']],
-    ],
-    [
-        /* The photograph is an opal glass dome with no brass anywhere on it, so
-           the finish in this line reads off the picture. It said "brushed brass"
-           while the well held a line drawing, which nothing contradicted. */
-        'image' => 'brindle-wall-sconce.webp',
-        'alt' => 'Brindle wall sconce, an opal glass dome lit flush against a plaster wall',
-        'name' => 'Brindle Wall Sconce',
-        'meta' => 'Opal glass dome, 18 cm, E14',
-        'price' => 99.00,
-        'flag' => null,
-        'category' => 'Wall Sconces',
-        'style' => 'Heritage',
-        'swatches' => [['Opal', '#E2DED2'], ['Charcoal', '#2F2E2C']],
-    ],
-    [
-        'image' => 'linen-drum-shade.webp',
-        'alt' => 'Linen drum shade standing on its own, an undyed cylinder with a visible weave',
-        'name' => 'Linen Drum Shade',
-        'meta' => 'Undyed linen, 45 cm, E27 ring',
-        'price' => 59.00,
-        'flag' => null,
-        'category' => 'Decorative Accessories',
-        'style' => 'Warm Minimal',
-        'swatches' => [['Natural', '#E2DED2'], ['Clay', '#E2925E']],
-    ],
-    [
-        'image' => 'corva-ceiling-disc.webp',
-        'alt' => 'Corva ceiling disc mounted flush, an opal diffuser inside a brushed brass rim',
-        'name' => 'Corva Ceiling Disc',
-        'meta' => 'Flush mount, 40 cm, 3000K',
-        'price' => 219.00,
-        'flag' => null,
-        'category' => 'LED Ceiling Lights',
-        'style' => 'Warm Minimal',
-        'swatches' => [['Warm white', '#FBF9F5'], ['Charcoal', '#2F2E2C']],
-    ],
-    [
-        'image' => 'odette-arc-lamp.webp',
-        'alt' => 'Odette arc lamp curving out of a marble base over an oak floor',
-        'name' => 'Odette Arc Lamp',
-        'meta' => 'Brass arc, marble base, 2.1 m',
-        'price' => 329.00,
-        'flag' => 'New',
-        'category' => 'Ambient Floor Lamps',
-        'style' => 'Sculptural',
-        'swatches' => [['Charcoal', '#2F2E2C'], ['Brass', '#C9BCA9']],
-    ],
-    [
-        'image' => 'nimbus-smart-downlight.webp',
-        'alt' => 'Two Nimbus downlights recessed in a ceiling, throwing overlapping pools of warm light',
-        'name' => 'Nimbus Smart Downlight',
-        'meta' => 'Tunable 2700–5000K, 90 mm cut-out',
-        'price' => 45.00,
-        'flag' => null,
-        'category' => 'Smart Bulbs',
-        'style' => 'Smart & Connected',
-        'swatches' => [['Warm white', '#FBF9F5']],
-    ],
-    [
-        'image' => 'kelso-solar-bollard.webp',
-        'alt' => 'Kelso solar bollard lighting a sand path beside dry grasses',
-        'name' => 'Kelso Solar Bollard',
-        'meta' => 'Powder-coated, 40 cm, IP65',
-        'price' => 179.00,
-        'flag' => null,
-        'category' => 'Outdoor Solar Lights',
-        'style' => 'Sculptural',
-        'swatches' => [['Charcoal', '#2F2E2C'], ['Sand', '#C9BCA9']],
-    ],
-    [
-        'image' => 'ashby-twin-sconce.webp',
-        'alt' => 'Ashby twin sconce on a plaster wall, two brass arms under small linen shades',
-        'name' => 'Ashby Twin Sconce',
-        'meta' => 'Twin brass arms, linen shades, E14',
-        'price' => 145.00,
-        'flag' => null,
-        'category' => 'Wall Sconces',
-        'style' => 'Heritage',
-        'swatches' => [['Brass', '#C9BCA9'], ['Natural', '#E2DED2']],
-    ],
-    [
-        'image' => 'rowan-rotary-dimmer.webp',
-        'alt' => 'Rowan rotary dimmer, a brushed brass plate with a knurled knob',
-        'name' => 'Rowan Rotary Dimmer',
-        'meta' => 'Trailing-edge rotary, 250 W, brass',
-        'price' => 39.00,
-        'flag' => null,
-        'category' => 'Decorative Accessories',
-        'style' => 'Smart & Connected',
-        'swatches' => [['Charcoal', '#2F2E2C'], ['Natural', '#E2DED2']],
-    ],
-];
+$products = $products ?? [];
 
 /** Facet values, derived from the catalogue so a new product cannot fall outside the filters. */
 $categories = array_values(array_unique(array_column($products, 'category')));
@@ -285,7 +138,7 @@ $productUrl = $this->Url->build('/shop/product');
                      data-price="<?= h((string)$product['price']) ?>"
                      data-category="<?= h($product['category']) ?>"
                      data-style="<?= h($product['style']) ?>">
-                    <a class="product-card" href="<?= h($productUrl) ?>">
+                    <a class="product-card" href="<?= h(!empty($product['slug']) ? $this->Url->build('/shop/product/' . $product['slug']) : $productUrl) ?>">
                         <span class="product-media">
                             <?php if ($product['flag'] !== null) : ?>
                                 <span class="product-flag"><?= h($product['flag']) ?></span>

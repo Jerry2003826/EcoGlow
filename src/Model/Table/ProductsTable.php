@@ -23,7 +23,9 @@ class ProductsTable extends Table
         $this->setDisplayField('name');
         $this->setPrimaryKey('id');
         $this->addBehavior('Timestamp');
+        $this->belongsTo('Categories', ['foreignKey' => 'category_id']);
         $this->hasMany('ProductVariants', ['foreignKey' => 'product_id']);
+        $this->hasMany('ProductImages', ['foreignKey' => 'product_id']);
         $this->mapJsonColumns(['specifications', 'tags', 'metadata']);
     }
 }

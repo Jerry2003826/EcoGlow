@@ -16,6 +16,8 @@ declare(strict_types=1);
  */
 namespace App\Controller;
 
+use App\Model\Entity\User;
+use App\Service\Authorization\PermissionService;
 use Cake\Controller\Controller;
 use Cake\Event\EventInterface;
 use Cake\Http\Exception\NotFoundException;
@@ -76,15 +78,62 @@ class AppController extends Controller
         parent::beforeRender($event);
 
         $unreadCount = 0;
+        $isStaff = false;
+        $isCustomer = false;
         $identity = $this->request->getAttribute('identity');
         if ($identity !== null && $this->request->getParam('controller') !== 'Error') {
-            $unreadCount = $this->fetchTable('ContactMessages')
-                ->find()
-                ->where(['ContactMessages.is_read' => false])
-                ->count();
+            $userId = (int)$identity->getIdentifier();
+            $user = $this->fetchTable('Users')->get($userId);
+            $isStaff = $this->isStaffUser($user);
+            $isCustomer = $this->isCustomerUser($user);
+            if ($isStaff) {
+                $unreadCount = $this->fetchTable('ContactMessages')
+                    ->find()
+                    ->where(['ContactMessages.is_read' => false])
+                    ->count();
+            }
         }
 
-        $this->set('unreadCount', $unreadCount);
+        $this->set(compact('unreadCount', 'isStaff', 'isCustomer'));
+    }
+
+    /**
+     * Staff are anyone with a non-customer role, or any RBAC grant.
+     *
+     * @param \App\Model\Entity\User $user User.
+     * @return bool
+     */
+    protected function isStaffUser(User $user): bool
+    {
+        $role = (string)($user->get('role') ?: '');
+        if ($role !== '' && $role !== 'customer') {
+            return true;
+        }
+
+        return (new PermissionService())->hasAny((int)$user->id);
+    }
+
+    /**
+     * Customer portal identity: role is customer and they hold no staff grants.
+     *
+     * @param \App\Model\Entity\User $user User.
+     * @return bool
+     */
+    protected function isCustomerUser(User $user): bool
+    {
+        return (string)($user->get('role') ?: '') === 'customer'
+            && !(new PermissionService())->hasAny((int)$user->id);
+    }
+
+    /**
+     * Where to send someone after a successful sign-in.
+     *
+     * @param \App\Model\Entity\User $user User.
+     * @return string
+     */
+    protected function afterLoginPath(User $user): string
+    {
+        return $this->isCustomerUser($user) ? '/account' : '/admin';
     }
 
     /**

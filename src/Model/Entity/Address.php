@@ -18,9 +18,22 @@ use Cake\ORM\Entity;
 class Address extends Entity
 {
     /**
-     * Addresses are not patched from a public form in this batch.
+     * Customer address form fields. customer_id is set() by the controller.
      *
      * @var array<string, bool>
      */
-    protected array $_accessible = [];
+    protected array $_accessible = [
+        'label' => true,
+        'recipient_name' => true,
+        'company' => true,
+        'line1' => true,
+        'line2' => true,
+        'suburb' => true,
+        'state' => true,
+        'postcode' => true,
+        'country_code' => true,
+        'phone' => true,
+        'is_default_shipping' => true,
+        'is_default_billing' => true,
+    ];
 }

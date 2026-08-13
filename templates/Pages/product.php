@@ -23,85 +23,18 @@
  * which is legible, survives greyscale, and does not depend on the image.
  *
  * @var \App\View\AppView $this
+ * @var array<string, mixed> $product
+ * @var list<string> $globes
+ * @var array<string, string> $specs
+ * @var list<array<string, mixed>> $related
  */
-$product = [
-    /* A landscape frame of the same lamp, shot for this page only. The square one
-       the cards use cannot fill the column here: on a window that is wide but not
-       tall its height is what runs out first, and a square that is capped on
-       height either narrows and leaves an empty strip beside it or crops to a
-       letterbox, which on a floor lamp takes off the base. Shot wide, the lamp
-       stays whole and the frame fills the column at any window shape. */
-    'image' => 'marlow-detail-wide.webp',
-    'alt' => 'Marlow floor lamp lit against a plaster wall, a turned oak column under a linen drum shade',
-    'name' => 'Marlow Floor Lamp',
-    'meta' => 'Turned oak, linen shade, 1.45 m',
-    'price' => 249.00,
-    'flag' => 'New',
-    'category' => 'Ambient Floor Lamps',
-    'style' => 'Warm Minimal',
-    'swatches' => [['Oak', '#C9BCA9'], ['Charcoal', '#2F2E2C'], ['Terracotta', '#E2925E']],
-];
+$product = $product ?? [];
+$globes = $globes ?? [];
+$specs = $specs ?? [];
+$related = $related ?? [];
+$canAdd = !empty($product['variant_id']);
 
-$this->assign('title', $product['name']);
-
-/**
- * Kept short enough that the three sit on one line: the row has 528px and the
- * labels came to 544px, so it wrapped and pushed the basket button 52px down the
- * page. The fitting is E27 whichever is chosen and the specification list says
- * so, so it does not need naming three times here. The selected chip also gains
- * a bullet, which is another 14px, hence the margin left over.
- */
-$globes = [
-    'Warm white, 2700 K',
-    'Smart tunable white',
-    'Fitting only',
-];
-
-$specs = [
-    'Height' => '1.45 m',
-    'Shade diameter' => '38 cm',
-    'Materials' => 'Solid oak, natural linen',
-    'Fitting' => 'E27, max 60 W equivalent',
-    'Globe included' => 'Yes, 9 W LED (2700 K)',
-    'Energy rating' => 'A+',
-    'Cable' => '2.0 m, in-line rotary dimmer',
-];
-
-/** Reuses the listing page's card component, so the grid at the foot needs only these six fields. */
-$related = [
-    [
-        'image' => 'odette-arc-lamp.webp',
-        'alt' => 'Odette arc lamp curving out of a marble base over an oak floor',
-        'name' => 'Odette Arc Lamp',
-        'meta' => 'Brass arc, marble base, 2.1 m',
-        'price' => 329.00,
-        'swatches' => [['Charcoal', '#2F2E2C'], ['Brass', '#C9BCA9']],
-    ],
-    [
-        'image' => 'linen-drum-shade.webp',
-        'alt' => 'Linen drum shade standing on its own, an undyed cylinder with a visible weave',
-        'name' => 'Linen Drum Shade',
-        'meta' => 'Undyed linen, 45 cm, E27 ring',
-        'price' => 59.00,
-        'swatches' => [['Natural', '#E2DED2'], ['Clay', '#E2925E']],
-    ],
-    [
-        'image' => 'aura-smart-bulbs.webp',
-        'alt' => 'Four Aura globes laid in a row on brass screw bases, two of them lit',
-        'name' => 'Aura Smart Bulb Set',
-        'meta' => 'Four E27 globes, 2200–6500K',
-        'price' => 79.00,
-        'swatches' => [['Warm white', '#FBF9F5']],
-    ],
-    [
-        'image' => 'rowan-rotary-dimmer.webp',
-        'alt' => 'Rowan rotary dimmer, a brushed brass plate with a knurled knob',
-        'name' => 'Rowan Rotary Dimmer',
-        'meta' => 'Trailing-edge rotary, 250 W, brass',
-        'price' => 39.00,
-        'swatches' => [['Charcoal', '#2F2E2C'], ['Natural', '#E2DED2']],
-    ],
-];
+$this->assign('title', $product['name'] ?? 'Product');
 
 $shopUrl = $this->Url->build('/shop');
 $productUrl = $this->Url->build('/shop/product');
@@ -180,6 +113,8 @@ $productUrl = $this->Url->build('/shop/product');
                 </div>
             </fieldset>
 
+            <?= $this->Form->create(null, ['url' => '/cart/add']) ?>
+            <?= $this->Form->hidden('product_variant_id', ['value' => (int)($product['variant_id'] ?? 0)]) ?>
             <div class="eg-option">
                 <label class="eg-eyebrow d-block" for="product-qty">Quantity</label>
                 <div class="eg-qty" data-qty>
@@ -191,18 +126,31 @@ $productUrl = $this->Url->build('/shop/product');
             </div>
 
             <div class="d-grid gap-2 mt-4">
-                <button type="button" class="btn btn-eg-primary" disabled
-                        aria-describedby="basket-pending">
-                    Add to basket
-                </button>
+                <?php if ($canAdd) : ?>
+                    <?= $this->Form->button('Add to basket', [
+                        'class' => 'btn btn-eg-primary',
+                    ]) ?>
+                <?php else : ?>
+                    <button type="button" class="btn btn-eg-primary" disabled
+                            aria-describedby="basket-pending">
+                        Add to basket
+                    </button>
+                <?php endif; ?>
                 <a class="btn btn-eg-ghost" href="<?= $this->Url->build('/contact') ?>">
                     Ask about installation
                 </a>
             </div>
-            <p class="eg-note" id="basket-pending">
-                Ordering opens when the checkout backend lands. Until then, ask us to
-                reserve a fixture and we will hold it.
-            </p>
+            <?php if ($canAdd) : ?>
+                <p class="eg-note" id="basket-pending">
+                    Checkout and payment land next. The basket holds the line until then.
+                </p>
+            <?php else : ?>
+                <p class="eg-note" id="basket-pending">
+                    Ordering opens when the checkout backend lands. Until then, ask us to
+                    reserve a fixture and we will hold it.
+                </p>
+            <?php endif; ?>
+            <?= $this->Form->end() ?>
         </div>
 
         <?php
@@ -338,7 +286,7 @@ $productUrl = $this->Url->build('/shop/product');
         <div class="row g-4 reveal" data-reveal-step="1">
             <?php foreach ($related as $item) : ?>
                 <div class="col-6 col-lg-3">
-                    <a class="product-card" href="<?= h($productUrl) ?>">
+                    <a class="product-card" href="<?= h(!empty($item['slug']) ? $this->Url->build('/shop/product/' . $item['slug']) : $productUrl) ?>">
                         <span class="product-media">
                             <?= $this->Html->image('products/' . $item['image'], [
                                 'alt' => $item['alt'],

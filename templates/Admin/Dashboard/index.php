@@ -55,8 +55,8 @@ $this->assign('breadcrumb', $this->element('admin/breadcrumb', [
             <h3 class="admin-panel-title">New orders</h3>
             <?php if (count($newOrders) === 0) : ?>
                 <?= $this->element('admin/empty', [
-                    'title' => 'No new orders waiting',
-                    'body' => 'Confirmed and processing orders that still need packing will show up here.',
+                    'title' => 'No new orders waiting.',
+                    'body' => 'Confirmed orders that still need packing will appear here.',
                 ]) ?>
             <?php else : ?>
                 <ul class="admin-need-list">
@@ -74,8 +74,8 @@ $this->assign('breadcrumb', $this->element('admin/breadcrumb', [
             <h3 class="admin-panel-title mt-4">Unread messages</h3>
             <?php if (count($unreadInbox) === 0) : ?>
                 <?= $this->element('admin/empty', [
-                    'title' => 'Inbox is clear',
-                    'body' => 'New enquiries from the public contact form will appear here until someone opens them.',
+                    'title' => 'Inbox is clear.',
+                    'body' => 'New contact-form enquiries will appear here.',
                 ]) ?>
             <?php else : ?>
                 <ul class="admin-need-list">
@@ -93,8 +93,8 @@ $this->assign('breadcrumb', $this->element('admin/breadcrumb', [
             <h3 class="admin-panel-title mt-4">Below reorder point</h3>
             <?php if ($lowStockItems === []) : ?>
                 <?= $this->element('admin/empty', [
-                    'title' => 'Stock is above reorder point',
-                    'body' => 'Variants that have fallen to or below their reorder point will be listed here.',
+                    'title' => 'Stock is above reorder point.',
+                    'body' => 'Variants at or below reorder point will appear here.',
                 ]) ?>
             <?php else : ?>
                 <ul class="admin-need-list">
@@ -118,8 +118,8 @@ $this->assign('breadcrumb', $this->element('admin/breadcrumb', [
             </div>
             <?php if ($recentTransactions === []) : ?>
                 <?= $this->element('admin/empty', [
-                    'title' => 'No transactions yet',
-                    'body' => 'Orders, payments and refunds will list here as soon as they are recorded.',
+                    'title' => 'No transactions yet.',
+                    'body' => 'Orders and payments will list here.',
                 ]) ?>
             <?php else : ?>
                 <div class="table-responsive">
@@ -145,10 +145,10 @@ $this->assign('breadcrumb', $this->element('admin/breadcrumb', [
                                             <?= h($row['reference_number'] ?: '—') ?>
                                         <?php endif; ?>
                                     </td>
-                                    <td><?= h($row['customer_name'] ?: 'Walk-in') ?></td>
+                                    <td class="cell-customer"><?= h($row['customer_name'] ?: 'Walk-in') ?></td>
                                     <td><?= $this->Money->aud((int)$row['amount_cents']) ?></td>
                                     <td><?= $this->element('admin/status_pill', ['status' => (string)$row['status']]) ?></td>
-                                    <td class="text-nowrap">
+                                    <td class="cell-date">
                                         <?= h($row['occurred_at']
                                             ? (new DateTime($row['occurred_at']))->setTimezone('Australia/Melbourne')->format('d M Y, H:i')
                                             : '—') ?>

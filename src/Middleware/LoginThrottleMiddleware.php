@@ -75,9 +75,11 @@ class LoginThrottleMiddleware implements MiddlewareInterface
         if ($this->isLoginPost($request) && self::isLockedOut($this->clientIp($request))) {
             // Bounce back to the login form (GET), where the controller shows
             // the lockout message. Authentication is never invoked.
+            $path = rtrim($request->getUri()->getPath(), '/');
+
             return (new Response())
                 ->withStatus(302)
-                ->withHeader('Location', '/login');
+                ->withHeader('Location', $path === '/account/login' ? '/account/login' : '/login');
         }
 
         return $handler->handle($request);
@@ -91,8 +93,10 @@ class LoginThrottleMiddleware implements MiddlewareInterface
      */
     protected function isLoginPost(ServerRequestInterface $request): bool
     {
+        $path = rtrim($request->getUri()->getPath(), '/');
+
         return strtoupper($request->getMethod()) === 'POST'
-            && rtrim($request->getUri()->getPath(), '/') === '/login';
+            && in_array($path, ['/login', '/account/login'], true);
     }
 
     /**

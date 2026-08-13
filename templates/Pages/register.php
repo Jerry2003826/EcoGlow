@@ -1,28 +1,14 @@
 <?php
 /**
- * Customer registration page — warm-earth storefront theme.
+ * Customer registration — warm-earth storefront theme.
  *
- * Static page: `PagesController::display()` renders this through the explicit
- * `/register` route in config/routes.php.
- *
- * PENDING CLIENT CONFIRMATION — the field set below is a proposal, not a spec.
- * The requirements document only says customers "register and log in when
- * purchasing"; it does not list the fields, and the client has not confirmed
- * them. So this is the smallest set that can create an account at all: name,
- * email, password, confirmation. Likely additions once the client decides are a
- * delivery address, a phone number for installation bookings, and a marketing
- * opt-in — each of which is a new control here plus a column on the customers
- * table. Nothing else on the page depends on the list, so adding a field is a
- * local change.
- *
- * There is no customers table and no session for a shopper, so submission is
- * disabled rather than posted somewhere inert. The fields themselves are real —
- * labelled, typed, and carrying the autocomplete and validation attributes the
- * live form will use — so the client can review the shape of the form now.
+ * Age is not collected. See docs/database/customer-contact-and-age.md.
  *
  * @var \App\View\AppView $this
+ * @var \App\Model\Entity\User $user
  */
 $this->assign('title', 'Create an Account');
+$this->Html->css('account', ['block' => true]);
 ?>
 <div class="container">
     <nav aria-label="Breadcrumb" class="pt-4 reveal">
@@ -46,7 +32,7 @@ $this->assign('title', 'Create an Account');
                 Track orders, save finishes and book installation in one place.
             </p>
 
-            <?= $this->Form->create(null) ?>
+            <?= $this->Form->create($user ?? null, ['url' => '/register']) ?>
             <div class="mb-3">
                 <?= $this->Form->control('name', [
                     'type' => 'text',
@@ -54,6 +40,7 @@ $this->assign('title', 'Create an Account');
                     'class' => 'form-control',
                     'autocomplete' => 'name',
                     'required' => true,
+                    'value' => $this->getRequest()->getData('name'),
                 ]) ?>
             </div>
             <div class="mb-3">
@@ -66,6 +53,16 @@ $this->assign('title', 'Create an Account');
                 ]) ?>
             </div>
             <div class="mb-3">
+                <?= $this->Form->control('phone', [
+                    'type' => 'tel',
+                    'label' => 'Phone',
+                    'class' => 'form-control',
+                    'autocomplete' => 'tel',
+                    'required' => true,
+                    'value' => $this->getRequest()->getData('phone'),
+                ]) ?>
+            </div>
+            <div class="mb-3">
                 <?= $this->Form->control('password', [
                     'type' => 'password',
                     'label' => 'Password',
@@ -74,6 +71,7 @@ $this->assign('title', 'Create an Account');
                     'minlength' => 8,
                     'aria-describedby' => 'password-help',
                     'required' => true,
+                    'value' => '',
                 ]) ?>
                 <p class="form-text mb-0" id="password-help">At least 8 characters.</p>
             </div>
@@ -85,21 +83,22 @@ $this->assign('title', 'Create an Account');
                     'autocomplete' => 'new-password',
                     'minlength' => 8,
                     'required' => true,
+                    'value' => '',
                 ]) ?>
+                <?php if (!empty($user) && $user->getError('confirm_password')) : ?>
+                    <div class="error-message"><?= h(implode(' ', $user->getError('confirm_password'))) ?></div>
+                <?php endif; ?>
             </div>
             <div class="d-grid">
                 <?= $this->Form->button(__('Create account'), [
                     'class' => 'btn btn-eg-primary',
-                    'disabled' => true,
-                    'aria-describedby' => 'register-pending',
                 ]) ?>
             </div>
             <?= $this->Form->end() ?>
 
-            <p class="eg-note mb-0" id="register-pending">
-                Accounts go live with the customer backend, and the fields above are still
-                waiting on the client&rsquo;s sign-off. Need something now?
-                <a href="<?= $this->Url->build('/contact') ?>">Send us a message</a>.
+            <p class="eg-note mb-0">
+                Already have an account?
+                <a href="<?= $this->Url->build('/account/login') ?>">Sign in</a>.
             </p>
         </div>
     </div>
