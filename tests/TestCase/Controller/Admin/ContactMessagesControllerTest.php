@@ -83,6 +83,38 @@ class ContactMessagesControllerTest extends TestCase
     }
 
     /**
+     * Test the unread tally that the heading and the nav badge share.
+     *
+     * Both read the single `$unreadCount` that AppController::beforeRender sets;
+     * this controller used to run the identical COUNT a second time for its own
+     * heading. Asserting on both rendered places, and on the view variable
+     * itself, means dropping that duplicate cannot silently blank either one —
+     * and the second half checks the number is still live rather than cached,
+     * by reading the only unread message and expecting the tally to clear.
+     *
+     * @return void
+     */
+    public function testIndexShowsUnreadCountFromSharedViewVariable(): void
+    {
+        $this->loginAsAdmin();
+
+        $this->get('/admin/contact-messages');
+
+        $this->assertResponseOk();
+        $this->assertSame(1, $this->viewVariable('unreadCount'));
+        $this->assertResponseContains('1 unread');
+        $this->assertResponseContains('<span class="badge-count">1</span>');
+
+        $this->get('/admin/contact-messages/view/1');
+        $this->get('/admin/contact-messages');
+
+        $this->assertResponseOk();
+        $this->assertSame(0, $this->viewVariable('unreadCount'));
+        $this->assertResponseNotContains('1 unread');
+        $this->assertResponseNotContains('badge-count');
+    }
+
+    /**
      * Test viewing a message marks it as read.
      *
      * @return void

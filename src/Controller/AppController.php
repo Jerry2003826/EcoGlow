@@ -54,10 +54,18 @@ class AppController extends Controller
     }
 
     /**
-     * Expose the unread contact-message count to the navigation bar.
+     * Expose the unread contact-message count to every authenticated render.
      *
-     * Computed here (rather than in the layout template) so the view stays
-     * free of ORM calls and the query only runs for authenticated users.
+     * This is the single source of that number. It is computed here rather than
+     * in the layout so the view stays free of ORM calls, and it runs after the
+     * action so the count reflects anything the action just changed — such as
+     * a message being marked read on its way to being displayed.
+     *
+     * Two things read it: the navigation badge in the default layout, and the
+     * "n unread" pill on the admin message list. The admin controller used to
+     * run the identical COUNT again for its own copy, which meant two of the
+     * same query in one render.
+     *
      * The Error controller is skipped so error pages never trigger a query.
      *
      * @param \Cake\Event\EventInterface $event The beforeRender event.
@@ -76,7 +84,7 @@ class AppController extends Controller
                 ->count();
         }
 
-        $this->set('navUnreadCount', $unreadCount);
+        $this->set('unreadCount', $unreadCount);
     }
 
     /**

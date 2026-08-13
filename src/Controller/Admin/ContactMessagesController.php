@@ -41,6 +41,10 @@ class ContactMessagesController extends AppController
     /**
      * Index method: paginated list of contact messages, newest first.
      *
+     * The "n unread" pill on this page reads `$unreadCount`, which
+     * AppController::beforeRender() already sets for the navigation badge.
+     * Counting it again here ran the same COUNT twice in one render.
+     *
      * @return void
      */
     public function index(): void
@@ -49,11 +53,8 @@ class ContactMessagesController extends AppController
             ->orderBy(['ContactMessages.is_read' => 'ASC', 'ContactMessages.created' => 'DESC']);
 
         $contactMessages = $this->paginate($query, ['limit' => 20]);
-        $unreadCount = $this->ContactMessages->find()
-            ->where(['is_read' => false])
-            ->count();
 
-        $this->set(compact('contactMessages', 'unreadCount'));
+        $this->set(compact('contactMessages'));
     }
 
     /**
