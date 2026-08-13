@@ -1,71 +1,122 @@
 /*
  * ==========================================================================
- * Eco Glow Lighting — "Night Glow" design system
+ * Eco Glow Lighting — "Warm Earth" design system
  *
- * Dramatic near-black backdrop with concentrated warm light. Borderless,
- * open editorial layout — sections are separated by light and whitespace,
- * not by boxes. Built on top of Bootstrap 5.
+ * Light, low-chroma boutique storefront drawn from the client's vision board:
+ * warm white and greige grounds, deep forest green as the only saturated
+ * action colour, terracotta as a surface/accent that never carries text, and
+ * an editorial serif over a neutral sans. Built on top of Bootstrap 5.
+ *
+ * Every colour below states its measured WCAG 2.x contrast ratio. Ratios are
+ * computed, not estimated; anything carrying text clears AA 4.5:1 unless it is
+ * explicitly marked as an inactive control (exempt under 1.4.3) or as a
+ * decorative line/fill that never sits behind glyphs.
  * ==========================================================================
  */
 
-/* ---------- Fonts ---------- */
-@import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&display=swap');
-
 /* ---------- Design tokens ---------- */
 :root {
-    /* Surfaces — pushed much darker for drama */
-    --eg-bg-0: #050508;
-    --eg-bg-1: #0a0a12;
-    --eg-bg-2: #10101c;
-    --eg-glass: rgba(255, 255, 255, 0.03);
-    --eg-glass-strong: rgba(255, 255, 255, 0.06);
-    --eg-border: rgba(255, 255, 255, 0.08);
-    --eg-border-light: rgba(255, 209, 102, 0.35);
+    /* Grounds. Nothing here carries text on its own; the ratios quoted on the
+       ink tokens below are measured against these three. */
+    --eg-bg: #FBF9F5;        /* warm white — page base */
+    --eg-bg-alt: #E2DED2;    /* greige — alternating bands, image wells */
 
-    /* Brand light — hotter and more concentrated */
-    --eg-amber: #ffbe5c;
-    --eg-gold: #ffd166;
-    --eg-cyan: #4cc9f0;
-    --eg-glow: rgba(255, 190, 92, 0.3);
-    --eg-glow-strong: rgba(255, 190, 92, 0.55);
+    /* Lines and fills only. 1.78:1 on warm white: far below AA, so this must
+       never be used as a text colour. It flips to a *text* colour on the
+       charcoal band, where it reads 7.27:1 (see --eg-on-dark-muted). */
+    --eg-border: #C9BCA9;
 
-    /* Text. Dim is the floor for anything readable: it clears WCAG AA on every
-       surface here (8.2:1 to 8.8:1), while faint peaks at 4.17:1 and fails the
-       4.5:1 minimum everywhere. Faint is reserved for inactive controls, which
-       1.4.3 exempts -- do not reach for it for body copy, labels or hints. */
-    --eg-text: #f0f0f8;
-    --eg-text-dim: #a9a9c0;
-    --eg-text-faint: #6f6f88;
+    /* Ink. Charcoal 12.90:1 on warm white, 10.09:1 on greige.
+       Olive-brown 7.06:1 on warm white, 5.52:1 on greige — safe for body copy
+       on both grounds. It drops to 3.97:1 on a solid --eg-border fill, so no
+       muted text may sit on one. */
+    --eg-text: #2F2E2C;
+    --eg-text-muted: #5B5545;
 
-    /* Validation failure. A red rather than a dimmed amber: amber is this
-       site's "working as intended" colour, so a field in error needs a hue
-       nothing else here uses. Measured 8.55:1 against the glass form card it
-       sits on, clearing WCAG AA 1.4.3. Against body copy it is only 2:1, which
-       is why the error styles below never rely on colour alone. */
-    --eg-error: #ff8a8a;
-    --eg-error-soft: rgba(255, 138, 138, 0.09);
+    /* Brand deep green — the only saturated colour that carries text.
+       9.58:1 on warm white, 7.49:1 on greige. Reversed, warm white on green
+       is the same 9.58:1, which is what the primary button uses. */
+    --eg-brand: #124C24;
+    /* Hover fill. Warm white on it measures 12.67:1. */
+    --eg-brand-hover: #0C3719;
+    /* Soft green wash. Charcoal 11.49:1, brand green 8.53:1. */
+    --eg-brand-tint: #E7EEE8;
 
-    /* Success. Green for the same reason error is red: amber already means
-       "brand furniture" here — every link, button and badge is amber — so an
-       amber success banner would read as decoration rather than as something
-       that just happened. Measured 12.24:1 on the page background and 11.67:1
-       on the glass card. */
-    --eg-success: #5ce0a0;
-    --eg-success-soft: rgba(92, 224, 160, 0.09);
+    /* Terracotta. 2.35:1 on warm white — it is the loudest colour on the board
+       and the easiest to misuse, so the rule here is absolute: it is never a
+       text colour anywhere in this stylesheet. It appears only as a fill, a
+       rule, a hover state or an icon shape. Where it is a fill, the text on it
+       is charcoal: #2F2E2C on #E2925E is 5.50:1. */
+    --eg-accent: #E2925E;
+    /* Hover fill, chosen so charcoal stays readable on it: 5.02:1. */
+    --eg-accent-hover: #D78C55;
+    /* Soft terracotta wash. Charcoal 11.90:1, brand green 8.83:1. */
+    --eg-accent-tint: #FAEEE4;
 
-    /* Shape & motion */
-    --eg-radius: 1.25rem;
-    --eg-radius-sm: 0.75rem;
+    /* Ink for the charcoal band. Warm white 12.90:1, greige rule 7.27:1. */
+    --eg-on-dark: #FBF9F5;
+    --eg-on-dark-muted: #C9BCA9;
+
+    /* --- Status colours ---------------------------------------------------
+       Picked as a set, not one at a time, so that the four flash states stay
+       apart once hue is removed. Pure-luminance ratios between them:
+       success/error 1.87:1, warning/error 1.48:1, info/error 1.34:1,
+       success/warning 1.27:1. Success against error — the pair that actually
+       matters — is close to 2:1 in greyscale, and every state also carries its
+       own glyph, so neither cue is doing the job alone (WCAG 1.4.1). */
+
+    /* 5.03:1 on warm white, 4.64:1 on its own tint. */
+    --eg-success: #2D7A40;
+    --eg-success-tint: #EAF2EC;
+
+    /* 9.43:1 on warm white, 8.44:1 on its own tint, 7.37:1 on greige. Deep
+       rust rather than a bright red: it belongs to the earthy palette and is
+       still the darkest of the four states, which is what separates it from
+       success in greyscale. */
+    --eg-error: #7A2617;
+    --eg-error-tint: #F7EAE6;
+
+    /* 6.37:1 on warm white, 5.91:1 on its own tint. */
+    --eg-warning: #7E5313;
+    --eg-warning-tint: #F7F0E2;
+
+    /* Informational reuses the olive-brown body ink rather than introducing a
+       fifth hue — the client asked for few colours, and "info" is the state
+       that least needs to shout. 6.39:1 on its own tint. */
+    --eg-info-tint: #F0EEE7;
+
+    /* Inactive controls only. 2.92:1 on warm white, which WCAG 1.4.3 exempts
+       for disabled controls; it reads 2.41:1 against the enabled olive-brown,
+       which is the distinction being bought. Never use for live text. */
+    --eg-disabled: #9C927F;
+
+    /* --- Type ---
+       Frasa Display and TT Interphases are the licensed faces the vision board
+       specifies; we do not hold either licence yet. They are named first so
+       that dropping the woff2 files into webroot/font and adding @font-face
+       blocks to fonts.css is the whole switch-over. Playfair Display and Inter
+       are the self-hosted stand-ins that ship today.
+
+       (The previous stylesheet named 'Sora' and 'DM Sans' with no @font-face
+       and no font files, so every page silently rendered in the system sans.) */
+    --eg-font-title: 'Frasa Display', 'Playfair Display', Georgia, serif;
+    --eg-font-body: 'TT Interphases', 'Inter', system-ui, -apple-system, sans-serif;
+
+    /* Shape & motion. Small radii read more boutique than pills; 999px is
+       reserved for chips, badges and status pills. */
+    --eg-radius: 0.5rem;
+    --eg-radius-sm: 0.3rem;
     --eg-ease: cubic-bezier(0.22, 1, 0.36, 1);
 
     /* Bootstrap overrides */
-    --bs-body-bg: var(--eg-bg-0);
+    --bs-body-bg: var(--eg-bg);
     --bs-body-color: var(--eg-text);
-    --bs-emphasis-color: #ffffff;
-    --bs-secondary-color: var(--eg-text-dim);
+    --bs-body-font-family: var(--eg-font-body);
+    --bs-emphasis-color: var(--eg-text);
+    --bs-secondary-color: var(--eg-text-muted);
     --bs-border-color: var(--eg-border);
-    --bs-link-color: var(--eg-amber);
-    --bs-link-hover-color: var(--eg-gold);
+    --bs-link-color: var(--eg-brand);
+    --bs-link-hover-color: var(--eg-brand-hover);
 }
 
 /* ---------- Base ---------- */
@@ -74,44 +125,58 @@ html {
 }
 
 body {
-    background:
-        radial-gradient(900px 480px at 85% -10%, rgba(255, 190, 92, 0.05), transparent 60%),
-        radial-gradient(700px 400px at -10% 40%, rgba(76, 201, 240, 0.03), transparent 55%),
-        var(--eg-bg-0);
+    background: var(--eg-bg);
     color: var(--eg-text);
-    font-family: 'DM Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
-    line-height: 1.7;
+    font-family: var(--eg-font-body);
+    line-height: 1.65;
     overflow-x: hidden;
 }
 
 h1, h2, h3, h4, h5, h6,
-.display-1, .display-2, .display-3, .display-4, .display-5,
-.navbar-brand, .btn {
-    font-family: 'Sora', 'DM Sans', system-ui, sans-serif;
+.display-1, .display-2, .display-3, .display-4, .display-5 {
+    font-family: var(--eg-font-title);
+    color: var(--eg-text);
+    font-weight: 400;
+    letter-spacing: -0.01em;
 }
 
-h1, h2, h3 {
-    letter-spacing: -0.03em;
-    color: var(--bs-emphasis-color);
+/* The sans is the "working" face: anything the user acts on or scans in a
+   hurry stays in it, so the serif reads as voice rather than as chrome. */
+.btn,
+.navbar-eg .nav-link,
+.eg-eyebrow,
+.table-eg thead th,
+.eg-chip,
+.pill {
+    font-family: var(--eg-font-body);
 }
 
 a {
-    color: var(--eg-amber);
+    color: var(--eg-brand);
     text-decoration: none;
     transition: color 0.2s var(--eg-ease);
 }
 
 a:hover {
-    color: var(--eg-gold);
+    color: var(--eg-brand-hover);
+    text-decoration: underline;
 }
 
 ::selection {
-    background: rgba(255, 190, 92, 0.4);
-    color: #fff;
+    background: var(--eg-accent-tint);
+    color: var(--eg-text);
 }
 
 .text-muted {
-    color: var(--eg-text-dim) !important;
+    color: var(--eg-text-muted) !important;
+}
+
+/* A single visible focus treatment for everything, in the brand green:
+   9.58:1 on warm white and 7.49:1 on greige, well past the 3:1 that WCAG
+   1.4.11 asks of a focus indicator. */
+:focus-visible {
+    outline: 2px solid var(--eg-brand);
+    outline-offset: 2px;
 }
 
 /* ---------- Skip to main content (WCAG 2.4.1) ---------- */
@@ -124,17 +189,17 @@ a:hover {
     z-index: 2100;
     padding: 0.75rem 1.25rem;
     border-radius: 0 0 var(--eg-radius-sm) var(--eg-radius-sm);
-    background: linear-gradient(120deg, var(--eg-amber), var(--eg-gold));
-    color: #201608;
-    font-weight: 700;
-    box-shadow: 0 0 26px var(--eg-glow-strong);
+    background: var(--eg-brand);
+    color: var(--eg-on-dark); /* 9.58:1 */
+    font-weight: 600;
     transition: top 0.2s var(--eg-ease);
 }
 
 .skip-link:focus {
     top: 0;
-    color: #201608;
-    outline: 2px solid #fff;
+    color: var(--eg-on-dark);
+    text-decoration: none;
+    outline: 2px solid var(--eg-text);
     outline-offset: 2px;
 }
 
@@ -144,62 +209,45 @@ a:hover {
     outline: none;
 }
 
-/* ---------- Cursor glow spot ---------- */
-#glow-spot {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 36rem;
-    height: 36rem;
-    margin: -18rem 0 0 -18rem;
-    border-radius: 50%;
-    pointer-events: none;
-    z-index: 1;
-    background: radial-gradient(circle, rgba(255, 190, 92, 0.13) 0%, rgba(255, 190, 92, 0.05) 35%, transparent 65%);
-    opacity: 0;
-    transition: opacity 0.6s var(--eg-ease);
-    will-change: transform;
-}
-
-body.glow-active #glow-spot {
-    opacity: 1;
-}
-
-/* ---------- Power-on intro ---------- */
-#power-on {
-    position: fixed;
+/* ---------- Soft organic wash ----------
+   The vision board's cover carries a low-saturation, grainy gradient bloom in
+   one corner. It is kept because it is the board's own atmosphere and it costs
+   nothing in contrast — it only ever sits behind large areas of ground, never
+   behind text. This is not the old hard "glow": no light source, no bloom, no
+   coloured shadow, opacity in the single-percent range. */
+.eg-wash {
+    position: absolute;
     inset: 0;
-    z-index: 2000;
-    background: var(--eg-bg-0);
-    display: grid;
-    place-items: center;
-    animation: power-on-fade 1.1s var(--eg-ease) 0.35s forwards;
+    overflow: hidden;
+    pointer-events: none;
 }
 
-#power-on::before {
+.eg-wash::before {
     content: '';
-    width: 14rem;
-    height: 14rem;
-    border-radius: 50%;
-    background: radial-gradient(circle, var(--eg-glow-strong) 0%, var(--eg-glow) 35%, transparent 70%);
-    animation: power-on-bloom 1.2s var(--eg-ease) forwards;
+    position: absolute;
+    inset: -20%;
+    background:
+        radial-gradient(38% 42% at 78% 72%, rgba(226, 146, 94, 0.28), transparent 70%),
+        radial-gradient(34% 38% at 92% 44%, rgba(183, 196, 180, 0.32), transparent 72%),
+        radial-gradient(30% 34% at 62% 96%, rgba(201, 188, 169, 0.35), transparent 70%);
 }
 
-@keyframes power-on-bloom {
-    0% { transform: scale(0.2); opacity: 0; }
-    60% { opacity: 1; }
-    100% { transform: scale(2.4); opacity: 1; }
-}
-
-@keyframes power-on-fade {
-    to { opacity: 0; visibility: hidden; }
+/* Fractal noise laid over the gradient, which is what stops it reading as a
+   flat CSS blur. Inlined so it costs no extra request. */
+.eg-wash::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    opacity: 0.4;
+    mix-blend-mode: multiply;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)' opacity='0.28'/%3E%3C/svg%3E");
 }
 
 /* ---------- Scroll reveal ---------- */
 .reveal {
     opacity: 0;
-    transform: translateY(2rem);
-    transition: opacity 0.8s var(--eg-ease), transform 0.8s var(--eg-ease);
+    transform: translateY(1.25rem);
+    transition: opacity 0.7s var(--eg-ease), transform 0.7s var(--eg-ease);
     transition-delay: var(--reveal-delay, 0s);
 }
 
@@ -208,50 +256,96 @@ body.glow-active #glow-spot {
     transform: translateY(0);
 }
 
-/* ---------- Navbar: floating frosted glass ---------- */
+/* ---------- Announcement bar ---------- */
+.eg-announce {
+    background: var(--eg-text);
+    color: var(--eg-on-dark); /* 12.90:1 */
+    font-size: 0.8rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 0.55rem 0;
+}
+
+/* aria-hidden separator. Terracotta would measure 5.50:1 here and would pass,
+   but the rule for this palette is that terracotta is never an ink anywhere,
+   so the greige on-dark tone carries it instead: 7.27:1. */
+.eg-announce .eg-announce-sep {
+    color: var(--eg-on-dark-muted);
+}
+
+/* ---------- Navbar ---------- */
+/* Sticky rather than fixed, so the announcement bar above it scrolls away and
+   no page needs a magic padding-top to clear a floating header. */
+.eg-header {
+    z-index: 1030;
+}
+
 .navbar-eg {
-    background: rgba(5, 5, 8, 0.5);
-    backdrop-filter: blur(18px) saturate(140%);
-    -webkit-backdrop-filter: blur(18px) saturate(140%);
+    background: var(--eg-bg);
     border-bottom: 1px solid var(--eg-border);
-    padding-top: 1rem;
-    padding-bottom: 1rem;
-    transition: background 0.4s var(--eg-ease), box-shadow 0.4s var(--eg-ease);
+    padding-top: 0.65rem;
+    padding-bottom: 0.65rem;
 }
 
 .navbar-eg.is-scrolled {
-    background: rgba(5, 5, 8, 0.82);
-    box-shadow: 0 0.5rem 2.5rem rgba(0, 0, 0, 0.6);
+    box-shadow: 0 0.25rem 1rem rgba(47, 46, 44, 0.07);
 }
 
 .navbar-eg .navbar-brand {
-    font-weight: 700;
-    font-size: 1.3rem;
-    letter-spacing: -0.02em;
-    color: #fff;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.6rem;
+    font-family: var(--eg-font-title);
+    font-size: 1.6rem;
+    font-weight: 600;
+    line-height: 1.1;
+    letter-spacing: 0.02em;
+    color: var(--eg-text); /* 12.90:1 */
+    text-align: center;
+    text-decoration: none;
 }
 
-.navbar-eg .navbar-brand .brand-word {
-    background: linear-gradient(92deg, var(--eg-amber), var(--eg-gold) 55%, #fff 120%);
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
+.navbar-eg .navbar-brand:hover {
+    color: var(--eg-brand);
+    text-decoration: none;
 }
 
-.brand-bulb {
-    width: 1.6rem;
-    height: 1.6rem;
-    color: var(--eg-amber);
-    filter: drop-shadow(0 0 8px var(--eg-glow-strong));
-    transition: filter 0.3s var(--eg-ease), transform 0.3s var(--eg-ease);
+.navbar-eg .navbar-brand .brand-sub {
+    display: block;
+    font-family: var(--eg-font-body);
+    font-size: 0.55rem;
+    font-weight: 500;
+    letter-spacing: 0.32em;
+    text-transform: uppercase;
+    color: var(--eg-text-muted); /* 7.06:1 */
 }
 
-.navbar-eg .navbar-brand:hover .brand-bulb {
-    filter: drop-shadow(0 0 14px var(--eg-glow-strong)) drop-shadow(0 0 30px var(--eg-glow));
-    transform: rotate(-8deg);
+/* Three-part header: links left, wordmark centred, utilities right — the
+   arrangement from the Nook Collections reference. Below lg the collapse drops
+   to its own row underneath (Bootstrap already gives it flex-basis:100%). */
+.navbar-eg .nav-primary {
+    order: 4;
+}
+
+.navbar-eg .navbar-brand {
+    order: 2;
+}
+
+.navbar-eg .nav-utils {
+    order: 3;
+}
+
+.navbar-eg .navbar-toggler {
+    order: 1;
+}
+
+@media (min-width: 992px) {
+    .navbar-eg .nav-primary {
+        order: 1;
+        flex: 1 1 0;
+    }
+
+    .navbar-eg .nav-utils {
+        flex: 1 1 0;
+        justify-content: flex-end;
+    }
 }
 
 .navbar-eg .nav-link {
@@ -260,38 +354,98 @@ body.glow-active #glow-spot {
     align-items: center;
     gap: 0.4rem;
     min-height: 44px;
-    color: var(--eg-text-dim);
+    color: var(--eg-text); /* 12.90:1 */
+    font-size: 0.82rem;
     font-weight: 500;
-    padding: 0.5rem 1rem;
-    transition: color 0.25s var(--eg-ease);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 0.5rem 0.9rem;
+    transition: color 0.2s var(--eg-ease);
 }
 
 .navbar-eg .nav-link::after {
     content: '';
     position: absolute;
-    left: 1rem;
-    right: 1rem;
-    bottom: 0.15rem;
-    height: 2px;
-    border-radius: 2px;
-    background: linear-gradient(90deg, var(--eg-amber), var(--eg-gold));
-    box-shadow: 0 0 12px var(--eg-glow-strong);
+    left: 0.9rem;
+    right: 0.9rem;
+    bottom: 0.35rem;
+    height: 1px;
+    background: var(--eg-brand);
     transform: scaleX(0);
     transform-origin: left;
-    transition: transform 0.3s var(--eg-ease);
+    transition: transform 0.25s var(--eg-ease);
 }
 
 .navbar-eg .nav-link:hover {
-    color: #fff;
+    color: var(--eg-brand);
 }
 
 .navbar-eg .nav-link:hover::after {
     transform: scaleX(1);
 }
 
+.nav-utils {
+    display: flex;
+    align-items: center;
+    gap: 0.15rem;
+}
+
+/* 44px square so the icon cluster meets the same touch-target floor as the
+   toggler (WCAG 2.5.8). */
+.eg-icon-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    min-width: 44px;
+    min-height: 44px;
+    padding: 0 0.55rem;
+    border: none;
+    border-radius: var(--eg-radius-sm);
+    background: transparent;
+    color: var(--eg-text); /* 12.90:1 */
+    transition: color 0.2s var(--eg-ease), background-color 0.2s var(--eg-ease);
+}
+
+.eg-icon-btn:hover {
+    background: var(--eg-accent-tint);
+    color: var(--eg-brand);
+    text-decoration: none;
+}
+
+.eg-icon-btn svg {
+    width: 1.15rem;
+    height: 1.15rem;
+}
+
+/* The basket icon is a live link to /cart now that the storefront routes exist.
+   Search is not: there is no index to search, and a box that swallows a query
+   and does nothing is worse than one that plainly says it is off. Disabled also
+   takes it out of the tab order. WCAG 1.4.3 exempts inactive controls. */
+.eg-icon-btn:disabled {
+    color: var(--eg-disabled);
+    background: transparent;
+    cursor: default;
+}
+
+.badge-count {
+    display: inline-block;
+    min-width: 1.35rem;
+    padding: 0.1em 0.4em;
+    border-radius: 999px;
+    background: var(--eg-accent);
+    color: var(--eg-text); /* 5.50:1 */
+    font-size: 0.7rem;
+    font-weight: 700;
+    line-height: 1.45;
+    text-align: center;
+}
+
 /* Left unscoped on purpose: Bootstrap's `.navbar-expand-lg .navbar-toggler`
-   must stay more specific so the toggler still hides on desktop. Its default
-   padding computes to a 40px box, under the 44px minimum touch target. */
+   must stay more specific so the toggler still hides on desktop. Adding a
+   `.navbar-eg` prefix here would tie the two selectors on specificity and win
+   on source order, putting a second hamburger on every desktop page. Its
+   default padding computes to a 40px box, under the 44px minimum. */
 .navbar-toggler {
     --bs-navbar-toggler-padding-y: 0.375rem;
     min-height: 44px;
@@ -299,347 +453,1116 @@ body.glow-active #glow-spot {
     border-color: var(--eg-border);
 }
 
-.badge-glow {
-    background: linear-gradient(120deg, var(--eg-amber), var(--eg-gold));
-    color: #201608;
-    font-weight: 700;
-    border-radius: 999px;
-    padding: 0.25em 0.65em;
-    box-shadow: 0 0 14px var(--eg-glow-strong);
+.navbar-toggler:focus {
+    box-shadow: none;
+}
+
+/* Bootstrap's default icon is a white-on-transparent data URI; on a warm white
+   header it is invisible. Redrawn in charcoal. */
+.navbar-eg .navbar-toggler-icon {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3E%3Cpath stroke='%232F2E2C' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3E%3C/svg%3E");
 }
 
 /* ---------- Buttons ---------- */
-.btn-glow {
-    --bs-btn-padding-x: 1.75rem;
-    --bs-btn-padding-y: 0.8rem;
-    background: linear-gradient(120deg, var(--eg-amber), var(--eg-gold));
-    border: none;
-    border-radius: 999px;
-    color: #201608;
-    font-weight: 700;
-    letter-spacing: 0.01em;
-    box-shadow: 0 0 26px var(--eg-glow), 0 6px 22px rgba(0, 0, 0, 0.5);
-    transition: transform 0.25s var(--eg-ease), box-shadow 0.25s var(--eg-ease);
-}
-
-.btn-glow:hover,
-.btn-glow:focus {
-    background: linear-gradient(120deg, var(--eg-gold), var(--eg-amber));
-    color: #201608;
-    transform: translateY(-3px);
-    box-shadow: 0 0 48px var(--eg-glow-strong), 0 14px 30px rgba(0, 0, 0, 0.55);
-}
-
-.btn-glow:active {
-    transform: translateY(-1px);
-}
-
-.btn-ghost-glow {
-    --bs-btn-padding-x: 1.5rem;
+.btn-eg-primary,
+.btn-eg-secondary,
+.btn-eg-ghost {
+    --bs-btn-padding-x: 1.6rem;
     --bs-btn-padding-y: 0.7rem;
-    background: transparent;
-    border: 1px solid var(--eg-border-light);
-    border-radius: 999px;
-    color: var(--eg-amber);
-    font-weight: 600;
-    transition: all 0.25s var(--eg-ease);
-}
-
-.btn-ghost-glow:hover,
-.btn-ghost-glow:focus {
-    border-color: var(--eg-amber);
-    color: var(--eg-gold);
-    box-shadow: 0 0 24px var(--eg-glow), inset 0 0 14px rgba(255, 190, 92, 0.1);
-    transform: translateY(-2px);
-}
-
-.btn-outline-danger {
-    border-radius: 999px;
-}
-
-/* ---------- Glass panels (kept ONLY for functional areas: forms/admin) ---------- */
-.glass-card {
-    position: relative;
-    background: var(--eg-glass);
-    border: 1px solid var(--eg-border);
-    border-radius: var(--eg-radius);
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
-    box-shadow: 0 1.5rem 3rem rgba(0, 0, 0, 0.5);
-}
-
-.glass-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 8%;
-    right: 8%;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, var(--eg-border-light), transparent);
-    pointer-events: none;
-}
-
-/* ---------- Hero — darkest, with a single hot light source ---------- */
-.hero-eg {
-    position: relative;
-    min-height: 94vh;
-    display: flex;
-    align-items: center;
-    overflow: hidden;
-    background:
-        radial-gradient(52rem 30rem at 50% -10%, rgba(255, 190, 92, 0.28), transparent 60%),
-        radial-gradient(30rem 20rem at 78% 26%, rgba(255, 209, 102, 0.12), transparent 60%),
-        radial-gradient(26rem 18rem at 15% 65%, rgba(76, 201, 240, 0.05), transparent 60%),
-        var(--eg-bg-0);
-}
-
-.hero-eg::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: radial-gradient(22rem 13rem at 50% 0%, rgba(255, 209, 102, 0.35), transparent 65%);
-    mix-blend-mode: screen;
-    pointer-events: none;
-}
-
-.hero-eg::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    height: 40%;
-    background: linear-gradient(180deg, transparent, rgba(5, 5, 8, 0.9));
-    pointer-events: none;
-}
-
-.hero-title {
-    font-size: clamp(2.8rem, 7vw, 5.4rem);
-    font-weight: 800;
-    line-height: 1.04;
-}
-
-.hero-title .shine {
-    background: linear-gradient(94deg, #fff 8%, var(--eg-gold) 42%, var(--eg-amber) 78%);
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-    text-shadow: none;
-}
-
-.hero-lead {
-    color: var(--eg-text-dim);
-    font-size: 1.25rem;
-    max-width: 42rem;
-}
-
-.hero-badge {
     display: inline-flex;
     align-items: center;
-    gap: 0.5rem;
-    padding: 0.45rem 1.1rem;
-    border-radius: 999px;
-    border: 1px solid var(--eg-border-light);
-    background: rgba(255, 190, 92, 0.1);
-    color: var(--eg-amber);
-    font-weight: 600;
+    justify-content: center;
+    gap: 0.55rem;
+    min-height: 44px;
+    border-radius: var(--eg-radius-sm);
     font-size: 0.85rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    transition: background-color 0.2s var(--eg-ease), border-color 0.2s var(--eg-ease), color 0.2s var(--eg-ease);
+}
+
+/* Warm white on deep green: 9.58:1. */
+.btn-eg-primary {
+    background: var(--eg-brand);
+    border: 1px solid var(--eg-brand);
+    color: var(--eg-on-dark);
+}
+
+/* Warm white on the hover fill: 12.67:1. */
+.btn-eg-primary:hover,
+.btn-eg-primary:focus,
+.btn-eg-primary:active {
+    background: var(--eg-brand-hover);
+    border-color: var(--eg-brand-hover);
+    color: var(--eg-on-dark);
+    text-decoration: none;
+}
+
+/* Warm white on olive-brown: 7.06:1. */
+.btn-eg-secondary {
+    background: var(--eg-text-muted);
+    border: 1px solid var(--eg-text-muted);
+    color: var(--eg-on-dark);
+}
+
+.btn-eg-secondary:hover,
+.btn-eg-secondary:focus,
+.btn-eg-secondary:active {
+    background: var(--eg-text);
+    border-color: var(--eg-text);
+    color: var(--eg-on-dark); /* 12.90:1 */
+    text-decoration: none;
+}
+
+/* Outline on the page ground: the label is charcoal at 12.90:1 and the rule is
+   decorative, so the greige border being 1.78:1 costs nothing. */
+.btn-eg-ghost {
+    background: transparent;
+    border: 1px solid var(--eg-border);
+    color: var(--eg-text);
+}
+
+.btn-eg-ghost:hover,
+.btn-eg-ghost:focus,
+.btn-eg-ghost:active {
+    background: var(--eg-brand-tint);
+    border-color: var(--eg-brand);
+    color: var(--eg-brand); /* 8.53:1 on the tint */
+    text-decoration: none;
+}
+
+/* The arrow that the LUMO reference puts inside every call to action. */
+.btn-arrow {
+    width: 0.9rem;
+    height: 0.9rem;
+    flex: none;
+}
+
+.btn-sm.btn-eg-primary,
+.btn-sm.btn-eg-secondary,
+.btn-sm.btn-eg-ghost {
+    --bs-btn-padding-x: 0.9rem;
+    --bs-btn-padding-y: 0.4rem;
+    font-size: 0.75rem;
+}
+
+/* Destructive actions stay in the rust used for every other failure state:
+   9.43:1 as a label on warm white, warm white on it as a fill. */
+.btn-eg-danger {
+    --bs-btn-padding-x: 0.9rem;
+    --bs-btn-padding-y: 0.4rem;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    border-radius: var(--eg-radius-sm);
+    background: transparent;
+    border: 1px solid var(--eg-error);
+    color: var(--eg-error);
+    font-size: 0.75rem;
+    font-weight: 600;
     letter-spacing: 0.08em;
     text-transform: uppercase;
 }
 
-/* ---------- Section shell — separated by light rules, not boxes ---------- */
+.btn-eg-danger:hover,
+.btn-eg-danger:focus {
+    background: var(--eg-error);
+    color: var(--eg-bg); /* 9.43:1 */
+    text-decoration: none;
+}
+
+/* A control that cannot yet do what its label says is disabled rather than
+   wired to something inert — "Add to basket" and "Proceed to checkout" until
+   the orders backend lands, "Create account" until there is a customers table.
+   Bootstrap's default is the enabled fill at 65% opacity, which on the primary
+   green still reads as a live button. This replaces it with the greige surface
+   so the control is plainly off: --eg-disabled on it is 2.29:1, which WCAG
+   1.4.3 exempts for inactive controls and which is the point — the enabled
+   button is warm white on deep green, 9.58:1, so the two cannot be confused. */
+.btn-eg-primary:disabled,
+.btn-eg-secondary:disabled,
+.btn-eg-ghost:disabled {
+    background: var(--eg-bg-alt);
+    border-color: var(--eg-border);
+    color: var(--eg-disabled);
+    opacity: 1;
+    cursor: default;
+}
+
+/* ---------- Surfaces ---------- */
+.eg-card {
+    background: var(--eg-bg);
+    border: 1px solid var(--eg-border);
+    border-radius: var(--eg-radius);
+}
+
+.eg-band-alt {
+    background: var(--eg-bg-alt);
+}
+
+/* The dark counterpart to the light product areas in the LUMO reference.
+   Everything inside flips to the on-dark ink pair. */
+.eg-band-dark {
+    position: relative;
+    background: var(--eg-text);
+    color: var(--eg-on-dark); /* 12.90:1 */
+    overflow: hidden;
+}
+
+.eg-band-dark h1,
+.eg-band-dark h2,
+.eg-band-dark h3,
+.eg-band-dark h4 {
+    color: var(--eg-on-dark);
+}
+
+.eg-band-dark .text-muted,
+.eg-band-dark p {
+    color: var(--eg-on-dark-muted) !important; /* 7.27:1 */
+}
+
+.eg-band-dark .eg-eyebrow {
+    color: var(--eg-on-dark-muted);
+}
+
+/* ---------- Section shell ---------- */
 .section-eg {
     position: relative;
-    padding: 7rem 0;
+    padding: 5.5rem 0;
 }
 
-.section-eg + .section-eg::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 12%;
-    right: 12%;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, var(--eg-border-light), transparent);
-    opacity: 0.6;
-}
-
-.section-eyebrow {
-    color: var(--eg-amber);
-    font-weight: 700;
-    letter-spacing: 0.18em;
+.eg-eyebrow {
+    display: block;
+    color: var(--eg-text-muted); /* 7.06:1 */
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.22em;
     text-transform: uppercase;
-    font-size: 0.8rem;
+    margin-bottom: 0.75rem;
 }
 
 .section-title {
-    font-size: clamp(2rem, 4vw, 3rem);
-    font-weight: 700;
+    font-family: var(--eg-font-title);
+    font-size: clamp(1.9rem, 3.6vw, 2.9rem);
+    font-weight: 400;
+    line-height: 1.15;
 }
 
-/* ---------- Products — borderless open grid ---------- */
-.product-item {
+.section-lead {
+    color: var(--eg-text-muted); /* 7.06:1 on warm white, 5.52:1 on greige */
+    max-width: 38rem;
+}
+
+/* ---------- Hero ---------- */
+.hero-eg {
     position: relative;
-    height: 100%;
-    padding: 2.5rem 1.5rem;
-    text-align: center;
-    transition: transform 0.35s var(--eg-ease);
+    background: var(--eg-bg);
+    overflow: hidden;
 }
 
-.product-item:hover {
-    transform: translateY(-6px);
+.hero-title {
+    font-family: var(--eg-font-title);
+    font-size: clamp(2.4rem, 6vw, 4.4rem);
+    font-weight: 400;
+    line-height: 1.06;
+    letter-spacing: -0.015em;
 }
 
-.product-item .lamp-visual {
+.hero-lead {
+    color: var(--eg-text-muted); /* 7.06:1 */
+    font-size: 1.05rem;
+    max-width: 32rem;
+}
+
+/* The vision-board panel: greige ground, soft grainy wash, one lamp shape. */
+.hero-figure {
     position: relative;
-    width: 6rem;
-    height: 6rem;
-    margin: 0 auto 1.6rem;
+    min-height: clamp(20rem, 42vw, 30rem);
+    border-radius: var(--eg-radius);
+    background: var(--eg-bg-alt);
+    overflow: hidden;
     display: grid;
     place-items: center;
 }
 
-.lamp-visual .halo {
-    position: absolute;
-    inset: 0;
-    border-radius: 50%;
-    background: radial-gradient(circle, var(--eg-glow) 0%, transparent 70%);
-    transform: scale(1.05);
-    transition: transform 0.4s var(--eg-ease), opacity 0.4s var(--eg-ease);
-    opacity: 0.7;
-}
-
-.lamp-visual svg {
+.hero-figure .hero-lamp {
     position: relative;
+    width: clamp(7rem, 14vw, 10rem);
+    height: clamp(7rem, 14vw, 10rem);
+    color: var(--eg-text); /* a line drawing, 10.09:1 on greige */
+    opacity: 0.72;
+}
+
+.hero-stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2.25rem;
+    padding-top: 1.75rem;
+    margin-top: 2rem;
+    border-top: 1px solid var(--eg-border);
+}
+
+.hero-stats .stat-num {
+    display: block;
+    font-family: var(--eg-font-title);
+    font-size: 1.6rem;
+    line-height: 1.1;
+    color: var(--eg-text); /* 12.90:1 */
+}
+
+.hero-stats .stat-label {
+    font-size: 0.75rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--eg-text-muted); /* 7.06:1 */
+}
+
+/* ==========================================================================
+ * Storefront components
+ *
+ * The pieces the catalogue, product detail, basket and registration pages are
+ * assembled from. They were styled and measured a task ahead of those pages so
+ * that the visual language was settled before any of them was written; all four
+ * are now built out of exactly these parts.
+ * ========================================================================== */
+
+/* ---------- Product card ----------
+   Used by: category tiles, the Best Sellers grid, the /shop listing and the
+   "goes well with" row on a product page. Borderless over the page ground, the
+   way the Nook reference handles them — the image well is the only box. */
+.product-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    text-decoration: none;
+    color: inherit;
+}
+
+.product-card:hover {
+    color: inherit;
+    text-decoration: none;
+}
+
+.product-media {
+    position: relative;
+    aspect-ratio: 4 / 5;
+    display: grid;
+    place-items: center;
+    border-radius: var(--eg-radius);
+    background: var(--eg-bg-alt);
+    overflow: hidden;
+    transition: background-color 0.3s var(--eg-ease);
+}
+
+.product-card:hover .product-media {
+    background: var(--eg-accent-tint);
+}
+
+/* The image well is greige and so is the alternating band, so a card dropped
+   straight onto one has no visible image area at all — the marks appear to
+   float on the band. Same trap .category-tile sidesteps, same answer: on the
+   band the well takes the page ground instead. */
+.eg-band-alt .product-media {
+    background: var(--eg-bg);
+}
+
+.eg-band-alt .product-card:hover .product-media {
+    background: var(--eg-accent-tint);
+}
+
+.product-media svg {
+    width: 42%;
+    height: 42%;
+    color: var(--eg-text); /* line art, 10.09:1 on greige */
+    opacity: 0.62;
+    transition: transform 0.35s var(--eg-ease);
+}
+
+.product-card:hover .product-media svg {
+    transform: translateY(-4px);
+}
+
+/* Corner flag on a product image — terracotta fill, charcoal label: 5.50:1. */
+.product-flag {
+    position: absolute;
+    top: 0.75rem;
+    left: 0.75rem;
+    padding: 0.2em 0.65em;
+    border-radius: 999px;
+    background: var(--eg-accent);
+    color: var(--eg-text);
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.product-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    padding-top: 1rem;
+}
+
+.product-name {
+    font-family: var(--eg-font-title);
+    font-size: 1.1rem;
+    line-height: 1.3;
+    color: var(--eg-text); /* 12.90:1 */
+    margin: 0;
+}
+
+.product-meta {
+    font-size: 0.85rem;
+    color: var(--eg-text-muted); /* 7.06:1 */
+    margin: 0;
+}
+
+.product-price {
+    font-weight: 600;
+    color: var(--eg-text); /* 12.90:1 */
+}
+
+/* Colourway dots. Decorative duplicates of the swatch names, which is why a
+   1.78:1 ring is acceptable here — no information lives in the dot alone. */
+.product-swatches {
+    display: flex;
+    gap: 0.35rem;
+    padding-top: 0.35rem;
+}
+
+.product-swatches .swatch {
+    width: 0.85rem;
+    height: 0.85rem;
+    border-radius: 50%;
+    border: 1px solid var(--eg-border);
+}
+
+/* ---------- Filter chips ----------
+   Used by: the /shop category and style filters, the home page's collection
+   shortcuts, and the globe picker on a product page. Styles a `<button>`, an
+   `<a>` and a `<label>` alike, since the three pages need different semantics
+   from the same shape. */
+.eg-chip-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.eg-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    min-height: 44px;
+    padding: 0.45rem 1.1rem;
+    border: 1px solid var(--eg-border);
+    border-radius: 999px;
+    background: transparent;
+    color: var(--eg-text); /* 12.90:1 */
+    cursor: pointer;
+    font-size: 0.8rem;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    transition: background-color 0.2s var(--eg-ease), border-color 0.2s var(--eg-ease), color 0.2s var(--eg-ease);
+}
+
+.eg-chip:hover {
+    border-color: var(--eg-brand);
+    background: var(--eg-brand-tint);
+    color: var(--eg-brand); /* 8.53:1 on the tint */
+    text-decoration: none;
+}
+
+/* Selected state carries a filled dot as well as the fill, so the choice is
+   not signalled by colour alone. */
+.eg-chip.is-active {
+    background: var(--eg-brand);
+    border-color: var(--eg-brand);
+    color: var(--eg-on-dark); /* 9.58:1 */
+}
+
+.eg-chip.is-active::before {
+    content: '\2022';
+    font-weight: 700;
+}
+
+/* ---------- Sort control ---------- */
+.eg-sort {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+    color: var(--eg-text-muted); /* 7.06:1 */
+}
+
+.eg-sort .form-select {
+    min-height: 44px;
+    width: auto;
+    padding-right: 2.25rem;
+    border-color: var(--eg-border);
+    font-size: 0.85rem;
+    color: var(--eg-text);
+}
+
+/* ---------- Breadcrumb ---------- */
+.eg-breadcrumb {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    font-size: 0.8rem;
+    color: var(--eg-text-muted); /* 7.06:1 */
+}
+
+.eg-breadcrumb a {
+    color: var(--eg-text-muted);
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
+}
+
+.eg-breadcrumb a:hover {
+    color: var(--eg-brand);
+}
+
+.eg-breadcrumb li + li::before {
+    content: '/';
+    margin-right: 0.5rem;
+    color: var(--eg-border); /* a separator, never read */
+}
+
+.eg-breadcrumb [aria-current='page'] {
+    color: var(--eg-text); /* 12.90:1 */
+}
+
+/* ---------- Quantity stepper ---------- */
+.eg-qty {
+    display: inline-flex;
+    align-items: stretch;
+    border: 1px solid var(--eg-border);
+    border-radius: var(--eg-radius-sm);
+    overflow: hidden;
+}
+
+.eg-qty button {
+    min-width: 44px;
+    min-height: 44px;
+    border: none;
+    background: transparent;
+    color: var(--eg-text); /* 12.90:1 */
+    font-size: 1rem;
+    line-height: 1;
+}
+
+.eg-qty button:hover {
+    background: var(--eg-bg-alt);
+}
+
+.eg-qty button:disabled {
+    color: var(--eg-disabled); /* inactive control, 1.4.3 exempt */
+}
+
+.eg-qty input {
     width: 3rem;
-    height: 3rem;
-    color: var(--eg-amber);
-    filter: drop-shadow(0 0 12px var(--eg-glow-strong));
-    transition: filter 0.35s var(--eg-ease), transform 0.35s var(--eg-ease);
-}
-
-.product-item:hover .lamp-visual .halo {
-    transform: scale(1.7);
-    opacity: 1;
-}
-
-.product-item:hover .lamp-visual svg {
-    filter: drop-shadow(0 0 18px var(--eg-glow-strong)) drop-shadow(0 0 40px var(--eg-glow));
-    transform: translateY(-3px);
-}
-
-.product-item h3 {
-    font-size: 1.2rem;
+    border: none;
+    border-left: 1px solid var(--eg-border);
+    border-right: 1px solid var(--eg-border);
+    background: transparent;
+    color: var(--eg-text);
+    text-align: center;
     font-weight: 600;
 }
 
-.product-item p {
-    color: var(--eg-text-dim);
-    font-size: 0.98rem;
-    margin-bottom: 0;
+.eg-qty input:focus {
+    outline: 2px solid var(--eg-brand);
+    outline-offset: -2px;
+}
+
+/* ---------- Category tile ---------- */
+/* Warm white with a rule, not greige: these tiles sit on the greige band, so
+   filling them with the band colour would leave nothing to see. */
+.category-tile {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    min-height: 11rem;
+    padding: 1.4rem;
+    border: 1px solid var(--eg-border);
+    border-radius: var(--eg-radius);
+    background: var(--eg-bg);
+    color: var(--eg-text);
+    text-decoration: none;
+    overflow: hidden;
+    transition: background-color 0.3s var(--eg-ease), border-color 0.3s var(--eg-ease);
+}
+
+.category-tile:hover {
+    background: var(--eg-accent-tint);
+    border-color: var(--eg-accent);
+    color: var(--eg-text);
+    text-decoration: none;
+}
+
+/* margin-bottom:auto pins the mark to the top and pushes the label pair to the
+   bottom of the tile without taking either out of flow. */
+.category-tile svg {
+    width: 2.25rem;
+    height: 2.25rem;
+    margin-bottom: auto;
+    color: var(--eg-text);
+    opacity: 0.55;
+}
+
+.category-tile .tile-name {
+    font-family: var(--eg-font-title);
+    font-size: 1.15rem;
+    line-height: 1.25;
+    color: var(--eg-text); /* 12.90:1; 11.90:1 on the hover tint */
+}
+
+.category-tile .tile-text {
+    font-size: 0.85rem;
+    color: var(--eg-text-muted); /* 7.06:1; 6.51:1 on the hover tint */
+    margin: 0.25rem 0 0;
+}
+
+/* ---------- Interior page header ---------- */
+/* The home page opens on the hero; every other storefront page opens on this:
+   eyebrow, title, one line of lead. Centred like the Nook reference, with a
+   left-aligned variant for pages that are a working surface rather than a
+   landing (the basket). */
+.eg-page-head {
+    max-width: 46rem;
+    margin: 0 auto 2.5rem;
+    text-align: center;
+}
+
+.eg-page-head-start {
+    margin-left: 0;
+    text-align: left;
+}
+
+/* ---------- Listing toolbar ---------- */
+.eg-shop-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem 1.5rem;
+    padding: 1rem 0;
+    border-top: 1px solid var(--eg-border);
+    border-bottom: 1px solid var(--eg-border);
+}
+
+.eg-shop-count {
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--eg-text-muted); /* 7.06:1 */
+}
+
+.eg-sort label {
+    margin: 0;
+    white-space: nowrap;
+}
+
+.eg-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem 3rem;
+    padding: 1.75rem 0 2.25rem;
+}
+
+/* min-width:0 so a long chip row wraps inside the group instead of forcing the
+   flex parent wider than the container — the usual source of a horizontal
+   scrollbar on a filter row at 390px. */
+.eg-filter-group {
+    min-width: 0;
+}
+
+.eg-shop-empty {
+    padding: 3.5rem 0;
+    text-align: center;
+    color: var(--eg-text-muted); /* 7.06:1 */
+}
+
+/* ---------- Chip and swatch pickers ----------
+   Product options are real radio groups: one input per choice, visually hidden
+   but still focusable, with the chip or swatch as its label. That buys native
+   single-select semantics and arrow-key navigation for free, and it is the only
+   version of this control that still works with JavaScript off. */
+.eg-choice-input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* Same treatment as `.eg-chip.is-active`, including the leading dot, so the
+   selected option is not signalled by fill colour alone. */
+.eg-choice-input:checked + .eg-chip {
+    background: var(--eg-brand);
+    border-color: var(--eg-brand);
+    color: var(--eg-on-dark); /* 9.58:1 */
+}
+
+.eg-choice-input:checked + .eg-chip::before {
+    content: '\2022';
+    font-weight: 700;
+}
+
+/* The input carries focus but is off-screen, so the ring has to be drawn on
+   whichever label follows it. */
+.eg-choice-input:focus-visible + .eg-chip,
+.eg-choice-input:focus-visible + .eg-swatch-label {
+    outline: 2px solid var(--eg-brand);
+    outline-offset: 2px;
+}
+
+.eg-option {
+    min-width: 0;
+    margin: 1.75rem 0 0;
+    padding: 0;
+    border: none;
+}
+
+/* Reboot floats legends and blows their font size up with a vw unit; both have
+   to go before a legend can sit in the type scale as an eyebrow. */
+.eg-option legend {
+    float: none;
+    width: auto;
+    padding: 0;
+    font-size: 0.72rem;
+    line-height: inherit;
+}
+
+.eg-swatch-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+}
+
+/* 44 x 44 of hit area around a 24px dot (WCAG 2.5.8). The dot alone would be a
+   24px target, which is the usual failure on a colourway picker. */
+.eg-swatch-label {
+    display: inline-grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+.eg-swatch-dot {
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: 50%;
+    border: 1px solid var(--eg-border);
+    transition: box-shadow 0.2s var(--eg-ease);
+}
+
+.eg-swatch-label:hover .eg-swatch-dot {
+    box-shadow: 0 0 0 2px var(--eg-bg), 0 0 0 3px var(--eg-border);
+}
+
+/* Selection is a ring — a change of shape, not of hue — because the dot's own
+   colour is the thing being chosen and cannot also carry the state. The colour
+   name sits beside it in a `.visually-hidden` span, and the input underneath is
+   a real radio, so assistive tech is told outright which one is checked. */
+.eg-choice-input:checked + .eg-swatch-label .eg-swatch-dot {
+    box-shadow: 0 0 0 2px var(--eg-bg), 0 0 0 4px var(--eg-brand);
+}
+
+/* ---------- Product gallery ---------- */
+/* Square rather than the 4:5 of a grid card: the detail image is the widest
+   thing on the page and 4:5 at half a container is taller than most viewports.
+
+   The first `background` is the fallback. The second tints the well towards the
+   selected finish so that picking a colourway visibly changes the preview —
+   mixed down to 22% so the ground stays light and the line drawing on it keeps
+   its 10.09:1. A browser that cannot parse color-mix() drops the second
+   declaration and keeps the plain greige. */
+.eg-gallery-media {
+    aspect-ratio: 1 / 1;
+    background: var(--eg-bg-alt);
+    background: color-mix(in srgb, var(--finish, var(--eg-bg-alt)) 22%, var(--eg-bg-alt));
+}
+
+.product-media .eg-gallery-mark {
+    width: 46%;
+    height: 46%;
+}
+
+.product-price-lg {
+    font-family: var(--eg-font-title);
+    font-size: 1.75rem;
+    line-height: 1.2;
+}
+
+/* ---------- Key/value rows ----------
+   One component for the product specification list and the basket summary:
+   both are a label on the left, a value on the right, ruled between. */
+.eg-kv-list {
+    margin: 0;
+}
+
+.eg-kv-row {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 0.25rem 1.5rem;
+    padding: 0.65rem 0;
+    border-bottom: 1px solid rgba(201, 188, 169, 0.5);
+}
+
+.eg-kv-row:last-child {
+    border-bottom: none;
+}
+
+.eg-kv-row dt {
+    color: var(--eg-text-muted); /* 7.06:1 */
+    font-size: 0.85rem;
+    font-weight: 400;
+}
+
+.eg-kv-row dd {
+    margin: 0;
+    color: var(--eg-text); /* 12.90:1 */
+    font-size: 0.9rem;
+    font-weight: 500;
+    text-align: right;
+}
+
+.eg-kv-row.is-total {
+    margin-top: 0.35rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--eg-border);
+    border-bottom: none;
+}
+
+.eg-kv-row.is-total dt,
+.eg-kv-row.is-total dd {
+    color: var(--eg-text); /* 12.90:1 */
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+/* ---------- Pending-backend note ----------
+   Sits under any control that is deliberately disabled and says why. Terracotta
+   is the rule down the side only; the copy itself is olive-brown at 7.06:1,
+   because terracotta on this ground is 2.35:1 and is never an ink. */
+.eg-note {
+    margin: 0.85rem 0 0;
+    padding-left: 0.8rem;
+    border-left: 2px solid var(--eg-accent);
+    color: var(--eg-text-muted);
+    font-size: 0.82rem;
+    line-height: 1.55;
+}
+
+/* ---------- Basket ---------- */
+.eg-cart-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+/* Stacked beside a fixed-width thumbnail on a phone, one row of five on a
+   tablet up. minmax(0, 1fr) on the name column rather than 1fr: a bare 1fr has
+   an auto minimum and a long product name would push the row wider than the
+   grid instead of wrapping. */
+.eg-cart-line {
+    display: grid;
+    grid-template-columns: 4.5rem minmax(0, 1fr);
+    grid-template-areas:
+        "thumb name"
+        "thumb unit"
+        "thumb qty"
+        "thumb total";
+    gap: 0.4rem 1rem;
+    padding: 1.35rem 0;
+    border-bottom: 1px solid var(--eg-border);
+}
+
+.eg-cart-list > .eg-cart-line:first-child {
+    border-top: 1px solid var(--eg-border);
+}
+
+@media (min-width: 768px) {
+    .eg-cart-line {
+        grid-template-columns: 5.5rem minmax(0, 1fr) 6rem auto 6.5rem;
+        grid-template-areas: "thumb name unit qty total";
+        align-items: center;
+        gap: 1.25rem;
+    }
+
+    .eg-cart-total {
+        text-align: right;
+    }
+}
+
+.eg-cart-thumb {
+    grid-area: thumb;
+    align-self: start;
+    display: grid;
+    place-items: center;
+    aspect-ratio: 1 / 1;
+    border-radius: var(--eg-radius-sm);
+    background: var(--eg-bg-alt);
+}
+
+.eg-cart-thumb svg {
+    width: 50%;
+    height: 50%;
+    color: var(--eg-text); /* line art, 10.09:1 on greige */
+    opacity: 0.62;
+}
+
+.eg-cart-name {
+    grid-area: name;
+    min-width: 0;
+}
+
+/* inline-flex with a 44px floor rather than a bare inline link: this is the
+   line's main tap target and at its natural 22px it was half the height WCAG
+   2.5.8 asks for. */
+.eg-cart-title {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    color: var(--eg-text); /* 12.90:1 */
+    font-family: var(--eg-font-title);
+    font-size: 1.05rem;
+    line-height: 1.3;
+}
+
+.eg-cart-title:hover {
+    color: var(--eg-brand);
+}
+
+.eg-cart-unit {
+    grid-area: unit;
+    margin: 0;
+}
+
+.eg-cart-qty {
+    grid-area: qty;
+}
+
+.eg-cart-total {
+    grid-area: total;
+    margin: 0;
+    font-weight: 600;
+}
+
+.eg-cart-label {
+    display: block;
+    color: var(--eg-text-muted); /* 7.06:1 */
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+/* Rust rather than the muted ink: removing a line is destructive and reads as
+   the same class of action as every other failure state on the site. 9.43:1. */
+.eg-cart-remove {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: var(--eg-error);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    text-decoration: underline;
+    text-underline-offset: 0.25em;
+}
+
+.eg-cart-remove:hover {
+    color: var(--eg-text); /* 12.90:1 */
+}
+
+.eg-cart-continue {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-height: 44px;
+    margin-top: 1.25rem;
+    color: var(--eg-brand); /* 9.58:1 */
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.eg-cart-continue svg {
+    width: 1rem;
+    height: 1rem;
+}
+
+.eg-summary {
+    padding: 1.75rem;
+}
+
+@media (min-width: 992px) {
+    .eg-summary {
+        position: sticky;
+        top: 6.5rem;
+    }
+}
+
+.eg-summary-note {
+    margin: 0.75rem 0 0;
+    color: var(--eg-text-muted); /* 7.06:1 */
+    font-size: 0.82rem;
+}
+
+/* The one place the green wash carries body copy: brand green on it is 8.53:1. */
+.eg-summary-hint {
+    margin: 0.85rem 0 0;
+    padding: 0.6rem 0.85rem;
+    border-radius: var(--eg-radius-sm);
+    background: var(--eg-brand-tint);
+    color: var(--eg-brand);
+    font-size: 0.82rem;
+    font-weight: 500;
+}
+
+.eg-summary-account {
+    margin-top: 1.25rem;
+    color: var(--eg-text-muted); /* 7.06:1 */
+    font-size: 0.82rem;
+}
+
+/* ---------- Accordion ----------
+   Bootstrap's own accordion is a white panel with a blue open state and a blue
+   chevron data-URI; all three have to be replaced, the chevrons included, or
+   the open panel is the only blue thing on the site. */
+.eg-accordion {
+    --bs-accordion-bg: transparent;
+    --bs-accordion-color: var(--eg-text);
+    --bs-accordion-border-color: var(--eg-border);
+    --bs-accordion-border-radius: var(--eg-radius);
+    --bs-accordion-inner-border-radius: var(--eg-radius);
+    --bs-accordion-btn-bg: transparent;
+    --bs-accordion-btn-color: var(--eg-text); /* 12.90:1 */
+    --bs-accordion-active-bg: var(--eg-brand-tint);
+    --bs-accordion-active-color: var(--eg-brand); /* 8.53:1 on the tint */
+    --bs-accordion-btn-focus-box-shadow: none;
+    --bs-accordion-btn-icon: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%232F2E2C'%3e%3cpath fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3e%3c/svg%3e");
+    --bs-accordion-btn-active-icon: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23124C24'%3e%3cpath fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3e%3c/svg%3e");
+}
+
+.eg-accordion .accordion-button {
+    font-family: var(--eg-font-body);
+    font-size: 0.95rem;
+    font-weight: 600;
+}
+
+/* Inset, because the header sits flush inside the item's rounded border and an
+   outward ring would be clipped by it. */
+.eg-accordion .accordion-button:focus-visible {
+    outline: 2px solid var(--eg-brand);
+    outline-offset: -2px;
+}
+
+.eg-accordion .accordion-body {
+    color: var(--eg-text-muted); /* 7.06:1 */
 }
 
 /* ---------- Services ---------- */
 .service-step {
     display: flex;
-    gap: 1.2rem;
-    padding: 1.2rem 0;
-    border-bottom: 1px dashed var(--eg-border);
+    gap: 1.1rem;
+    padding: 1.1rem 0;
+    border-bottom: 1px solid rgba(201, 188, 169, 0.35);
 }
 
 .service-step:last-child {
     border-bottom: none;
 }
 
+/* The step number is content, not decoration, so it takes an ink that clears
+   AA on the page ground: 7.06:1. Terracotta would have been 2.35:1 here — this
+   is exactly the misuse the palette rule exists to prevent. */
 .service-step .step-no {
-    font-family: 'Sora', sans-serif;
-    font-weight: 700;
-    color: var(--eg-amber);
-    text-shadow: 0 0 20px var(--eg-glow-strong);
-    font-size: 1.1rem;
-    min-width: 2.8rem;
+    font-family: var(--eg-font-title);
+    font-size: 1.05rem;
+    min-width: 2.4rem;
+    color: var(--eg-text-muted);
+}
+
+/* On the charcoal band the same ink would drop to 1.36:1, so it flips to the
+   on-dark tone: 7.27:1. */
+.eg-band-dark .service-step .step-no {
+    color: var(--eg-on-dark-muted);
+}
+
+.eg-band-dark .service-step {
+    border-bottom-color: rgba(201, 188, 169, 0.22);
 }
 
 .service-step h4 {
-    font-size: 1.1rem;
-    margin-bottom: 0.25rem;
+    font-size: 1.05rem;
+    margin-bottom: 0.2rem;
 }
 
 .service-step p {
-    color: var(--eg-text-dim);
     margin-bottom: 0;
-    font-size: 0.98rem;
+    font-size: 0.92rem;
 }
 
-.service-art {
-    position: relative;
-    padding: 3.5rem;
-    display: grid;
-    place-items: center;
-    min-height: 26rem;
-}
-
-.service-art .bulb-glow {
-    position: absolute;
-    width: 20rem;
-    height: 20rem;
-    border-radius: 50%;
-    background: radial-gradient(circle, var(--eg-glow-strong) 0%, var(--eg-glow) 40%, transparent 70%);
-    animation: breathe 4.5s ease-in-out infinite;
-}
-
-@keyframes breathe {
-    0%, 100% { transform: scale(1); opacity: 0.9; }
-    50% { transform: scale(1.14); opacity: 1; }
-}
-
-.service-art svg {
-    position: relative;
-    width: 11rem;
-    height: 11rem;
-    color: var(--eg-gold);
-    filter: drop-shadow(0 0 26px var(--eg-glow-strong));
-}
-
-/* ---------- Before / After compare — the one place a framed band stays ---------- */
+/* ---------- Before / after compare ----------
+   Kept from the previous build: it is the one interactive demo that suits a
+   lighting business, and its keyboard handling and ARIA are existing work.
+   Restyled from a hot amber scene to a low-chroma warm interior. */
 .compare-band {
     position: relative;
-    border-radius: 1.5rem;
+    border-radius: var(--eg-radius);
     overflow: hidden;
-    border: 1px solid var(--eg-border-light);
-    box-shadow: 0 0 70px rgba(255, 190, 92, 0.18), 0 2rem 4rem rgba(0, 0, 0, 0.6);
+    border: 1px solid var(--eg-border);
     user-select: none;
     touch-action: none;
 }
 
 .compare-scene {
     position: relative;
-    height: clamp(18rem, 44vw, 28rem);
+    height: clamp(16rem, 40vw, 24rem);
     background:
-        radial-gradient(34rem 20rem at 50% 118%, rgba(255, 209, 102, 0.72), transparent 64%),
-        radial-gradient(18rem 13rem at 26% 18%, rgba(255, 190, 92, 0.5), transparent 62%),
-        radial-gradient(16rem 12rem at 76% 24%, rgba(255, 190, 92, 0.42), transparent 62%),
-        linear-gradient(180deg, #2c2c48, #1b1b2e 70%, #141422);
+        radial-gradient(30rem 18rem at 50% 112%, rgba(226, 146, 94, 0.5), transparent 66%),
+        radial-gradient(16rem 12rem at 26% 22%, rgba(226, 146, 94, 0.26), transparent 64%),
+        linear-gradient(180deg, #EFE9DE, #E2DED2 68%, #D6D0C2);
 }
 
 .compare-scene::after {
     content: '';
     position: absolute;
-    left: 8%;
-    right: 8%;
+    left: 10%;
+    right: 10%;
     bottom: 0;
-    height: 62%;
+    height: 58%;
     background:
-        linear-gradient(180deg, transparent 0 38%, rgba(0, 0, 0, 0.55) 38% 100%),
-        linear-gradient(90deg, transparent 0 12%, rgba(0, 0, 0, 0.6) 12% 40%, transparent 40% 46%, rgba(0, 0, 0, 0.6) 46% 78%, transparent 78%);
-    border-radius: 0.8rem 0.8rem 0 0;
+        linear-gradient(180deg, transparent 0 40%, rgba(47, 46, 44, 0.16) 40% 100%),
+        linear-gradient(90deg, transparent 0 14%, rgba(47, 46, 44, 0.2) 14% 40%, transparent 40% 48%, rgba(47, 46, 44, 0.2) 48% 78%, transparent 78%);
+    border-radius: 0.5rem 0.5rem 0 0;
 }
 
 .compare-dark {
     position: absolute;
     inset: 0;
-    background: rgba(3, 3, 8, 0.88);
+    background: rgba(47, 46, 44, 0.72);
     clip-path: polygon(0 0, var(--split, 50%) 0, var(--split, 50%) 100%, 0 100%);
 }
 
@@ -649,8 +1572,7 @@ body.glow-active #glow-spot {
     bottom: 0;
     left: var(--split, 50%);
     width: 2px;
-    background: linear-gradient(180deg, transparent, var(--eg-gold), transparent);
-    box-shadow: 0 0 20px var(--eg-glow-strong);
+    background: var(--eg-bg);
     cursor: ew-resize;
 }
 
@@ -659,14 +1581,12 @@ body.glow-active #glow-spot {
     position: absolute;
     top: 50%;
     left: 50%;
-    width: 2.8rem;
-    height: 2.8rem;
+    width: 2.6rem;
+    height: 2.6rem;
     transform: translate(-50%, -50%);
     border-radius: 50%;
-    border: 2px solid var(--eg-gold);
-    background: rgba(5, 5, 8, 0.7);
-    backdrop-filter: blur(6px);
-    box-shadow: 0 0 24px var(--eg-glow-strong);
+    border: 2px solid var(--eg-bg);
+    background: rgba(47, 46, 44, 0.55);
 }
 
 /* The divider itself is only 2px wide, so the focus ring goes on the knob. */
@@ -675,34 +1595,33 @@ body.glow-active #glow-spot {
 }
 
 .compare-divider:focus-visible::after {
-    border-color: #fff;
-    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.85), 0 0 30px var(--eg-glow-strong);
+    border-color: var(--eg-brand);
+    box-shadow: 0 0 0 3px var(--eg-bg);
 }
 
 .compare-tag {
     position: absolute;
-    top: 1.2rem;
-    padding: 0.3rem 0.9rem;
+    top: 1rem;
+    padding: 0.28rem 0.85rem;
     border-radius: 999px;
-    font-size: 0.78rem;
+    font-size: 0.72rem;
     font-weight: 700;
     letter-spacing: 0.1em;
     text-transform: uppercase;
-    backdrop-filter: blur(6px);
 }
 
+/* Charcoal fill, warm white label: 12.90:1. */
 .compare-tag-dark {
-    left: 1.2rem;
-    background: rgba(0, 0, 0, 0.55);
-    color: var(--eg-text-dim);
-    border: 1px solid var(--eg-border);
+    left: 1rem;
+    background: var(--eg-text);
+    color: var(--eg-on-dark);
 }
 
+/* Warm white fill, charcoal label: 12.90:1. */
 .compare-tag-light {
-    right: 1.2rem;
-    background: rgba(255, 190, 92, 0.18);
-    color: var(--eg-gold);
-    border: 1px solid var(--eg-border-light);
+    right: 1rem;
+    background: var(--eg-bg);
+    color: var(--eg-text);
 }
 
 /* ---------- Timeline ---------- */
@@ -711,7 +1630,7 @@ body.glow-active #glow-spot {
     margin: 0;
     padding: 0;
     list-style: none;
-    max-width: 44rem;
+    max-width: 42rem;
 }
 
 .timeline::before {
@@ -719,14 +1638,14 @@ body.glow-active #glow-spot {
     position: absolute;
     top: 0.6rem;
     bottom: 0.6rem;
-    left: 0.7rem;
-    width: 2px;
-    background: linear-gradient(180deg, var(--eg-amber), rgba(255, 190, 92, 0.12));
+    left: 0.6rem;
+    width: 1px;
+    background: var(--eg-border);
 }
 
 .timeline li {
     position: relative;
-    padding: 0 0 2.2rem 3rem;
+    padding: 0 0 2rem 2.6rem;
 }
 
 .timeline li:last-child {
@@ -736,112 +1655,143 @@ body.glow-active #glow-spot {
 .timeline .node {
     position: absolute;
     left: 0;
-    top: 0.2rem;
-    width: 1.4rem;
-    height: 1.4rem;
+    top: 0.35rem;
+    width: 1.2rem;
+    height: 1.2rem;
     border-radius: 50%;
-    border: 2px solid var(--eg-amber);
-    background: var(--eg-bg-1);
-    box-shadow: 0 0 18px var(--eg-glow-strong);
+    border: 1px solid var(--eg-brand);
+    background: var(--eg-accent);
 }
 
 .timeline h4 {
-    font-size: 1.1rem;
-    margin-bottom: 0.25rem;
+    font-size: 1.05rem;
+    margin-bottom: 0.2rem;
 }
 
 .timeline p {
-    color: var(--eg-text-dim);
+    color: var(--eg-text-muted); /* 7.06:1 */
     margin: 0;
-    font-size: 0.98rem;
+    font-size: 0.92rem;
 }
 
-/* ---------- CTA band — open glow, no hard card ---------- */
-.cta-band {
-    position: relative;
-    padding: 6rem 2rem;
-    text-align: center;
-    overflow: hidden;
-    background:
-        radial-gradient(38rem 20rem at 50% 115%, rgba(255, 190, 92, 0.22), transparent 68%),
-        var(--eg-bg-0);
-}
-
-/* ---------- Footer: horizon light strip ---------- */
+/* ---------- Footer ---------- */
 .footer-eg {
-    position: relative;
     margin-top: auto;
-    padding: 2.6rem 0;
-    color: var(--eg-text-dim);
-    background: linear-gradient(180deg, rgba(255, 190, 92, 0.05), rgba(5, 5, 8, 0) 30%), var(--eg-bg-1);
-    border-top: 1px solid var(--eg-border-light);
-    overflow: hidden;
+    padding: 3.5rem 0 2rem;
+    background: var(--eg-text);
+    color: var(--eg-on-dark-muted); /* 7.27:1 */
 }
 
-.footer-eg::before {
-    content: '';
-    position: absolute;
-    top: -1px;
-    left: 10%;
-    right: 10%;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, var(--eg-amber), transparent);
-    box-shadow: 0 0 22px var(--eg-glow-strong);
+.footer-eg h2 {
+    font-family: var(--eg-font-body);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--eg-on-dark); /* 12.90:1 */
+    margin-bottom: 1rem;
+}
+
+.footer-eg .footer-brand {
+    font-family: var(--eg-font-title);
+    font-size: 1.5rem;
+    color: var(--eg-on-dark);
+}
+
+.footer-eg ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.footer-eg a {
+    display: inline-block;
+    padding: 0.35rem 0;
+    color: var(--eg-on-dark-muted); /* 7.27:1 */
+    font-size: 0.9rem;
+}
+
+.footer-eg a:hover {
+    color: var(--eg-on-dark);
+}
+
+.footer-eg .footer-base {
+    margin-top: 2.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid rgba(201, 188, 169, 0.25);
+    font-size: 0.82rem;
 }
 
 /* ---------- Forms ---------- */
 .form-control,
 .form-select {
-    background-color: rgba(255, 255, 255, 0.04);
+    background-color: var(--eg-bg);
     border: 1px solid var(--eg-border);
     border-radius: var(--eg-radius-sm);
-    color: var(--eg-text);
-    padding: 0.75rem 1rem;
-    transition: border-color 0.25s var(--eg-ease), box-shadow 0.25s var(--eg-ease), background-color 0.25s var(--eg-ease);
+    color: var(--eg-text); /* 12.90:1 */
+    min-height: 44px;
+    padding: 0.65rem 0.9rem;
+    transition: border-color 0.2s var(--eg-ease), box-shadow 0.2s var(--eg-ease);
 }
 
-/* --eg-text-dim, not --eg-text-faint: faint only reaches 3.98:1 on the field
-   background and fails WCAG 1.4.3 AA. */
+/* --eg-text-muted, not --eg-disabled: placeholder text is live content and has
+   to clear 4.5:1. It measures 7.06:1 on the field. */
 .form-control::placeholder {
-    color: var(--eg-text-dim);
+    color: var(--eg-text-muted);
+    opacity: 1;
 }
 
 .form-control:focus,
 .form-select:focus {
-    background-color: rgba(255, 255, 255, 0.07);
-    border-color: var(--eg-amber);
-    color: #fff;
-    box-shadow: 0 0 0 0.2rem rgba(255, 190, 92, 0.16), 0 0 22px var(--eg-glow);
+    background-color: var(--eg-bg);
+    border-color: var(--eg-brand);
+    color: var(--eg-text);
+    box-shadow: 0 0 0 0.2rem rgba(18, 76, 36, 0.14);
 }
 
+/* `.input > label` is not a Bootstrap class: it is CakePHP's own FormHelper
+   wrapper. FormHelper emits a bare `<label for="…">` with no class of its own,
+   so a rule written only against `.form-label` never reaches a single label on
+   this site — every one of them would fall back to plain body copy. */
 .form-label,
-.col-form-label {
-    color: var(--eg-text-dim);
-    font-weight: 500;
+.col-form-label,
+.input > label {
+    display: inline-block;
+    color: var(--eg-text); /* 12.90:1 */
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 0.35rem;
 }
 
 .form-text {
-    color: var(--eg-text-dim);
+    color: var(--eg-text-muted); /* 7.06:1 */
 }
 
 /* ---------- Form validation errors ---------- */
 /* CakePHP's default FormHelper templates flag a failed control three ways: the
    wrapper gains `.error`, the widget gains `.form-error`, and the message is
-   emitted as `<div class="error-message" id="{field}-error">`. cake.css colours
-   `.error-message`, but this layout only loads bootstrap/fonts/site, so without
-   the rules below an error renders in plain body copy and reads as an ordinary
-   caption rather than a problem.
+   emitted as `<div class="error-message" id="{field}-error">`. The stock
+   skeleton stylesheet used to colour that class, but no layout here has loaded
+   it for some time and it has since been deleted, so without the rules below an
+   error renders in plain body copy and reads as an ordinary caption rather than
+   a problem.
 
    Colour is not the only cue (WCAG 1.4.1): the message is smaller and bolder
    than body copy and led by a warning glyph, and the field itself gains a
-   second ring. All three survive greyscale. */
+   second ring. All three survive greyscale.
+
+   The rust replaces the previous #ff8a8a, which was picked for a near-black
+   ground and only manages 2.30:1 on warm white. #7A2617 measures 9.43:1 on the
+   page ground and 8.44:1 on the tinted field. */
 .error-message {
     display: flex;
     align-items: baseline;
     gap: 0.4rem;
     margin-top: 0.4rem;
     color: var(--eg-error);
-    font-size: 0.9rem;
+    font-size: 0.88rem;
     font-weight: 600;
     line-height: 1.5;
 }
@@ -857,7 +1807,7 @@ body.glow-active #glow-spot {
 .form-control.form-error,
 .form-select.form-error {
     border-color: var(--eg-error);
-    background-color: var(--eg-error-soft);
+    background-color: var(--eg-error-tint);
     /* An inset ring rather than border-width: 2px — it doubles the outline
        without shrinking the content box, so the field does not reflow when it
        flips into error. */
@@ -870,68 +1820,63 @@ body.glow-active #glow-spot {
 .form-control.form-error:focus,
 .form-select.form-error:focus {
     border-color: var(--eg-error);
-    box-shadow: 0 0 0 0.2rem rgba(255, 138, 138, 0.22), inset 0 0 0 1px var(--eg-error);
+    box-shadow: 0 0 0 0.2rem rgba(122, 38, 23, 0.18), inset 0 0 0 1px var(--eg-error);
 }
 
-/* ---------- Alerts / flash ---------- */
+/* ---------- Bootstrap alerts ---------- */
 .alert {
     border-radius: var(--eg-radius-sm);
     border: 1px solid var(--eg-border);
-    backdrop-filter: blur(8px);
 }
 
 .alert-success {
-    background: rgba(46, 196, 182, 0.12);
-    border-color: rgba(46, 196, 182, 0.35);
-    color: #8ef0e4;
+    background: var(--eg-success-tint);
+    border-color: var(--eg-success);
+    color: var(--eg-success); /* 4.64:1 */
 }
 
 .alert-danger,
 .alert-error {
-    background: rgba(255, 107, 107, 0.12);
-    border-color: rgba(255, 107, 107, 0.35);
-    color: #ffb3b3;
+    background: var(--eg-error-tint);
+    border-color: var(--eg-error);
+    color: var(--eg-error); /* 8.44:1 */
 }
 
 .alert-warning {
-    background: rgba(255, 190, 92, 0.12);
-    border-color: var(--eg-border-light);
-    color: var(--eg-amber);
+    background: var(--eg-warning-tint);
+    border-color: var(--eg-warning);
+    color: var(--eg-warning); /* 5.91:1 */
 }
 
 .alert-info {
-    background: rgba(76, 201, 240, 0.1);
-    border-color: rgba(76, 201, 240, 0.3);
-    color: #a8e4f9;
+    background: var(--eg-info-tint);
+    border-color: var(--eg-text-muted);
+    color: var(--eg-text-muted); /* 6.39:1 */
 }
 
 /* ---------- Page-level flash messages ---------- */
 /* `templates/element/flash/*.php` emit `<div class="message">` plus `success`,
    `warning` or `error`. `info.php` and `default.php` emit the bare `.message`,
    so the base rule here *is* the informational state and the three modifiers
-   below override it. cake.css styles all of this, but the layout only loads
-   bootstrap/fonts/site — so until now a flash rendered as plain body copy with
-   no box at all, and TC4's "green confirmation" was neither green nor a banner.
+   below override it. The stock skeleton stylesheet styled all of this, but no
+   layout here has loaded it for some time and it has since been deleted — so
+   without these a flash renders as plain body copy with no box at all.
 
    Colour is not the only cue (WCAG 1.4.1): every state carries its own leading
-   glyph as well. That matters more here than it does for field errors, because
-   success and error sit only 1.36:1 apart in luminance — desaturate the page
-   and the two banners are near-identical greys, leaving the glyph to carry the
-   whole distinction. */
+   glyph. The four inks were also chosen as a set so they stay apart with hue
+   removed — success against error, the pair that matters, is 1.87:1 in pure
+   luminance — but the glyph is what carries the distinction outright. */
 .message {
     display: flex;
     align-items: baseline;
-    gap: 0.65rem;
+    gap: 0.6rem;
     margin: 0 0 1rem;
-    padding: 0.9rem 1.25rem;
+    padding: 0.85rem 1.15rem;
     border: 1px solid var(--eg-border);
-    border-left: 3px solid var(--eg-cyan);
+    border-left: 3px solid var(--eg-text-muted);
     border-radius: var(--eg-radius-sm);
-    background: rgba(76, 201, 240, 0.09);
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
-    box-shadow: 0 1rem 2rem rgba(0, 0, 0, 0.45);
-    color: var(--eg-cyan);
+    background: var(--eg-info-tint);
+    color: var(--eg-text-muted); /* 6.39:1 */
     font-weight: 500;
     /* The flash templates dismiss on click, so advertise that it is clickable. */
     cursor: pointer;
@@ -953,8 +1898,8 @@ body.glow-active #glow-spot {
 
 .message.success {
     border-left-color: var(--eg-success);
-    background: var(--eg-success-soft);
-    color: var(--eg-success);
+    background: var(--eg-success-tint);
+    color: var(--eg-success); /* 4.64:1 */
 }
 
 .message.success::before {
@@ -962,9 +1907,9 @@ body.glow-active #glow-spot {
 }
 
 .message.warning {
-    border-left-color: var(--eg-gold);
-    background: rgba(255, 209, 102, 0.09);
-    color: var(--eg-gold);
+    border-left-color: var(--eg-warning);
+    background: var(--eg-warning-tint);
+    color: var(--eg-warning); /* 5.91:1 */
 }
 
 .message.warning::before {
@@ -973,8 +1918,8 @@ body.glow-active #glow-spot {
 
 .message.error {
     border-left-color: var(--eg-error);
-    background: var(--eg-error-soft);
-    color: var(--eg-error);
+    background: var(--eg-error-tint);
+    color: var(--eg-error); /* 8.44:1 */
 }
 
 .message.error::before {
@@ -983,10 +1928,9 @@ body.glow-active #glow-spot {
 
 /* Flash renders first inside <main>, which is full-bleed, so without a wrapper
    the banner sat flush against the top-left of the viewport. The layout wraps
-   it in `.container` to line it up with the page content; this adds the gap
-   below the fixed navbar. */
+   it in `.container` to line it up with the page content. */
 .flash-stack {
-    padding-top: 1.75rem;
+    padding-top: 1.5rem;
 }
 
 /* ---------- Badges / pills ---------- */
@@ -994,124 +1938,133 @@ body.glow-active #glow-spot {
     display: inline-block;
     padding: 0.28em 0.85em;
     border-radius: 999px;
-    font-size: 0.78rem;
+    font-size: 0.72rem;
     font-weight: 700;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
 }
 
+/* Terracotta fill with charcoal text: 5.50:1. Paired with a bold subject line
+   and a left rule on the row, so "unread" never rests on the fill alone. */
 .pill-new {
-    background: rgba(255, 190, 92, 0.16);
-    color: var(--eg-gold);
-    border: 1px solid var(--eg-border-light);
-    box-shadow: 0 0 14px var(--eg-glow);
+    background: var(--eg-accent);
+    color: var(--eg-text);
 }
 
 .pill-read {
-    background: rgba(255, 255, 255, 0.05);
-    color: var(--eg-text-dim);
+    background: transparent;
     border: 1px solid var(--eg-border);
+    color: var(--eg-text-muted); /* 7.06:1 on the page ground */
 }
 
 /* ---------- Admin table ---------- */
 .admin-panel {
-    background: var(--eg-glass);
+    background: var(--eg-bg);
     border: 1px solid var(--eg-border);
     border-radius: var(--eg-radius);
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
-    padding: 1.6rem;
+    padding: 0.5rem 1.25rem;
 }
 
 .table-eg {
     --bs-table-bg: transparent;
     --bs-table-color: var(--eg-text);
-    --bs-table-border-color: var(--eg-border);
-    --bs-table-hover-bg: rgba(255, 190, 92, 0.05);
-    --bs-table-hover-color: #fff;
+    --bs-table-border-color: rgba(201, 188, 169, 0.5);
+    --bs-table-hover-bg: var(--eg-accent-tint);
+    --bs-table-hover-color: var(--eg-text);
     margin-bottom: 0;
 }
 
 .table-eg thead th {
-    color: var(--eg-text-dim);
-    font-size: 0.78rem;
-    letter-spacing: 0.1em;
+    color: var(--eg-text-muted); /* 7.06:1 */
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
     text-transform: uppercase;
-    border-bottom: 1px solid var(--eg-border-light);
+    border-bottom: 1px solid var(--eg-border);
     padding: 0.9rem 0.75rem;
 }
 
 .table-eg thead th a {
-    color: var(--eg-text-dim);
+    color: var(--eg-text-muted);
 }
 
 .table-eg thead th a:hover {
-    color: var(--eg-amber);
+    color: var(--eg-brand);
 }
 
 .table-eg tbody td {
-    padding: 1rem 0.75rem;
+    padding: 0.9rem 0.75rem;
     vertical-align: middle;
 }
 
 .table-eg .cell-message {
     max-width: 22rem;
     min-width: 12rem;
-    color: var(--eg-text-dim);
+    color: var(--eg-text-muted); /* 7.06:1 */
 }
 
+/* Unread rows carry three cues at once — the rule, the tint and the bold
+   subject in the template — so none of them is load-bearing on its own. */
 .table-eg tbody tr.row-unread td:first-child {
-    box-shadow: inset 3px 0 0 var(--eg-amber);
+    box-shadow: inset 3px 0 0 var(--eg-accent);
 }
 
 .table-eg tbody tr.row-unread td {
-    background: rgba(255, 190, 92, 0.06);
+    background: var(--eg-accent-tint);
 }
 
-/* ---------- Pagination: pills ---------- */
+/* ---------- Pagination ---------- */
 .pagination {
-    gap: 0.4rem;
+    gap: 0.35rem;
 }
 
+/* min-width as well as min-height: a single-digit page number is about 37px
+   wide with this padding, so height alone leaves the target short of the 44px
+   WCAG 2.5.8 floor on the axis nobody checks. */
 .page-link {
-    background: rgba(255, 255, 255, 0.04);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 44px;
+    min-height: 44px;
+    background: transparent;
     border: 1px solid var(--eg-border) !important;
-    border-radius: 999px !important;
-    color: var(--eg-text-dim);
-    padding: 0.45rem 0.95rem;
-    transition: all 0.2s var(--eg-ease);
+    border-radius: var(--eg-radius-sm) !important;
+    color: var(--eg-text); /* 12.90:1 */
+    padding: 0.45rem 0.9rem;
+    transition: background-color 0.2s var(--eg-ease), color 0.2s var(--eg-ease);
 }
 
 .page-link:hover {
-    background: rgba(255, 190, 92, 0.14);
-    border-color: var(--eg-border-light) !important;
-    color: var(--eg-gold);
+    background: var(--eg-brand-tint);
+    border-color: var(--eg-brand) !important;
+    color: var(--eg-brand); /* 8.53:1 on the tint */
 }
 
 .page-item.active .page-link {
-    background: linear-gradient(120deg, var(--eg-amber), var(--eg-gold));
-    border-color: transparent !important;
-    color: #201608;
-    font-weight: 700;
-    box-shadow: 0 0 16px var(--eg-glow);
+    background: var(--eg-brand);
+    border-color: var(--eg-brand) !important;
+    color: var(--eg-on-dark); /* 9.58:1 */
+    font-weight: 600;
 }
 
-/* Deliberately still --eg-text-faint. WCAG 1.4.3 exempts inactive controls,
-   and the enabled .page-link above is already --eg-text-dim: promoting this to
-   dim too would make the two states share one colour, leaving the 4%-white fill
-   as the only cue that "Previous" is dead on page 1. Faint against dim reads as
-   2.12:1, which is the distinction worth keeping here. */
+/* Deliberately --eg-disabled at 2.92:1. WCAG 1.4.3 exempts inactive controls,
+   and the enabled .page-link above is charcoal: promoting this to charcoal too
+   would make the two states share one colour, leaving nothing to say that
+   "Prev" is dead on page 1. The two read 4.42:1 apart, which is the
+   distinction worth keeping. */
 .page-item.disabled .page-link {
     background: transparent;
-    color: var(--eg-text-faint);
+    color: var(--eg-disabled);
 }
 
 /* ---------- Detail key-values ---------- */
 .kv {
     display: flex;
     align-items: center;
-    gap: 0.9rem;
-    padding: 0.85rem 0;
-    border-bottom: 1px dashed var(--eg-border);
+    gap: 0.85rem;
+    padding: 0.8rem 0;
+    border-bottom: 1px solid rgba(201, 188, 169, 0.45);
 }
 
 .kv:last-child {
@@ -1124,9 +2077,9 @@ body.glow-active #glow-spot {
     flex: none;
     display: grid;
     place-items: center;
-    border-radius: 0.7rem;
-    background: rgba(255, 190, 92, 0.12);
-    color: var(--eg-amber);
+    border-radius: 0.5rem;
+    background: var(--eg-accent-tint);
+    color: var(--eg-text); /* icon line art, 11.90:1 on the tint */
 }
 
 .kv .kv-icon svg {
@@ -1135,53 +2088,52 @@ body.glow-active #glow-spot {
 }
 
 .kv .kv-label {
-    color: var(--eg-text-dim);
-    font-size: 0.78rem;
-    letter-spacing: 0.08em;
+    color: var(--eg-text-muted); /* 7.06:1 */
+    font-size: 0.72rem;
+    letter-spacing: 0.1em;
     text-transform: uppercase;
 }
 
 .kv .kv-value {
-    color: var(--eg-text);
+    color: var(--eg-text); /* 12.90:1 */
     font-weight: 500;
 }
 
 .message-bubble {
-    background: rgba(255, 190, 92, 0.07);
-    border: 1px solid var(--eg-border-light);
-    border-radius: 1rem 1rem 1rem 0.25rem;
-    padding: 1.4rem 1.6rem;
-    color: var(--eg-text);
+    background: var(--eg-bg-alt);
+    border-radius: var(--eg-radius) var(--eg-radius) var(--eg-radius) 0.2rem;
+    padding: 1.3rem 1.5rem;
+    color: var(--eg-text); /* 10.09:1 on greige */
 }
 
 /* ---------- Auth ---------- */
 .auth-wrap {
-    min-height: 72vh;
+    min-height: 68vh;
     display: grid;
     place-items: center;
+    padding: 3rem 0;
 }
 
 .auth-card {
     width: 100%;
-    max-width: 26rem;
-    padding: 2.6rem 2.2rem;
+    max-width: 25rem;
+    padding: 2.4rem 2rem;
 }
 
-.auth-bulb {
-    width: 4rem;
-    height: 4rem;
-    margin: 0 auto 1rem;
+.auth-mark {
+    width: 3rem;
+    height: 3rem;
+    margin: 0 auto 1.1rem;
     display: grid;
     place-items: center;
     border-radius: 50%;
-    background: radial-gradient(circle, var(--eg-glow-strong), transparent 70%);
+    background: var(--eg-accent-tint);
+    color: var(--eg-text); /* line art, 11.90:1 on the tint */
 }
 
-.auth-bulb svg {
-    width: 2.2rem;
-    height: 2.2rem;
-    color: var(--eg-gold);
-    filter: drop-shadow(0 0 14px var(--eg-glow-strong));
+.auth-mark svg {
+    width: 1.5rem;
+    height: 1.5rem;
 }
 
 .auth-link {
@@ -1195,8 +2147,7 @@ body.glow-active #glow-spot {
 }
 
 /* These icons are aria-hidden and duplicate their field's label, so 1.4.11 does
-   not apply. Raised to dim anyway to match the placeholder they sit beside, and
-   because the icon is the only glyph left in the field once text is typed. */
+   not apply; they are drawn in the muted ink anyway, at 7.06:1. */
 /* Pinned to the middle of the field rather than the middle of .input-icon:
    FormHelper appends the validation message *inside* this wrapper, so centring
    on the wrapper drops the icon halfway into the message whenever the field is
@@ -1204,46 +2155,63 @@ body.glow-active #glow-spot {
    box — which is where 50% lands anyway while no message is present. */
 .input-icon svg {
     position: absolute;
-    left: 1rem;
-    top: calc(1px + 0.75rem + 0.75em);
+    left: 0.9rem;
+    top: calc(1px + 0.65rem + 0.75em);
     transform: translateY(-50%);
     width: 1.05rem;
     height: 1.05rem;
-    color: var(--eg-text-dim);
+    color: var(--eg-text-muted);
     pointer-events: none;
 }
 
 .input-icon .form-control {
-    padding-left: 2.7rem;
+    padding-left: 2.6rem;
 }
 
 /* ---------- Contact sidebar ---------- */
 .contact-aside {
     height: 100%;
-    padding: 2.4rem;
+    padding: 2.2rem;
     display: flex;
     flex-direction: column;
-    gap: 1.4rem;
-}
-
-.contact-aside .aside-glow {
-    position: absolute;
-    width: 18rem;
-    height: 18rem;
-    top: -6rem;
-    right: -6rem;
-    border-radius: 50%;
-    background: radial-gradient(circle, var(--eg-glow), transparent 70%);
-    pointer-events: none;
+    gap: 1.3rem;
+    background: var(--eg-bg-alt);
+    border-radius: var(--eg-radius);
 }
 
 /* ---------- reCAPTCHA framing ---------- */
 .recaptcha-frame {
     display: inline-block;
-    padding: 0.6rem;
+    padding: 0.5rem;
     border-radius: var(--eg-radius-sm);
-    background: rgba(255, 255, 255, 0.04);
+    background: var(--eg-bg-alt);
     border: 1px solid var(--eg-border);
+}
+
+/* ---------- Error pages ---------- */
+.error-shell {
+    display: grid;
+    place-items: center;
+    min-height: 70vh;
+    padding: 3rem 0;
+    text-align: center;
+}
+
+/* aria-hidden in the template: the status is already in the heading beside it,
+   so this is an ornament and its 1.78:1 against the page ground is fine. */
+.error-code {
+    display: block;
+    margin-bottom: 0.75rem;
+    font-family: var(--eg-font-title);
+    font-size: clamp(3.5rem, 12vw, 7rem);
+    line-height: 1;
+    color: var(--eg-border);
+}
+
+/* CakePHP's error templates emit <p class="error"> for the detail line. */
+.error-shell p.error {
+    color: var(--eg-error); /* 9.43:1 */
+    font-weight: 500;
 }
 
 /* ---------- Reduced motion ---------- */
@@ -1252,19 +2220,10 @@ body.glow-active #glow-spot {
         scroll-behavior: auto;
     }
 
-    #glow-spot,
-    #power-on {
-        display: none !important;
-    }
-
     .reveal {
         opacity: 1;
         transform: none;
         transition: none;
-    }
-
-    .service-art .bulb-glow {
-        animation: none;
     }
 
     *, *::before, *::after {
