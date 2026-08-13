@@ -48,7 +48,7 @@ $this->Html->css('account', ['block' => true]);
             </div>
             <?= $this->Form->end() ?>
             <p class="text-center small mb-0 mt-2">
-                <?= $this->Html->link(__('Forgot password?'), '/forgot-password', ['class' => 'auth-link']) ?>
+                <?= $this->Html->link(__('Forgot password?'), '/forgot-password?from=customer', ['class' => 'auth-link']) ?>
             </p>
             <p class="eg-note mb-0 mt-3">
                 New here?

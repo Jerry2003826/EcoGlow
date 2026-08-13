@@ -136,7 +136,11 @@ class OutboundMessageSender
     private function deliver(OutboundMessage $message): void
     {
         $template = (string)($message->get('template_key') ?: 'contact_reply');
-        $method = $template === 'invoice' ? 'invoice' : 'contactReply';
+        $method = match ($template) {
+            'invoice' => 'invoice',
+            'order_confirmation' => 'orderConfirmation',
+            default => 'contactReply',
+        };
         $this->getMailer('Outbound')->send($method, [$message]);
     }
 

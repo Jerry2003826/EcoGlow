@@ -8,6 +8,7 @@
  * @var array<int, string> $nextStatuses
  * @var bool $canSeeContact
  * @var \App\Model\Entity\Invoice|null $existingInvoice
+ * @var \App\Model\Entity\Payment|null $stripePayment
  */
 
 use App\Model\Entity\SalesOrder;
@@ -43,6 +44,18 @@ $this->assign('breadcrumb', $this->element('admin/breadcrumb', [
             'Issue invoice',
             ['controller' => 'Invoices', 'action' => 'createFromOrder', $salesOrder->id],
             ['class' => 'btn btn-eg-ghost'],
+        ) ?>
+    </div>
+<?php endif; ?>
+<?php if (!empty($stripePayment)) : ?>
+    <div class="admin-actions mb-3">
+        <?= $this->Form->postButton(
+            'Refund Stripe payment',
+            ['action' => 'refund', $salesOrder->id],
+            [
+                'class' => 'btn btn-eg-ghost',
+                'confirm' => 'Refund the captured Stripe payment? Unshipped stock will be returned.',
+            ],
         ) ?>
     </div>
 <?php endif; ?>

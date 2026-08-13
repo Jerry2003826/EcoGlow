@@ -6,7 +6,9 @@
  * @var \App\Model\Entity\User $user
  * @var string|null $token The plain-text reset token, posted back with the form.
  * @var int $minPasswordLength
+ * @var string $loginPath Sign-in path matching the area that started this reset.
  */
+$loginPath = $loginPath ?? '/login';
 $this->assign('title', 'Reset Password');
 ?>
 <div class="container">
@@ -23,7 +25,16 @@ $this->assign('title', 'Reset Password');
             <p class="text-muted text-center small mb-4">
                 Pick something at least <?= h((string)$minPasswordLength) ?> characters long.
             </p>
-            <?= $this->Form->create($user, ['url' => ['action' => 'resetPassword', $token]]) ?>
+            <?= $this->Form->create($user, [
+                'url' => [
+                    'action' => 'resetPassword',
+                    $token,
+                    '?' => $loginPath === '/account/login' ? ['from' => 'customer'] : [],
+                ],
+            ]) ?>
+            <?php if ($loginPath === '/account/login') : ?>
+                <?= $this->Form->hidden('from', ['value' => 'customer']) ?>
+            <?php endif; ?>
             <div class="mb-3">
                 <div class="input-icon">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
@@ -58,7 +69,7 @@ $this->assign('title', 'Reset Password');
             </div>
             <?= $this->Form->end() ?>
             <p class="text-center small mt-4 mb-0">
-                <?= $this->Html->link(__('Back to sign in'), ['action' => 'login'], ['class' => 'auth-link']) ?>
+                <?= $this->Html->link(__('Back to sign in'), $loginPath, ['class' => 'auth-link']) ?>
             </p>
         </div>
     </div>

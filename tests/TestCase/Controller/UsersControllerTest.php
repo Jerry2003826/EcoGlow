@@ -483,6 +483,123 @@ class UsersControllerTest extends TestCase
     }
 
     /**
+     * POST /register with valid staff credentials must not create a session.
+     *
+     * The register form posts email + password. If FormAuthenticator has no
+     * loginUrl, that POST authenticates on any path and bypasses the throttle
+     * which only counts /login and /account/login.
+     *
+     * @return void
+     */
+    public function testRegisterPostWithStaffCredentialsDoesNotAuthenticate(): void
+    {
+        $this->post('/register', [
+            'name' => 'Ada Admin',
+            'email' => 'admin@example.com',
+            'phone' => '0400000001',
+            'password' => 'password',
+            'password_confirm' => 'password',
+        ]);
+
+        $this->assertResponseOk();
+        $this->assertResponseNotContains('Your account is ready');
+        $this->assertNull($this->getSession()->read('Auth'));
+
+        $this->get('/admin/contact-messages');
+        $this->assertResponseCode(302);
+        $this->assertRedirectContains('/login');
+    }
+
+    /**
+     * Both login forms still authenticate after loginUrl is pinned per path.
+     *
+     * @return void
+     */
+    public function testBothLoginFormsStillAuthenticate(): void
+    {
+        $this->post('/login', [
+            'email' => 'admin@example.com',
+            'password' => 'password',
+        ]);
+        $this->assertResponseCode(302);
+        $this->assertRedirectContains('/admin');
+        $this->assertNotNull($this->getSession()->read('Auth'));
+
+        $this->get('/logout');
+
+        $this->post('/account/login', [
+            'email' => 'customer-a@example.com',
+            'password' => 'password',
+        ]);
+        $this->assertResponseCode(302);
+        $this->assertRedirectContains('/account');
+    }
+
+    /**
+     * Customer-area forgot-password returns to the customer login, including
+     * for an address that has no account, so the redirect cannot enumerate.
+     *
+     * @return void
+     */
+    public function testForgotPasswordFromCustomerAreaReturnsToCustomerLogin(): void
+    {
+        $this->post('/forgot-password?from=customer', ['email' => 'admin@example.com']);
+        $this->assertResponseCode(302);
+        $this->assertSame('/account/login', $this->redirectPath());
+        $this->assertFlashMessage(self::RESET_REQUESTED_MESSAGE);
+
+        $this->post('/forgot-password?from=customer', ['email' => 'nobody@example.com']);
+        $this->assertResponseCode(302);
+        $this->assertSame('/account/login', $this->redirectPath());
+        $this->assertFlashMessage(self::RESET_REQUESTED_MESSAGE);
+    }
+
+    /**
+     * Completing a customer-area reset lands on the customer login.
+     *
+     * @return void
+     */
+    public function testResetPasswordFromCustomerAreaReturnsToCustomerLogin(): void
+    {
+        $this->post('/forgot-password?from=customer', ['email' => 'customer-a@example.com']);
+        $token = $this->resetTokenFromMail();
+
+        $this->post('/reset-password/' . $token . '?from=customer', [
+            'password' => 'brand-new-password',
+            'confirm_password' => 'brand-new-password',
+        ]);
+        $this->assertResponseCode(302);
+        $this->assertSame('/account/login', $this->redirectPath());
+    }
+
+    /**
+     * Customer login still counts toward the existing cache throttle.
+     *
+     * @return void
+     */
+    public function testCustomerLoginStillThrottles(): void
+    {
+        for ($i = 0; $i < 5; $i++) {
+            $this->post('/account/login', [
+                'email' => 'customer-a@example.com',
+                'password' => 'wrong-password',
+            ]);
+            $this->assertResponseContains('Invalid email or password');
+        }
+
+        $this->post('/account/login', [
+            'email' => 'customer-a@example.com',
+            'password' => 'wrong-password',
+        ]);
+        $this->assertResponseCode(302);
+        $this->assertRedirectContains('/account/login');
+
+        $this->get('/account/login');
+        $this->assertResponseOk();
+        $this->assertResponseContains('Too many failed login attempts');
+    }
+
+    /**
      * Write a reset token straight onto the seeded account.
      *
      * Bypasses the entity so the test sets up state the same way the database
@@ -521,5 +638,18 @@ class UsersControllerTest extends TestCase
         );
 
         return $matches[1];
+    }
+
+    /**
+     * Path of the Location header, ignoring host and query string.
+     *
+     * @return string
+     */
+    private function redirectPath(): string
+    {
+        $location = $this->_response?->getHeaderLine('Location') ?? '';
+        $path = parse_url($location, PHP_URL_PATH);
+
+        return is_string($path) && $path !== '' ? $path : $location;
     }
 }

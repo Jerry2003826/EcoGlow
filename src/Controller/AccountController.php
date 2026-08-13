@@ -155,6 +155,40 @@ class AccountController extends AppController
     }
 
     /**
+     * @return void
+     */
+    public function bookings(): void
+    {
+        $customer = $this->requireCustomer();
+        $requests = $this->fetchTable('ServiceRequests')->find()
+            ->contain(['ServiceTypes', 'ServiceAppointments'])
+            ->where(['customer_id' => $customer->id])
+            ->orderBy(['ServiceRequests.id' => 'DESC'])
+            ->all();
+        $this->set(compact('customer', 'requests'));
+    }
+
+    /**
+     * @param string|null $id Request id.
+     * @return void
+     */
+    public function booking(?string $id = null): void
+    {
+        $customer = $this->requireCustomer();
+        $request = $this->fetchTable('ServiceRequests')->find()
+            ->contain(['ServiceTypes', 'ServiceAppointments' => ['Users']])
+            ->where([
+                'ServiceRequests.id' => $this->recordId($id),
+                'ServiceRequests.customer_id' => $customer->id,
+            ])
+            ->first();
+        if ($request === null) {
+            throw new NotFoundException();
+        }
+        $this->set(compact('customer', 'request'));
+    }
+
+    /**
      * @return \App\Model\Entity\Customer
      */
     private function requireCustomer(): Customer

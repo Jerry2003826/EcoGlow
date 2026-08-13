@@ -6,6 +6,8 @@ namespace App\Controller\Admin;
 use App\Model\Entity\SalesOrder;
 use App\Service\Inventory\InventoryLedger;
 use App\Service\Orders\OrderService;
+use App\Service\Payments\PaymentGatewayFactory;
+use App\Service\Payments\RefundService;
 use Cake\Http\Response;
 use Cake\I18n\Date;
 use InvalidArgumentException;
@@ -97,8 +99,22 @@ class OrdersController extends AdminController
                 'status !=' => 'void',
             ])
             ->first();
+        $stripePayment = $this->fetchTable('Payments')->find()
+            ->where([
+                'sales_order_id' => $salesOrder->id,
+                'provider' => 'stripe',
+                'status' => 'captured',
+            ])
+            ->first();
 
-        $this->set(compact('salesOrder', 'today', 'nextStatuses', 'canSeeContact', 'existingInvoice'));
+        $this->set(compact(
+            'salesOrder',
+            'today',
+            'nextStatuses',
+            'canSeeContact',
+            'existingInvoice',
+            'stripePayment',
+        ));
     }
 
     /**
@@ -215,6 +231,31 @@ class OrdersController extends AdminController
         }
         $this->orders->addNote($order, $body, $this->actorId());
         $this->Flash->success(__('Note saved.'));
+
+        return $this->redirect(['action' => 'view', $order->id]);
+    }
+
+    /**
+     * Refund a captured Stripe payment. Restocks only if the goods have not shipped.
+     *
+     * @param string|null $id Order id.
+     * @return \Cake\Http\Response|null
+     */
+    public function refund(?string $id = null): ?Response
+    {
+        $this->request->allowMethod(['post']);
+        $this->requirePermission('refunds.process');
+        $order = $this->fetchTable('SalesOrders')->get($this->recordId($id));
+        try {
+            $refunds = new RefundService(
+                $this->orders,
+                PaymentGatewayFactory::create(),
+            );
+            $refunds->refundOrder($order, $this->actorId());
+            $this->Flash->success(__('Refund recorded. Stock was returned if the order had not shipped.'));
+        } catch (InvalidArgumentException $exception) {
+            $this->Flash->error($exception->getMessage());
+        }
 
         return $this->redirect(['action' => 'view', $order->id]);
     }

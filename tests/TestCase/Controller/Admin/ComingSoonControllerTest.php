@@ -28,7 +28,7 @@ class ComingSoonControllerTest extends TestCase
      */
     public function testIndexRequiresAuthentication(): void
     {
-        $this->get('/admin/coming-soon/appointments');
+        $this->get('/admin/coming-soon/quotations');
         $this->assertResponseCode(302);
         $this->assertRedirectContains('/login');
     }
@@ -39,7 +39,7 @@ class ComingSoonControllerTest extends TestCase
     public function testIndexForbiddenWithoutPermission(): void
     {
         $this->loginAs(3);
-        $this->get('/admin/coming-soon/appointments');
+        $this->get('/admin/coming-soon/quotations');
         $this->assertResponseCode(403);
     }
 
@@ -49,9 +49,9 @@ class ComingSoonControllerTest extends TestCase
     public function testIndexOkForStaff(): void
     {
         $this->loginAs(1);
-        $this->get('/admin/coming-soon/appointments');
+        $this->get('/admin/coming-soon/quotations');
         $this->assertResponseOk();
-        $this->assertResponseContains('Schedule licensed installation');
+        $this->assertResponseContains('Versioned quotes');
         $this->assertResponseNotContains('Please check back later');
     }
 

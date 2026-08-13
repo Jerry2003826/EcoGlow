@@ -11,7 +11,8 @@
         "cakephp/cakephp": "5.4.*",
         "cakephp/migrations": "^5.0",
         "cakephp/plugin-installer": "^2.0",
-        "mobiledetect/mobiledetectlib": "^4.8.03"
+        "mobiledetect/mobiledetectlib": "^4.8.03",
+        "stripe/stripe-php": "^21.2"
     },
     "require-dev": {
         "cakephp/bake": "^3.6",

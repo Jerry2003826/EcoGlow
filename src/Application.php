@@ -148,11 +148,14 @@ class Application extends BaseApplication implements
             // https://book.cakephp.org/5/en/security/csrf.html#cross-site-request-forgery-csrf-middleware
             // `secure` is tied to debug so the cookie is HTTPS-only in
             // production while still working over plain HTTP in local dev.
-            ->add(new CsrfProtectionMiddleware([
+            // Stripe webhooks have no CSRF cookie; skip that one path only.
+            ->add((new CsrfProtectionMiddleware([
                 'httponly' => true,
                 'samesite' => 'Lax',
                 'secure' => !Configure::read('debug'),
-            ]))
+            ]))->skipCheckCallback(function (ServerRequestInterface $request): bool {
+                return rtrim($request->getUri()->getPath(), '/') === '/webhooks/stripe';
+            }))
 
             // Block locked-out login attempts *before* authentication so a
             // correct password cannot be persisted to the session during a
@@ -187,17 +190,22 @@ class Application extends BaseApplication implements
         ];
 
         $path = $request->getUri()->getPath();
-        $customerArea = str_starts_with($path, '/account') || $path === '/register';
+        $customerArea = str_starts_with($path, '/account')
+            || str_starts_with($path, '/checkout')
+            || str_starts_with($path, '/services')
+            || $path === '/register';
+        $loginUrl = $customerArea ? '/account/login' : '/login';
         $authenticationService = new AuthenticationService([
-            'unauthenticatedRedirect' => $customerArea ? '/account/login' : '/login',
+            'unauthenticatedRedirect' => $loginUrl,
             'queryParam' => 'redirect',
             'authenticators' => [
                 'Authentication.Session',
                 'Authentication.Form' => [
                     'fields' => $fields,
-                    // DefaultUrlChecker only accepts one URL. Both staff and
-                    // customer forms share this authenticator, so do not pin it.
-                    'loginUrl' => null,
+                    // DefaultUrlChecker compares a single path. Pin it to the
+                    // login form that belongs to this request so POST /register
+                    // (which also has email + password) cannot authenticate.
+                    'loginUrl' => $loginUrl,
                     'identifier' => [
                         'className' => 'Authentication.Password',
                         'fields' => $fields,

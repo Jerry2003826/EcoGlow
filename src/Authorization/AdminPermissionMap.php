@@ -48,6 +48,7 @@ final class AdminPermissionMap
                 'createFromOrder' => ['invoices.issue'],
                 'send' => ['invoices.issue'],
                 'recordPayment' => ['payments.record'],
+                'refund' => ['refunds.process'],
                 self::ANY => ['invoices.issue'],
             ],
             'Reports' => [
@@ -63,7 +64,15 @@ final class AdminPermissionMap
                 'updatePromisedDate' => ['orders.manage'],
                 'addNote' => ['orders.manage'],
                 'updateStatus' => ['orders.manage', 'orders.dispatch'],
+                'refund' => ['refunds.process'],
                 self::ANY => ['orders.view', 'orders.create', 'orders.manage', 'orders.dispatch'],
+            ],
+            'Appointments' => [
+                'schedule' => ['services.dispatch'],
+                'updateStatus' => ['services.manage', 'services.dispatch'],
+                'addWorkLog' => ['services.manage'],
+                'addPart' => ['services.manage'],
+                self::ANY => ['services.manage', 'services.dispatch'],
             ],
             'Inventory' => [
                 'adjust' => ['inventory.adjust'],

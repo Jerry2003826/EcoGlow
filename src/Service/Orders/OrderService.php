@@ -3,8 +3,11 @@ declare(strict_types=1);
 
 namespace App\Service\Orders;
 
+use App\Model\Entity\Cart;
 use App\Model\Entity\OrderNote;
 use App\Model\Entity\SalesOrder;
+use App\Service\AustralianStates;
+use App\Service\Cart\CartService;
 use App\Service\Inventory\InventoryLedger;
 use App\Service\Money;
 use Cake\Datasource\ConnectionInterface;
@@ -301,6 +304,272 @@ class OrderService
         $note->visible_to_customer = false;
 
         return $notes->saveOrFail($note);
+    }
+
+    /**
+     * Web checkout: draft unpaid order, live prices, full-quantity reservation.
+     *
+     * Posted prices are ignored. Short stock refuses the order rather than
+     * recording a partial reservation.
+     *
+     * @param int $customerId Customer placing the order.
+     * @param int $userId Acting customer user.
+     * @param \App\Model\Entity\Cart $cart Cart with items contained.
+     * @param array<string, mixed> $address Shipping fields.
+     * @return \App\Model\Entity\SalesOrder
+     */
+    public function createFromCheckout(int $customerId, int $userId, Cart $cart, array $address): SalesOrder
+    {
+        $this->assertCheckoutAddress($address);
+        $items = $cart->cart_items ?? [];
+        if ($items === []) {
+            throw new InvalidArgumentException('Your basket is empty.');
+        }
+
+        $this->fetchTable('Customers')->get($customerId);
+
+        return $this->connection()->transactional(function () use ($customerId, $userId, $cart, $address, $items) {
+            $cartService = new CartService();
+            $totals = $cartService->totals($cart);
+            $orderNumber = $this->ledger->nextDocumentNumber('sales_order', 'ORD');
+            $promised = Date::now('Australia/Melbourne')->addDays(10);
+
+            $prepared = [];
+            foreach ($items as $index => $item) {
+                $prepared[] = $this->prepareLine([
+                    'product_variant_id' => (int)$item->product_variant_id,
+                    'quantity' => (int)$item->quantity,
+                ], $index);
+            }
+
+            $orders = $this->fetchTable('SalesOrders');
+            $order = $orders->newEmptyEntity();
+            $order->order_number = $orderNumber;
+            $order->customer_id = $customerId;
+            $order->status = SalesOrder::STATUS_DRAFT;
+            $order->payment_status = 'pending';
+            $order->fulfilment_method = 'shipping';
+            $order->currency = 'AUD';
+            $order->subtotal_cents = (int)$totals['subtotal_cents'];
+            $order->discount_cents = 0;
+            $order->shipping_cents = (int)$totals['shipping_cents'];
+            $order->tax_cents = (int)$totals['gst_cents'];
+            $order->grand_total_cents = (int)$totals['total_cents'];
+            $order->placed_at = DateTime::now('UTC');
+            $order->created_by_user_id = $userId;
+            $order->source_channel = SalesOrder::CHANNEL_WEB;
+            $order->order_type = 'retail';
+            $order->promised_delivery_date = $promised;
+            $order->version_number = 1;
+            $order->metadata = ['created_via' => 'web_checkout'];
+            $orders->saveOrFail($order);
+
+            $this->recordStatus($order, null, SalesOrder::STATUS_DRAFT, $userId, 'Checkout started');
+            $this->snapshotAddress($order, $address);
+
+            $itemsTable = $this->fetchTable('SalesOrderItems');
+            $reservations = $this->fetchTable('StockReservations');
+            foreach ($prepared as $row) {
+                $item = $itemsTable->newEmptyEntity();
+                foreach ($row as $field => $value) {
+                    if ($field === 'quantity_requested') {
+                        continue;
+                    }
+                    $item->set($field, $value);
+                }
+                $item->sales_order_id = $order->id;
+                $itemsTable->saveOrFail($item);
+
+                $location = $this->ledger->bestLocationFor((int)$row['product_variant_id']);
+                $available = $location['available'];
+                $qty = (int)$row['quantity'];
+                if ($qty > max($available, 0)) {
+                    throw new InvalidArgumentException(
+                        'One or more items are no longer available in the quantity you asked for.',
+                    );
+                }
+                $this->ledger->applyInTransaction(
+                    (int)$row['product_variant_id'],
+                    $location['id'],
+                    'reservation',
+                    0,
+                    $qty,
+                    'sales_order',
+                    (int)$order->id,
+                    'Reserve stock for ' . $order->order_number,
+                    $userId,
+                );
+                $reservation = $reservations->newEmptyEntity();
+                $reservation->sales_order_id = $order->id;
+                $reservation->sales_order_item_id = $item->id;
+                $reservation->product_variant_id = $row['product_variant_id'];
+                $reservation->inventory_location_id = $location['id'];
+                $reservation->quantity = $qty;
+                $reservation->status = 'active';
+                $reservation->reservation_movement_id = $this->ledger->lastInsertId();
+                $reservation->created_by_user_id = $userId;
+                $reservations->saveOrFail($reservation);
+            }
+
+            $cart->set('status', 'converted');
+            $this->fetchTable('Carts')->saveOrFail($cart);
+
+            return $orders->get($order->id, contain: [
+                'Customers',
+                'SalesOrderItems',
+                'OrderAddresses',
+            ]);
+        });
+    }
+
+    /**
+     * Payment succeeded: confirm the order and consume reservations.
+     *
+     * @param \App\Model\Entity\SalesOrder $order Order.
+     * @param int $actorUserId Acting user (customer or system).
+     * @return \App\Model\Entity\SalesOrder
+     */
+    public function confirmPaid(SalesOrder $order, int $actorUserId): SalesOrder
+    {
+        return $this->connection()->transactional(function () use ($order, $actorUserId) {
+            $order = $this->fetchTable('SalesOrders')->get($order->id);
+            if ($order->payment_status === 'refunded') {
+                return $order;
+            }
+            $order->payment_status = 'paid';
+            if ($order->status === SalesOrder::STATUS_DRAFT) {
+                $from = $order->status;
+                $order->status = SalesOrder::STATUS_CONFIRMED;
+                $this->fetchTable('SalesOrders')->saveOrFail($order);
+                $this->annotateLatestHistory(
+                    $order,
+                    $from,
+                    SalesOrder::STATUS_CONFIRMED,
+                    $actorUserId,
+                    'Payment captured',
+                );
+            } else {
+                $this->fetchTable('SalesOrders')->saveOrFail($order);
+            }
+            $this->consumeReservations((int)$order->id, $actorUserId, $order->order_number);
+
+            return $order;
+        });
+    }
+
+    /**
+     * Payment failed or abandoned: cancel and release reservations.
+     *
+     * @param \App\Model\Entity\SalesOrder $order Order.
+     * @param int $actorUserId Acting user.
+     * @param string $note History note.
+     * @return \App\Model\Entity\SalesOrder
+     */
+    public function failUnpaid(SalesOrder $order, int $actorUserId, string $note = 'Payment failed'): SalesOrder
+    {
+        return $this->connection()->transactional(function () use ($order, $actorUserId, $note) {
+            $order = $this->fetchTable('SalesOrders')->get($order->id);
+            if ($order->payment_status === 'paid' || $order->status === SalesOrder::STATUS_CANCELLED) {
+                return $order;
+            }
+            $order->payment_status = 'failed';
+            $this->fetchTable('SalesOrders')->saveOrFail($order);
+            if ($order->status !== SalesOrder::STATUS_CANCELLED) {
+                $this->changeStatus($order, SalesOrder::STATUS_CANCELLED, $actorUserId, $note);
+            }
+
+            return $this->fetchTable('SalesOrders')->get($order->id);
+        });
+    }
+
+    /**
+     * Restock consumed reservations when the goods have not shipped.
+     *
+     * @param \App\Model\Entity\SalesOrder $order Order.
+     * @param int $actorUserId Acting staff user.
+     * @return void
+     */
+    public function restockIfUnshipped(SalesOrder $order, int $actorUserId): void
+    {
+        if (
+            $order->status === SalesOrder::STATUS_DISPATCHED
+            || $order->status === SalesOrder::STATUS_COMPLETED
+        ) {
+            return;
+        }
+
+        $this->connection()->transactional(function () use ($order, $actorUserId): void {
+            $reservations = $this->fetchTable('StockReservations');
+            $consumed = $reservations->find()
+                ->where(['sales_order_id' => $order->id, 'status' => 'consumed'])
+                ->all();
+            foreach ($consumed as $reservation) {
+                $qty = (int)$reservation->quantity;
+                if ($qty > 0) {
+                    $this->ledger->applyInTransaction(
+                        (int)$reservation->product_variant_id,
+                        (int)$reservation->inventory_location_id,
+                        'return',
+                        $qty,
+                        0,
+                        'sales_order',
+                        (int)$order->id,
+                        'Restock refunded ' . $order->order_number,
+                        $actorUserId,
+                    );
+                }
+                $reservation->status = 'returned';
+                $reservation->released_at = DateTime::now('UTC');
+                $reservations->saveOrFail($reservation);
+            }
+            $this->releaseReservations((int)$order->id, $actorUserId, $order->order_number);
+        });
+    }
+
+    /**
+     * @param array<string, mixed> $address Posted shipping fields.
+     * @return void
+     */
+    private function assertCheckoutAddress(array $address): void
+    {
+        foreach (['recipient_name', 'line1', 'suburb', 'state', 'postcode'] as $field) {
+            if (trim((string)($address[$field] ?? '')) === '') {
+                throw new InvalidArgumentException('Please complete the delivery address.');
+            }
+        }
+        $state = strtoupper(trim((string)$address['state']));
+        if (!AustralianStates::isValid($state)) {
+            throw new InvalidArgumentException('Please choose an Australian state or territory.');
+        }
+        $postcode = trim((string)$address['postcode']);
+        if (!preg_match('/^\d{4}$/', $postcode)) {
+            throw new InvalidArgumentException('Please enter a four-digit postcode.');
+        }
+    }
+
+    /**
+     * @param \App\Model\Entity\SalesOrder $order Order.
+     * @param array<string, mixed> $address Shipping fields.
+     * @return void
+     */
+    private function snapshotAddress(SalesOrder $order, array $address): void
+    {
+        $addresses = $this->fetchTable('OrderAddresses');
+        foreach (['shipping', 'billing'] as $type) {
+            $row = $addresses->newEmptyEntity();
+            $row->set('sales_order_id', $order->id);
+            $row->set('address_type', $type);
+            $row->set('recipient_name', trim((string)$address['recipient_name']));
+            $row->set('company', $this->nullableString($address['company'] ?? null));
+            $row->set('line1', trim((string)$address['line1']));
+            $row->set('line2', $this->nullableString($address['line2'] ?? null));
+            $row->set('suburb', trim((string)$address['suburb']));
+            $row->set('state', strtoupper(trim((string)$address['state'])));
+            $row->set('postcode', trim((string)$address['postcode']));
+            $row->set('country_code', 'AU');
+            $row->set('phone', $this->nullableString($address['phone'] ?? null));
+            $addresses->saveOrFail($row);
+        }
     }
 
     /**

@@ -287,6 +287,10 @@ class UsersController extends AppController
      */
     public function forgotPassword(): ?Response
     {
+        $resetArea = $this->passwordResetArea();
+        $loginPath = $this->loginPathForArea($resetArea);
+        $this->set(compact('loginPath'));
+
         if (!$this->request->is('post')) {
             return null;
         }
@@ -321,14 +325,14 @@ class UsersController extends AppController
             ->first();
 
         if ($user !== null) {
-            $this->sendResetLink($user);
+            $this->sendResetLink($user, $resetArea);
         }
 
         $this->Flash->success(__(
             'If that email address has an account, we have sent a password reset link. Please check your inbox.',
         ));
 
-        return $this->redirect(['action' => 'login']);
+        return $this->redirect($loginPath);
     }
 
     /**
@@ -339,6 +343,10 @@ class UsersController extends AppController
      */
     public function resetPassword(?string $token = null): ?Response
     {
+        $resetArea = $this->passwordResetArea();
+        $loginPath = $this->loginPathForArea($resetArea);
+        $this->set(compact('loginPath'));
+
         $user = $this->findUserByResetToken((string)$token);
 
         if ($user === null) {
@@ -346,7 +354,7 @@ class UsersController extends AppController
                 __('That password reset link is invalid or has expired. Please request a new one.'),
             );
 
-            return $this->redirect(['action' => 'forgotPassword']);
+            return $this->redirect(['action' => 'forgotPassword', '?' => $this->resetAreaQuery($resetArea)]);
         }
 
         if ($this->request->is(['post', 'put'])) {
@@ -376,7 +384,7 @@ class UsersController extends AppController
 
                     $this->Flash->success(__('Your password has been updated. Please sign in.'));
 
-                    return $this->redirect(['action' => 'login']);
+                    return $this->redirect($loginPath);
                 }
             }
 
@@ -397,9 +405,10 @@ class UsersController extends AppController
      * oracle. The reset simply does not arrive and can be requested again.
      *
      * @param \App\Model\Entity\User $user The account requesting the reset.
+     * @param string $resetArea customer|staff, used only for the return path.
      * @return void
      */
-    protected function sendResetLink(User $user): void
+    protected function sendResetLink(User $user, string $resetArea = 'staff'): void
     {
         $token = bin2hex(Security::randomBytes(self::RESET_TOKEN_BYTES));
 
@@ -416,7 +425,12 @@ class UsersController extends AppController
         }
 
         try {
-            $this->getMailer('User')->send('resetPassword', [$user, $token, self::RESET_TOKEN_TTL_HOURS]);
+            $this->getMailer('User')->send('resetPassword', [
+                $user,
+                $token,
+                self::RESET_TOKEN_TTL_HOURS,
+                $resetArea === 'customer',
+            ]);
         } catch (Throwable $e) {
             Log::error(sprintf('Could not send the password reset email: %s', $e->getMessage()));
         }
@@ -447,6 +461,47 @@ class UsersController extends AppController
             ->first();
 
         return $user;
+    }
+
+    /**
+     * Where this reset was started: customer storefront or staff console.
+     *
+     * Query, posted field, then session — never inferred from the account —
+     * so known and unknown addresses still share one redirect.
+     *
+     * @return string customer|staff
+     */
+    private function passwordResetArea(): string
+    {
+        $from = (string)$this->request->getQuery('from');
+        if ($from === '') {
+            $from = (string)$this->request->getData('from');
+        }
+        if ($from === '') {
+            $from = (string)$this->request->getSession()->read('PasswordReset.from');
+        }
+        $area = $from === 'customer' ? 'customer' : 'staff';
+        $this->request->getSession()->write('PasswordReset.from', $area);
+
+        return $area;
+    }
+
+    /**
+     * @param string $area customer|staff
+     * @return string
+     */
+    private function loginPathForArea(string $area): string
+    {
+        return $area === 'customer' ? '/account/login' : '/login';
+    }
+
+    /**
+     * @param string $area customer|staff
+     * @return array<string, string>
+     */
+    private function resetAreaQuery(string $area): array
+    {
+        return $area === 'customer' ? ['from' => 'customer'] : [];
     }
 
     /**

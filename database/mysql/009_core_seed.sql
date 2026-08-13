@@ -72,19 +72,21 @@ DELETE rp FROM `role_permissions` rp INNER JOIN `roles` r ON r.`id` = rp.`role_i
 -- @@STATEMENT_END@@
 INSERT INTO `feature_flags` (`flag_key`,`enabled`,`rollout_percentage`,`rules`,`description`,`modified`) VALUES ('website.customer_accounts',1,100,JSON_OBJECT(),'Merged-requirements default',UTC_TIMESTAMP(6)) ON DUPLICATE KEY UPDATE `enabled`=VALUES(`enabled`),`modified`=UTC_TIMESTAMP(6);
 -- @@STATEMENT_END@@
+INSERT INTO `feature_flags` (`flag_key`,`enabled`,`rollout_percentage`,`rules`,`description`,`modified`) VALUES ('commerce.customer_account_required',1,100,JSON_OBJECT(),'Web checkout requires a signed-in customer',UTC_TIMESTAMP(6)) ON DUPLICATE KEY UPDATE `enabled`=VALUES(`enabled`),`modified`=UTC_TIMESTAMP(6);
+-- @@STATEMENT_END@@
 INSERT INTO `feature_flags` (`flag_key`,`enabled`,`rollout_percentage`,`rules`,`description`,`modified`) VALUES ('commerce.manual_channel_orders',1,100,JSON_OBJECT(),'Merged-requirements default',UTC_TIMESTAMP(6)) ON DUPLICATE KEY UPDATE `enabled`=VALUES(`enabled`),`modified`=UTC_TIMESTAMP(6);
 -- @@STATEMENT_END@@
 INSERT INTO `feature_flags` (`flag_key`,`enabled`,`rollout_percentage`,`rules`,`description`,`modified`) VALUES ('inventory.low_stock_alerts',1,100,JSON_OBJECT(),'Merged-requirements default',UTC_TIMESTAMP(6)) ON DUPLICATE KEY UPDATE `enabled`=VALUES(`enabled`),`modified`=UTC_TIMESTAMP(6);
 -- @@STATEMENT_END@@
 INSERT INTO `feature_flags` (`flag_key`,`enabled`,`rollout_percentage`,`rules`,`description`,`modified`) VALUES ('commerce.quotations',0,100,JSON_OBJECT(),'Merged-requirements default',UTC_TIMESTAMP(6)) ON DUPLICATE KEY UPDATE `enabled`=VALUES(`enabled`),`modified`=UTC_TIMESTAMP(6);
 -- @@STATEMENT_END@@
-INSERT INTO `feature_flags` (`flag_key`,`enabled`,`rollout_percentage`,`rules`,`description`,`modified`) VALUES ('commerce.online_payments',0,100,JSON_OBJECT(),'Merged-requirements default',UTC_TIMESTAMP(6)) ON DUPLICATE KEY UPDATE `enabled`=VALUES(`enabled`),`modified`=UTC_TIMESTAMP(6);
+INSERT INTO `feature_flags` (`flag_key`,`enabled`,`rollout_percentage`,`rules`,`description`,`modified`) VALUES ('commerce.online_payments',1,100,JSON_OBJECT(),'Full-amount Stripe payments on web checkout',UTC_TIMESTAMP(6)) ON DUPLICATE KEY UPDATE `enabled`=VALUES(`enabled`),`modified`=UTC_TIMESTAMP(6);
 -- @@STATEMENT_END@@
 INSERT INTO `feature_flags` (`flag_key`,`enabled`,`rollout_percentage`,`rules`,`description`,`modified`) VALUES ('commerce.shipping_rates',0,100,JSON_OBJECT(),'Merged-requirements default',UTC_TIMESTAMP(6)) ON DUPLICATE KEY UPDATE `enabled`=VALUES(`enabled`),`modified`=UTC_TIMESTAMP(6);
 -- @@STATEMENT_END@@
 INSERT INTO `feature_flags` (`flag_key`,`enabled`,`rollout_percentage`,`rules`,`description`,`modified`) VALUES ('commerce.trade_accounts',0,100,JSON_OBJECT(),'Merged-requirements default',UTC_TIMESTAMP(6)) ON DUPLICATE KEY UPDATE `enabled`=VALUES(`enabled`),`modified`=UTC_TIMESTAMP(6);
 -- @@STATEMENT_END@@
-INSERT INTO `feature_flags` (`flag_key`,`enabled`,`rollout_percentage`,`rules`,`description`,`modified`) VALUES ('services.installation_repairs',1,100,JSON_OBJECT(),'Merged-requirements default',UTC_TIMESTAMP(6)) ON DUPLICATE KEY UPDATE `enabled`=VALUES(`enabled`),`modified`=UTC_TIMESTAMP(6);
+INSERT INTO `feature_flags` (`flag_key`,`enabled`,`rollout_percentage`,`rules`,`description`,`modified`) VALUES ('services.installation_repairs',1,100,JSON_OBJECT(),'Customer booking and staff scheduling',UTC_TIMESTAMP(6)) ON DUPLICATE KEY UPDATE `enabled`=VALUES(`enabled`),`modified`=UTC_TIMESTAMP(6);
 -- @@STATEMENT_END@@
 INSERT INTO `feature_flags` (`flag_key`,`enabled`,`rollout_percentage`,`rules`,`description`,`modified`) VALUES ('customer.save_for_later',1,100,JSON_OBJECT(),'Merged-requirements default',UTC_TIMESTAMP(6)) ON DUPLICATE KEY UPDATE `enabled`=VALUES(`enabled`),`modified`=UTC_TIMESTAMP(6);
 -- @@STATEMENT_END@@

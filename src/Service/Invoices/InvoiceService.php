@@ -60,12 +60,15 @@ class InvoiceService
         return $this->connection()->transactional(function () use ($order, $actorUserId) {
             $today = Date::now('Australia/Melbourne');
             $invoices = $this->fetchTable('Invoices');
+            $alreadyPaid = $this->capturedPaymentsTotal((int)$order->id);
             $invoice = $invoices->newEmptyEntity();
             $invoice->invoice_number = $this->ledger->nextDocumentNumber('invoice', 'INV');
             $invoice->invoice_type = 'invoice';
             $invoice->sales_order_id = $order->id;
             $invoice->customer_id = $order->customer_id;
-            $invoice->status = Invoice::STATUS_ISSUED;
+            $invoice->status = $alreadyPaid >= (int)$order->grand_total_cents
+                ? Invoice::STATUS_PAID
+                : Invoice::STATUS_ISSUED;
             $invoice->currency = 'AUD';
             $invoice->issue_date = $today;
             $invoice->due_date = $today->addDays(14);
@@ -74,7 +77,7 @@ class InvoiceService
             $invoice->shipping_cents = (int)$order->shipping_cents;
             $invoice->tax_cents = (int)$order->tax_cents;
             $invoice->grand_total_cents = (int)$order->grand_total_cents;
-            $invoice->amount_paid_cents = 0;
+            $invoice->amount_paid_cents = $alreadyPaid;
             $invoice->credit_applied_cents = 0;
             $invoice->business_snapshot = $this->businessSnapshot();
             $invoice->customer_snapshot = $this->customerSnapshot($order);
@@ -109,6 +112,17 @@ class InvoiceService
 
             $note = 'Issued from ' . $order->order_number;
             $this->recordStatus($invoice, null, Invoice::STATUS_ISSUED, $actorUserId, $note);
+            if ($invoice->status === Invoice::STATUS_PAID) {
+                $invoice->paid_at = DateTime::now('UTC');
+                $invoices->saveOrFail($invoice);
+                $this->recordStatus(
+                    $invoice,
+                    Invoice::STATUS_ISSUED,
+                    Invoice::STATUS_PAID,
+                    $actorUserId,
+                    'Paid on the web checkout',
+                );
+            }
 
             return $invoices->get($invoice->id, finder: 'detail');
         });
@@ -260,6 +274,28 @@ class InvoiceService
         $history->changed_by_user_id = $actorUserId;
         $history->note = $note;
         $this->fetchTable('InvoiceStatusHistory')->saveOrFail($history);
+    }
+
+    /**
+     * Captured Stripe/manual payments already on the order.
+     *
+     * @param int $orderId Sales order id.
+     * @return int
+     */
+    private function capturedPaymentsTotal(int $orderId): int
+    {
+        $total = 0;
+        $rows = $this->fetchTable('Payments')->find()
+            ->where([
+                'sales_order_id' => $orderId,
+                'status' => 'captured',
+            ])
+            ->all();
+        foreach ($rows as $row) {
+            $total += (int)$row->amount_cents;
+        }
+
+        return $total;
     }
 
     /**

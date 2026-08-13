@@ -52,6 +52,24 @@ class OutboundMailer extends Mailer
     }
 
     /**
+     * Order confirmation after a captured web payment.
+     *
+     * @param \App\Model\Entity\OutboundMessage $message Queue row.
+     * @return void
+     */
+    public function orderConfirmation(OutboundMessage $message): void
+    {
+        $meta = $message->get('metadata');
+        $orderNumber = is_array($meta) ? (string)($meta['order_number'] ?? '') : '';
+
+        $this->compose($message, 'order_confirmation', [
+            'bodyText' => (string)$message->get('body_text'),
+            'subject' => (string)$message->get('subject'),
+            'orderNumber' => $orderNumber,
+        ]);
+    }
+
+    /**
      * Shared envelope for a queued row.
      *
      * @param \App\Model\Entity\OutboundMessage $message Queue row.

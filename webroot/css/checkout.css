@@ -1,0 +1,86 @@
+/*
+ * Checkout and service-booking extras. Tokens from site.css only.
+ * Do not edit site.css.
+ */
+
+.checkout-page {
+    --bs-primary: var(--eg-brand);
+    --bs-code-color: var(--eg-text);
+    --bs-link-color: var(--eg-brand);
+    --bs-link-hover-color: var(--eg-brand-hover);
+    overflow-x: hidden;
+}
+
+.checkout-section-title {
+    font-family: var(--eg-font-body);
+    font-size: 0.95rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin: 0 0 1.25rem;
+    color: var(--eg-text);
+}
+
+.checkout-legend {
+    font-family: var(--eg-font-body);
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 0.75rem;
+    color: var(--eg-text);
+}
+
+.checkout-alert {
+    background: var(--eg-error-tint);
+    color: var(--eg-error);
+    border: 1px solid var(--eg-border);
+    border-radius: var(--eg-radius-sm);
+    padding: 0.85rem 1rem;
+    margin-bottom: 1.25rem;
+    font-weight: 600;
+}
+
+.checkout-lines {
+    list-style: none;
+    margin: 0 0 1rem;
+    padding: 0;
+}
+
+.checkout-lines li {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--eg-border);
+}
+
+.checkout-payment-element {
+    min-height: 12rem;
+}
+
+.checkout-page .btn,
+.checkout-page .form-control,
+.checkout-page .form-select,
+.checkout-page .form-check-label {
+    min-height: 44px;
+}
+
+.checkout-page textarea.form-control {
+    min-height: 8rem;
+}
+
+.checkout-page .form-check-input:focus-visible,
+.checkout-page .form-control:focus-visible,
+.checkout-page .form-select:focus-visible,
+.checkout-page .btn:focus-visible {
+    outline: 2px solid var(--eg-brand);
+    outline-offset: 2px;
+}
+
+@media (max-width: 575.98px) {
+    .checkout-lines li {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}

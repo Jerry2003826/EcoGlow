@@ -75,7 +75,7 @@ class AdminController extends AppController
                 'items' => [
                     $this->navItem('Dashboard', 'Dashboard'),
                     $this->navItem('Orders', 'Orders'),
-                    $this->comingSoonItem('Appointments', 'appointments'),
+                    $this->navItem('Appointments', 'Appointments'),
                 ],
             ],
             [

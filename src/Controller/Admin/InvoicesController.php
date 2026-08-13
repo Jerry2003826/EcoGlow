@@ -6,7 +6,10 @@ namespace App\Controller\Admin;
 use App\Model\Entity\Invoice;
 use App\Service\Inventory\InventoryLedger;
 use App\Service\Invoices\InvoiceService;
+use App\Service\Orders\OrderService;
 use App\Service\OutboundQueue;
+use App\Service\Payments\PaymentGatewayFactory;
+use App\Service\Payments\RefundService;
 use Cake\Http\Response;
 use Cake\I18n\Date;
 use InvalidArgumentException;
@@ -77,13 +80,20 @@ class InvoicesController extends AdminController
         $invoice = $this->fetchTable('Invoices')->get($this->recordId($id), finder: 'detail');
         $today = Date::now('Australia/Melbourne');
         $payments = [];
+        $stripePayment = null;
         if ($invoice->sales_order_id) {
             $payments = $this->fetchTable('Payments')->find()
                 ->where(['sales_order_id' => $invoice->sales_order_id])
                 ->orderBy(['Payments.created' => 'ASC'])
                 ->all();
+            foreach ($payments as $payment) {
+                if ($payment->provider === 'stripe' && $payment->status === 'captured') {
+                    $stripePayment = $payment;
+                    break;
+                }
+            }
         }
-        $this->set(compact('invoice', 'today', 'payments'));
+        $this->set(compact('invoice', 'today', 'payments', 'stripePayment'));
     }
 
     /**
@@ -135,6 +145,37 @@ class InvoicesController extends AdminController
         try {
             $this->invoices->recordPayment($invoice, $this->postedCents('amount'), $this->actorId());
             $this->Flash->success(__('Payment recorded.'));
+        } catch (InvalidArgumentException $exception) {
+            $this->Flash->error($exception->getMessage());
+        }
+
+        return $this->redirect(['action' => 'view', $invoice->id]);
+    }
+
+    /**
+     * Refund the captured Stripe payment on the related order.
+     *
+     * @param string|null $id Invoice id.
+     * @return \Cake\Http\Response|null
+     */
+    public function refund(?string $id = null): ?Response
+    {
+        $this->request->allowMethod(['post']);
+        $this->requirePermission('refunds.process');
+        $invoice = $this->fetchTable('Invoices')->get($this->recordId($id));
+        if (!$invoice->sales_order_id) {
+            $this->Flash->error(__('This invoice is not linked to an order.'));
+
+            return $this->redirect(['action' => 'view', $invoice->id]);
+        }
+        $order = $this->fetchTable('SalesOrders')->get((int)$invoice->sales_order_id);
+        try {
+            $refunds = new RefundService(
+                new OrderService(new InventoryLedger()),
+                PaymentGatewayFactory::create(),
+            );
+            $refunds->refundOrder($order, $this->actorId());
+            $this->Flash->success(__('Refund recorded.'));
         } catch (InvalidArgumentException $exception) {
             $this->Flash->error($exception->getMessage());
         }

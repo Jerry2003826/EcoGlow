@@ -9,6 +9,7 @@ $items = [
     'index' => ['label' => 'Profile', 'url' => '/account'],
     'addresses' => ['label' => 'Addresses', 'url' => '/account/addresses'],
     'orders' => ['label' => 'Orders', 'url' => '/account/orders'],
+    'bookings' => ['label' => 'Bookings', 'url' => '/account/bookings'],
 ];
 ?>
 <nav class="account-nav" aria-label="Account">

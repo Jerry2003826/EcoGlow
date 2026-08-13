@@ -128,4 +128,14 @@ return [
     //        'from' => ['no-reply@your-domain.com' => 'Eco Glow Lighting'],
     //    ],
     //],
+
+    /*
+     * Stripe Payment Element keys (https://dashboard.stripe.com/apikeys).
+     * Leave empty locally; tests stub the client and never call Stripe.
+     */
+    'Stripe' => [
+        'publishableKey' => env('STRIPE_PUBLISHABLE_KEY', ''),
+        'secretKey' => env('STRIPE_SECRET_KEY', ''),
+        'webhookSecret' => env('STRIPE_WEBHOOK_SECRET', ''),
+    ],
 ];

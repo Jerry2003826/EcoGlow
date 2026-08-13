@@ -36,18 +36,24 @@ class UserMailer extends Mailer
      * @param \App\Model\Entity\User $user The account requesting the reset.
      * @param string $token The plain-text reset token.
      * @param int $expiresInHours How long the link stays valid, in hours.
+     * @param bool $fromCustomer Whether the request started on the customer form.
      * @return void
      */
-    public function resetPassword(User $user, string $token, int $expiresInHours): void
-    {
-        $resetUrl = Router::url(
-            [
-                'controller' => 'Users',
-                'action' => 'resetPassword',
-                $token,
-            ],
-            true,
-        );
+    public function resetPassword(
+        User $user,
+        string $token,
+        int $expiresInHours,
+        bool $fromCustomer = false,
+    ): void {
+        $url = [
+            'controller' => 'Users',
+            'action' => 'resetPassword',
+            $token,
+        ];
+        if ($fromCustomer) {
+            $url['?'] = ['from' => 'customer'];
+        }
+        $resetUrl = Router::url($url, true);
 
         $this
             ->setTo($user->email)

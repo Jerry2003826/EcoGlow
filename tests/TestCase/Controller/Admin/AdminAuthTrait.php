@@ -35,6 +35,14 @@ trait AdminAuthTrait
         'app.OrderNotes',
         'app.StockReservations',
         'app.InventoryMovements',
+        'app.Payments',
+        'app.PaymentRefunds',
+        'app.OrderAddresses',
+        'app.IdempotencyRecords',
+        'app.ServiceTypes',
+        'app.ServiceRequests',
+        'app.ServiceAppointments',
+        'app.FeatureFlags',
     ];
 
     /**

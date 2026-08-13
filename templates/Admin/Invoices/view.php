@@ -6,6 +6,7 @@
  * @var \App\Model\Entity\Invoice $invoice
  * @var \Cake\I18n\Date $today
  * @var iterable<\App\Model\Entity\Payment> $payments
+ * @var \App\Model\Entity\Payment|null $stripePayment
  */
 
 use App\Model\Entity\Invoice;
@@ -186,6 +187,18 @@ $this->assign('breadcrumb', $this->element('admin/breadcrumb', [
                 <?= $this->Form->button('Record payment', ['class' => 'btn btn-eg-ghost']) ?>
             </div>
             <?= $this->Form->end() ?>
+        <?php endif; ?>
+        <?php if (!empty($stripePayment)) : ?>
+            <div class="admin-actions mt-3">
+                <?= $this->Form->postButton(
+                    'Refund Stripe payment',
+                    ['action' => 'refund', $invoice->id],
+                    [
+                        'class' => 'btn btn-eg-ghost',
+                        'confirm' => 'Refund the captured Stripe payment on this invoice order?',
+                    ],
+                ) ?>
+            </div>
         <?php endif; ?>
     </div>
 </section>

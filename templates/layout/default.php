@@ -146,7 +146,7 @@ $navLinks = [
                 <div class="col-6 col-lg-3">
                     <h2>Support</h2>
                     <ul>
-                        <li><a href="<?= $home ?>#services">Installation &amp; Repairs</a></li>
+                        <li><a href="<?= $this->Url->build('/services/book') ?>">Installation &amp; Repairs</a></li>
                         <li><a href="<?= $this->Url->build('/contact') ?>">Contact Us</a></li>
                     </ul>
                 </div>

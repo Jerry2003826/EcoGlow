@@ -42,6 +42,8 @@ class SalesOrdersTable extends Table
             'sort' => ['OrderNotes.created' => 'ASC', 'OrderNotes.id' => 'ASC'],
         ]);
         $this->hasMany('StockReservations', ['foreignKey' => 'sales_order_id']);
+        $this->hasMany('OrderAddresses', ['foreignKey' => 'sales_order_id']);
+        $this->hasMany('Payments', ['foreignKey' => 'sales_order_id']);
         $this->mapJsonColumns(['metadata']);
     }
 
@@ -58,6 +60,8 @@ class SalesOrdersTable extends Table
             'SalesOrderItems',
             'OrderStatusHistory' => ['Users'],
             'OrderNotes',
+            'OrderAddresses',
+            'Payments',
         ]);
     }
 }

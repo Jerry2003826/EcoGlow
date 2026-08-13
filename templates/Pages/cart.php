@@ -212,14 +212,23 @@ $productUrl = $this->Url->build('/shop/product');
                 </p>
 
                 <div class="d-grid mt-3">
-                    <button type="button" class="btn btn-eg-primary" disabled
-                            aria-describedby="checkout-pending">
-                        Proceed to checkout
-                    </button>
+                    <?php if ($isEmpty) : ?>
+                        <button type="button" class="btn btn-eg-primary" disabled
+                                aria-describedby="checkout-pending">
+                            Proceed to checkout
+                        </button>
+                    <?php else : ?>
+                        <a href="<?= $this->Url->build('/checkout') ?>" class="btn btn-eg-primary">
+                            Proceed to checkout
+                        </a>
+                    <?php endif; ?>
                 </div>
                 <p class="eg-note" id="checkout-pending">
-                    Checkout and payment land next. This basket is saved, including when you
-                    come back later.
+                    <?php if ($isEmpty) : ?>
+                        Add a lamp to continue to checkout.
+                    <?php else : ?>
+                        You will sign in if needed, then pay in full on the next page.
+                    <?php endif; ?>
                 </p>
 
                 <p class="eg-summary-account mb-0">

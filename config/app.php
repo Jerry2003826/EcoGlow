@@ -512,6 +512,17 @@ return [
      *  - `errorLevel` - Defaults to `E_ALL`. Can be set to `false` to disable overwrite error level.
      *  - `fixtureStrategy` - Defaults to TruncateStrategy. Can be set to any class implementing FixtureStrategyInterface.
      */
+    /*
+     * Stripe keys. Never commit live values. Dashboard → Developers → API keys
+     * and Webhooks. Empty defaults fail closed: PaymentIntent creation and
+     * webhook verification refuse to run without a secret.
+     */
+    'Stripe' => [
+        'publishableKey' => env('STRIPE_PUBLISHABLE_KEY', ''),
+        'secretKey' => env('STRIPE_SECRET_KEY', ''),
+        'webhookSecret' => env('STRIPE_WEBHOOK_SECRET', ''),
+    ],
+
     'TestSuite' => [
         'errorLevel' => null,
         'fixtureStrategy' => null,

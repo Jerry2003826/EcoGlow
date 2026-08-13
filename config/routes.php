@@ -87,6 +87,12 @@ return function (RouteBuilder $routes): void {
         $builder->connect('/cart/remove', ['controller' => 'Carts', 'action' => 'remove']);
         $builder->connect('/cart/save-later', ['controller' => 'Carts', 'action' => 'saveLater']);
         $builder->connect('/cart/move-to-cart', ['controller' => 'Carts', 'action' => 'moveToCart']);
+        $builder->connect('/checkout', ['controller' => 'Checkout', 'action' => 'index']);
+        $builder->connect('/checkout/confirmation/{id}', ['controller' => 'Checkout', 'action' => 'confirmation'])
+            ->setPass(['id'])
+            ->setPatterns(['id' => '\d+']);
+        $builder->connect('/webhooks/stripe', ['controller' => 'Webhooks', 'action' => 'stripe']);
+        $builder->connect('/services/book', ['controller' => 'Services', 'action' => 'book']);
         $builder->connect('/register', ['controller' => 'Users', 'action' => 'register']);
         $builder->connect('/account/login', ['controller' => 'Users', 'action' => 'customerLogin']);
         $builder->connect('/account', ['controller' => 'Account', 'action' => 'index']);
@@ -97,6 +103,10 @@ return function (RouteBuilder $routes): void {
             ->setPatterns(['id' => '\d+']);
         $builder->connect('/account/orders', ['controller' => 'Account', 'action' => 'orders']);
         $builder->connect('/account/orders/{id}', ['controller' => 'Account', 'action' => 'order'])
+            ->setPass(['id'])
+            ->setPatterns(['id' => '\d+']);
+        $builder->connect('/account/bookings', ['controller' => 'Account', 'action' => 'bookings']);
+        $builder->connect('/account/bookings/{id}', ['controller' => 'Account', 'action' => 'booking'])
             ->setPass(['id'])
             ->setPatterns(['id' => '\d+']);
 
