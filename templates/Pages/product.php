@@ -140,19 +140,6 @@ $productUrl = $this->Url->build('/shop/product');
             <p class="text-muted small">Includes GST. Free delivery Australia-wide over $150.</p>
 
             <?php
-            /* What the shade does and how far it dims, and nothing about the oak
-               or the linen: the line under the heading already names both, and
-               "About this lamp" below covers how they are finished. Four lines of
-               that repetition here pushed the finish, globe and basket 128px
-               further down the page than they needed to be. */
-            ?>
-            <p class="mt-3">
-                Open top and bottom, so it throws light up the wall as well as onto the
-                page &mdash; the lamp for a reading chair. The in-line rotary dimmer takes
-                it down to about 10 per cent.
-            </p>
-
-            <?php
             /* The chosen finish is named in text next to the legend as well as
                drawn as a ring on the dot. The dot's own colour is the thing being
                chosen and so cannot also carry the state, and the well beside it
@@ -210,8 +197,28 @@ $productUrl = $this->Url->build('/shop/product');
                 Ordering opens when the checkout backend lands. Until then, ask us to
                 reserve a fixture and we will hold it.
             </p>
+        </div>
 
-            <dl class="eg-kv-list mt-4 mb-0">
+        <?php
+        /* The photograph is square and the buying panel beside it is nearly twice
+           as tall, which left 407px of empty column under the image at 1440px.
+           These two blocks are the ones that do not have to sit in that panel —
+           what the shade does, and the three delivery lines — so on a wide screen
+           the grid drops them into that space instead, and taking them out of the
+           panel lifts the finish, globe and basket by 95px.
+
+           They stay after the panel in the markup, so stacked on a phone the order
+           is photograph, then price and buying controls, then this: the usual
+           order for a product page, and the reading order a screen reader gets. */
+        ?>
+        <div class="col-lg-7 product-aside reveal" data-reveal-step="2">
+            <p class="product-aside-lead">
+                Open top and bottom, so it throws light up the wall as well as onto the
+                page &mdash; the lamp for a reading chair. The in-line rotary dimmer takes
+                it down to about 10 per cent.
+            </p>
+
+            <dl class="eg-kv-list mb-0">
                 <div class="eg-kv-row">
                     <dt>Delivery</dt>
                     <dd>2 &ndash; 5 business days</dd>
