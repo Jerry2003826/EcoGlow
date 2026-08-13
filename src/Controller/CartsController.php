@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Service\Cart\CartService;
+use Cake\Datasource\Exception\RecordNotFoundException;
 use Cake\Http\Response;
 use InvalidArgumentException;
 
@@ -49,14 +50,18 @@ class CartsController extends AppController
         $this->request->allowMethod(['post']);
         try {
             $cart = $this->currentCart(true);
+            $quantityRaw = $this->request->getData('quantity');
+            $quantity = is_numeric($quantityRaw) ? (int)$quantityRaw : 0;
             $this->carts->add(
                 $cart,
                 (int)$this->request->getData('product_variant_id'),
-                (int)$this->request->getData('quantity') ?: 1,
+                $quantity,
             );
             $this->Flash->success(__('Added to your basket.'));
         } catch (InvalidArgumentException $exception) {
             $this->Flash->error($exception->getMessage());
+        } catch (RecordNotFoundException) {
+            $this->Flash->error(__('That product is no longer in the catalogue.'));
         }
 
         return $this->redirect($this->referer('/cart'));
@@ -77,6 +82,8 @@ class CartsController extends AppController
             );
         } catch (InvalidArgumentException $exception) {
             $this->Flash->error($exception->getMessage());
+        } catch (RecordNotFoundException) {
+            $this->Flash->error(__('That product is no longer in the catalogue.'));
         }
 
         return $this->redirect(['action' => 'index']);

@@ -26,6 +26,7 @@ $addresses = $addresses ?? [];
 $states = $states ?? [];
 $errors = $errors ?? [];
 $paymentsEnabled = $paymentsEnabled ?? false;
+$stripeConfigured = $stripeConfigured ?? false;
 $publishableKey = $publishableKey ?? '';
 $clientSecret = $clientSecret ?? null;
 $order = $order ?? null;
@@ -144,14 +145,19 @@ $confirmationUrl = $order
                     </section>
 
                     <div class="d-grid mb-4">
-                        <?php if ($paymentsEnabled) : ?>
+                        <?php if ($paymentsEnabled && $stripeConfigured) : ?>
                             <?= $this->Form->button('Continue to payment', [
                                 'class' => 'btn btn-eg-primary',
                                 'id' => 'checkout-submit',
                             ]) ?>
-                        <?php else : ?>
+                        <?php elseif (!$paymentsEnabled) : ?>
                             <p class="checkout-alert" role="status">
                                 Online payment is not open yet. Please contact us to complete your order.
+                            </p>
+                        <?php else : ?>
+                            <p class="checkout-alert" role="status">
+                                Card payment is not configured on this server yet. Your basket is held;
+                                please contact us to complete the order.
                             </p>
                         <?php endif; ?>
                     </div>

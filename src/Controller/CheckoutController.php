@@ -47,6 +47,8 @@ class CheckoutController extends AppController
         $flags = new FeatureFlagService();
         $paymentsEnabled = $flags->enabled(FeatureFlagService::ONLINE_PAYMENTS, false);
         $publishableKey = (string)Configure::read('Stripe.publishableKey');
+        $stripeConfigured = $publishableKey !== ''
+            && (string)Configure::read('Stripe.secretKey') !== '';
         $addresses = $this->fetchTable('Addresses')->find()
             ->where(['customer_id' => $customer->id])
             ->orderBy(['is_default_shipping' => 'DESC', 'id' => 'ASC'])
@@ -64,6 +66,11 @@ class CheckoutController extends AppController
             }
             if (!$paymentsEnabled) {
                 $this->Flash->error(__('Online payment is not open yet. Please contact us to complete your order.'));
+            } elseif (!$stripeConfigured) {
+                $this->Flash->error(__(
+                    'Card payment is not configured on this server yet. ' .
+                    'Your basket is held; please contact us to complete the order.',
+                ));
             } else {
                 try {
                     $posted = $this->postedAddress($addresses);
@@ -91,6 +98,7 @@ class CheckoutController extends AppController
             'addresses',
             'states',
             'paymentsEnabled',
+            'stripeConfigured',
             'publishableKey',
             'clientSecret',
             'order',

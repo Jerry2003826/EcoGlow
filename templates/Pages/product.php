@@ -115,6 +115,10 @@ $productUrl = $this->Url->build('/shop/product');
 
             <?= $this->Form->create(null, ['url' => '/cart/add']) ?>
             <?= $this->Form->hidden('product_variant_id', ['value' => (int)($product['variant_id'] ?? 0)]) ?>
+            <?php $cartFlash = $this->Flash->render(); ?>
+            <?php if ($cartFlash) : ?>
+                <?= $cartFlash ?>
+            <?php endif; ?>
             <div class="eg-option">
                 <label class="eg-eyebrow d-block" for="product-qty">Quantity</label>
                 <div class="eg-qty" data-qty>

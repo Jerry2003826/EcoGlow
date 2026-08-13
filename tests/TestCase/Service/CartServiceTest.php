@@ -7,6 +7,7 @@ use App\Service\Cart\CartService;
 use App\Service\Money;
 use Cake\Http\ServerRequest;
 use Cake\TestSuite\TestCase;
+use InvalidArgumentException;
 
 /**
  * Basket merge, save-for-later, and site_settings pricing.
@@ -21,6 +22,10 @@ class CartServiceTest extends TestCase
         'app.Customers',
         'app.Products',
         'app.ProductVariants',
+        'app.InventoryLocations',
+        'app.InventoryBalances',
+        'app.Carts',
+        'app.CartItems',
         'app.SiteSettings',
     ];
 
@@ -155,5 +160,64 @@ class CartServiceTest extends TestCase
 
         $totals = $carts->totals($this->fetchTable('Carts')->get($cart->id, contain: ['CartItems']));
         $this->assertSame(24900, $totals['subtotal_cents']);
+    }
+
+    /**
+     * Tracked variants with no available units cannot be added.
+     *
+     * @return void
+     */
+    public function testAddRejectsWhenOutOfStock(): void
+    {
+        $this->fetchTable('InventoryBalances')->getConnection()->execute(
+            'UPDATE inventory_balances SET quantity_on_hand = 0 WHERE product_variant_id = 1',
+        );
+        $carts = new CartService();
+        $cart = $carts->current(null, 'oos-token', true);
+        $this->assertNotNull($cart);
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('This item is temporarily out of stock.');
+        $carts->add($cart, 1, 1);
+    }
+
+    /**
+     * @return void
+     */
+    public function testAddRejectsUnknownVariant(): void
+    {
+        $carts = new CartService();
+        $cart = $carts->current(null, 'missing-variant', true);
+        $this->assertNotNull($cart);
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('That product is no longer in the catalogue.');
+        $carts->add($cart, 9999, 1);
+    }
+
+    /**
+     * @return void
+     */
+    public function testAddRejectsInvalidQuantity(): void
+    {
+        $carts = new CartService();
+        $cart = $carts->current(null, 'bad-qty', true);
+        $this->assertNotNull($cart);
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Please choose a quantity of at least 1.');
+        $carts->add($cart, 1, 0);
+    }
+
+    /**
+     * Asking for more than remaining stock names the number left.
+     *
+     * @return void
+     */
+    public function testAddRejectsWhenQuantityExceedsStock(): void
+    {
+        $carts = new CartService();
+        $cart = $carts->current(null, 'over-qty', true);
+        $this->assertNotNull($cart);
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Only 5 of this item are left.');
+        $carts->add($cart, 1, 6);
     }
 }

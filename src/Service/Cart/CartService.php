@@ -5,8 +5,10 @@ namespace App\Service\Cart;
 
 use App\Model\Entity\Cart;
 use App\Model\Entity\CartItem;
+use App\Model\Entity\ProductVariant;
 use App\Service\Money;
 use Cake\Datasource\ConnectionInterface;
+use Cake\Datasource\Exception\RecordNotFoundException;
 use Cake\Http\ServerRequest;
 use Cake\ORM\Locator\LocatorAwareTrait;
 use InvalidArgumentException;
@@ -84,6 +86,13 @@ class CartService
             ->contain($this->containGraph())
             ->where(['Carts.anonymous_token_hash' => $hash, 'Carts.status' => 'active'])
             ->first();
+        if ($cart && $userId) {
+            $cart->set('user_id', $userId);
+            $cart->set('anonymous_token_hash', null);
+            $carts->saveOrFail($cart);
+
+            return $this->reload($cart);
+        }
         if ($cart || !$create) {
             return $cart;
         }
@@ -105,12 +114,18 @@ class CartService
      * @param \App\Model\Entity\Cart $cart Cart.
      * @param int $variantId Variant id.
      * @param int $quantity Quantity.
+     * @param bool $requireStock When false, login merge may exceed available stock;
+     *     checkout still refuses short stock.
      * @return \App\Model\Entity\Cart
      */
-    public function add(Cart $cart, int $variantId, int $quantity): Cart
+    public function add(Cart $cart, int $variantId, int $quantity, bool $requireStock = true): Cart
     {
-        $quantity = max(1, min(99, $quantity));
-        $price = $this->livePrice($variantId);
+        $variant = $this->requireActiveVariant($variantId);
+        $this->assertQuantity($quantity);
+        if ($requireStock) {
+            $this->assertStock($variant, $this->quantityInCart($cart, $variantId) + $quantity);
+        }
+        $price = (int)$variant->get('price_cents');
         $items = $this->fetchTable('CartItems');
         $existing = $items->find()
             ->where(['cart_id' => $cart->id, 'product_variant_id' => $variantId])
@@ -145,8 +160,11 @@ class CartService
 
             return $this->reload($cart);
         }
-        $item->set('quantity', min(99, $quantity));
-        $item->set('unit_price_snapshot_cents', $this->livePrice((int)$item->product_variant_id));
+        $this->assertQuantity($quantity);
+        $variant = $this->requireActiveVariant((int)$item->product_variant_id);
+        $this->assertStock($variant, $quantity);
+        $item->set('quantity', $quantity);
+        $item->set('unit_price_snapshot_cents', (int)$variant->get('price_cents'));
         $this->fetchTable('CartItems')->saveOrFail($item);
 
         return $this->reload($cart);
@@ -243,7 +261,12 @@ class CartService
 
             if ($anonymous && (int)$anonymous->id !== (int)$userCart->id) {
                 foreach ($anonymous->cart_items ?? [] as $item) {
-                    $this->add($userCart, (int)$item->product_variant_id, (int)$item->quantity);
+                    $this->add(
+                        $userCart,
+                        (int)$item->product_variant_id,
+                        (int)$item->quantity,
+                        false,
+                    );
                     $userCart = $this->reload($userCart);
                 }
                 $anonymous->set('status', 'merged');
@@ -371,12 +394,99 @@ class CartService
      */
     public function livePrice(int $variantId): int
     {
-        $variant = $this->fetchTable('ProductVariants')->get($variantId);
+        return (int)$this->requireActiveVariant($variantId)->get('price_cents');
+    }
+
+    /**
+     * @param int $variantId Variant id.
+     * @return \App\Model\Entity\ProductVariant
+     */
+    private function requireActiveVariant(int $variantId): ProductVariant
+    {
+        if ($variantId < 1) {
+            throw new InvalidArgumentException('That product is no longer in the catalogue.');
+        }
+        try {
+            /** @var \App\Model\Entity\ProductVariant $variant */
+            $variant = $this->fetchTable('ProductVariants')->get($variantId);
+        } catch (RecordNotFoundException) {
+            throw new InvalidArgumentException('That product is no longer in the catalogue.');
+        }
         if (!$variant->get('is_active')) {
             throw new InvalidArgumentException('That finish is no longer available.');
         }
 
-        return (int)$variant->get('price_cents');
+        return $variant;
+    }
+
+    /**
+     * @param int $quantity Requested quantity.
+     * @return void
+     */
+    private function assertQuantity(int $quantity): void
+    {
+        if ($quantity < 1) {
+            throw new InvalidArgumentException('Please choose a quantity of at least 1.');
+        }
+        if ($quantity > 99) {
+            throw new InvalidArgumentException('You can add at most 99 of this item.');
+        }
+    }
+
+    /**
+     * @param \App\Model\Entity\ProductVariant $variant Variant.
+     * @param int $needed Units already in the basket plus the new request.
+     * @return void
+     */
+    private function assertStock(ProductVariant $variant, int $needed): void
+    {
+        if (!$variant->get('track_inventory') || $variant->get('allow_backorder')) {
+            return;
+        }
+        $available = $this->availableUnits((int)$variant->id);
+        if ($needed <= $available) {
+            return;
+        }
+        if ($available < 1) {
+            throw new InvalidArgumentException('This item is temporarily out of stock.');
+        }
+
+        throw new InvalidArgumentException(sprintf(
+            'Only %d of this item %s left.',
+            $available,
+            $available === 1 ? 'is' : 'are',
+        ));
+    }
+
+    /**
+     * @param \App\Model\Entity\Cart $cart Cart.
+     * @param int $variantId Variant id.
+     * @return int
+     */
+    private function quantityInCart(Cart $cart, int $variantId): int
+    {
+        $item = $this->fetchTable('CartItems')->find()
+            ->where(['cart_id' => $cart->id, 'product_variant_id' => $variantId])
+            ->first();
+
+        return $item ? (int)$item->quantity : 0;
+    }
+
+    /**
+     * @param int $variantId Variant id.
+     * @return int
+     */
+    private function availableUnits(int $variantId): int
+    {
+        $row = $this->connection()->execute(
+            'SELECT COALESCE(SUM(quantity_available), 0) AS available
+               FROM inventory_balances
+              WHERE product_variant_id = ?',
+            [$variantId],
+            ['integer'],
+        )->fetch('assoc');
+
+        return is_array($row) ? (int)$row['available'] : 0;
     }
 
     /**

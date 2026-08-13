@@ -33,6 +33,8 @@ class CheckoutControllerTest extends TestCase
         'app.InventoryLocations',
         'app.InventoryBalances',
         'app.ReorderRules',
+        'app.Carts',
+        'app.CartItems',
         'app.SalesOrders',
         'app.SalesOrderItems',
         'app.OrderStatusHistory',
@@ -65,7 +67,7 @@ class CheckoutControllerTest extends TestCase
         $this->gateway = new FakePaymentGateway();
         Configure::write('Stripe.gateway', $this->gateway);
         Configure::write('Stripe.publishableKey', 'pk_test_fake');
-        Configure::write('Stripe.secretKey', '');
+        Configure::write('Stripe.secretKey', 'sk_test_fake');
         Configure::write('Stripe.webhookSecret', 'whsec_test');
     }
 
@@ -192,6 +194,43 @@ class CheckoutControllerTest extends TestCase
         $this->loginCustomer(4);
         $this->get('/checkout/confirmation/' . $order->id);
         $this->assertResponseCode(404);
+    }
+
+    /**
+     * Missing Stripe keys are an expected local state: show a notice, do not charge.
+     *
+     * @return void
+     */
+    public function testMissingStripeKeysShowsNoticeAndDoesNotCharge(): void
+    {
+        Configure::write('Stripe.publishableKey', '');
+        Configure::write('Stripe.secretKey', '');
+        $this->fillCart(4, 'no-stripe-token', 1, 1);
+        $this->loginCustomer(4, 'no-stripe-token');
+
+        $this->get('/checkout');
+        $this->assertResponseOk();
+        $this->assertResponseContains('Marlow Floor Lamp');
+        $this->assertResponseContains('Card payment is not configured on this server yet');
+        $this->assertResponseNotContains('Continue to payment');
+
+        $this->post('/checkout', [
+            'recipient_name' => 'Casey Aitken',
+            'line1' => '10 Flinders Lane',
+            'suburb' => 'Melbourne',
+            'state' => 'VIC',
+            'postcode' => '3000',
+        ]);
+        $this->assertResponseOk();
+        $this->assertSame(0, $this->gateway->lastAmountCents);
+        $this->assertSame(
+            0,
+            $this->fetchTable('SalesOrders')->find()->where(['customer_id' => 2])->count(),
+        );
+        $this->assertFlashMessage(
+            'Card payment is not configured on this server yet. ' .
+            'Your basket is held; please contact us to complete the order.',
+        );
     }
 
     /**

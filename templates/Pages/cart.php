@@ -58,6 +58,11 @@ $productUrl = $this->Url->build('/shop/product');
         <h1 class="section-title">Your basket</h1>
     </div>
 
+    <?php $cartFlash = $this->Flash->render(); ?>
+    <?php if ($cartFlash) : ?>
+        <?= $cartFlash ?>
+    <?php endif; ?>
+
     <div class="row g-4 g-lg-5" data-cart
          data-free-from="<?= h((string)$freeDeliveryFrom) ?>"
          data-delivery="<?= h((string)$deliveryFlat) ?>">
