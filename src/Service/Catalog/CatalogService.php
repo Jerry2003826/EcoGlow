@@ -117,7 +117,10 @@ class CatalogService
         $product = $listing;
         $product['image'] = $detailImage;
         $product['alt'] = $detailAlt;
-        $product['variant_id'] = $this->defaultVariantId($row);
+        $variant = $this->defaultVariant($row);
+        $product['variant_id'] = $variant ? (int)$variant->id : 0;
+        $product['available'] = $variant ? $this->availableUnits((int)$variant->id) : 0;
+        $product['in_stock'] = $this->variantIsPurchasable($variant, (int)$product['available']);
 
         $globes = $meta['globes'] ?? [];
         if (!is_array($globes) || $globes === []) {
@@ -184,7 +187,7 @@ class CatalogService
         }
 
         $priceCents = $variant ? (int)$variant->get('price_cents') : 0;
-        $category = $row->category->name ?? $legacy['category'] ?? 'Ambient Floor Lamps';
+        $category = $row->category?->name ?? $legacy['category'] ?? 'Ambient Floor Lamps';
 
         return [
             'slug' => (string)$row->slug,
@@ -217,17 +220,6 @@ class CatalogService
         }
 
         return $variants[0] ?? null;
-    }
-
-    /**
-     * @param \App\Model\Entity\Product $row Product.
-     * @return int
-     */
-    private function defaultVariantId(Product $row): int
-    {
-        $variant = $this->defaultVariant($row);
-
-        return $variant ? (int)$variant->id : 0;
     }
 
     /**
@@ -478,6 +470,8 @@ class CatalogService
             [['Oak', '#C9BCA9'], ['Charcoal', '#2F2E2C'], ['Terracotta', '#E2925E']],
         );
         $product['variant_id'] = 0;
+        $product['available'] = 0;
+        $product['in_stock'] = false;
 
         return [
             'product' => $product,
@@ -603,6 +597,48 @@ class CatalogService
             'category' => $category,
             'style' => $style,
             'swatches' => $swatches,
+            'available' => 0,
+            'in_stock' => false,
         ];
+    }
+
+    /**
+     * Sellable units across locations. Matches the cart's stock check.
+     *
+     * @param int $variantId Variant id.
+     * @return int
+     */
+    private function availableUnits(int $variantId): int
+    {
+        try {
+            $row = $this->fetchTable('InventoryBalances')->getConnection()->execute(
+                'SELECT COALESCE(SUM(quantity_available), 0) AS available
+                   FROM inventory_balances
+                  WHERE product_variant_id = ?',
+                [$variantId],
+                ['integer'],
+            )->fetch('assoc');
+        } catch (Throwable) {
+            return 0;
+        }
+
+        return is_array($row) ? (int)$row['available'] : 0;
+    }
+
+    /**
+     * @param \App\Model\Entity\ProductVariant|null $variant Variant.
+     * @param int $available Units on hand.
+     * @return bool
+     */
+    private function variantIsPurchasable(mixed $variant, int $available): bool
+    {
+        if ($variant === null) {
+            return false;
+        }
+        if (!$variant->get('track_inventory') || $variant->get('allow_backorder')) {
+            return true;
+        }
+
+        return $available > 0;
     }
 }

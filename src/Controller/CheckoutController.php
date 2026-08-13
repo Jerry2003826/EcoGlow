@@ -65,9 +65,9 @@ class CheckoutController extends AppController
                 return $this->redirect('/cart');
             }
             if (!$paymentsEnabled) {
-                $this->Flash->error(__('Online payment is not open yet. Please contact us to complete your order.'));
+                $this->Flash->warning(__('Online payment is not open yet. Please contact us to complete your order.'));
             } elseif (!$stripeConfigured) {
-                $this->Flash->error(__(
+                $this->Flash->warning(__(
                     'Card payment is not configured on this server yet. ' .
                     'Your basket is held; please contact us to complete the order.',
                 ));

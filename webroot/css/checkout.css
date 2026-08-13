@@ -11,6 +11,34 @@
     overflow-x: hidden;
 }
 
+.checkout-layout {
+    display: grid;
+    gap: 1.25rem;
+}
+
+@media (min-width: 992px) {
+    .checkout-layout {
+        grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr);
+        gap: 1.5rem 1.75rem;
+        align-items: start;
+    }
+
+    .checkout-aside {
+        position: sticky;
+        top: 6.5rem;
+    }
+}
+
+.checkout-aside {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.checkout-aside-card {
+    padding: 1.25rem 1.35rem;
+}
+
 .checkout-section-title {
     font-family: var(--eg-font-body);
     font-size: 0.95rem;
@@ -19,6 +47,10 @@
     text-transform: uppercase;
     margin: 0 0 1.25rem;
     color: var(--eg-text);
+}
+
+.checkout-aside-card .checkout-section-title {
+    margin-bottom: 0.85rem;
 }
 
 .checkout-legend {
@@ -35,9 +67,21 @@
     background: var(--eg-error-tint);
     color: var(--eg-error);
     border: 1px solid var(--eg-border);
+    border-left: 3px solid var(--eg-error);
     border-radius: var(--eg-radius-sm);
     padding: 0.85rem 1rem;
-    margin-bottom: 1.25rem;
+    margin-bottom: 0;
+    font-weight: 600;
+}
+
+.checkout-notice {
+    background: var(--eg-warning-tint);
+    color: var(--eg-warning);
+    border: 1px solid var(--eg-border);
+    border-left: 3px solid var(--eg-warning);
+    border-radius: var(--eg-radius-sm);
+    padding: 0.85rem 1rem;
+    margin-bottom: 0;
     font-weight: 600;
 }
 
@@ -59,10 +103,62 @@
     min-height: 12rem;
 }
 
+.checkout-check,
+.checkout-page .form-check {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    min-height: 44px;
+    margin: 0;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.checkout-page input[type="checkbox"],
+.checkout-page input[type="radio"],
+.checkout-page .form-check-input {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 1.25rem;
+    height: 1.25rem;
+    margin: 0;
+    flex: none;
+    border: 1.5px solid var(--eg-border);
+    border-radius: var(--eg-radius-sm);
+    background-color: var(--eg-bg);
+    background-image: none;
+    accent-color: var(--eg-brand);
+    cursor: pointer;
+}
+
+.checkout-page input[type="radio"],
+.checkout-page .form-check-input[type="radio"] {
+    border-radius: 50%;
+}
+
+.checkout-page input[type="checkbox"]:checked,
+.checkout-page .form-check-input[type="checkbox"]:checked {
+    background-color: var(--eg-brand);
+    border-color: var(--eg-brand);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='none' stroke='%23FBF9F5' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' d='M3.5 8.5l3 3 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 0.85rem;
+}
+
+.checkout-page input[type="radio"]:checked,
+.checkout-page .form-check-input[type="radio"]:checked {
+    background-color: var(--eg-bg);
+    background-image: none;
+    border-color: var(--eg-brand);
+    box-shadow: inset 0 0 0 0.28rem var(--eg-brand);
+}
+
 .checkout-page .btn,
 .checkout-page .form-control,
 .checkout-page .form-select,
-.checkout-page .form-check-label {
+.checkout-page .form-check-label,
+.checkout-page .checkout-check {
     min-height: 44px;
 }
 
@@ -70,6 +166,8 @@
     min-height: 8rem;
 }
 
+.checkout-page input[type="checkbox"]:focus-visible,
+.checkout-page input[type="radio"]:focus-visible,
 .checkout-page .form-check-input:focus-visible,
 .checkout-page .form-control:focus-visible,
 .checkout-page .form-select:focus-visible,

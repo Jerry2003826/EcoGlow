@@ -159,6 +159,9 @@ class CheckoutControllerTest extends TestCase
         $this->get('/checkout');
         $this->assertResponseOk();
         $this->assertResponseContains('Online payment is not open yet');
+        $this->assertResponseContains('checkout-notice');
+        $this->assertResponseContains('id="checkout-pay-heading"');
+        $this->assertResponseNotContains('Continue to payment');
 
         $this->post('/checkout', [
             'recipient_name' => 'Casey Aitken',
@@ -212,6 +215,8 @@ class CheckoutControllerTest extends TestCase
         $this->assertResponseOk();
         $this->assertResponseContains('Marlow Floor Lamp');
         $this->assertResponseContains('Card payment is not configured on this server yet');
+        $this->assertResponseContains('checkout-notice');
+        $this->assertResponseContains('id="checkout-pay-heading"');
         $this->assertResponseNotContains('Continue to payment');
 
         $this->post('/checkout', [

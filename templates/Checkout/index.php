@@ -60,8 +60,8 @@ $confirmationUrl = $order
         <p class="text-muted">Your basket is empty.</p>
         <a class="btn btn-eg-primary" href="<?= $this->Url->build('/shop') ?>">Continue shopping</a>
     <?php else : ?>
-        <div class="row g-4 g-lg-5">
-            <div class="col-lg-7">
+        <div class="checkout-layout">
+            <div class="checkout-main">
                 <?php if ($clientSecret === null) : ?>
                     <?= $this->Form->create(null, [
                         'url' => '/checkout',
@@ -74,24 +74,22 @@ $confirmationUrl = $order
                         <?php if (count($addresses) > 0) : ?>
                             <fieldset class="mb-4">
                                 <legend class="checkout-legend">Saved addresses</legend>
-                                <div class="form-check mb-2">
-                                    <input class="form-check-input" type="radio" name="saved_address_id"
-                                           id="saved-address-new" value="0" checked>
-                                    <label class="form-check-label" for="saved-address-new">Use a new address</label>
-                                </div>
+                                <label class="checkout-check">
+                                    <input type="radio" name="saved_address_id" value="0" checked>
+                                    <span>Use a new address</span>
+                                </label>
                                 <?php foreach ($addresses as $row) : ?>
-                                    <div class="form-check mb-2">
-                                        <input class="form-check-input" type="radio" name="saved_address_id"
-                                               id="saved-address-<?= (int)$row->id ?>"
+                                    <label class="checkout-check">
+                                        <input type="radio" name="saved_address_id"
                                                value="<?= (int)$row->id ?>">
-                                        <label class="form-check-label" for="saved-address-<?= (int)$row->id ?>">
+                                        <span>
                                             <?= h($row->recipient_name) ?> —
                                             <?= h($row->line1) ?>,
                                             <?= h($row->suburb) ?>
                                             <?= h($row->state) ?>
                                             <?= h($row->postcode) ?>
-                                        </label>
-                                    </div>
+                                        </span>
+                                    </label>
                                 <?php endforeach; ?>
                             </fieldset>
                         <?php endif; ?>
@@ -137,40 +135,42 @@ $confirmationUrl = $order
                             <label class="form-label" for="phone">Phone</label>
                             <input class="form-control" type="tel" name="phone" id="phone" autocomplete="tel">
                         </div>
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" name="save_address" value="1"
-                                   id="save-address">
-                            <label class="form-check-label" for="save-address">Save this address to my account</label>
-                        </div>
+                        <label class="checkout-check">
+                            <input type="checkbox" name="save_address" value="1">
+                            <span>Save this address to my account</span>
+                        </label>
                     </section>
 
-                    <div class="d-grid mb-4">
+                    <section class="eg-card p-4 p-md-5" aria-labelledby="checkout-pay-heading">
+                        <h2 id="checkout-pay-heading" class="checkout-section-title">Payment</h2>
                         <?php if ($paymentsEnabled && $stripeConfigured) : ?>
-                            <?= $this->Form->button('Continue to payment', [
-                                'class' => 'btn btn-eg-primary',
-                                'id' => 'checkout-submit',
-                            ]) ?>
+                            <div class="d-grid">
+                                <?= $this->Form->button('Continue to payment', [
+                                    'class' => 'btn btn-eg-primary',
+                                    'id' => 'checkout-submit',
+                                ]) ?>
+                            </div>
                         <?php elseif (!$paymentsEnabled) : ?>
-                            <p class="checkout-alert" role="status">
+                            <p class="checkout-notice" role="status">
                                 Online payment is not open yet. Please contact us to complete your order.
                             </p>
                         <?php else : ?>
-                            <p class="checkout-alert" role="status">
+                            <p class="checkout-notice" role="status">
                                 Card payment is not configured on this server yet. Your basket is held;
                                 please contact us to complete the order.
                             </p>
                         <?php endif; ?>
-                    </div>
+                    </section>
                     <?= $this->Form->end() ?>
                 <?php else : ?>
-                    <section class="eg-card p-4 p-md-5 mb-4" aria-labelledby="checkout-pay-heading">
+                    <section class="eg-card p-4 p-md-5" aria-labelledby="checkout-pay-heading">
                         <h2 id="checkout-pay-heading" class="checkout-section-title">Payment</h2>
                         <p class="mb-3">
                             Order <?= h($order->order_number ?? '') ?> is held pending payment.
                             Do not refresh this page until the payment finishes.
                         </p>
                         <?php if ($publishableKey === '') : ?>
-                            <p class="checkout-alert" role="alert">
+                            <p class="checkout-notice" role="status">
                                 Stripe is not configured on this server yet. Your order is saved;
                                 a staff member can take payment once keys are in place.
                             </p>
@@ -187,8 +187,8 @@ $confirmationUrl = $order
                 <?php endif; ?>
             </div>
 
-            <div class="col-lg-5">
-                <section class="eg-card eg-summary p-4 p-md-5 mb-4" aria-labelledby="checkout-ship-heading">
+            <aside class="checkout-aside">
+                <section class="eg-card checkout-aside-card" aria-labelledby="checkout-ship-heading">
                     <h2 id="checkout-ship-heading" class="checkout-section-title">Delivery</h2>
                     <?php if ((int)($totals['shipping_cents'] ?? 0) === 0) : ?>
                         <p class="mb-0">Free delivery — this order is at or above
@@ -200,7 +200,7 @@ $confirmationUrl = $order
                     <?php endif; ?>
                 </section>
 
-                <section class="eg-card eg-summary p-4 p-md-5" aria-labelledby="checkout-review-heading">
+                <section class="eg-card checkout-aside-card" aria-labelledby="checkout-review-heading">
                     <h2 id="checkout-review-heading" class="checkout-section-title">Order review</h2>
                     <ul class="checkout-lines">
                         <?php foreach ($lines as $line) : ?>
@@ -234,7 +234,7 @@ $confirmationUrl = $order
                         Includes GST of <?= $this->Money->aud((int)($totals['gst_cents'] ?? 0)) ?>.
                     </p>
                 </section>
-            </div>
+            </aside>
         </div>
     <?php endif; ?>
 </div>

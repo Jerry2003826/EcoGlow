@@ -31,7 +31,7 @@ $customer = $customer ?? null;
     </div>
 
     <?php if (!$bookingsOpen) : ?>
-        <p class="checkout-alert" role="status">
+        <p class="checkout-notice" role="status">
             Installation and repair bookings are not open yet. Please use the contact form.
         </p>
         <a class="btn btn-eg-primary" href="<?= $this->Url->build('/contact') ?>">Contact us</a>
@@ -94,11 +94,10 @@ $customer = $customer ?? null;
             <fieldset class="mb-3">
                 <legend class="checkout-legend">Preferred time of day</legend>
                 <?php foreach ($windows as $key => $label) : ?>
-                    <div class="form-check mb-2">
-                        <input class="form-check-input" type="radio" name="preferred_window"
-                               id="window-<?= h($key) ?>" value="<?= h($key) ?>" required>
-                        <label class="form-check-label" for="window-<?= h($key) ?>"><?= h($label) ?></label>
-                    </div>
+                    <label class="checkout-check">
+                        <input type="radio" name="preferred_window" value="<?= h($key) ?>" required>
+                        <span><?= h($label) ?></span>
+                    </label>
                 <?php endforeach; ?>
             </fieldset>
             <div class="mb-4">

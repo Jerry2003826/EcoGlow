@@ -9,10 +9,9 @@
  * listing page. The real route becomes `/shop/product/{slug}` and $product
  * arrives from the controller; the markup does not change.
  *
- * Two controls on this page cannot do what their labels say until the orders
- * backend exists, so they are disabled rather than wired to something inert:
- * "Add to basket" and the basket count. Everything else is live — the finish
- * and globe pickers are real radio groups, and the quantity stepper works.
+ * "Add to basket" is live when the variant has sellable stock. Out of stock
+ * disables the button at render time and names the reason beside it. The
+ * header basket count is the other control that still waits on a later piece.
  *
  * The image well now holds the product photograph. It used to hold a line
  * drawing, and the well was tinted towards the selected finish with
@@ -32,7 +31,11 @@ $product = $product ?? [];
 $globes = $globes ?? [];
 $specs = $specs ?? [];
 $related = $related ?? [];
-$canAdd = !empty($product['variant_id']);
+$hasVariant = !empty($product['variant_id']);
+$inStock = !empty($product['in_stock']);
+$canAdd = $hasVariant && $inStock;
+$available = (int)($product['available'] ?? 0);
+$maxQty = $canAdd && $available > 0 ? min(99, $available) : 99;
 
 $this->assign('title', $product['name'] ?? 'Product');
 
@@ -123,7 +126,7 @@ $productUrl = $this->Url->build('/shop/product');
                 <label class="eg-eyebrow d-block" for="product-qty">Quantity</label>
                 <div class="eg-qty" data-qty>
                     <button type="button" data-qty-step="-1" aria-label="Decrease quantity">&minus;</button>
-                    <input type="number" id="product-qty" name="quantity" value="1" min="1" max="99"
+                    <input type="number" id="product-qty" name="quantity" value="1" min="1" max="<?= (int)$maxQty ?>"
                            inputmode="numeric" autocomplete="off" data-qty-input>
                     <button type="button" data-qty-step="1" aria-label="Increase quantity">+</button>
                 </div>
@@ -134,9 +137,14 @@ $productUrl = $this->Url->build('/shop/product');
                     <?= $this->Form->button('Add to basket', [
                         'class' => 'btn btn-eg-primary',
                     ]) ?>
+                <?php elseif ($hasVariant) : ?>
+                    <button type="button" class="btn btn-eg-primary" disabled
+                            aria-disabled="true" aria-describedby="basket-oos">
+                        Add to basket
+                    </button>
                 <?php else : ?>
                     <button type="button" class="btn btn-eg-primary" disabled
-                            aria-describedby="basket-pending">
+                            aria-disabled="true" aria-describedby="basket-pending">
                         Add to basket
                     </button>
                 <?php endif; ?>
@@ -147,6 +155,10 @@ $productUrl = $this->Url->build('/shop/product');
             <?php if ($canAdd) : ?>
                 <p class="eg-note" id="basket-pending">
                     Checkout and payment land next. The basket holds the line until then.
+                </p>
+            <?php elseif ($hasVariant) : ?>
+                <p class="eg-note" id="basket-oos" role="status">
+                    This item is temporarily out of stock.
                 </p>
             <?php else : ?>
                 <p class="eg-note" id="basket-pending">
