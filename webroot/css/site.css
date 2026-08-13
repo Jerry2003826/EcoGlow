@@ -1756,9 +1756,17 @@ a:hover {
 
 .eg-option {
     min-width: 0;
-    margin: 1.5rem 0 0;
+    margin: 1rem 0 0;
     padding: 0;
     border: none;
+}
+
+/* The eyebrow's own 0.75rem is spaced for a section heading standing above a
+   block of prose. Here it labels a control directly under it, and the control is
+   44px tall for the touch target whether it needs the height or not, so the
+   block already has more air in it than it looks. */
+.eg-option .eg-eyebrow {
+    margin-bottom: 0.4rem;
 }
 
 /* Reboot floats legends and blows their font size up with a vw unit; both have
