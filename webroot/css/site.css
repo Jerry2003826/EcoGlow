@@ -977,6 +977,35 @@ a:hover {
    two cards can be compared side by side without one of them being taller for a
    reason the visitor cannot see. */
 
+/* The product page's own image is the one square well whose height is a problem.
+   Seven columns of a 1024px window is 522px, so the well alone was taller than
+   the room under the header and the price started below the fold.
+
+   The cap goes on the column rather than on the image. Capping the image would
+   have left it sitting in a 264px pool of empty column with the text half a
+   screen away, and cropping it to a letterbox would cut the top off a floor
+   lamp — these are photographs of tall objects. Shrinking the column instead
+   keeps the ratio, keeps the image against the page grid, and hands the width it
+   gives up to the copy, which is what actually decides where the basket button
+   lands: wider copy is fewer lines. */
+@media (min-width: 992px) {
+    .product-layout > .product-media-col {
+        width: min(50%, 62vh);
+        width: min(50%, 62svh);
+    }
+
+    .product-layout > .product-info-col {
+        flex: 1 1 0;
+        width: auto;
+    }
+
+    /* The copy column is now wide enough on a large monitor to run past a
+       comfortable measure, so the prose keeps its own. */
+    .product-info-col > p {
+        max-width: 34rem;
+    }
+}
+
 /* Corner flag on a product image — terracotta fill, charcoal label: 5.50:1. */
 .product-flag {
     position: absolute;

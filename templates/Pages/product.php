@@ -102,8 +102,8 @@ $productUrl = $this->Url->build('/shop/product');
         </ol>
     </nav>
 
-    <div class="row g-4 g-lg-5">
-        <div class="col-lg-7 reveal">
+    <div class="row g-4 g-lg-5 product-layout">
+        <div class="col-lg-7 product-media-col reveal">
             <span class="product-media">
                 <?php if ($product['flag'] !== null) : ?>
                     <span class="product-flag"><?= h($product['flag']) ?></span>
@@ -123,7 +123,7 @@ $productUrl = $this->Url->build('/shop/product');
             </span>
         </div>
 
-        <div class="col-lg-5 reveal" data-reveal-step="1">
+        <div class="col-lg-5 product-info-col reveal" data-reveal-step="1">
             <span class="eg-eyebrow"><?= h($product['category']) ?></span>
             <h1 class="section-title h2"><?= h($product['name']) ?></h1>
             <p class="product-meta"><?= h($product['meta']) ?></p>
