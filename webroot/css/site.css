@@ -989,20 +989,30 @@ a:hover {
    gives up to the copy, which is what actually decides where the basket button
    lands: wider copy is fewer lines. */
 @media (min-width: 992px) {
+    /* Both columns are sized to what they hold and then pushed to opposite edges,
+       so the slack lands between them instead of trailing off the right. Letting
+       the copy column take the whole remainder had it 786px wide at 1440px, which
+       is far past a readable measure — the text then wrapped at 523px and left
+       215px of nothing on the right, which read as the layout sitting off to one
+       side. Capped at 36rem the measure is right and the leftover becomes the gap
+       between the image and the text, which is where it is wanted. */
+    .product-layout {
+        justify-content: space-between;
+    }
+
     .product-layout > .product-media-col {
         width: min(50%, 62vh);
         width: min(50%, 62svh);
     }
 
+    /* Grows into whatever the image column leaves and stops at a readable measure,
+       rather than being set to 36rem outright: a fixed width here plus a tall
+       image column came to more than the container between 992px and 1200px, and
+       the row wrapped the copy underneath the photograph. */
     .product-layout > .product-info-col {
         flex: 1 1 0;
         width: auto;
-    }
-
-    /* The copy column is now wide enough on a large monitor to run past a
-       comfortable measure, so the prose keeps its own. */
-    .product-info-col > p {
-        max-width: 34rem;
+        max-width: 36rem;
     }
 }
 
@@ -1733,7 +1743,7 @@ a:hover {
 
 .eg-option {
     min-width: 0;
-    margin: 1.75rem 0 0;
+    margin: 1.5rem 0 0;
     padding: 0;
     border: none;
 }

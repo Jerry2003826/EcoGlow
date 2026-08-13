@@ -38,10 +38,17 @@ $product = [
 
 $this->assign('title', $product['name']);
 
+/**
+ * Kept short enough that the three sit on one line: the row has 528px and the
+ * labels came to 544px, so it wrapped and pushed the basket button 52px down the
+ * page. The fitting is E27 whichever is chosen and the specification list says
+ * so, so it does not need naming three times here. The selected chip also gains
+ * a bullet, which is another 14px, hence the margin left over.
+ */
 $globes = [
-    'E27 warm white, 2700 K',
-    'E27 smart tunable white',
-    'No globe, fitting only',
+    'Warm white, 2700 K',
+    'Smart tunable white',
+    'Fitting only',
 ];
 
 $specs = [
@@ -132,11 +139,17 @@ $productUrl = $this->Url->build('/shop/product');
             </p>
             <p class="text-muted small">Includes GST. Free delivery Australia-wide over $150.</p>
 
-            <p class="mt-4">
-                A 1.45 m oak column, turned and oiled rather than lacquered, under a 45 cm
-                shade sewn from undyed linen. The shade is open top and bottom, so the light
-                goes up the wall as well as onto the page &mdash; the lamp for a reading chair.
-                The in-line rotary dimmer takes it down to about 10 per cent.
+            <?php
+            /* What the shade does and how far it dims, and nothing about the oak
+               or the linen: the line under the heading already names both, and
+               "About this lamp" below covers how they are finished. Four lines of
+               that repetition here pushed the finish, globe and basket 128px
+               further down the page than they needed to be. */
+            ?>
+            <p class="mt-3">
+                Open top and bottom, so it throws light up the wall as well as onto the
+                page &mdash; the lamp for a reading chair. The in-line rotary dimmer takes
+                it down to about 10 per cent.
             </p>
 
             <?php
