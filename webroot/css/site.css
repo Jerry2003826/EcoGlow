@@ -361,6 +361,35 @@ a:hover {
     }
 }
 
+/* Centring the wordmark means the links and the utilities take equal halves of
+   the row, so the row needs twice the width of the links: 431px each side plus
+   113px of wordmark is 975px, and Bootstrap's container is 960px at this
+   breakpoint. Fifteen pixels short, so the labels wrapped onto two lines, which
+   put 11px on the header and took it straight out of the hero below. Tightening
+   the tracking and the wordmark buys back more than the shortfall; both are back
+   to full size from 1200px, where the container is 1140px and there is room. */
+@media (min-width: 992px) and (max-width: 1199.98px) {
+    .navbar-eg .navbar-nav {
+        --bs-navbar-nav-link-padding-x: 0.35rem;
+    }
+
+    .navbar-eg .nav-link {
+        letter-spacing: 0.07em;
+        white-space: nowrap;
+    }
+
+    /* Follows the narrower padding in, so the rule still stops short of the label
+       by about what it does at full size. */
+    .navbar-eg .nav-link::after {
+        left: 0.55rem;
+        right: 0.55rem;
+    }
+
+    .navbar-eg .navbar-brand {
+        font-size: 1.45rem;
+    }
+}
+
 .navbar-eg .nav-link {
     position: relative;
     display: flex;
@@ -712,7 +741,7 @@ a:hover {
 .hero-shot {
     position: relative;
     margin: 0;
-    aspect-ratio: 4 / 3;
+    aspect-ratio: 16 / 10;
     background: var(--eg-bg-alt);
     overflow: hidden;
 }
@@ -734,9 +763,34 @@ a:hover {
     font-size: 0.82rem;
 }
 
+/* Still the stacked layout here, so the photograph and the copy are each
+   spending the same screen. 16/9 of a 1024px tablet is 576px of photograph
+   before the heading even starts, which puts the buttons off a landscape iPad
+   entirely. The cap only bites on a short viewport: at 768×1366 the ratio is
+   already inside it and nothing changes. */
 @media (min-width: 768px) {
     .hero-shot {
         aspect-ratio: 16 / 9;
+        max-height: 40vh;
+        max-height: 40svh;
+    }
+}
+
+/* Wide and short at the same time — a split-screen tablet, a small laptop window
+   — is the case that runs out of room fastest in the stacked layout, because the
+   photograph and the copy are both spending the same short screen. */
+@media (min-width: 768px) and (max-height: 640px) {
+    .hero-shot {
+        max-height: 32vh;
+        max-height: 32svh;
+    }
+
+    .hero-title {
+        font-size: clamp(1.9rem, 5vw, 2.6rem);
+    }
+
+    .hero-lead {
+        font-size: 0.95rem;
     }
 }
 
@@ -762,13 +816,43 @@ a:hover {
    scroll width), and ::after fades it out to the right, entirely outside the text
    box. The copy stays inside a .container so it lines up with the header nav. */
 @media (min-width: 992px) {
+    /* The height cannot come off the width here. 16/9 of 1440px is 810px, taller
+       than the viewport of any laptop, and it grows as the window widens — the
+       wider the screen the further off it pushes the buttons, which is the wrong
+       way round. It comes off the viewport instead, capped at 40rem so a large
+       monitor does not get a hero the height of a page, and it leaves 14rem for
+       the header, the caption and enough of the next band to show there is more.
+
+       The figure and the copy are laid into one grid cell rather than the copy
+       being absolutely positioned over the figure, so both of them size it: the
+       viewport sets the floor through the figure, the text sets it through the
+       copy, and the cell takes whichever is taller. That is what makes a short
+       window crop the photograph instead of the heading. */
+    .hero-collage {
+        display: grid;
+    }
+
+    .hero-shot,
+    .hero-overlay {
+        grid-area: 1 / 1;
+    }
+
     .hero-shot {
-        min-height: 32rem;
+        aspect-ratio: auto;
+        max-height: none;
+        min-height: min(40rem, calc(100vh - 14rem));
+        min-height: min(40rem, calc(100svh - 14rem));
+    }
+
+    /* Out of the flow, or the intrinsic 3:2 of the file would size the figure the
+       moment the aspect-ratio above stops doing it — taller again than the 16/9
+       this is replacing. */
+    .hero-shot img {
+        position: absolute;
+        inset: 0;
     }
 
     .hero-overlay {
-        position: absolute;
-        inset: 0;
         display: grid;
     }
 
@@ -806,6 +890,27 @@ a:hover {
         left: 100%;
         width: 9rem;
         background: linear-gradient(90deg, rgba(251, 249, 245, 0.94), rgba(251, 249, 245, 0));
+    }
+}
+
+/* A wide window is usually a short one: 1440×720 and 1024×500 are both ordinary
+   laptop viewports once a dock and three browser toolbars have taken their cut.
+   Sizing the display type off the width alone puts a 70px heading in a 500px
+   window, and since the copy now sets the height of the hero, that heading is
+   what pushes the buttons off the screen. Under 640px of height the type and the
+   panel padding come down together. */
+@media (min-width: 992px) and (max-height: 640px) {
+    .hero-title {
+        font-size: clamp(1.9rem, 3.6vw, 2.6rem);
+    }
+
+    .hero-lead {
+        font-size: 0.95rem;
+    }
+
+    .hero-copy {
+        padding-top: 1.75rem;
+        padding-bottom: 1.75rem;
     }
 }
 
