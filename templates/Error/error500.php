@@ -8,6 +8,7 @@ use Cake\Core\Configure;
 use Cake\Error\Debugger;
 
 $this->setLayout('error');
+$this->assign('title', __d('cake', 'An Internal Error Has Occurred.'));
 
 if (Configure::read('debug')) :
     $this->setLayout('dev_error');
@@ -29,7 +30,8 @@ if (Configure::read('debug')) :
     $this->end();
 endif;
 ?>
-<h2><?= __d('cake', 'An Internal Error Has Occurred.') ?></h2>
+<span class="error-code" aria-hidden="true"><?= h((string)$this->getResponse()->getStatusCode()) ?></span>
+<h2 class="section-title"><?= __d('cake', 'An Internal Error Has Occurred.') ?></h2>
 <p class="error">
     <strong><?= __d('cake', 'Error') ?>: </strong>
     <?= h($message) ?>

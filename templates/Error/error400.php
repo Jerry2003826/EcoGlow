@@ -7,6 +7,7 @@
 use Cake\Core\Configure;
 
 $this->setLayout('error');
+$this->assign('title', $message);
 
 if (Configure::read('debug')) :
     $this->setLayout('dev_error');
@@ -19,7 +20,8 @@ if (Configure::read('debug')) :
     $this->end();
 endif;
 ?>
-<h2><?= h($message) ?></h2>
+<span class="error-code" aria-hidden="true"><?= h((string)$this->getResponse()->getStatusCode()) ?></span>
+<h2 class="section-title"><?= h($message) ?></h2>
 <p class="error">
     <strong><?= __d('cake', 'Error') ?>: </strong>
     <?= __d('cake', 'The requested address {0} was not found on this server.', "<strong>'{$url}'</strong>") ?>

@@ -1,6 +1,6 @@
 <?php
 /**
- * Public contact form view — night-glow brand theme.
+ * Public contact form view — warm-earth storefront theme.
  *
  * @var \App\View\AppView $this
  * @var \App\Model\Entity\ContactMessage $contactMessage
@@ -10,12 +10,18 @@
 $this->assign('title', 'Contact Us');
 ?>
 <div class="container py-5">
+    <nav aria-label="Breadcrumb" class="mb-4 reveal">
+        <ol class="eg-breadcrumb">
+            <li><a href="<?= $this->Url->build('/') ?>">Home</a></li>
+            <li aria-current="page">Contact</li>
+        </ol>
+    </nav>
+
     <div class="row g-4 g-lg-5 align-items-stretch">
         <div class="col-lg-5 reveal">
-            <div class="glass-card contact-aside position-relative overflow-hidden">
-                <span class="aside-glow" aria-hidden="true"></span>
+            <div class="contact-aside">
                 <div>
-                    <div class="section-eyebrow">Say Hello</div>
+                    <span class="eg-eyebrow">Say hello</span>
                     <h1 class="section-title h2 mb-3">Contact Eco Glow Lighting</h1>
                     <p class="text-muted mb-0">
                         Questions about a product, an installation, or a repair? Send us a message and
@@ -23,7 +29,7 @@ $this->assign('title', 'Contact Us');
                     </p>
                 </div>
 
-                <div class="d-flex flex-column gap-3 mt-2">
+                <div class="d-flex flex-column mt-2">
                     <div class="kv">
                         <span class="kv-icon" aria-hidden="true">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.13.96.36 1.9.7 2.8a2 2 0 0 1-.45 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.45c.9.34 1.84.57 2.8.7A2 2 0 0 1 22 16.9z"/></svg>
@@ -48,19 +54,19 @@ $this->assign('title', 'Contact Us');
                         </span>
                         <span>
                             <span class="kv-label d-block">Hours</span>
-                            <span class="kv-value">Mon – Sat, 8am – 6pm</span>
+                            <span class="kv-value">Mon &ndash; Sat, 8am &ndash; 6pm</span>
                         </span>
                     </div>
                 </div>
 
-                <p class="mb-0 mt-auto" style="color: var(--eg-text-dim); font-size: 0.9rem;">
-                    Every message lands directly with Jordan — no call centres, no bots.
+                <p class="text-muted mb-0 mt-auto small">
+                    Every message lands directly with Jordan &mdash; no call centres, no bots.
                 </p>
             </div>
         </div>
 
         <div class="col-lg-7 reveal" data-reveal-step="1">
-            <div class="glass-card h-100 p-4 p-lg-5">
+            <div class="eg-card h-100 p-4 p-lg-5">
                 <?= $this->Form->create($contactMessage) ?>
                 <div class="row">
                     <div class="col-md-6 mb-3">
@@ -113,7 +119,7 @@ $this->assign('title', 'Contact Us');
                     <?php else : ?>
                         <div class="mb-4">
                             <span class="recaptcha-frame">
-                                <span class="g-recaptcha d-block" data-sitekey="<?= h($recaptchaSitekey) ?>" data-theme="dark"></span>
+                                <span class="g-recaptcha d-block" data-sitekey="<?= h($recaptchaSitekey) ?>" data-theme="light"></span>
                             </span>
                         </div>
                         <?= $this->Html->script('https://www.google.com/recaptcha/api.js', ['async' => true, 'defer' => true, 'block' => 'scriptBottom']) ?>
@@ -121,8 +127,8 @@ $this->assign('title', 'Contact Us');
                 <?php endif; ?>
 
                 <div class="d-grid gap-2 d-sm-flex">
-                    <?= $this->Form->button(__('Light up my inbox'), ['class' => 'btn btn-glow btn-lg flex-sm-fill']) ?>
-                    <button type="reset" class="btn btn-ghost-glow btn-lg"><?= __('Clear') ?></button>
+                    <?= $this->Form->button(__('Send message'), ['class' => 'btn btn-eg-primary flex-sm-fill']) ?>
+                    <button type="reset" class="btn btn-eg-ghost"><?= __('Clear') ?></button>
                 </div>
                 <?= $this->Form->end() ?>
             </div>

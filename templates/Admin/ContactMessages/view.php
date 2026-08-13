@@ -1,26 +1,34 @@
 <?php
 /**
- * Admin contact message detail view — night-glow brand theme.
+ * Admin contact message detail view — warm-earth storefront theme.
  *
  * @var \App\View\AppView $this
  * @var \App\Model\Entity\ContactMessage $contactMessage
  */
 $this->assign('title', 'Message: ' . $contactMessage->subject);
 ?>
-<div class="container py-4">
-    <div class="d-flex justify-content-between align-items-center mb-4 reveal">
+<div class="container py-5">
+    <nav aria-label="Breadcrumb" class="mb-4 reveal">
+        <ol class="eg-breadcrumb">
+            <li><a href="<?= $this->Url->build('/') ?>">Home</a></li>
+            <li><?= $this->Html->link('Messages', ['action' => 'index']) ?></li>
+            <li aria-current="page"><?= h($contactMessage->subject) ?></li>
+        </ol>
+    </nav>
+
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4 reveal">
         <div>
-            <div class="section-eyebrow">Message</div>
-            <h1 class="h2 mb-0">Message Details</h1>
+            <span class="eg-eyebrow">Message</span>
+            <h1 class="section-title h2 mb-0">Message Details</h1>
         </div>
         <div class="d-flex gap-2">
-            <?= $this->Html->link('Back to Messages', ['action' => 'index'], ['class' => 'btn btn-ghost-glow']) ?>
+            <?= $this->Html->link('Back to Messages', ['action' => 'index'], ['class' => 'btn btn-sm btn-eg-ghost']) ?>
             <?= $this->Form->postLink(
                 'Delete',
                 ['action' => 'delete', $contactMessage->id],
                 [
                     'confirm' => __('Are you sure you want to delete this message?'),
-                    'class' => 'btn btn-outline-danger',
+                    'class' => 'btn btn-eg-danger',
                 ],
             ) ?>
         </div>
@@ -28,7 +36,7 @@ $this->assign('title', 'Message: ' . $contactMessage->subject);
 
     <div class="row g-4">
         <div class="col-lg-4 reveal" data-reveal-step="1">
-            <div class="glass-card p-4">
+            <div class="eg-card p-4">
                 <h2 class="h5 mb-3">Sender</h2>
                 <div class="kv">
                     <span class="kv-icon" aria-hidden="true">
@@ -70,15 +78,16 @@ $this->assign('title', 'Message: ' . $contactMessage->subject);
         </div>
 
         <div class="col-lg-8 reveal" data-reveal-step="2">
-            <div class="glass-card p-4 h-100 d-flex flex-column">
-                <span class="pill pill-new align-self-start mb-3">Subject</span>
+            <div class="eg-card p-4 h-100 d-flex flex-column">
+                <span class="eg-eyebrow">Subject</span>
                 <h2 class="h4"><?= h($contactMessage->subject) ?></h2>
                 <div class="message-bubble mt-3 flex-grow-1">
                     <?= nl2br(h($contactMessage->message)) ?>
                 </div>
                 <div class="mt-4">
-                    <a class="btn btn-glow" href="mailto:<?= h($contactMessage->email) ?>?subject=<?= rawurlencode('Re: ' . $contactMessage->subject) ?>">
-                        Reply via Email
+                    <a class="btn btn-eg-primary" href="mailto:<?= h($contactMessage->email) ?>?subject=<?= rawurlencode('Re: ' . $contactMessage->subject) ?>">
+                        Reply via email
+                        <svg class="btn-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg>
                     </a>
                 </div>
             </div>

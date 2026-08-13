@@ -1,28 +1,35 @@
 <?php
 /**
- * Admin contact messages list view — night-glow brand theme.
+ * Admin contact messages list view — warm-earth storefront theme.
  *
  * @var \App\View\AppView $this
  * @var \Cake\Datasource\Paging\PaginatedInterface<\App\Model\Entity\ContactMessage> $contactMessages
- * @var int $unreadCount
+ * @var int $unreadCount Set by AppController::beforeRender, shared with the nav badge.
  */
 $this->assign('title', 'Contact Messages');
 ?>
-<div class="container py-4">
-    <div class="d-flex justify-content-between align-items-center mb-4 reveal">
+<div class="container py-5">
+    <nav aria-label="Breadcrumb" class="mb-4 reveal">
+        <ol class="eg-breadcrumb">
+            <li><a href="<?= $this->Url->build('/') ?>">Home</a></li>
+            <li aria-current="page">Messages</li>
+        </ol>
+    </nav>
+
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4 reveal">
         <div>
-            <div class="section-eyebrow">Inbox</div>
-            <h1 class="h2 mb-0">Contact Messages</h1>
+            <span class="eg-eyebrow">Inbox</span>
+            <h1 class="section-title h2 mb-0">Contact Messages</h1>
         </div>
         <?php if ($unreadCount > 0) : ?>
-            <span class="badge-glow fs-6"><?= $unreadCount ?> unread</span>
+            <span class="pill pill-new"><?= $unreadCount ?> unread</span>
         <?php endif; ?>
     </div>
 
     <?php if (count($contactMessages) === 0) : ?>
-        <div class="glass-card p-5 text-center reveal">
-            <div class="auth-bulb mx-auto" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 6L2 7"/></svg>
+        <div class="eg-card p-5 text-center reveal">
+            <div class="auth-mark mx-auto" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 6L2 7"/></svg>
             </div>
             <h2 class="h4">No messages yet &mdash; the floor is yours.</h2>
             <p class="text-muted mb-0">New enquiries from the contact form will appear here.</p>
@@ -64,13 +71,13 @@ $this->assign('title', 'Contact Messages');
                                     <?php endif; ?>
                                 </td>
                                 <td class="text-end text-nowrap">
-                                    <?= $this->Html->link('View', ['action' => 'view', $message->id], ['class' => 'btn btn-sm btn-ghost-glow']) ?>
+                                    <?= $this->Html->link('View', ['action' => 'view', $message->id], ['class' => 'btn btn-sm btn-eg-ghost']) ?>
                                     <?= $this->Form->postLink(
                                         'Delete',
                                         ['action' => 'delete', $message->id],
                                         [
                                             'confirm' => __('Are you sure you want to delete this message?'),
-                                            'class' => 'btn btn-sm btn-outline-danger',
+                                            'class' => 'btn btn-eg-danger',
                                         ],
                                     ) ?>
                                 </td>
@@ -90,6 +97,6 @@ $this->assign('title', 'Contact Messages');
                 <?= $this->Paginator->last('Last »', ['class' => 'page-link']) ?>
             </ul>
         </nav>
-        <p class="text-center small" style="color: var(--eg-text-dim);"><?= $this->Paginator->counter('Page {{page}} of {{pages}}, showing {{current}} of {{count}} messages') ?></p>
+        <p class="text-center small text-muted"><?= $this->Paginator->counter('Page {{page}} of {{pages}}, showing {{current}} of {{count}} messages') ?></p>
     <?php endif; ?>
 </div>

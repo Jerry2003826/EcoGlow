@@ -1,16 +1,16 @@
 <?php
 /**
- * Admin login view — night-glow brand theme.
+ * Staff login view — warm-earth storefront theme.
  *
  * @var \App\View\AppView $this
  */
-$this->assign('title', 'Admin Login');
+$this->assign('title', 'Staff Login');
 ?>
 <div class="container">
     <div class="auth-wrap">
-        <div class="glass-card auth-card reveal">
-            <div class="auth-bulb" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
+        <div class="eg-card auth-card reveal">
+            <div class="auth-mark" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
                      stroke-linecap="round" stroke-linejoin="round">
                     <path d="M9 18h6"/>
                     <path d="M10 21h4"/>
@@ -45,7 +45,7 @@ $this->assign('title', 'Admin Login');
                 </div>
             </div>
             <div class="d-grid">
-                <?= $this->Form->button(__('Sign in'), ['class' => 'btn btn-glow btn-lg']) ?>
+                <?= $this->Form->button(__('Sign in'), ['class' => 'btn btn-eg-primary']) ?>
             </div>
             <?= $this->Form->end() ?>
             <p class="text-center small mb-0 mt-2">
