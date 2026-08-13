@@ -4,13 +4,15 @@
  *
  * @var \App\View\AppView $this
  * @var string $status
+ * @var string|null $label
+ * @var string|null $toneOverride
  */
 
 use App\Model\Entity\SalesOrder;
 
 $labels = SalesOrder::statusLabels();
-$label = $labels[$status] ?? ucfirst(str_replace('_', ' ', $status));
-$tone = SalesOrder::statusTone($status);
+$tone = $toneOverride ?? SalesOrder::statusTone($status);
+$label = $label ?? $labels[$status] ?? ucfirst(str_replace('_', ' ', $status));
 ?>
 <span class="admin-status admin-status-<?= h($tone) ?>">
     <?= h($label) ?>

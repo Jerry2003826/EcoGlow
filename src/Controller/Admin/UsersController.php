@@ -1,0 +1,161 @@
+<?php
+declare(strict_types=1);
+
+namespace App\Controller\Admin;
+
+use App\Service\AuditLogger;
+use App\Service\Authorization\AccessService;
+use Cake\Http\Response;
+use InvalidArgumentException;
+
+/**
+ * Configurable access: users, roles and the permission matrix.
+ */
+class UsersController extends AdminController
+{
+    /**
+     * @var \App\Service\Authorization\AccessService
+     */
+    private AccessService $access;
+
+    /**
+     * @inheritDoc
+     */
+    public function initialize(): void
+    {
+        parent::initialize();
+        $this->access = new AccessService($this->permissions, new AuditLogger());
+    }
+
+    /**
+     * @return void
+     */
+    public function index(): void
+    {
+        $users = $this->fetchTable('Users')->find()
+            ->contain(['UserRoles' => ['Roles']])
+            ->where(['Users.deleted IS' => null])
+            ->orderBy(['Users.email' => 'ASC'])
+            ->all();
+        $roles = $this->fetchTable('Roles')->find()
+            ->where(['role_key !=' => 'customer'])
+            ->orderBy(['id' => 'ASC'])
+            ->all();
+        $permissions = $this->fetchTable('Permissions')->find()
+            ->orderBy(['module' => 'ASC', 'permission_key' => 'ASC'])
+            ->all();
+        $grants = [];
+        foreach ($this->fetchTable('RolePermissions')->find() as $row) {
+            $grants[(int)$row->role_id][(int)$row->permission_id] = true;
+        }
+        $overrides = $this->fetchTable('UserPermissionOverrides')->find()
+            ->contain(['Permissions', 'Users'])
+            ->where(['UserPermissionOverrides.ends_at IS' => null])
+            ->orderBy(['UserPermissionOverrides.id' => 'DESC'])
+            ->all();
+
+        $this->set(compact('users', 'roles', 'permissions', 'grants', 'overrides'));
+    }
+
+    /**
+     * @param string|null $id User id.
+     * @return \Cake\Http\Response|null
+     */
+    public function toggleActive(?string $id = null): ?Response
+    {
+        $this->request->allowMethod(['post']);
+        try {
+            $user = $this->fetchTable('Users')->get($this->recordId($id));
+            $active = (string)($user->get('status') ?: 'active') === 'active';
+            $this->access->setUserActive((int)$user->id, !$active, $this->actorId());
+            $this->Flash->success($active ? __('Account deactivated.') : __('Account activated.'));
+        } catch (InvalidArgumentException $exception) {
+            $this->Flash->error($exception->getMessage());
+        }
+
+        return $this->redirect(['action' => 'index']);
+    }
+
+    /**
+     * @param string|null $id User id.
+     * @return \Cake\Http\Response|null
+     */
+    public function updateRoles(?string $id = null): ?Response
+    {
+        $this->request->allowMethod(['post']);
+        $roleIds = array_map('intval', (array)$this->request->getData('role_ids'));
+        try {
+            $this->access->replaceUserRoles($this->recordId($id), $roleIds, $this->actorId());
+            $this->Flash->success(__('Roles updated.'));
+        } catch (InvalidArgumentException $exception) {
+            $this->Flash->error($exception->getMessage());
+        }
+
+        return $this->redirect(['action' => 'index']);
+    }
+
+    /**
+     * @param string|null $id Role id.
+     * @return \Cake\Http\Response|null
+     */
+    public function updateRolePermissions(?string $id = null): ?Response
+    {
+        $this->request->allowMethod(['post']);
+        $permissionIds = array_map('intval', (array)$this->request->getData('permission_ids'));
+        try {
+            $this->access->replaceRolePermissions($this->recordId($id), $permissionIds, $this->actorId());
+            $this->Flash->success(__('Role permissions updated.'));
+        } catch (InvalidArgumentException $exception) {
+            $this->Flash->error($exception->getMessage());
+        }
+
+        return $this->redirect(['action' => 'index']);
+    }
+
+    /**
+     * Save the whole matrix in one post: grants[roleId][] = permissionId.
+     *
+     * @return \Cake\Http\Response|null
+     */
+    public function updateMatrix(): ?Response
+    {
+        $this->request->allowMethod(['post']);
+        $grants = (array)$this->request->getData('grants');
+        try {
+            $roles = $this->fetchTable('Roles')->find()
+                ->where(['role_key !=' => 'customer'])
+                ->all();
+            $byRole = [];
+            foreach ($roles as $role) {
+                $byRole[(int)$role->id] = array_map('intval', (array)($grants[$role->id] ?? []));
+            }
+            $this->access->replaceAllRolePermissions($byRole, $this->actorId());
+            $this->Flash->success(__('Permission matrix saved.'));
+        } catch (InvalidArgumentException $exception) {
+            $this->Flash->error($exception->getMessage());
+        }
+
+        return $this->redirect(['action' => 'index']);
+    }
+
+    /**
+     * @return \Cake\Http\Response|null
+     */
+    public function setOverride(): ?Response
+    {
+        $this->request->allowMethod(['post']);
+        try {
+            $this->access->setOverride(
+                (int)$this->request->getData('user_id'),
+                (int)$this->request->getData('permission_id'),
+                (string)$this->request->getData('effect'),
+                $this->actorId(),
+            );
+            $this->Flash->success(__('Override saved. Deny always wins over allow.'));
+        } catch (InvalidArgumentException $exception) {
+            $this->Flash->error($exception->getMessage());
+        }
+
+        return $this->redirect(['action' => 'index']);
+    }
+}

@@ -27,6 +27,13 @@ class CustomersTable extends Table
         $this->setPrimaryKey('id');
         $this->addBehavior('Timestamp');
         $this->hasMany('SalesOrders', ['foreignKey' => 'customer_id']);
+        $this->hasMany('Addresses', ['foreignKey' => 'customer_id']);
+        $this->hasMany('CustomerInteractions', [
+            'foreignKey' => 'customer_id',
+            'sort' => ['CustomerInteractions.occurred_at' => 'DESC'],
+        ]);
+        $this->hasMany('Invoices', ['foreignKey' => 'customer_id']);
+        $this->hasMany('ContactMessages', ['foreignKey' => 'customer_id']);
         $this->mapJsonColumns(['tags', 'metadata']);
     }
 }

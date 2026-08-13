@@ -30,7 +30,6 @@ class AdminController extends AppController
 
         $this->permissions = new PermissionService();
         $this->viewBuilder()->setLayout('admin');
-        $this->viewBuilder()->addHelper('Paginator');
         $this->viewBuilder()->addHelper('Money');
     }
 
@@ -89,22 +88,22 @@ class AdminController extends AppController
             [
                 'label' => 'Customers',
                 'items' => [
-                    $this->comingSoonItem('Customers', 'customers'),
+                    $this->navItem('Customers', 'Customers'),
                     $this->navItem('Messages', 'ContactMessages'),
                 ],
             ],
             [
                 'label' => 'Finance',
                 'items' => [
-                    $this->comingSoonItem('Invoices', 'invoices'),
+                    $this->navItem('Invoices', 'Invoices'),
                     $this->comingSoonItem('Quotations', 'quotations'),
-                    $this->comingSoonItem('Reports', 'reports'),
+                    $this->navItem('Reports', 'Reports'),
                 ],
             ],
             [
                 'label' => 'Settings',
                 'items' => [
-                    $this->comingSoonItem('Users & roles', 'users'),
+                    $this->navItem('Users & roles', 'Users'),
                     $this->comingSoonItem('Feature flags', 'feature-flags'),
                 ],
             ],
@@ -173,5 +172,17 @@ class AdminController extends AppController
         if (!$this->permissions->has($this->actorId(), $permissionKey)) {
             throw new ForbiddenException(__('You do not have permission to do that.'));
         }
+    }
+
+    /**
+     * Whether the actor may see unmasked customer email and phone.
+     *
+     * customers.view_contact is not seeded, so customers.view is the gate.
+     *
+     * @return bool
+     */
+    protected function canViewCustomerContact(): bool
+    {
+        return $this->permissions->has($this->actorId(), 'customers.view');
     }
 }

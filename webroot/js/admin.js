@@ -17,7 +17,7 @@
             backdrop.hidden = !open;
         }
         if (sidebar) {
-            var mobile = window.matchMedia('(max-width: 991.98px)').matches;
+            var mobile = window.matchMedia('(max-width: 1199.98px)').matches;
             if (mobile && !open) {
                 sidebar.setAttribute('aria-hidden', 'true');
                 sidebar.setAttribute('inert', '');
@@ -32,7 +32,7 @@
         toggle.addEventListener('click', function () {
             setNav(!app.classList.contains('is-nav-open'));
         });
-        if (window.matchMedia('(max-width: 991.98px)').matches) {
+        if (window.matchMedia('(max-width: 1199.98px)').matches) {
             setNav(false);
         }
     }

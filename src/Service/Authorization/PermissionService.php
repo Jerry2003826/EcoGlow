@@ -81,6 +81,23 @@ class PermissionService
     }
 
     /**
+     * Drop cached grants so a later check sees a mutation in this request.
+     *
+     * @param int|null $userId User to forget, or null for everyone cached here.
+     * @return void
+     */
+    public function forget(?int $userId = null): void
+    {
+        if ($userId === null) {
+            $this->resolved = [];
+            $this->roles = [];
+
+            return;
+        }
+        unset($this->resolved[$userId], $this->roles[$userId]);
+    }
+
+    /**
      * Active role rows for display in the admin top bar.
      *
      * @param int $userId Authenticated user id.

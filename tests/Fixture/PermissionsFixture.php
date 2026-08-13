@@ -42,6 +42,7 @@ class PermissionsFixture extends TestFixture
         ['key' => 'reports.financial', 'module' => 'reports', 'name' => 'View financial and profit reports', 'risk' => 'high'],
         ['key' => 'ai.review_actions', 'module' => 'ai', 'name' => 'Approve/reject AI action requests', 'risk' => 'critical'],
         ['key' => 'audit.view', 'module' => 'audit', 'name' => 'View audit logs', 'risk' => 'high'],
+        ['key' => 'orders.view', 'module' => 'orders', 'name' => 'View sales orders', 'risk' => 'normal'],
     ];
 
     /**

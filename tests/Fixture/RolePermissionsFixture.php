@@ -16,17 +16,12 @@ class RolePermissionsFixture extends TestFixture
      * @var array<int, string>
      */
     private const STANDARD_KEYS = [
-        'customers.view',
-        'messages.manage',
-        'orders.create',
-        'orders.manage',
-        'orders.dispatch',
-        'inventory.view',
-        'invoices.issue',
-        'payments.record',
         'refunds.process',
-        'services.manage',
-        'reports.view',
+        'invoices.issue',
+        'orders.dispatch',
+        'payments.record',
+        'orders.view',
+        'customers.view',
     ];
 
     /**
@@ -41,7 +36,7 @@ class RolePermissionsFixture extends TestFixture
             'inventory.adjust', 'purchasing.manage', 'quotations.manage', 'quotations.approve',
             'invoices.issue', 'invoices.void', 'payments.record', 'refunds.process',
             'services.manage', 'services.dispatch', 'reports.view', 'reports.financial',
-            'ai.review_actions', 'audit.view',
+            'ai.review_actions', 'audit.view', 'orders.view',
         ];
         $idByKey = array_flip($allKeys);
         foreach ($idByKey as $key => $index) {

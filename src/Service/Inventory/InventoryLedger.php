@@ -86,18 +86,72 @@ class InventoryLedger
     /**
      * Next document number from document_sequences.
      *
-     * Mirrors sp_next_document_number in PHP because that routine's VARCHAR
-     * parameters inherit the collation from CREATE PROCEDURE time
-     * (utf8mb4_general_ci on this MariaDB), while the table is
-     * utf8mb4_unicode_ci — CALL then dies with "illegal mix of collations".
-     * Bound ORM parameters do not have that problem. Inventory mutations
-     * still go through the stored procedure.
+     * Prefers sp_next_document_number (rebuilt with utf8mb4_unicode_ci VARCHAR
+     * parameters so CALL no longer hits "illegal mix of collations" against
+     * the table). The PHP path is kept as a fallback when:
+     * - the local test account lacks ALTER/CREATE ROUTINE (errno 1370) so the
+     *   rebuild migration could not replace the old routine, or
+     * - CALL still raises 1267 (illegal mix of collations) or 1305 (unknown
+     *   procedure). Reproduce: CREATE PROCEDURE without an explicit COLLATE
+     *   on a MariaDB whose server collation is utf8mb4_general_ci, then CALL
+     *   it against document_sequences.document_type (utf8mb4_unicode_ci).
      *
      * @param string $documentType Sequence key, e.g. sales_order.
      * @param string $prefix Prefix stored on the sequence row.
      * @return string
      */
     public function nextDocumentNumber(string $documentType, string $prefix): string
+    {
+        $fromProcedure = $this->nextDocumentNumberFromProcedure($documentType, $prefix);
+        if ($fromProcedure !== null) {
+            return $fromProcedure;
+        }
+
+        return $this->nextDocumentNumberInPhp($documentType, $prefix);
+    }
+
+    /**
+     * @param string $documentType Sequence key.
+     * @param string $prefix Prefix stored on the sequence row.
+     * @return string|null
+     */
+    private function nextDocumentNumberFromProcedure(string $documentType, string $prefix): ?string
+    {
+        $connection = $this->connection();
+        try {
+            $connection->execute('SET @eg_next_document_number = NULL');
+            $this->callProcedure(
+                $connection,
+                'CALL sp_next_document_number(?, ?, @eg_next_document_number)',
+                [$documentType, $prefix],
+            );
+            $row = $connection->execute(
+                'SELECT @eg_next_document_number AS document_number',
+            )->fetch('assoc');
+            $number = is_array($row) ? trim((string)$row['document_number']) : '';
+
+            return $number !== '' ? $number : null;
+        } catch (Throwable $exception) {
+            $message = $exception->getMessage();
+            $collationMix = str_contains($message, '1267')
+                || str_contains(strtolower($message), 'illegal mix of collations');
+            $missingRoutine = str_contains($message, '1305')
+                || str_contains(strtolower($message), 'does not exist');
+            if ($collationMix || $missingRoutine) {
+                return null;
+            }
+            throw $exception;
+        }
+    }
+
+    /**
+     * Same algorithm as sp_next_document_number, used only when CALL cannot run.
+     *
+     * @param string $documentType Sequence key.
+     * @param string $prefix Prefix stored on the sequence row.
+     * @return string
+     */
+    private function nextDocumentNumberInPhp(string $documentType, string $prefix): string
     {
         $connection = $this->connection();
         $year = (int)DateTime::now('Australia/Melbourne')->format('Y');
@@ -247,6 +301,19 @@ class InventoryLedger
             // Drivers throw once there are no further rowsets.
         }
         $statement->closeCursor();
+    }
+
+    /**
+     * Id of the inventory_movements row written by the last CALL.
+     *
+     * @return int|null
+     */
+    public function lastInsertId(): ?int
+    {
+        $row = $this->connection()->execute('SELECT LAST_INSERT_ID() AS id')->fetch('assoc');
+        $id = is_array($row) ? (int)$row['id'] : 0;
+
+        return $id > 0 ? $id : null;
     }
 
     /**

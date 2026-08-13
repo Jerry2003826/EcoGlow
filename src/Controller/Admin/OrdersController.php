@@ -90,8 +90,15 @@ class OrdersController extends AdminController
         $salesOrder = $this->fetchTable('SalesOrders')->get($this->recordId($id), finder: 'detail');
         $today = Date::now('Australia/Melbourne');
         $nextStatuses = OrderService::TRANSITIONS[$salesOrder->status] ?? [];
+        $canSeeContact = $this->canViewCustomerContact();
+        $existingInvoice = $this->fetchTable('Invoices')->find()
+            ->where([
+                'sales_order_id' => $salesOrder->id,
+                'status !=' => 'void',
+            ])
+            ->first();
 
-        $this->set(compact('salesOrder', 'today', 'nextStatuses'));
+        $this->set(compact('salesOrder', 'today', 'nextStatuses', 'canSeeContact', 'existingInvoice'));
     }
 
     /**

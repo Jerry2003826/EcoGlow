@@ -32,6 +32,8 @@ INSERT INTO `permissions` (`permission_key`,`module`,`name`,`risk_level`) VALUES
 -- @@STATEMENT_END@@
 INSERT INTO `permissions` (`permission_key`,`module`,`name`,`risk_level`) VALUES ('orders.dispatch','orders','Pack and dispatch orders','normal') ON DUPLICATE KEY UPDATE `module`=VALUES(`module`),`name`=VALUES(`name`),`risk_level`=VALUES(`risk_level`);
 -- @@STATEMENT_END@@
+INSERT INTO `permissions` (`permission_key`,`module`,`name`,`risk_level`) VALUES ('orders.view','orders','View sales orders','normal') ON DUPLICATE KEY UPDATE `module`=VALUES(`module`),`name`=VALUES(`name`),`risk_level`=VALUES(`risk_level`);
+-- @@STATEMENT_END@@
 INSERT INTO `permissions` (`permission_key`,`module`,`name`,`risk_level`) VALUES ('inventory.view','inventory','View inventory','low') ON DUPLICATE KEY UPDATE `module`=VALUES(`module`),`name`=VALUES(`name`),`risk_level`=VALUES(`risk_level`);
 -- @@STATEMENT_END@@
 INSERT INTO `permissions` (`permission_key`,`module`,`name`,`risk_level`) VALUES ('inventory.adjust','inventory','Adjust stock','critical') ON DUPLICATE KEY UPDATE `module`=VALUES(`module`),`name`=VALUES(`name`),`risk_level`=VALUES(`risk_level`);
@@ -64,7 +66,9 @@ INSERT INTO `permissions` (`permission_key`,`module`,`name`,`risk_level`) VALUES
 -- @@STATEMENT_END@@
 INSERT IGNORE INTO `role_permissions` (`role_id`,`permission_id`,`created`) SELECT r.`id`,p.`id`,UTC_TIMESTAMP(6) FROM `roles` r CROSS JOIN `permissions` p WHERE r.`role_key` IN ('master','elevated_staff');
 -- @@STATEMENT_END@@
-INSERT IGNORE INTO `role_permissions` (`role_id`,`permission_id`,`created`) SELECT r.`id`,p.`id`,UTC_TIMESTAMP(6) FROM `roles` r JOIN `permissions` p ON p.`permission_key` IN ('customers.view','messages.manage','orders.create','orders.manage','orders.dispatch','inventory.view','invoices.issue','payments.record','refunds.process','services.manage','reports.view') WHERE r.`role_key`='standard_staff';
+INSERT IGNORE INTO `role_permissions` (`role_id`,`permission_id`,`created`) SELECT r.`id`,p.`id`,UTC_TIMESTAMP(6) FROM `roles` r JOIN `permissions` p ON p.`permission_key` IN ('refunds.process','invoices.issue','orders.dispatch','payments.record','orders.view','customers.view') WHERE r.`role_key`='standard_staff';
+-- @@STATEMENT_END@@
+DELETE rp FROM `role_permissions` rp INNER JOIN `roles` r ON r.`id` = rp.`role_id` INNER JOIN `permissions` p ON p.`id` = rp.`permission_id` WHERE r.`role_key` = 'standard_staff' AND p.`permission_key` NOT IN ('refunds.process','invoices.issue','orders.dispatch','payments.record','orders.view','customers.view');
 -- @@STATEMENT_END@@
 INSERT INTO `feature_flags` (`flag_key`,`enabled`,`rollout_percentage`,`rules`,`description`,`modified`) VALUES ('website.customer_accounts',1,100,JSON_OBJECT(),'Merged-requirements default',UTC_TIMESTAMP(6)) ON DUPLICATE KEY UPDATE `enabled`=VALUES(`enabled`),`modified`=UTC_TIMESTAMP(6);
 -- @@STATEMENT_END@@

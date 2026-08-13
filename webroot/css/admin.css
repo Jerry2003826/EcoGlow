@@ -16,25 +16,43 @@
     min-height: 100vh;
     background: var(--eg-bg);
     color: var(--eg-text);
+    overflow-x: hidden;
 }
 
+/* Serif is reserved for the page title (h1). Every other heading, panel
+   label and table header stays in the working sans. */
 .admin-app h2,
 .admin-app h3,
 .admin-app h4,
+.admin-app h5,
+.admin-app h6,
 .admin-app .admin-panel-title,
+.admin-app .admin-panel-head h2,
 .admin-app .table-eg thead th {
     font-family: var(--eg-font-body);
+    font-weight: 600;
     letter-spacing: 0;
 }
 
 .admin-app h1 {
     font-family: var(--eg-font-title);
+    font-weight: 400;
+}
+
+.admin-app h2,
+.admin-app h3,
+.admin-app .admin-panel-title,
+.admin-app .admin-panel-head h2 {
+    font-size: 0.95rem;
+    line-height: 1.35;
 }
 
 .admin-shell {
     display: flex;
     min-height: 100vh;
     align-items: stretch;
+    max-width: 100%;
+    overflow-x: hidden;
 }
 
 .admin-sidebar {
@@ -49,7 +67,9 @@
 }
 
 .admin-brand {
-    display: block;
+    display: flex;
+    align-items: center;
+    min-height: 44px;
     padding: 0 1.25rem 1.5rem;
     font-family: var(--eg-font-title);
     font-size: 1.35rem;
@@ -105,13 +125,20 @@
 }
 
 .admin-sidebar-foot {
-    margin: 1rem 1.25rem 0;
+    margin: 0.75rem 0.75rem 0;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--eg-border);
+}
+
+.admin-sidebar-foot .admin-nav-link {
+    color: var(--eg-text-muted);
     font-size: 0.85rem;
 }
 
 .admin-stage {
-    flex: 1;
+    flex: 1 1 auto;
     min-width: 0;
+    width: 100%;
     display: flex;
     flex-direction: column;
 }
@@ -143,12 +170,19 @@
 }
 
 .admin-user-email {
-    font-size: 0.9rem;
-    font-weight: 500;
+    font-size: 0.92rem;
+    font-weight: 600;
+    color: var(--eg-text);
 }
 
 .admin-user-role {
     margin: 0;
+    font-family: var(--eg-font-body);
+    font-size: 0.72rem;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    text-transform: none;
+    color: var(--eg-text-muted);
 }
 
 .admin-logout {
@@ -199,6 +233,9 @@
 .admin-content {
     padding-bottom: 2.5rem;
     flex: 1;
+    width: 100%;
+    max-width: 90rem;
+    box-sizing: border-box;
 }
 
 .admin-page-head {
@@ -213,10 +250,11 @@
 
 .admin-section {
     margin-bottom: var(--eg-admin-gap);
+    min-width: 0;
 }
 
-.admin-section h2 {
-    font-size: 1rem;
+.admin-section > h2 {
+    font-size: 0.95rem;
     font-weight: 600;
     margin: 0 0 0.85rem;
 }
@@ -248,13 +286,15 @@
 
 .admin-stat-value {
     font-family: var(--eg-font-title);
-    font-size: 1.75rem;
-    line-height: 1.2;
+    font-size: 2.5rem;
+    line-height: 1.1;
+    font-weight: 400;
     display: block;
 }
 
 .admin-stat-card .eg-eyebrow {
-    margin: 0.35rem 0 0;
+    margin: 0.45rem 0 0;
+    color: var(--eg-text-muted);
 }
 
 .admin-split {
@@ -268,11 +308,44 @@
     border: 1px solid var(--eg-border);
     border-radius: var(--eg-radius);
     padding: 1rem 1.15rem;
+    min-width: 0;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.admin-panel-head {
+    margin: -1rem -1.15rem 1rem;
+    padding: 0.85rem 1.15rem;
+    border-bottom: 1px solid var(--eg-border);
+}
+
+.admin-panel-head h2 {
+    margin: 0;
 }
 
 .admin-empty {
     color: var(--eg-text-muted);
     margin: 0;
+}
+
+.admin-empty-state {
+    padding: 2.5rem 1.25rem;
+    text-align: center;
+}
+
+.admin-empty-state h2,
+.admin-empty-state .admin-empty-title {
+    margin: 0;
+    font-family: var(--eg-font-body);
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--eg-text);
+}
+
+.admin-empty-state p {
+    margin: 0.4rem auto 0;
+    max-width: 28rem;
+    color: var(--eg-text-muted);
 }
 
 .admin-need-list {
@@ -300,6 +373,31 @@
     color: var(--eg-brand);
 }
 
+.admin-app .table-responsive {
+    overflow-x: auto;
+    max-width: 100%;
+}
+
+.admin-app .eg-breadcrumb a,
+.admin-app .table-eg thead a,
+.admin-app .table-eg tbody a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    min-width: 44px;
+}
+
+html:has(.admin-app),
+body:has(.admin-app) {
+    overflow-x: hidden;
+    max-width: 100%;
+}
+
+.admin-app .table-eg {
+    width: 100%;
+    margin-bottom: 0;
+}
+
 .admin-app .table-eg thead th,
 .admin-app .table-eg tbody td {
     padding-top: var(--eg-admin-cell-y);
@@ -312,6 +410,12 @@
 
 .admin-app .table-eg tbody tr.is-low-stock td {
     background: var(--eg-warning-tint);
+}
+
+.admin-app .table-eg .cell-id,
+.admin-app .table-eg .cell-sku,
+.admin-app .table-eg .cell-ref {
+    white-space: nowrap;
 }
 
 .admin-overdue-flag {
@@ -365,25 +469,63 @@
     display: flex;
     flex-wrap: wrap;
     gap: 0.75rem;
-    align-items: end;
+    align-items: flex-end;
+}
+
+.admin-filter-row > .btn {
+    min-height: 44px;
+    margin: 0;
+    align-self: flex-end;
 }
 
 .admin-field {
     display: flex;
     flex-direction: column;
     gap: 0.3rem;
-    min-width: 10rem;
+    flex: 1 1 12rem;
+    min-width: 0;
+    max-width: 100%;
 }
 
-.admin-field label {
-    font-size: 0.8rem;
+.admin-field-search {
+    flex: 2 1 18rem;
+}
+
+.admin-field label,
+.admin-app .admin-field .input > label,
+.admin-app .form-label {
+    font-size: 0.8125rem;
     font-weight: 600;
     color: var(--eg-text-muted);
 }
 
 .admin-field .form-control,
-.admin-field .form-select {
+.admin-field .form-select,
+.admin-app .form-control,
+.admin-app .form-select,
+.admin-app .input {
     min-height: 44px;
+    min-width: 0;
+    max-width: 100%;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.admin-app .form-select,
+.admin-app select {
+    max-width: 100%;
+}
+
+.admin-app input[type="date"],
+.admin-app input[type="search"] {
+    min-width: 0;
+    width: 100%;
+}
+
+.admin-app .input {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
 }
 
 .admin-actions {
@@ -437,12 +579,46 @@
     width: 5.5rem;
 }
 
-.admin-app .pagination .page-link {
-    min-height: 44px;
-    min-width: 44px;
+/* Same visual parameters as site.css .page-link so admin pagination is not a
+   second style. Templates must emit .page-item / .page-link. */
+.admin-app .pagination {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.admin-app .page-link {
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    min-width: 44px;
+    min-height: 44px;
+    background: transparent;
+    border: 1px solid var(--eg-border) !important;
+    border-radius: var(--eg-radius-sm) !important;
+    color: var(--eg-text);
+    padding: 0.45rem 0.9rem;
+}
+
+.admin-app .page-link:hover {
+    background: var(--eg-brand-tint);
+    border-color: var(--eg-brand) !important;
+    color: var(--eg-brand);
+}
+
+.admin-app .page-item.active .page-link {
+    background: var(--eg-brand);
+    border-color: var(--eg-brand) !important;
+    color: var(--eg-on-dark);
+    font-weight: 600;
+}
+
+.admin-app .page-item.disabled .page-link {
+    background: transparent;
+    color: var(--eg-disabled);
 }
 
 .admin-app .btn-sm.btn-eg-ghost,
@@ -452,25 +628,109 @@
 
 .admin-line-row {
     display: grid;
-    grid-template-columns: minmax(10rem, 0.9fr) minmax(0, 1.5fr) 6rem auto;
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.5fr) minmax(0, 6rem);
     gap: 0.5rem;
     align-items: end;
     margin-bottom: 0.65rem;
+    width: 100%;
+    max-width: 100%;
+}
+
+.admin-line-row > * {
+    min-width: 0;
+    max-width: 100%;
+}
+
+.admin-line-row .admin-stock-warn {
+    grid-column: 1 / -1;
 }
 
 .admin-nav-backdrop {
     display: none;
 }
 
+.admin-note {
+    font-size: 0.85rem;
+    color: var(--eg-text-muted);
+}
+
+.admin-mask-note {
+    margin: 0 0 0.75rem;
+    font-size: 0.8rem;
+    color: var(--eg-text-muted);
+}
+
+.admin-reply {
+    margin-top: 1.25rem;
+}
+
+.admin-matrix-wrap {
+    overflow-x: auto;
+}
+
+.admin-check {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    min-height: 44px;
+    margin-right: 0.75rem;
+    font-size: 0.85rem;
+}
+
+.admin-role-form {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.25rem 0.5rem;
+}
+
+.admin-matrix th,
+.admin-matrix td {
+    text-align: center;
+    vertical-align: middle;
+}
+
+.admin-matrix th:first-child,
+.admin-matrix td:first-child {
+    text-align: left;
+    white-space: nowrap;
+    position: sticky;
+    left: 0;
+    background: var(--eg-bg);
+    z-index: 1;
+}
+
+.admin-matrix td label {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    min-width: 44px;
+    margin: 0;
+    cursor: pointer;
+}
+
+.admin-invoice-meta {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 1.25rem;
+    margin-bottom: 1.25rem;
+}
+
+.admin-sensitive {
+    font-variant-numeric: tabular-nums;
+}
+
 @media (max-width: 1199px) {
     .admin-stat-grid,
     .admin-split,
-    .admin-detail {
+    .admin-detail,
+    .admin-invoice-meta {
         grid-template-columns: 1fr;
     }
 }
 
-@media (max-width: 991.98px) {
+@media (max-width: 1199.98px) {
     .admin-menu-toggle {
         display: inline-flex;
     }
@@ -517,5 +777,68 @@
 @media (max-width: 575.98px) {
     .admin-stat-grid {
         grid-template-columns: 1fr 1fr;
+    }
+}
+
+@media print {
+    .skip-link,
+    .admin-sidebar,
+    .admin-topbar,
+    .admin-flash,
+    .admin-menu-toggle,
+    .admin-nav-backdrop,
+    .admin-actions,
+    .admin-filters,
+    .admin-app .btn,
+    .admin-app form,
+    .admin-page-head .btn,
+    .admin-page-head .d-flex > .d-flex {
+        display: none !important;
+    }
+
+    .admin-app,
+    .admin-shell,
+    .admin-stage,
+    .admin-content {
+        display: block;
+        width: 100%;
+        max-width: none;
+        min-height: 0;
+        padding: 0;
+        margin: 0;
+        background: #fff;
+        color: #000;
+        overflow: visible;
+    }
+
+    .admin-invoice {
+        max-width: 210mm;
+        margin: 0 auto;
+        background: #fff;
+        color: #000;
+        border: 0;
+        padding: 0;
+    }
+
+    .admin-app .table-eg {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .admin-app .table-eg th,
+    .admin-app .table-eg td {
+        border: 1px solid #333;
+        color: #000;
+        background: #fff;
+    }
+
+    .admin-app .table-eg tr {
+        break-inside: avoid;
+        page-break-inside: avoid;
+    }
+
+    .admin-panel {
+        border: 0;
+        padding: 0;
     }
 }

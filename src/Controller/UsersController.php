@@ -94,6 +94,22 @@ class UsersController extends AppController
         if ($result->isValid()) {
             LoginThrottleMiddleware::clear($ip);
 
+            if ($this->request->is('post')) {
+                $identity = $this->Authentication->getIdentity();
+                if ($identity !== null) {
+                    $user = $this->Users->get((int)$identity->getIdentifier());
+                    $status = (string)($user->get('status') ?: 'active');
+                    if ($status !== 'active' || $user->get('deleted') !== null) {
+                        $this->Authentication->logout();
+                        $this->Flash->error(__('This account is inactive.'));
+
+                        return null;
+                    }
+                    $user->set('last_login_at', DateTime::now('UTC'));
+                    $this->Users->save($user);
+                }
+            }
+
             $target = $this->Authentication->getLoginRedirect() ?? '/admin';
             // Only allow relative redirect targets to prevent open redirects.
             if (str_starts_with($target, 'http') || str_starts_with($target, '//')) {

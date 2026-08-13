@@ -60,15 +60,15 @@ $this->assign('breadcrumb', $this->element('admin/breadcrumb', [
         </div>
         <div class="admin-field">
             <label for="from">From date</label>
-            <input type="date" class="form-control" id="from" name="from" value="<?= h($from) ?>">
+            <input type="date" class="form-control" id="from" name="from" value="<?= h($from) ?>" lang="en">
         </div>
         <div class="admin-field">
             <label for="to">To date</label>
-            <input type="date" class="form-control" id="to" name="to" value="<?= h($to) ?>">
+            <input type="date" class="form-control" id="to" name="to" value="<?= h($to) ?>" lang="en">
         </div>
-        <div class="admin-field">
+        <div class="admin-field admin-field-search">
             <label for="q">Search</label>
-            <input type="search" class="form-control" id="q" name="q" value="<?= h($q) ?>" placeholder="Order number or customer">
+            <input type="search" class="form-control" id="q" name="q" value="<?= h($q) ?>" placeholder="Order or customer" lang="en">
         </div>
         <?php if ($status !== '') : ?>
             <input type="hidden" name="status" value="<?= h($status) ?>">
@@ -79,7 +79,10 @@ $this->assign('breadcrumb', $this->element('admin/breadcrumb', [
 
 <?php if (count($salesOrders) === 0) : ?>
     <div class="admin-panel">
-        <p class="admin-empty mb-0">No orders match those filters.</p>
+        <?= $this->element('admin/empty', [
+            'title' => 'No orders match those filters',
+            'body' => 'Recorded phone, email, SMS and walk-in sales will appear here. Try clearing the filters, or record a new order.',
+        ]) ?>
     </div>
 <?php else : ?>
     <div class="admin-panel">
@@ -104,7 +107,7 @@ $this->assign('breadcrumb', $this->element('admin/breadcrumb', [
                         $channels = SalesOrder::channelLabels();
                         ?>
                         <tr class="<?= $overdue ? 'is-overdue' : '' ?>">
-                            <td><?= h($order->order_number) ?></td>
+                            <td class="cell-id"><?= h($order->order_number) ?></td>
                             <td><?= h($order->customer_label) ?></td>
                             <td><?= h($channels[$order->source_channel] ?? $order->source_channel) ?></td>
                             <td><?= $this->Money->aud((int)$order->grand_total_cents) ?></td>
@@ -126,14 +129,8 @@ $this->assign('breadcrumb', $this->element('admin/breadcrumb', [
         </div>
     </div>
 
-    <nav aria-label="Orders pagination" class="mt-4">
-        <ul class="pagination justify-content-center">
-            <?= $this->Paginator->first('« First', ['class' => 'page-link']) ?>
-            <?= $this->Paginator->prev('‹ Prev', ['class' => 'page-link']) ?>
-            <?= $this->Paginator->numbers() ?>
-            <?= $this->Paginator->next('Next ›', ['class' => 'page-link']) ?>
-            <?= $this->Paginator->last('Last »', ['class' => 'page-link']) ?>
-        </ul>
-    </nav>
-    <p class="text-center small text-muted"><?= $this->Paginator->counter('Page {{page}} of {{pages}}, showing {{current}} of {{count}} orders') ?></p>
+    <?= $this->element('admin/pagination', [
+        'label' => 'Orders pagination',
+        'counter' => 'Page {{page}} of {{pages}}, showing {{current}} of {{count}} orders',
+    ]) ?>
 <?php endif; ?>

@@ -6,9 +6,12 @@
  * @var \App\Model\Entity\SalesOrder $salesOrder
  * @var \Cake\I18n\Date $today
  * @var array<int, string> $nextStatuses
+ * @var bool $canSeeContact
+ * @var \App\Model\Entity\Invoice|null $existingInvoice
  */
 
 use App\Model\Entity\SalesOrder;
+use App\Service\ContactMask;
 
 $channels = SalesOrder::channelLabels();
 $labels = SalesOrder::statusLabels();
@@ -27,6 +30,22 @@ $this->assign('breadcrumb', $this->element('admin/breadcrumb', [
     </div>
     <?= $this->element('admin/status_pill', ['status' => $salesOrder->status]) ?>
 </div>
+<?php if ($existingInvoice) : ?>
+    <p class="admin-note">
+        <?= $this->Html->link(
+            'Invoice ' . $existingInvoice->invoice_number,
+            ['controller' => 'Invoices', 'action' => 'view', $existingInvoice->id],
+        ) ?>
+    </p>
+<?php else : ?>
+    <div class="admin-actions mb-3">
+        <?= $this->Form->postButton(
+            'Issue invoice',
+            ['controller' => 'Invoices', 'action' => 'createFromOrder', $salesOrder->id],
+            ['class' => 'btn btn-eg-ghost'],
+        ) ?>
+    </div>
+<?php endif; ?>
 
 <?php if (!empty($salesOrder->metadata['stock_warnings'])) : ?>
     <p class="eg-note" role="status">
@@ -65,7 +84,7 @@ $this->assign('breadcrumb', $this->element('admin/breadcrumb', [
                                             </div>
                                         <?php endif; ?>
                                     </td>
-                                    <td><?= h($item->sku_snapshot ?: '—') ?></td>
+                                    <td class="cell-sku"><?= h($item->sku_snapshot ?: '—') ?></td>
                                     <td><?= $this->Money->aud((int)$item->unit_price_cents) ?></td>
                                     <td><?= (int)$item->quantity ?></td>
                                     <td><?= $this->Money->aud((int)$item->line_total_cents) ?></td>
@@ -99,7 +118,10 @@ $this->assign('breadcrumb', $this->element('admin/breadcrumb', [
             <h2 id="notes-heading">Notes</h2>
             <div class="admin-panel">
                 <?php if (!$salesOrder->order_notes) : ?>
-                    <p class="admin-empty">No notes yet.</p>
+                    <?= $this->element('admin/empty', [
+                        'title' => 'No notes yet',
+                        'body' => 'Internal notes about packing, the customer or the promised date will collect here.',
+                    ]) ?>
                 <?php else : ?>
                     <ul class="admin-need-list">
                         <?php foreach ($salesOrder->order_notes as $note) : ?>
@@ -139,11 +161,15 @@ $this->assign('breadcrumb', $this->element('admin/breadcrumb', [
                     </div>
                     <div class="eg-kv-row">
                         <dt>Email</dt>
-                        <dd><?= h($salesOrder->customer->email ?? $salesOrder->guest_email ?? '—') ?></dd>
+                        <dd><?= h($canSeeContact
+                            ? ($salesOrder->customer?->email ?? $salesOrder->guest_email ?? '—')
+                            : ContactMask::email($salesOrder->customer?->email ?? $salesOrder->guest_email ?? null)) ?></dd>
                     </div>
                     <div class="eg-kv-row">
                         <dt>Phone</dt>
-                        <dd><?= h($salesOrder->customer->phone ?? $salesOrder->guest_phone ?? '—') ?></dd>
+                        <dd><?= h($canSeeContact
+                            ? ($salesOrder->customer?->phone ?? $salesOrder->guest_phone ?? '—')
+                            : ContactMask::phone($salesOrder->customer?->phone ?? $salesOrder->guest_phone ?? null)) ?></dd>
                     </div>
                 </dl>
             </div>
@@ -174,6 +200,8 @@ $this->assign('breadcrumb', $this->element('admin/breadcrumb', [
                         'type' => 'date',
                         'label' => 'Promised delivery date',
                         'class' => 'form-control',
+                        'lang' => 'en',
+                        'templates' => ['inputContainer' => '{{content}}'],
                         'value' => $salesOrder->promised_delivery_date
                             ? $salesOrder->promised_delivery_date->format('Y-m-d')
                             : '',
@@ -193,7 +221,10 @@ $this->assign('breadcrumb', $this->element('admin/breadcrumb', [
             <h2 id="advance-heading">Advance status</h2>
             <div class="admin-panel">
                 <?php if ($nextStatuses === []) : ?>
-                    <p class="admin-empty mb-0">This order is closed.</p>
+                    <?= $this->element('admin/empty', [
+                        'title' => 'This order is closed',
+                        'body' => 'Completed and cancelled orders cannot change status from here.',
+                    ]) ?>
                 <?php else : ?>
                     <div class="admin-actions">
                         <?php foreach ($nextStatuses as $next) : ?>
@@ -217,7 +248,10 @@ $this->assign('breadcrumb', $this->element('admin/breadcrumb', [
             <h2 id="history-heading">Status history</h2>
             <div class="admin-panel">
                 <?php if (!$salesOrder->order_status_history) : ?>
-                    <p class="admin-empty mb-0">No history yet.</p>
+                    <?= $this->element('admin/empty', [
+                        'title' => 'No history yet',
+                        'body' => 'Each status change is recorded here with the staff member who made it.',
+                    ]) ?>
                 <?php else : ?>
                     <ol class="admin-timeline">
                         <?php foreach ($salesOrder->order_status_history as $event) : ?>

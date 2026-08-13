@@ -45,17 +45,15 @@ class InventoryControllerTest extends TestCase
     }
 
     /**
-     * Standard staff can view inventory but not the adjust form.
+     * Standard staff no longer has inventory.view after the batch-2 tightening.
      *
      * @return void
      */
-    public function testIndexOkForStandardStaffWithoutAdjustForm(): void
+    public function testIndexForbiddenForStandardStaff(): void
     {
         $this->loginAs(2);
         $this->get('/admin/inventory');
-        $this->assertResponseOk();
-        $this->assertResponseContains('EGL-MARLOW-01');
-        $this->assertResponseNotContains('name="reason"');
+        $this->assertResponseCode(403);
     }
 
     /**

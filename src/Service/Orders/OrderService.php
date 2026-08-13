@@ -188,6 +188,7 @@ class OrderService
                     $reservation->inventory_location_id = $location['id'];
                     $reservation->quantity = $reserveQty;
                     $reservation->status = 'active';
+                    $reservation->reservation_movement_id = $this->ledger->lastInsertId();
                     $reservation->created_by_user_id = $actorUserId;
                     $reservations->saveOrFail($reservation);
                 }
@@ -252,6 +253,15 @@ class OrderService
             }
             $this->fetchTable('SalesOrders')->saveOrFail($order);
             $this->annotateLatestHistory($order, $from, $toStatus, $actorUserId, $note);
+
+            if ($toStatus === SalesOrder::STATUS_CANCELLED) {
+                $this->releaseReservations((int)$order->id, $actorUserId, $order->order_number);
+            } elseif (
+                $toStatus === SalesOrder::STATUS_DISPATCHED
+                || $toStatus === SalesOrder::STATUS_COMPLETED
+            ) {
+                $this->consumeReservations((int)$order->id, $actorUserId, $order->order_number);
+            }
 
             return $order;
         });
@@ -389,6 +399,80 @@ class OrderService
         $customers->saveOrFail($customer);
 
         return (int)$customer->id;
+    }
+
+    /**
+     * Release every active reservation for a cancelled order.
+     *
+     * @param int $orderId Order id.
+     * @param int $actorUserId Acting staff user.
+     * @param string $orderNumber Order number for the ledger note.
+     * @return void
+     */
+    private function releaseReservations(int $orderId, int $actorUserId, string $orderNumber): void
+    {
+        $reservations = $this->fetchTable('StockReservations');
+        $active = $reservations->find()
+            ->where(['sales_order_id' => $orderId, 'status' => 'active'])
+            ->all();
+        foreach ($active as $reservation) {
+            $qty = (int)$reservation->quantity;
+            if ($qty > 0) {
+                $this->ledger->applyInTransaction(
+                    (int)$reservation->product_variant_id,
+                    (int)$reservation->inventory_location_id,
+                    'reservation_release',
+                    0,
+                    -$qty,
+                    'sales_order',
+                    $orderId,
+                    'Release reservation for cancelled ' . $orderNumber,
+                    $actorUserId,
+                );
+            }
+            $reservation->status = 'released';
+            $reservation->released_at = DateTime::now('UTC');
+            $reservation->release_or_sale_movement_id = $this->ledger->lastInsertId();
+            $reservations->saveOrFail($reservation);
+        }
+    }
+
+    /**
+     * Deduct on-hand and reserved together when an order is dispatched or
+     * completed. Already-consumed rows are skipped so dispatch then complete
+     * cannot double-count.
+     *
+     * @param int $orderId Order id.
+     * @param int $actorUserId Acting staff user.
+     * @param string $orderNumber Order number for the ledger note.
+     * @return void
+     */
+    private function consumeReservations(int $orderId, int $actorUserId, string $orderNumber): void
+    {
+        $reservations = $this->fetchTable('StockReservations');
+        $active = $reservations->find()
+            ->where(['sales_order_id' => $orderId, 'status' => 'active'])
+            ->all();
+        foreach ($active as $reservation) {
+            $qty = (int)$reservation->quantity;
+            if ($qty > 0) {
+                $this->ledger->applyInTransaction(
+                    (int)$reservation->product_variant_id,
+                    (int)$reservation->inventory_location_id,
+                    'sale',
+                    -$qty,
+                    -$qty,
+                    'sales_order',
+                    $orderId,
+                    'Fulfil reservation for ' . $orderNumber,
+                    $actorUserId,
+                );
+            }
+            $reservation->status = 'consumed';
+            $reservation->consumed_at = DateTime::now('UTC');
+            $reservation->release_or_sale_movement_id = $this->ledger->lastInsertId();
+            $reservations->saveOrFail($reservation);
+        }
     }
 
     /**

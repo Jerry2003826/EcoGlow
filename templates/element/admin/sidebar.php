@@ -52,7 +52,7 @@ $currentModule = is_array($pass) && isset($pass[0]) ? (string)$pass[0] : '';
         <?php endforeach; ?>
     </nav>
 
-    <p class="admin-sidebar-foot">
-        <a href="<?= $this->Url->build('/') ?>">View storefront</a>
-    </p>
+    <div class="admin-sidebar-foot">
+        <a class="admin-nav-link" href="<?= $this->Url->build('/') ?>">View storefront</a>
+    </div>
 </aside>

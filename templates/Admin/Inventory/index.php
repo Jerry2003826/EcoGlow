@@ -36,7 +36,10 @@ $this->assign('breadcrumb', $this->element('admin/breadcrumb', [
 
 <?php if ($rows === []) : ?>
     <div class="admin-panel">
-        <p class="admin-empty mb-0">No products to show at this location.</p>
+        <?= $this->element('admin/empty', [
+            'title' => 'No products at this location',
+            'body' => 'Active variants and their on-hand, reserved and available quantities will list here once stock is received.',
+        ]) ?>
     </div>
 <?php else : ?>
     <div class="admin-panel">
@@ -60,7 +63,7 @@ $this->assign('breadcrumb', $this->element('admin/breadcrumb', [
                     <?php foreach ($rows as $row) : ?>
                         <?php $needs = (int)$row['needs_reorder'] === 1; ?>
                         <tr class="<?= $needs ? 'is-low-stock' : '' ?>">
-                            <td><?= h($row['sku']) ?></td>
+                            <td class="cell-sku"><?= h($row['sku']) ?></td>
                             <td>
                                 <?= h($row['product_name']) ?>
                                 <?php if ($row['variant_name']) : ?>

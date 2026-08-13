@@ -11,6 +11,7 @@
  * @var iterable<\App\Model\Entity\ContactMessage> $unreadInbox
  * @var array<int, array<string, mixed>> $lowStockItems
  * @var array<int, array<string, mixed>> $recentTransactions
+ * @var \Cake\I18n\Date $today
  */
 
 use App\Model\Entity\SalesOrder;
@@ -22,7 +23,7 @@ $this->assign('breadcrumb', $this->element('admin/breadcrumb', [
 ]));
 ?>
 <div class="admin-page-head">
-    <span class="eg-eyebrow">Today</span>
+    <span class="eg-eyebrow">Today · <?= h($today->format('d M Y')) ?> (Melbourne)</span>
     <h1>Dashboard</h1>
 </div>
 
@@ -47,17 +48,22 @@ $this->assign('breadcrumb', $this->element('admin/breadcrumb', [
 
 <div class="admin-split">
     <section class="admin-section" aria-labelledby="need-heading">
-        <h2 id="need-heading">Needs attention</h2>
         <div class="admin-panel">
+            <div class="admin-panel-head">
+                <h2 id="need-heading">Needs attention</h2>
+            </div>
             <h3 class="admin-panel-title">New orders</h3>
             <?php if (count($newOrders) === 0) : ?>
-                <p class="admin-empty">None waiting.</p>
+                <?= $this->element('admin/empty', [
+                    'title' => 'No new orders waiting',
+                    'body' => 'Confirmed and processing orders that still need packing will show up here.',
+                ]) ?>
             <?php else : ?>
                 <ul class="admin-need-list">
                     <?php foreach ($newOrders as $order) : ?>
                         <li>
                             <a href="<?= $this->Url->build(['controller' => 'Orders', 'action' => 'view', $order->id]) ?>">
-                                <span><?= h($order->order_number) ?> · <?= h($order->customer_label) ?></span>
+                                <span class="cell-id"><?= h($order->order_number) ?> · <?= h($order->customer_label) ?></span>
                                 <span><?= $this->Money->aud((int)$order->grand_total_cents) ?></span>
                             </a>
                         </li>
@@ -67,7 +73,10 @@ $this->assign('breadcrumb', $this->element('admin/breadcrumb', [
 
             <h3 class="admin-panel-title mt-4">Unread messages</h3>
             <?php if (count($unreadInbox) === 0) : ?>
-                <p class="admin-empty">None waiting.</p>
+                <?= $this->element('admin/empty', [
+                    'title' => 'Inbox is clear',
+                    'body' => 'New enquiries from the public contact form will appear here until someone opens them.',
+                ]) ?>
             <?php else : ?>
                 <ul class="admin-need-list">
                     <?php foreach ($unreadInbox as $message) : ?>
@@ -83,13 +92,16 @@ $this->assign('breadcrumb', $this->element('admin/breadcrumb', [
 
             <h3 class="admin-panel-title mt-4">Below reorder point</h3>
             <?php if ($lowStockItems === []) : ?>
-                <p class="admin-empty">None waiting.</p>
+                <?= $this->element('admin/empty', [
+                    'title' => 'Stock is above reorder point',
+                    'body' => 'Variants that have fallen to or below their reorder point will be listed here.',
+                ]) ?>
             <?php else : ?>
                 <ul class="admin-need-list">
                     <?php foreach ($lowStockItems as $item) : ?>
                         <li>
                             <a href="<?= $this->Url->build(['controller' => 'Inventory', 'action' => 'index']) ?>">
-                                <span><?= h($item['sku']) ?> · <?= h($item['product_name']) ?></span>
+                                <span class="cell-sku"><?= h($item['sku']) ?> · <?= h($item['product_name']) ?></span>
                                 <span><?= (int)$item['quantity_available'] ?> available</span>
                             </a>
                         </li>
@@ -100,10 +112,15 @@ $this->assign('breadcrumb', $this->element('admin/breadcrumb', [
     </section>
 
     <section class="admin-section" aria-labelledby="recent-heading">
-        <h2 id="recent-heading">Recent transactions</h2>
         <div class="admin-panel">
+            <div class="admin-panel-head">
+                <h2 id="recent-heading">Recent transactions</h2>
+            </div>
             <?php if ($recentTransactions === []) : ?>
-                <p class="admin-empty">None yet.</p>
+                <?= $this->element('admin/empty', [
+                    'title' => 'No transactions yet',
+                    'body' => 'Orders, payments and refunds will list here as soon as they are recorded.',
+                ]) ?>
             <?php else : ?>
                 <div class="table-responsive">
                     <table class="table table-eg align-middle" aria-label="Recent transactions">
@@ -119,7 +136,7 @@ $this->assign('breadcrumb', $this->element('admin/breadcrumb', [
                         <tbody>
                             <?php foreach ($recentTransactions as $row) : ?>
                                 <tr>
-                                    <td>
+                                    <td class="cell-ref">
                                         <?php if ($row['transaction_type'] === 'order') : ?>
                                             <a href="<?= $this->Url->build(['controller' => 'Orders', 'action' => 'view', $row['transaction_id']]) ?>">
                                                 <?= h($row['reference_number']) ?>
@@ -132,7 +149,9 @@ $this->assign('breadcrumb', $this->element('admin/breadcrumb', [
                                     <td><?= $this->Money->aud((int)$row['amount_cents']) ?></td>
                                     <td><?= $this->element('admin/status_pill', ['status' => (string)$row['status']]) ?></td>
                                     <td class="text-nowrap">
-                                        <?= h($row['occurred_at'] ? (new DateTime($row['occurred_at']))->format('d M Y, H:i') : '—') ?>
+                                        <?= h($row['occurred_at']
+                                            ? (new DateTime($row['occurred_at']))->setTimezone('Australia/Melbourne')->format('d M Y, H:i')
+                                            : '—') ?>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>

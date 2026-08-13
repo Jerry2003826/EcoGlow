@@ -47,6 +47,16 @@ class ContactMessagesTable extends Table
                 ],
             ],
         ]);
+        $this->belongsTo('Customers', ['foreignKey' => 'customer_id']);
+        $this->belongsTo('AssignedUsers', [
+            'className' => 'Users',
+            'foreignKey' => 'assigned_to_user_id',
+            'propertyName' => 'assigned_user',
+        ]);
+        $this->hasMany('ContactMessageEvents', [
+            'foreignKey' => 'contact_message_id',
+            'sort' => ['ContactMessageEvents.created' => 'ASC', 'ContactMessageEvents.id' => 'ASC'],
+        ]);
     }
 
     /**

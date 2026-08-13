@@ -52,12 +52,14 @@ $this->assign('breadcrumb', $this->element('admin/breadcrumb', [
                     <?= $this->Form->control('customer_first_name', [
                         'label' => 'First name',
                         'class' => 'form-control',
+                        'templates' => ['inputContainer' => '{{content}}'],
                     ]) ?>
                 </div>
                 <div class="admin-field">
                     <?= $this->Form->control('customer_last_name', [
                         'label' => 'Last name',
                         'class' => 'form-control',
+                        'templates' => ['inputContainer' => '{{content}}'],
                     ]) ?>
                 </div>
                 <div class="admin-field">
@@ -65,12 +67,14 @@ $this->assign('breadcrumb', $this->element('admin/breadcrumb', [
                         'type' => 'email',
                         'label' => 'Email',
                         'class' => 'form-control',
+                        'templates' => ['inputContainer' => '{{content}}'],
                     ]) ?>
                 </div>
                 <div class="admin-field">
                     <?= $this->Form->control('customer_phone', [
                         'label' => 'Phone',
                         'class' => 'form-control',
+                        'templates' => ['inputContainer' => '{{content}}'],
                     ]) ?>
                 </div>
             </div>
@@ -89,6 +93,7 @@ $this->assign('breadcrumb', $this->element('admin/breadcrumb', [
                         'required' => true,
                         'empty' => 'Select how this order arrived',
                         'options' => SalesOrder::channelLabels(),
+                        'templates' => ['inputContainer' => '{{content}}'],
                     ]) ?>
                 </div>
                 <div class="admin-field">
@@ -96,6 +101,7 @@ $this->assign('breadcrumb', $this->element('admin/breadcrumb', [
                         'label' => 'External reference',
                         'class' => 'form-control',
                         'placeholder' => 'Email thread or ticket number',
+                        'templates' => ['inputContainer' => '{{content}}'],
                     ]) ?>
                 </div>
                 <div class="admin-field">
@@ -103,6 +109,8 @@ $this->assign('breadcrumb', $this->element('admin/breadcrumb', [
                         'type' => 'date',
                         'label' => 'Promised delivery date',
                         'class' => 'form-control',
+                        'templates' => ['inputContainer' => '{{content}}'],
+                        'lang' => 'en',
                     ]) ?>
                 </div>
             </div>

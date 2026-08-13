@@ -41,6 +41,21 @@ final class AdminPermissionMap
             'ContactMessages' => [
                 self::ANY => ['messages.manage'],
             ],
+            'Customers' => [
+                self::ANY => ['customers.view', 'customers.edit'],
+            ],
+            'Invoices' => [
+                'createFromOrder' => ['invoices.issue'],
+                'send' => ['invoices.issue'],
+                'recordPayment' => ['payments.record'],
+                self::ANY => ['invoices.issue'],
+            ],
+            'Reports' => [
+                self::ANY => ['reports.view', 'reports.financial'],
+            ],
+            'Users' => [
+                self::ANY => ['access.manage'],
+            ],
             'Orders' => [
                 'add' => ['orders.create'],
                 'searchProducts' => ['orders.create'],
@@ -48,7 +63,7 @@ final class AdminPermissionMap
                 'updatePromisedDate' => ['orders.manage'],
                 'addNote' => ['orders.manage'],
                 'updateStatus' => ['orders.manage', 'orders.dispatch'],
-                self::ANY => ['orders.create', 'orders.manage', 'orders.dispatch'],
+                self::ANY => ['orders.view', 'orders.create', 'orders.manage', 'orders.dispatch'],
             ],
             'Inventory' => [
                 'adjust' => ['inventory.adjust'],

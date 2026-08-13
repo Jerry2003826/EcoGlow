@@ -179,4 +179,32 @@ class ContactMessagesControllerTest extends TestCase
         $table = $this->fetchTable('ContactMessages');
         $this->assertTrue($table->exists(['id' => 1]));
     }
+
+    /**
+     * A reply is queued, not sent, and the enquiry is marked resolved.
+     *
+     * @return void
+     */
+    public function testReplyQueuesOutboundAndResolves(): void
+    {
+        $this->loginAs(1);
+        $this->post('/admin/contact-messages/reply/1', [
+            'body' => 'Yes, the bulbs work with Google Home.',
+        ]);
+        $this->assertResponseCode(302);
+
+        $message = $this->fetchTable('ContactMessages')->get(1);
+        $this->assertSame('resolved', $message->status);
+        $this->assertNotNull($message->last_response_at);
+        $this->assertTrue($this->fetchTable('OutboundMessages')->exists([
+            'related_entity_type' => 'contact_message',
+            'related_entity_id' => 1,
+            'status' => 'queued',
+            'recipient' => 'jane@example.com',
+        ]));
+        $this->assertTrue($this->fetchTable('ContactMessageEvents')->exists([
+            'contact_message_id' => 1,
+            'direction' => 'outbound',
+        ]));
+    }
 }

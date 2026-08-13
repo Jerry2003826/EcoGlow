@@ -207,4 +207,77 @@ class OrdersControllerTest extends TestCase
             'changed_by_user_id' => 1,
         ]));
     }
+
+    /**
+     * Cancelling an order releases its reservations so available stock returns.
+     *
+     * @return void
+     */
+    public function testCancelReleasesReservedStock(): void
+    {
+        $this->loginAs(1);
+        $this->post('/admin/orders/add', [
+            'customer_id' => 1,
+            'source_channel' => SalesOrder::CHANNEL_PHONE,
+            'lines' => [
+                ['product_variant_id' => 1, 'quantity' => 2],
+            ],
+        ]);
+        $order = $this->fetchTable('SalesOrders')->find()->firstOrFail();
+
+        $this->post('/admin/orders/update-status/' . $order->id, [
+            'status' => SalesOrder::STATUS_CANCELLED,
+        ]);
+        $this->assertResponseCode(302);
+
+        $balance = $this->fetchTable('InventoryBalances')->get([
+            'product_variant_id' => 1,
+            'inventory_location_id' => 1,
+        ]);
+        $this->assertSame(5, (int)$balance->quantity_on_hand);
+        $this->assertSame(0, (int)$balance->quantity_reserved);
+        $this->assertSame(5, (int)$balance->quantity_available);
+        $this->assertTrue($this->fetchTable('StockReservations')->exists([
+            'sales_order_id' => $order->id,
+            'status' => 'released',
+        ]));
+    }
+
+    /**
+     * Dispatch deducts on-hand and reserved together.
+     *
+     * @return void
+     */
+    public function testDispatchConsumesReservedStock(): void
+    {
+        $this->loginAs(1);
+        $this->post('/admin/orders/add', [
+            'customer_id' => 1,
+            'source_channel' => SalesOrder::CHANNEL_IN_STORE,
+            'lines' => [
+                ['product_variant_id' => 1, 'quantity' => 2],
+            ],
+        ]);
+        $order = $this->fetchTable('SalesOrders')->find()->firstOrFail();
+
+        $this->post('/admin/orders/update-status/' . $order->id, [
+            'status' => SalesOrder::STATUS_PROCESSING,
+        ]);
+        $this->post('/admin/orders/update-status/' . $order->id, [
+            'status' => SalesOrder::STATUS_DISPATCHED,
+        ]);
+        $this->assertResponseCode(302);
+
+        $balance = $this->fetchTable('InventoryBalances')->get([
+            'product_variant_id' => 1,
+            'inventory_location_id' => 1,
+        ]);
+        $this->assertSame(3, (int)$balance->quantity_on_hand);
+        $this->assertSame(0, (int)$balance->quantity_reserved);
+        $this->assertSame(3, (int)$balance->quantity_available);
+        $this->assertTrue($this->fetchTable('StockReservations')->exists([
+            'sales_order_id' => $order->id,
+            'status' => 'consumed',
+        ]));
+    }
 }

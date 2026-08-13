@@ -19,11 +19,18 @@ class DashboardController extends AdminController
     {
         $connection = $this->fetchTable('SalesOrders')->getConnection();
         $today = Date::now('Australia/Melbourne');
-        $todaySql = $today->format('Y-m-d');
 
+        // v_business_dashboard_daily groups by Melbourne calendar day via
+        // CONVERT_TZ(..., 'UTC', 'Australia/Melbourne'), falling back to the
+        // stored UTC timestamp if timezone tables are missing. Compare against
+        // that same expression so "today" cannot drift across a day boundary.
         $todayRow = $connection->execute(
-            'SELECT orders_total FROM v_business_dashboard_daily WHERE business_date = ? LIMIT 1',
-            [$todaySql],
+            'SELECT orders_total FROM v_business_dashboard_daily
+              WHERE business_date = DATE(COALESCE(
+                  CONVERT_TZ(UTC_TIMESTAMP(), \'UTC\', \'Australia/Melbourne\'),
+                  UTC_TIMESTAMP()
+              ))
+              LIMIT 1',
         )->fetch('assoc');
         $ordersToday = $todayRow ? (int)$todayRow['orders_total'] : 0;
 
