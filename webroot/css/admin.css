@@ -1,0 +1,521 @@
+/*
+ * Eco Glow Lighting — staff console density.
+ *
+ * Reuses every :root token and component class from site.css. New rules live
+ * here so the storefront is never restyled. Colours are only derived from
+ * existing variables.
+ */
+
+:root {
+    --eg-admin-sidebar: 15rem;
+    --eg-admin-gap: 2rem;
+    --eg-admin-cell-y: 0.75rem;
+}
+
+.admin-app {
+    min-height: 100vh;
+    background: var(--eg-bg);
+    color: var(--eg-text);
+}
+
+.admin-app h2,
+.admin-app h3,
+.admin-app h4,
+.admin-app .admin-panel-title,
+.admin-app .table-eg thead th {
+    font-family: var(--eg-font-body);
+    letter-spacing: 0;
+}
+
+.admin-app h1 {
+    font-family: var(--eg-font-title);
+}
+
+.admin-shell {
+    display: flex;
+    min-height: 100vh;
+    align-items: stretch;
+}
+
+.admin-sidebar {
+    flex: none;
+    width: var(--eg-admin-sidebar);
+    background: var(--eg-bg-alt);
+    border-right: 1px solid var(--eg-border);
+    padding: 1.5rem 0 1.25rem;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+.admin-brand {
+    display: block;
+    padding: 0 1.25rem 1.5rem;
+    font-family: var(--eg-font-title);
+    font-size: 1.35rem;
+    color: var(--eg-text);
+    text-decoration: none;
+}
+
+.admin-brand:hover {
+    color: var(--eg-brand);
+    text-decoration: none;
+}
+
+.admin-nav {
+    flex: 1;
+    padding: 0 0.75rem;
+}
+
+.admin-nav-group {
+    margin: 1.25rem 0.5rem 0.4rem;
+}
+
+.admin-nav-list {
+    list-style: none;
+    margin: 0 0 0.5rem;
+    padding: 0;
+}
+
+.admin-nav-link {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    min-height: 44px;
+    padding: 0.45rem 0.85rem;
+    border-left: 3px solid transparent;
+    border-radius: 0 var(--eg-radius-sm) var(--eg-radius-sm) 0;
+    color: var(--eg-text);
+    font-size: 0.92rem;
+    text-decoration: none;
+}
+
+.admin-nav-link:hover {
+    background: var(--eg-brand-tint);
+    color: var(--eg-brand);
+    text-decoration: none;
+}
+
+.admin-nav-link.is-current {
+    background: var(--eg-brand-tint);
+    border-left-color: var(--eg-brand);
+    color: var(--eg-brand);
+    font-weight: 600;
+}
+
+.admin-sidebar-foot {
+    margin: 1rem 1.25rem 0;
+    font-size: 0.85rem;
+}
+
+.admin-stage {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.admin-topbar {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    min-height: 4rem;
+    padding: 0.5rem 1.5rem;
+    border-bottom: 1px solid var(--eg-border);
+    background: var(--eg-bg);
+}
+
+.admin-topbar-crumb {
+    flex: 1;
+    min-width: 0;
+}
+
+.admin-topbar .eg-breadcrumb {
+    margin: 0;
+}
+
+.admin-topbar-user {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    flex: none;
+}
+
+.admin-user-email {
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.admin-user-role {
+    margin: 0;
+}
+
+.admin-logout {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    min-height: 44px;
+    padding: 0.35rem 0.7rem;
+    color: var(--eg-text);
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.admin-logout svg {
+    width: 1.1rem;
+    height: 1.1rem;
+}
+
+.admin-logout:hover {
+    color: var(--eg-brand);
+    text-decoration: none;
+}
+
+.admin-menu-toggle {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border: 1px solid var(--eg-border);
+    border-radius: var(--eg-radius-sm);
+    background: transparent;
+    color: var(--eg-text);
+}
+
+.admin-menu-toggle svg {
+    width: 1.25rem;
+    height: 1.25rem;
+}
+
+.admin-flash,
+.admin-content {
+    padding: 1.25rem 1.5rem 0;
+}
+
+.admin-content {
+    padding-bottom: 2.5rem;
+    flex: 1;
+}
+
+.admin-page-head {
+    margin-bottom: var(--eg-admin-gap);
+}
+
+.admin-page-head h1 {
+    margin: 0;
+    font-size: 2rem;
+    line-height: 1.2;
+}
+
+.admin-section {
+    margin-bottom: var(--eg-admin-gap);
+}
+
+.admin-section h2 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0 0 0.85rem;
+}
+
+.admin-stat-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1rem;
+    margin-bottom: var(--eg-admin-gap);
+}
+
+.admin-stat-card {
+    display: block;
+    padding: 1.15rem 1.25rem;
+    border: 1px solid var(--eg-border);
+    border-radius: var(--eg-radius);
+    background: var(--eg-bg);
+    color: var(--eg-text);
+    text-decoration: none;
+    min-height: 44px;
+}
+
+.admin-stat-card:hover {
+    border-color: var(--eg-brand);
+    background: var(--eg-brand-tint);
+    color: var(--eg-text);
+    text-decoration: none;
+}
+
+.admin-stat-value {
+    font-family: var(--eg-font-title);
+    font-size: 1.75rem;
+    line-height: 1.2;
+    display: block;
+}
+
+.admin-stat-card .eg-eyebrow {
+    margin: 0.35rem 0 0;
+}
+
+.admin-split {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: var(--eg-admin-gap);
+}
+
+.admin-panel {
+    background: var(--eg-bg);
+    border: 1px solid var(--eg-border);
+    border-radius: var(--eg-radius);
+    padding: 1rem 1.15rem;
+}
+
+.admin-empty {
+    color: var(--eg-text-muted);
+    margin: 0;
+}
+
+.admin-need-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.admin-need-list li + li {
+    border-top: 1px solid rgba(201, 188, 169, 0.5);
+}
+
+.admin-need-list a {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.75rem;
+    min-height: 44px;
+    align-items: center;
+    padding: 0.45rem 0;
+    color: var(--eg-text);
+    text-decoration: none;
+}
+
+.admin-need-list a:hover {
+    color: var(--eg-brand);
+}
+
+.admin-app .table-eg thead th,
+.admin-app .table-eg tbody td {
+    padding-top: var(--eg-admin-cell-y);
+    padding-bottom: var(--eg-admin-cell-y);
+}
+
+.admin-app .table-eg tbody tr.is-overdue td:first-child {
+    box-shadow: inset 3px 0 0 var(--eg-accent);
+}
+
+.admin-app .table-eg tbody tr.is-low-stock td {
+    background: var(--eg-warning-tint);
+}
+
+.admin-overdue-flag {
+    display: inline-block;
+    margin-left: 0.35rem;
+    color: var(--eg-text);
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.admin-status {
+    display: inline-flex;
+    align-items: center;
+    min-height: 1.75rem;
+    padding: 0.15rem 0.7rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+}
+
+.admin-status-success {
+    background: var(--eg-success-tint);
+    color: var(--eg-success);
+}
+
+.admin-status-warning {
+    background: var(--eg-warning-tint);
+    color: var(--eg-warning);
+}
+
+.admin-status-error {
+    background: var(--eg-error-tint);
+    color: var(--eg-error);
+}
+
+.admin-status-muted {
+    background: var(--eg-info-tint);
+    color: var(--eg-text-muted);
+    border: 1px solid var(--eg-border);
+}
+
+.admin-filters {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+    margin-bottom: var(--eg-admin-gap);
+}
+
+.admin-filter-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    align-items: end;
+}
+
+.admin-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    min-width: 10rem;
+}
+
+.admin-field label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--eg-text-muted);
+}
+
+.admin-field .form-control,
+.admin-field .form-select {
+    min-height: 44px;
+}
+
+.admin-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.admin-detail {
+    display: grid;
+    grid-template-columns: minmax(0, 1.6fr) minmax(16rem, 0.9fr);
+    gap: var(--eg-admin-gap);
+}
+
+.admin-timeline {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.admin-timeline li {
+    position: relative;
+    padding: 0 0 1rem 1rem;
+    border-left: 2px solid var(--eg-border);
+}
+
+.admin-timeline li:last-child {
+    border-left-color: transparent;
+    padding-bottom: 0;
+}
+
+.admin-stock-warn {
+    color: var(--eg-warning);
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.admin-adjust-form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    align-items: center;
+}
+
+.admin-adjust-form .form-control,
+.admin-adjust-form .form-select {
+    min-height: 44px;
+}
+
+.admin-adjust-form input[name="quantity"] {
+    width: 5.5rem;
+}
+
+.admin-app .pagination .page-link {
+    min-height: 44px;
+    min-width: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.admin-app .btn-sm.btn-eg-ghost,
+.admin-app .btn-sm.btn-eg-primary {
+    min-height: 44px;
+}
+
+.admin-line-row {
+    display: grid;
+    grid-template-columns: minmax(10rem, 0.9fr) minmax(0, 1.5fr) 6rem auto;
+    gap: 0.5rem;
+    align-items: end;
+    margin-bottom: 0.65rem;
+}
+
+.admin-nav-backdrop {
+    display: none;
+}
+
+@media (max-width: 1199px) {
+    .admin-stat-grid,
+    .admin-split,
+    .admin-detail {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 991.98px) {
+    .admin-menu-toggle {
+        display: inline-flex;
+    }
+
+    .admin-sidebar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        z-index: 1040;
+        height: 100vh;
+        transform: translateX(-105%);
+        transition: transform 0.2s var(--eg-ease);
+        box-shadow: none;
+    }
+
+    .admin-app.is-nav-open .admin-sidebar {
+        transform: translateX(0);
+    }
+
+    .admin-nav-backdrop {
+        display: block;
+        position: fixed;
+        inset: 0;
+        z-index: 1030;
+        background: rgba(47, 46, 44, 0.35);
+    }
+
+    .admin-user-email {
+        display: none;
+    }
+
+    .admin-line-row {
+        grid-template-columns: 1fr;
+    }
+
+    .admin-content,
+    .admin-flash,
+    .admin-topbar {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .admin-stat-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+}

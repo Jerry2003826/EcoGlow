@@ -18,10 +18,17 @@ namespace App;
 
 use App\Middleware\HostHeaderMiddleware;
 use App\Middleware\LoginThrottleMiddleware;
+use App\Policy\RequestPolicy;
 use Authentication\AuthenticationService;
 use Authentication\AuthenticationServiceInterface;
 use Authentication\AuthenticationServiceProviderInterface;
 use Authentication\Middleware\AuthenticationMiddleware;
+use Authorization\AuthorizationService;
+use Authorization\AuthorizationServiceInterface;
+use Authorization\AuthorizationServiceProviderInterface;
+use Authorization\Middleware\AuthorizationMiddleware;
+use Authorization\Middleware\RequestAuthorizationMiddleware;
+use Authorization\Policy\MapResolver;
 use Cake\Core\Configure;
 use Cake\Core\ContainerInterface;
 use Cake\Datasource\FactoryLocator;
@@ -33,6 +40,7 @@ use Cake\Http\Middleware\CsrfProtectionMiddleware;
 use Cake\Http\Middleware\HttpsEnforcerMiddleware;
 use Cake\Http\Middleware\SecurityHeadersMiddleware;
 use Cake\Http\MiddlewareQueue;
+use Cake\Http\ServerRequest;
 use Cake\ORM\Locator\TableContainer;
 use Cake\ORM\Locator\TableLocator;
 use Cake\Routing\Middleware\AssetMiddleware;
@@ -47,7 +55,9 @@ use Psr\Http\Message\ServerRequestInterface;
  *
  * @extends \Cake\Http\BaseApplication<\App\Application>
  */
-class Application extends BaseApplication implements AuthenticationServiceProviderInterface
+class Application extends BaseApplication implements
+    AuthenticationServiceProviderInterface,
+    AuthorizationServiceProviderInterface
 {
     /**
      * Load all the application configuration and bootstrap logic.
@@ -151,7 +161,14 @@ class Application extends BaseApplication implements AuthenticationServiceProvid
 
             // Authentication middleware, after routing so that URL params
             // are available to the authentication service.
-            ->add(new AuthenticationMiddleware($this));
+            ->add(new AuthenticationMiddleware($this))
+
+            // Authorization after authentication so the identity can be decorated.
+            ->add(new AuthorizationMiddleware($this, [
+                'requireAuthorizationCheck' => true,
+                'unauthorizedHandler' => 'Authorization.Exception',
+            ]))
+            ->add(new RequestAuthorizationMiddleware());
 
         return $middlewareQueue;
     }
@@ -186,6 +203,21 @@ class Application extends BaseApplication implements AuthenticationServiceProvid
         ]);
 
         return $authenticationService;
+    }
+
+    /**
+     * Returns an authorization service that resolves request policies from the database.
+     *
+     * @param \Psr\Http\Message\ServerRequestInterface $request The request.
+     * @return \Authorization\AuthorizationServiceInterface
+     */
+    public function getAuthorizationService(ServerRequestInterface $request): AuthorizationServiceInterface
+    {
+        $resolver = new MapResolver([
+            ServerRequest::class => RequestPolicy::class,
+        ]);
+
+        return new AuthorizationService($resolver);
     }
 
     /**

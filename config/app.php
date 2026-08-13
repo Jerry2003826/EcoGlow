@@ -369,13 +369,10 @@ return [
             'quoteIdentifiers' => false,
 
             /*
-             * During development, if using MySQL < 5.6, uncommenting the
-             * following line could boost the speed at which schema metadata is
-             * fetched from the database. It can also be set directly with the
-             * mysql configuration directive 'innodb_stats_on_metadata = 0'
-             * which is the recommended value in production environments
+             * Schema is utf8mb4_unicode_ci. MariaDB 12's client default for
+             * utf8mb4 is a different collation, so pin the connection to match.
              */
-            //'init' => ['SET GLOBAL innodb_stats_on_metadata = 0'],
+            'init' => ['SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci'],
         ],
 
         /*
@@ -391,7 +388,7 @@ return [
             'cacheMetadata' => true,
             'quoteIdentifiers' => false,
             'log' => false,
-            //'init' => ['SET GLOBAL innodb_stats_on_metadata = 0'],
+            'init' => ['SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci'],
         ],
     ],
 

@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace App\Test\TestCase\Controller\Admin;
 
-use Authentication\Identity;
 use Cake\TestSuite\IntegrationTestTrait;
 use Cake\TestSuite\TestCase;
 
@@ -14,17 +13,8 @@ use Cake\TestSuite\TestCase;
  */
 class ContactMessagesControllerTest extends TestCase
 {
+    use AdminAuthTrait;
     use IntegrationTestTrait;
-
-    /**
-     * Fixtures
-     *
-     * @var array<string>
-     */
-    protected array $fixtures = [
-        'app.ContactMessages',
-        'app.Users',
-    ];
 
     /**
      * setUp method
@@ -46,11 +36,7 @@ class ContactMessagesControllerTest extends TestCase
      */
     protected function loginAsAdmin(): void
     {
-        $this->session([
-            'Auth' => new Identity(
-                $this->fetchTable('Users')->get(1),
-            ),
-        ]);
+        $this->loginAs(1);
     }
 
     /**
@@ -64,6 +50,18 @@ class ContactMessagesControllerTest extends TestCase
 
         $this->assertResponseCode(302);
         $this->assertRedirectContains('/login');
+    }
+
+    /**
+     * A signed-in user with no RBAC grants is refused, not silently allowed.
+     *
+     * @return void
+     */
+    public function testIndexForbiddenWithoutPermission(): void
+    {
+        $this->loginAs(3);
+        $this->get('/admin/contact-messages');
+        $this->assertResponseCode(403);
     }
 
     /**

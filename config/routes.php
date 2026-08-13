@@ -116,7 +116,13 @@ return function (RouteBuilder $routes): void {
      * Admin area. All routes here require an authenticated user.
      */
     $routes->prefix('Admin', function (RouteBuilder $builder): void {
-        $builder->connect('/', ['controller' => 'ContactMessages', 'action' => 'index']);
+        $builder->connect('/', ['controller' => 'Dashboard', 'action' => 'index']);
+        $builder->connect(
+            '/coming-soon/{module}',
+            ['controller' => 'ComingSoon', 'action' => 'index'],
+        )
+            ->setPass(['module'])
+            ->setPatterns(['module' => '[a-z0-9-]+']);
         $builder->fallbacks(DashedRoute::class);
     });
 

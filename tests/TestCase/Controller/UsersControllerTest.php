@@ -97,7 +97,7 @@ class UsersControllerTest extends TestCase
         ]);
 
         $this->assertResponseCode(302);
-        $this->assertRedirectContains('/admin/contact-messages');
+        $this->assertRedirectContains('/admin');
     }
 
     /**
@@ -132,7 +132,7 @@ class UsersControllerTest extends TestCase
         ]);
 
         $this->assertResponseCode(302);
-        $this->assertRedirectContains('/admin/contact-messages');
+        $this->assertRedirectContains('/admin');
     }
 
     /**
@@ -255,7 +255,7 @@ class UsersControllerTest extends TestCase
             'password' => 'password',
         ]);
         $this->assertResponseCode(302);
-        $this->assertRedirectContains('/admin/contact-messages');
+        $this->assertRedirectContains('/admin');
 
         // Because the counter was reset, a fresh wrong attempt is treated as
         // the first failure again, not a continuation toward lockout.
@@ -459,7 +459,7 @@ class UsersControllerTest extends TestCase
         // ...and the new one is.
         $this->post('/login', ['email' => 'admin@example.com', 'password' => 'brand-new-password']);
         $this->assertResponseCode(302);
-        $this->assertRedirectContains('/admin/contact-messages');
+        $this->assertRedirectContains('/admin');
     }
 
     /**

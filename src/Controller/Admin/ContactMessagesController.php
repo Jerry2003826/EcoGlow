@@ -3,20 +3,19 @@ declare(strict_types=1);
 
 namespace App\Controller\Admin;
 
-use App\Controller\AppController;
 use App\Model\Table\ContactMessagesTable;
 use Cake\Http\Response;
 
 /**
  * Admin ContactMessages Controller
  *
- * Lets the administrator review and manage messages submitted through
- * the public contact form. All actions require authentication.
+ * Lets staff review and manage messages submitted through the public contact
+ * form. Access is gated by the messages.manage permission.
  *
  * @property \Cake\Controller\Component\FlashComponent $Flash
  * @property \Cake\Controller\Component\PaginatorComponent $Paginator
  */
-class ContactMessagesController extends AppController
+class ContactMessagesController extends AdminController
 {
     /**
      * The contact messages table.
@@ -35,7 +34,6 @@ class ContactMessagesController extends AppController
         parent::initialize();
 
         $this->ContactMessages = $this->fetchTable('ContactMessages');
-        $this->viewBuilder()->addHelper('Paginator');
     }
 
     /**

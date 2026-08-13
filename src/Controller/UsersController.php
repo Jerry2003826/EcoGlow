@@ -94,10 +94,10 @@ class UsersController extends AppController
         if ($result->isValid()) {
             LoginThrottleMiddleware::clear($ip);
 
-            $target = $this->Authentication->getLoginRedirect() ?? '/admin/contact-messages';
+            $target = $this->Authentication->getLoginRedirect() ?? '/admin';
             // Only allow relative redirect targets to prevent open redirects.
             if (str_starts_with($target, 'http') || str_starts_with($target, '//')) {
-                $target = '/admin/contact-messages';
+                $target = '/admin';
             }
 
             return $this->redirect($target);
