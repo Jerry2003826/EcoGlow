@@ -43,6 +43,58 @@ class PagesControllerTest extends TestCase
     }
 
     /**
+     * Test the four storefront pages render for an anonymous visitor.
+     *
+     * They are connected explicitly in config/routes.php rather than reached
+     * through /pages/*, so this covers the routes as much as the templates: a
+     * typo in either would show up as a 404 here. Each assertion looks for
+     * something only that page renders, so a route pointing at the wrong
+     * template still fails.
+     *
+     * @return void
+     */
+    public function testStorefrontPagesRenderPublicly()
+    {
+        Configure::write('debug', true);
+
+        $pages = [
+            '/shop' => 'All lighting',
+            '/shop/product' => 'Marlow Floor Lamp',
+            '/cart' => 'Your basket',
+            '/register' => 'Create your account',
+        ];
+
+        foreach ($pages as $url => $heading) {
+            $this->get($url);
+
+            $this->assertResponseOk($url . ' should render without a login');
+            $this->assertResponseContains($heading, $url . ' should render its own page heading');
+        }
+    }
+
+    /**
+     * Test the header points at the storefront routes but keeps search off.
+     *
+     * The basket icon and Shop were placeholders until these routes existed.
+     * Search has no index behind it and stays disabled, which is the part worth
+     * pinning down — it is the one that would be easy to "finish" by accident.
+     *
+     * @return void
+     */
+    public function testHeaderLinksToStorefrontAndLeavesSearchDisabled()
+    {
+        Configure::write('debug', true);
+
+        $this->get('/');
+
+        $this->assertResponseOk();
+        $this->assertResponseContains('href="/shop"');
+        $this->assertResponseContains('href="/cart"');
+        $this->assertResponseContains('aria-label="Basket"');
+        $this->assertResponseContains('disabled aria-label="Search (coming soon)"');
+    }
+
+    /**
      * Test that missing template renders 404 page in production
      *
      * @return void

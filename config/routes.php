@@ -63,6 +63,22 @@ return function (RouteBuilder $routes): void {
         $builder->connect('/pages/*', 'Pages::display');
 
         /*
+         * Storefront. These are static templates under templates/Pages for now:
+         * there is no products table, so PagesController::display renders each
+         * one and the placeholder catalogue lives in the template. Connected
+         * explicitly rather than left to `/pages/*` so the public URLs are the
+         * ones the finished shop will keep, and so the templates can link to
+         * each other without a `/pages/` prefix that later has to be unpicked.
+         *
+         * `/shop/product` grows a slug segment (`/shop/product/*`) once there
+         * is a record to look up.
+         */
+        $builder->connect('/shop', ['controller' => 'Pages', 'action' => 'display', 'shop']);
+        $builder->connect('/shop/product', ['controller' => 'Pages', 'action' => 'display', 'product']);
+        $builder->connect('/cart', ['controller' => 'Pages', 'action' => 'display', 'cart']);
+        $builder->connect('/register', ['controller' => 'Pages', 'action' => 'display', 'register']);
+
+        /*
          * Public contact form.
          */
         $builder->connect('/contact', ['controller' => 'Contact', 'action' => 'index']);
