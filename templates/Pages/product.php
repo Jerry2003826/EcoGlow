@@ -235,7 +235,7 @@ $productUrl = $this->Url->build('/shop/product');
         </div>
     </div>
 
-    <div class="row mt-5 pt-4">
+    <div class="row g-4 g-lg-5 mt-5">
         <div class="col-lg-7 reveal">
             <h2 class="section-title h4 mb-3">Product details</h2>
             <div class="accordion eg-accordion" id="productDetails">
@@ -255,27 +255,6 @@ $productUrl = $this->Url->build('/shop/product');
                                 undyed Australian linen, which warms the light without tinting it.
                                 Assembly takes one Allen key and about five minutes.
                             </p>
-                        </div>
-                    </div>
-                </div>
-                <div class="accordion-item">
-                    <h3 class="accordion-header">
-                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
-                                data-bs-target="#detail-specs" aria-expanded="false" aria-controls="detail-specs">
-                            Specifications
-                        </button>
-                    </h3>
-                    <div class="accordion-collapse collapse" id="detail-specs"
-                         data-bs-parent="#productDetails">
-                        <div class="accordion-body">
-                            <dl class="eg-kv-list mb-0">
-                                <?php foreach ($specs as $specLabel => $specValue) : ?>
-                                    <div class="eg-kv-row">
-                                        <dt><?= h($specLabel) ?></dt>
-                                        <dd><?= h($specValue) ?></dd>
-                                    </div>
-                                <?php endforeach; ?>
-                            </dl>
                         </div>
                     </div>
                 </div>
@@ -316,6 +295,24 @@ $productUrl = $this->Url->build('/shop/product');
                     </div>
                 </div>
             </div>
+        </div>
+
+        <?php
+        /* The specification table used to be the second panel of that accordion,
+           which left 538px of the row empty beside it and hid the seven numbers
+           most likely to decide the purchase behind a click. Out here it fills
+           that space and needs no opening. */
+        ?>
+        <div class="col-lg-5 reveal" data-reveal-step="1">
+            <h2 class="section-title h4 mb-3">Specifications</h2>
+            <dl class="eg-kv-list mb-0">
+                <?php foreach ($specs as $specLabel => $specValue) : ?>
+                    <div class="eg-kv-row">
+                        <dt><?= h($specLabel) ?></dt>
+                        <dd><?= h($specValue) ?></dd>
+                    </div>
+                <?php endforeach; ?>
+            </dl>
         </div>
     </div>
 </div>
