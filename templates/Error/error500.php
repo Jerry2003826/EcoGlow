@@ -31,7 +31,7 @@ if (Configure::read('debug')) :
 endif;
 ?>
 <span class="error-code" aria-hidden="true"><?= h((string)$this->getResponse()->getStatusCode()) ?></span>
-<h2 class="section-title"><?= __d('cake', 'An Internal Error Has Occurred.') ?></h2>
+<h1 class="section-title"><?= __d('cake', 'An Internal Error Has Occurred.') ?></h1>
 <p class="error">
     <strong><?= __d('cake', 'Error') ?>: </strong>
     <?= h($message) ?>

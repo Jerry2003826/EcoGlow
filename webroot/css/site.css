@@ -1977,7 +1977,7 @@ a:hover {
     border-bottom-color: rgba(201, 188, 169, 0.22);
 }
 
-.service-step h4 {
+.service-step h3 {
     font-size: 1.05rem;
     margin-bottom: 0.2rem;
 }
@@ -2147,8 +2147,13 @@ a:hover {
     margin: 0;
 }
 
+/* The swatch is hung in the gutter rather than sat in the row, so the term and
+   its definition stay in one column and the macro spans both of them. Its width
+   plus the gap is the row's own left padding, which is what keeps the text edge
+   straight down the list whatever each definition wraps to. */
 .eg-material {
-    padding: 1.05rem 0;
+    position: relative;
+    padding: 1.05rem 0 1.05rem 5.5rem;
     border-bottom: 1px solid rgba(201, 188, 169, 0.5);
 }
 
@@ -2159,6 +2164,20 @@ a:hover {
 .eg-material:last-child {
     padding-bottom: 0;
     border-bottom: none;
+}
+
+.eg-material-swatch {
+    position: absolute;
+    top: 1.05rem;
+    left: 0;
+    width: 4.5rem;
+    height: 4.5rem;
+    border-radius: var(--eg-radius-sm);
+    object-fit: cover;
+}
+
+.eg-material:first-child .eg-material-swatch {
+    top: 0;
 }
 
 /* Reboot bolds every <dt>; the serif carries the name here, at the same size

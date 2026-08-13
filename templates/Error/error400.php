@@ -21,7 +21,7 @@ if (Configure::read('debug')) :
 endif;
 ?>
 <span class="error-code" aria-hidden="true"><?= h((string)$this->getResponse()->getStatusCode()) ?></span>
-<h2 class="section-title"><?= h($message) ?></h2>
+<h1 class="section-title"><?= h($message) ?></h1>
 <p class="error">
     <strong><?= __d('cake', 'Error') ?>: </strong>
     <?= __d('cake', 'The requested address {0} was not found on this server.', "<strong>'{$url}'</strong>") ?>

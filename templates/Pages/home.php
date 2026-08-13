@@ -138,22 +138,27 @@ $steps = [
    here is a claim about the business. */
 $materials = [
     [
+        'image' => 'oak.webp',
         'name' => 'Turned oak',
         'text' => 'Floor-lamp columns and side-table bases, turned solid and finished in oil rather than lacquer, so the grain stays open and a scuff rubs back instead of chipping.',
     ],
     [
+        'image' => 'linen.webp',
         'name' => 'Undyed linen',
         'text' => 'Drum and cone shades from 30 to 50 cm. Left undyed because a dyed weave tints whatever passes through it, and the globe behind it is already set at 2700–3000K.',
     ],
     [
+        'image' => 'opal.webp',
         'name' => 'Opal glass',
         'text' => 'Pendant globes, sconce domes and flush ceiling discs. Opal scatters across the whole surface rather than leaving one bright spot, which keeps a bare LED out of your eye line.',
     ],
     [
+        'image' => 'brass.webp',
         'name' => 'Brushed brass',
         'text' => 'Stems, canopies and sconce arms. Left unlacquered, so it darkens slowly and evenly instead of wearing through a clear coat in the places a hand touches it.',
     ],
     [
+        'image' => 'powder.webp',
         'name' => 'Powder-coated aluminium',
         'text' => 'Outdoor spikes, bollards and IP65 housings. The coating is baked on and is the weatherproofing itself, so there is no paint film to lift at an edge.',
     ],
@@ -374,7 +379,7 @@ $contactUrl = $this->Url->build('/contact');
                         <div class="service-step">
                             <span class="step-no"><?= str_pad((string)($index + 1), 2, '0', STR_PAD_LEFT) ?></span>
                             <div>
-                                <h4><?= h($step['title']) ?></h4>
+                                <h3><?= h($step['title']) ?></h3>
                                 <p><?= h($step['text']) ?></p>
                             </div>
                         </div>
@@ -454,13 +459,33 @@ $contactUrl = $this->Url->build('/contact');
                 /* A definition list, not a set of headings: each row really is
                    a term and its definition, and a <dl> keeps five material
                    names out of the heading outline, where they would have to
-                   sit under this section's own h2. */
+                   sit under this section's own h2.
+
+                   The swatch sits inside the <dd>, because the wrapping <div>
+                   of a <dl> may only hold terms and definitions, and it is
+                   lifted out of the row by position. It carries an empty alt: a
+                   macro of a surface the definition has already described in
+                   words has nothing to add to a screen reader, and taking it
+                   out of the flow leaves each term read immediately before its
+                   own definition. */
                 ?>
                 <dl class="eg-materials">
                     <?php foreach ($materials as $material) : ?>
                         <div class="eg-material">
                             <dt><?= h($material['name']) ?></dt>
-                            <dd><?= h($material['text']) ?></dd>
+                            <dd>
+                                <?= $this->Html->image(
+                                    'materials/' . $material['image'],
+                                    [
+                                        'alt' => '',
+                                        'class' => 'eg-material-swatch',
+                                        'width' => 320,
+                                        'height' => 320,
+                                        'loading' => 'lazy',
+                                    ],
+                                ) ?>
+                                <?= h($material['text']) ?>
+                            </dd>
                         </div>
                     <?php endforeach; ?>
                 </dl>
