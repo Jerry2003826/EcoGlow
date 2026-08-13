@@ -999,8 +999,8 @@ a:hover {
 @media (min-width: 992px) {
     .product-layout {
         display: grid;
-        grid-template-columns: min(54%, 72vh) minmax(0, 1fr);
-        grid-template-columns: min(54%, 72svh) minmax(0, 1fr);
+        grid-template-columns: min(56%, 74vh) minmax(0, 1fr);
+        grid-template-columns: min(56%, 74svh) minmax(0, 1fr);
         grid-template-areas:
             "media panel"
             "aside panel";
@@ -1015,11 +1015,16 @@ a:hover {
     .product-layout > .product-info-col {
         grid-area: panel;
         width: auto;
-        /* Held to a readable measure and pushed to the right edge, so the slack
-           between the two columns is a gap rather than a trail of nothing after
-           the text. */
+    }
+
+    /* The measure is held on the contents, not on the column. Capping the column
+       and pushing it to the right edge turned all of the slack into one 258px
+       gulf between the photograph and the price; capping what is inside it lets
+       the column fill the row while the text still starts against the gutter, so
+       the two sides read as one block and what is left over is a small margin on
+       the right rather than a canyon up the middle. */
+    .product-layout > .product-info-col > * {
         max-width: 36rem;
-        justify-self: end;
     }
 
     .product-layout > .product-aside {
