@@ -977,17 +977,17 @@ a:hover {
    two cards can be compared side by side without one of them being taller for a
    reason the visitor cannot see. */
 
-/* The product page's own image is the one square well whose height is a problem.
-   Seven columns of a 1024px window is 522px, so the well alone was taller than
-   the room under the header and the price started below the fold.
+/* Except this one. The product page's image has to fill a column whose width is
+   whatever the buying panel does not take, and a square cannot do that: on a
+   window that is wide but not tall its height runs out first, so it either
+   narrows and leaves an empty strip beside it or crops to a letterbox — and a
+   letterbox off a floor lamp takes the base with it. It has its own landscape
+   frame instead, which fills the column at any window shape. Stacked on a phone
+   the shorter frame also gets the price into view sooner. */
+.product-media-col .product-media {
+    aspect-ratio: 3 / 2;
+}
 
-   The cap goes on the column rather than on the image. Capping the image would
-   have left it sitting in a 264px pool of empty column with the text half a
-   screen away, and cropping it to a letterbox would cut the top off a floor
-   lamp — these are photographs of tall objects. Shrinking the column instead
-   keeps the ratio, keeps the image against the page grid, and hands the width it
-   gives up to the copy, which is what actually decides where the basket button
-   lands: wider copy is fewer lines. */
 /* Two rows and two columns rather than a flex row, because the photograph and the
    buying panel are nowhere near the same height and flex can only put the third
    block below both of them. Grid puts it under the photograph, in the column that
@@ -999,8 +999,20 @@ a:hover {
 @media (min-width: 992px) {
     .product-layout {
         display: grid;
-        grid-template-columns: min(56%, 74vh) minmax(0, 1fr);
-        grid-template-columns: min(56%, 74svh) minmax(0, 1fr);
+        /* The panel column is the width of what goes in it; the photograph takes
+           everything left. Doing it the other way round — sizing the photograph
+           off the viewport height and giving the panel the remainder — is what
+           left 184px of nothing to the right of the basket button on a wide, short
+           window: the panel column came to 808px while its contents were capped
+           at 36rem.            The percentage stops 36rem eating a narrow container: between 992px and
+           1200px Bootstrap holds the container at 960px whatever the window does,
+           so the share is what decides the panel there. 55% leaves it 493px of
+           usable width, which is the least the globe chips need to stay on one
+           line — at 50% they wrapped, and a row of chips that is one line on some
+           desktops and two on others is worse than a slightly smaller photograph.
+           Above 1200px the container is wide enough that 36rem wins and this has
+           no effect. */
+        grid-template-columns: minmax(0, 1fr) min(36rem, 55%);
         grid-template-areas:
             "media panel"
             "aside panel";
@@ -1017,14 +1029,19 @@ a:hover {
         width: auto;
     }
 
-    /* The measure is held on the contents, not on the column. Capping the column
-       and pushing it to the right edge turned all of the slack into one 258px
-       gulf between the photograph and the price; capping what is inside it lets
-       the column fill the row while the text still starts against the gutter, so
-       the two sides read as one block and what is left over is a small margin on
-       the right rather than a canyon up the middle. */
-    .product-layout > .product-info-col > * {
-        max-width: 36rem;
+    /* The photograph fills its column, so its height is capped here rather than
+       through the column width. On a window that is wide but not tall this crops
+       the square to a landscape one, which is fine on these shots: the lamp sits
+       in the middle third and what comes off the top and bottom is wall and
+       floor. Square again as soon as the window is tall enough. */
+    /* The cap is a backstop for a very short window. The width is stated because
+       aspect-ratio works both ways and would otherwise answer the cap by narrowing
+       the box, which puts the empty strip back beside the photograph instead of in
+       the row. At 3:2 the cap only ever trims a few per cent, off wall and floor. */
+    .product-media-col .product-media {
+        width: 100%;
+        max-height: 70vh;
+        max-height: 70svh;
     }
 
     .product-layout > .product-aside {

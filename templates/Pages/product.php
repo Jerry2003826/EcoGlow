@@ -25,7 +25,13 @@
  * @var \App\View\AppView $this
  */
 $product = [
-    'image' => 'marlow-floor-lamp.webp',
+    /* A landscape frame of the same lamp, shot for this page only. The square one
+       the cards use cannot fill the column here: on a window that is wide but not
+       tall its height is what runs out first, and a square that is capped on
+       height either narrows and leaves an empty strip beside it or crops to a
+       letterbox, which on a floor lamp takes off the base. Shot wide, the lamp
+       stays whole and the frame fills the column at any window shape. */
+    'image' => 'marlow-detail-wide.webp',
     'alt' => 'Marlow floor lamp lit against a plaster wall, a turned oak column under a linen drum shade',
     'name' => 'Marlow Floor Lamp',
     'meta' => 'Turned oak, linen shade, 1.45 m',
@@ -122,8 +128,8 @@ $productUrl = $this->Url->build('/shop/product');
                 ?>
                 <?= $this->Html->image('products/' . $product['image'], [
                     'alt' => $product['alt'],
-                    'width' => 800,
-                    'height' => 800,
+                    'width' => 1536,
+                    'height' => 1024,
                     'fetchpriority' => 'high',
                     'decoding' => 'async',
                 ]) ?>
