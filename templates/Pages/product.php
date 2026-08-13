@@ -154,7 +154,8 @@ $productUrl = $this->Url->build('/shop/product');
             </div>
             <?php if ($canAdd) : ?>
                 <p class="eg-note" id="basket-pending">
-                    Checkout and payment land next. The basket holds the line until then.
+                    Checkout is open. Card payment is not switched on yet, so we will be in
+                    touch to settle the order.
                 </p>
             <?php elseif ($hasVariant) : ?>
                 <p class="eg-note" id="basket-oos" role="status">
