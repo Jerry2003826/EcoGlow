@@ -305,7 +305,15 @@
         var grid = shop.querySelector('[data-shop-grid]');
         var pager = shop.querySelector('[data-shop-pages]');
         var cards = toArray(shop.querySelectorAll('[data-product]'));
+        var facets = ['category', 'style'];
         var state = { category: '', style: '', sort: 'featured', page: 1 };
+
+        // The filter panel is a <details>: it opens itself, and the only thing
+        // touched here is the initial state, once, below.
+        var disclosure = shop.querySelector('[data-shop-filters]');
+        var tally = shop.querySelector('[data-shop-tally]');
+        var appliedBar = shop.querySelector('[data-shop-active]');
+        var tagList = shop.querySelector('[data-shop-tags]');
 
         var facetOf = function (card, facet) {
             return card.getAttribute('data-' + facet) || '';
@@ -334,7 +342,73 @@
             return parseInt(a.getAttribute('data-order'), 10) - parseInt(b.getAttribute('data-order'), 10);
         };
 
-        var addPageButton = function (label, page, isDisabled, isCurrent) {
+        // One way in for every filter change — a chip, a tag's remove button,
+        // clear-all, or a value read out of the address bar — so the chips can
+        // never disagree with the state they are meant to be showing.
+        var applyFacet = function (facet, value) {
+            state[facet] = value;
+            state.page = 1;
+
+            shop.querySelectorAll('[data-shop-filter="' + facet + '"]').forEach(function (chip) {
+                var isOn = chip.getAttribute('data-value') === value;
+                chip.classList.toggle('is-active', isOn);
+                chip.setAttribute('aria-pressed', isOn ? 'true' : 'false');
+            });
+        };
+
+        var appliedFacets = function () {
+            return facets.filter(function (facet) {
+                return state[facet] !== '';
+            });
+        };
+
+        // Rebuilt whole on every render. Two tags at most, so there is nothing
+        // to win by diffing, and it keeps this the only place a tag is made.
+        var renderTags = function () {
+            var applied = appliedFacets();
+
+            if (tally) {
+                tally.textContent = '(' + applied.length + ')';
+                tally.hidden = applied.length === 0;
+            }
+            if (appliedBar) {
+                appliedBar.hidden = applied.length === 0;
+            }
+            if (!tagList) {
+                return;
+            }
+
+            tagList.textContent = '';
+            applied.forEach(function (facet) {
+                var value = state[facet];
+
+                var remove = document.createElement('button');
+                remove.type = 'button';
+                remove.className = 'eg-tag-remove';
+                remove.setAttribute('data-shop-remove', facet);
+                // The × is decorative; the name has to say which filter goes.
+                remove.setAttribute('aria-label', 'Remove filter: ' + value);
+
+                var cross = document.createElement('span');
+                cross.setAttribute('aria-hidden', 'true');
+                cross.textContent = '\u00D7';
+                remove.appendChild(cross);
+
+                var tag = document.createElement('li');
+                tag.className = 'eg-tag';
+                tag.appendChild(document.createTextNode(value));
+                tag.appendChild(remove);
+                tagList.appendChild(tag);
+            });
+        };
+
+        // `name` is the accessible name and has to contain the visible label,
+        // which is what WCAG 2.5.3 (Label in Name) asks for so that a speech-input
+        // user can say what they can see. Deriving it from the page number instead
+        // gave the Previous and Next buttons the names "Go to page 1" and
+        // "Go to page 3" — neither contains the word on the button, and both
+        // collided with the numbered button that already carried that name.
+        var addPageButton = function (label, page, isDisabled, isCurrent, name) {
             var item = document.createElement('li');
             item.className = 'page-item' + (isDisabled ? ' disabled' : '') + (isCurrent ? ' active' : '');
 
@@ -343,10 +417,9 @@
             button.className = 'page-link';
             button.textContent = label;
             button.disabled = isDisabled;
+            button.setAttribute('aria-label', name);
             if (isCurrent) {
                 button.setAttribute('aria-current', 'page');
-            } else {
-                button.setAttribute('aria-label', 'Go to page ' + page);
             }
             button.addEventListener('click', function () {
                 state.page = page;
@@ -389,13 +462,15 @@
                 emptyNote.hidden = matching.length > 0;
             }
 
+            renderTags();
+
             pager.textContent = '';
             if (pageCount > 1) {
-                addPageButton('Previous', state.page - 1, state.page === 1, false);
+                addPageButton('Previous', state.page - 1, state.page === 1, false, 'Previous page');
                 for (var page = 1; page <= pageCount; page++) {
-                    addPageButton(String(page), page, false, page === state.page);
+                    addPageButton(String(page), page, false, page === state.page, 'Page ' + page);
                 }
-                addPageButton('Next', state.page + 1, state.page === pageCount, false);
+                addPageButton('Next', state.page + 1, state.page === pageCount, false, 'Next page');
             }
 
             if (returnFocusToPager) {
@@ -406,21 +481,45 @@
             }
         };
 
+        // Where focus lands once a control has removed itself from the page.
+        var handOffFocus = function () {
+            var nextTag = tagList ? tagList.querySelector('[data-shop-remove]') : null;
+            var trigger = disclosure ? disclosure.querySelector('summary') : null;
+            (nextTag || trigger || document.body).focus();
+        };
+
         shop.querySelectorAll('[data-shop-filter]').forEach(function (chip) {
             chip.addEventListener('click', function () {
-                var facet = chip.getAttribute('data-shop-filter');
-                state[facet] = chip.getAttribute('data-value');
-                state.page = 1;
-
-                shop.querySelectorAll('[data-shop-filter="' + facet + '"]').forEach(function (peer) {
-                    var isOn = peer === chip;
-                    peer.classList.toggle('is-active', isOn);
-                    peer.setAttribute('aria-pressed', isOn ? 'true' : 'false');
-                });
-
+                applyFacet(chip.getAttribute('data-shop-filter'), chip.getAttribute('data-value'));
                 render(false);
             });
         });
+
+        // Delegated, because renderTags replaces these buttons on every pass.
+        if (tagList) {
+            tagList.addEventListener('click', function (event) {
+                var trigger = event.target.closest('[data-shop-remove]');
+                if (!trigger) {
+                    return;
+                }
+
+                applyFacet(trigger.getAttribute('data-shop-remove'), '');
+                render(false);
+                handOffFocus();
+            });
+        }
+
+        var clearAll = shop.querySelector('[data-shop-clear]');
+        if (clearAll) {
+            clearAll.addEventListener('click', function () {
+                facets.forEach(function (facet) {
+                    applyFacet(facet, '');
+                });
+                render(false);
+                // This button is inside the row that has just been hidden.
+                handOffFocus();
+            });
+        }
 
         var sortControl = shop.querySelector('[data-shop-sort]');
         if (sortControl) {
@@ -431,23 +530,50 @@
             });
         }
 
+        // A filter can also arrive in the address bar — /shop?category=Smart+Bulbs
+        // — which is how a link from another page hands one over. A value that
+        // matches no product is ignored rather than trusted.
+        var query = new URLSearchParams(window.location.search);
+        facets.forEach(function (facet) {
+            var wanted = query.get(facet);
+            var isKnown = wanted !== null && cards.some(function (card) {
+                return facetOf(card, facet) === wanted;
+            });
+
+            if (isKnown) {
+                applyFacet(facet, wanted);
+            }
+        });
+
+        // Arriving with a filter already applied and its panel shut reads as a
+        // catalogue with products missing, so open the panel for that case.
+        if (disclosure && appliedFacets().length > 0) {
+            disclosure.open = true;
+        }
+
         render(false);
     }
 
-    /* ---------- Product finish preview ----------
-       Tints the image well towards the selected colourway, so the radio group
-       has something to show for itself. The radios work on their own; this only
-       adds the preview. */
+    /* ---------- Product finish readout ----------
+       Writes the chosen colourway into the picker's own legend. This used to
+       tint the image well towards the selected hex with color-mix(), which was
+       worth having while the well held a line drawing on a flat greige ground;
+       over the product photograph that arrived with it, the same wash only made
+       the photograph look like a bad print. A word is legible, survives
+       greyscale, and stays true whatever the image is.
+
+       The radios work on their own — with scripting off the readout simply keeps
+       naming the finish that is checked by default. */
     document.querySelectorAll('[data-product-detail]').forEach(function (root) {
-        var preview = root.querySelector('[data-finish-preview]');
-        if (!preview) {
+        var readout = root.querySelector('[data-finish-name]');
+        if (!readout) {
             return;
         }
 
         var applyFinish = function () {
             var chosen = root.querySelector('input[name="finish"]:checked');
             if (chosen) {
-                preview.style.setProperty('--finish', chosen.getAttribute('data-hex'));
+                readout.textContent = chosen.value;
             }
         };
 
