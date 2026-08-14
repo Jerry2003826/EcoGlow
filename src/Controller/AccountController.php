@@ -22,6 +22,38 @@ class AccountController extends AppController
     }
 
     /**
+     * Console-style account shell: same composition as the staff console.
+     *
+     * @param \Cake\Event\EventInterface $event Event.
+     * @return void
+     */
+    public function beforeRender(\Cake\Event\EventInterface $event)
+    {
+        parent::beforeRender($event);
+
+        $identity = $this->request->getAttribute('identity');
+        $accountUserEmail = '';
+        $accountUserName = '';
+        if ($identity !== null) {
+            $accountUserEmail = (string)$identity['email'];
+            $accountUserName = trim(
+                (string)$identity['first_name'] . ' ' . (string)$identity['last_name'],
+            );
+        }
+
+        $action = (string)$this->request->getParam('action');
+        $accountCurrent = match ($action) {
+            'addresses', 'addAddress', 'deleteAddress' => 'addresses',
+            'orders', 'order' => 'orders',
+            'bookings', 'booking' => 'bookings',
+            default => 'index',
+        };
+
+        $this->set(compact('accountUserEmail', 'accountUserName', 'accountCurrent'));
+        $this->viewBuilder()->setLayout('account');
+    }
+
+    /**
      * @return \Cake\Http\Response|null
      */
     public function index(): ?Response

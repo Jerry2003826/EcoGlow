@@ -227,3 +227,442 @@
         justify-content: center;
     }
 }
+
+/* ==========================================================================
+   Account console shell — same composition as the staff console:
+   dark rail sidebar + sticky glass topbar + card content stage.
+   Scoped to .account-app (layout account.php only).
+   ========================================================================== */
+
+:root {
+    --eg-account-rail: #0E2E18;
+    --eg-account-rail-deep: #0A2211;
+    --eg-account-rail-line: rgba(251, 249, 245, 0.12);
+    --eg-account-rail-text: rgba(251, 249, 245, 0.94);
+    --eg-account-rail-muted: rgba(251, 249, 245, 0.6);
+    --eg-account-rail-faint: rgba(251, 249, 245, 0.42);
+    --eg-account-rail-hover: rgba(251, 249, 245, 0.08);
+    --eg-account-rail-active: rgba(251, 249, 245, 0.14);
+    --eg-account-card-line: rgba(201, 188, 169, 0.55);
+}
+
+.account-app {
+    min-height: 100vh;
+    background: var(--eg-bg);
+    color: var(--eg-text);
+    overflow-x: hidden;
+    --bs-code-color: var(--eg-text);
+    --bs-primary: var(--eg-brand);
+    --bs-link-color: var(--eg-brand);
+    --bs-link-hover-color: var(--eg-brand-hover);
+    --bs-focus-ring-color: rgba(18, 76, 36, 0.35);
+}
+
+.account-shell {
+    display: flex;
+    min-height: 100vh;
+    align-items: stretch;
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
+/* ---------- Rail ---------- */
+
+.account-sidebar {
+    flex: none;
+    width: 16.5rem;
+    background:
+        radial-gradient(120% 50% at 0% 0%, rgba(226, 146, 94, 0.12) 0%, transparent 55%),
+        linear-gradient(178deg, var(--eg-account-rail) 0%, var(--eg-account-rail-deep) 100%);
+    padding: 1.35rem 0 1.1rem;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--eg-account-rail-line) transparent;
+}
+
+.account-sidebar::-webkit-scrollbar {
+    width: 6px;
+}
+
+.account-sidebar::-webkit-scrollbar-thumb {
+    background: var(--eg-account-rail-line);
+    border-radius: 999px;
+}
+
+.account-brand {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    min-height: 44px;
+    margin: 0 0.9rem 1.15rem;
+    padding: 0 0.35rem 1.15rem;
+    border-bottom: 1px solid var(--eg-account-rail-line);
+    font-family: var(--eg-font-title);
+    font-size: 1.35rem;
+    color: var(--eg-on-dark);
+    text-decoration: none;
+}
+
+.account-brand:hover {
+    color: #FFFFFF;
+    text-decoration: none;
+}
+
+.account-brand-mark {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.15rem;
+    height: 2.15rem;
+    flex: none;
+    border-radius: 0.65rem;
+    background: linear-gradient(150deg, var(--eg-brand) 0%, var(--eg-brand-hover) 100%);
+    box-shadow: inset 0 0 0 1px rgba(251, 249, 245, 0.22), 0 4px 10px -3px rgba(0, 0, 0, 0.45);
+    color: var(--eg-on-dark);
+}
+
+.account-brand-mark svg {
+    width: 1.15rem;
+    height: 1.15rem;
+}
+
+.account-brand-text {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.15;
+    min-width: 0;
+}
+
+.account-brand .brand-sub {
+    font-family: var(--eg-font-body);
+    font-size: 0.66rem;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--eg-account-rail-muted);
+}
+
+.account-nav-rail {
+    flex: 1;
+    padding: 0 0.9rem;
+}
+
+.account-nav-group {
+    margin: 0.15rem 0.55rem 0.45rem;
+    font-size: 0.66rem;
+    letter-spacing: 0.2em;
+    color: var(--eg-account-rail-faint);
+}
+
+.account-nav-list {
+    list-style: none;
+    margin: 0 0 0.5rem;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.account-rail-link {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    min-height: 44px;
+    padding: 0.5rem 0.7rem;
+    border-radius: 0.55rem;
+    color: var(--eg-account-rail-muted);
+    font-size: 0.9rem;
+    font-weight: 500;
+    text-decoration: none;
+    transition: background 0.16s var(--eg-ease), color 0.16s var(--eg-ease);
+}
+
+.account-rail-link:hover {
+    background: var(--eg-account-rail-hover);
+    color: var(--eg-account-rail-text);
+    text-decoration: none;
+}
+
+.account-rail-link.is-current {
+    background: var(--eg-account-rail-active);
+    box-shadow: inset 0 0 0 1px var(--eg-account-rail-line);
+    color: #FFFFFF;
+    font-weight: 600;
+}
+
+.account-rail-link.is-current .account-rail-icon {
+    color: var(--eg-accent);
+}
+
+.account-rail-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.3rem;
+    height: 1.3rem;
+    flex: none;
+    color: var(--eg-account-rail-faint);
+    transition: color 0.16s var(--eg-ease);
+}
+
+.account-rail-link:hover .account-rail-icon {
+    color: var(--eg-account-rail-text);
+}
+
+.account-rail-icon svg {
+    width: 1.1rem;
+    height: 1.1rem;
+}
+
+.account-rail-label {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.account-sidebar-foot {
+    margin: 0.9rem 0.9rem 0;
+    padding-top: 0.85rem;
+    border-top: 1px solid var(--eg-account-rail-line);
+}
+
+.account-sidebar-foot .account-rail-link {
+    color: var(--eg-account-rail-muted);
+    font-size: 0.85rem;
+}
+
+.account-sidebar-foot .account-rail-link:hover {
+    color: var(--eg-account-rail-text);
+}
+
+/* ---------- Stage & topbar ---------- */
+
+.account-stage {
+    flex: 1 1 auto;
+    min-width: 0;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.account-topbar {
+    position: sticky;
+    top: 0;
+    z-index: 1020;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    min-height: 4.25rem;
+    padding: 0.55rem 1.75rem;
+    border-bottom: 1px solid var(--eg-account-card-line);
+    background: rgba(251, 249, 245, 0.82);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+}
+
+.account-topbar-crumb {
+    flex: 1;
+    min-width: 0;
+}
+
+.account-topbar .eg-breadcrumb {
+    margin: 0;
+}
+
+.account-topbar-user {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex: none;
+    padding-left: 1rem;
+    border-left: 1px solid var(--eg-account-card-line);
+}
+
+.account-user-avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.35rem;
+    height: 2.35rem;
+    flex: none;
+    border-radius: 50%;
+    background: linear-gradient(150deg, var(--eg-brand) 0%, var(--eg-brand-hover) 100%);
+    color: var(--eg-on-dark); /* 9.58:1 on brand green */
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    box-shadow: 0 0 0 2px var(--eg-bg), 0 0 0 3.5px var(--eg-account-card-line);
+}
+
+.account-user-meta {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.25;
+    min-width: 0;
+}
+
+.account-user-name {
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--eg-text);
+    max-width: 14rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.account-user-email {
+    font-size: 0.72rem;
+    color: var(--eg-text-muted);
+    max-width: 14rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.account-logout {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    min-height: 44px;
+    padding: 0.4rem 0.85rem;
+    border: 1px solid var(--eg-border);
+    border-radius: var(--eg-radius-sm);
+    background: #FFFFFF;
+    color: var(--eg-text);
+    font-size: 0.82rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: border-color 0.16s var(--eg-ease), color 0.16s var(--eg-ease), background 0.16s var(--eg-ease);
+}
+
+.account-logout svg {
+    width: 1.05rem;
+    height: 1.05rem;
+}
+
+.account-logout:hover {
+    border-color: var(--eg-error);
+    background: var(--eg-error-tint);
+    color: var(--eg-error); /* 9.43:1 on warm white */
+    text-decoration: none;
+}
+
+.account-menu-toggle {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border: 1px solid var(--eg-border);
+    border-radius: var(--eg-radius-sm);
+    background: #FFFFFF;
+    color: var(--eg-text);
+}
+
+.account-menu-toggle svg {
+    width: 1.25rem;
+    height: 1.25rem;
+}
+
+/* ---------- Content stage ---------- */
+
+.account-flash,
+.account-content {
+    padding: 1.5rem 1.75rem 0;
+}
+
+.account-flash {
+    padding-bottom: 0;
+}
+
+.account-flash .message {
+    border-radius: var(--eg-radius);
+    box-shadow: 0 1px 2px rgba(47, 46, 44, 0.05), 0 10px 28px -14px rgba(47, 46, 44, 0.16);
+}
+
+.account-content {
+    padding-bottom: 3rem;
+    flex: 1;
+    width: 100%;
+    max-width: 60rem;
+    box-sizing: border-box;
+}
+
+.account-content .eg-page-head {
+    margin-bottom: 1.75rem;
+}
+
+.account-nav-backdrop {
+    display: none;
+}
+
+html:has(.account-app),
+body:has(.account-app) {
+    overflow-x: hidden;
+    max-width: 100%;
+}
+
+/* ---------- Responsive: off-canvas rail like the staff console ---------- */
+
+@media (max-width: 991.98px) {
+    .account-menu-toggle {
+        display: inline-flex;
+    }
+
+    .account-sidebar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        z-index: 1040;
+        height: 100vh;
+        height: 100dvh;
+        transform: translateX(-105%);
+        transition: transform 0.22s var(--eg-ease);
+        box-shadow: none;
+    }
+
+    .account-app.is-nav-open .account-sidebar {
+        transform: translateX(0);
+        box-shadow: 0 0 48px rgba(10, 34, 17, 0.45);
+    }
+
+    .account-nav-backdrop {
+        display: block;
+        position: fixed;
+        inset: 0;
+        z-index: 1030;
+        background: rgba(10, 34, 17, 0.45);
+        backdrop-filter: blur(2px);
+        -webkit-backdrop-filter: blur(2px);
+    }
+
+    .account-topbar-user {
+        padding-left: 0;
+        border-left: 0;
+    }
+
+    .account-user-meta {
+        display: none;
+    }
+
+    .account-content,
+    .account-flash {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+
+    .account-topbar {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+}

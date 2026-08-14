@@ -9,29 +9,24 @@
  */
 $this->assign('title', 'Addresses');
 $this->Html->css('account', ['block' => true]);
+$this->assign('breadcrumb', $this->element('admin/breadcrumb', [
+    'items' => [
+        ['label' => 'Account', 'url' => '/account'],
+        ['label' => 'Addresses'],
+    ],
+]));
 ?>
-<div class="container py-5 account-page">
-    <nav aria-label="Breadcrumb" class="mb-4 reveal">
-        <ol class="eg-breadcrumb">
-            <li><a href="<?= $this->Url->build('/') ?>">Home</a></li>
-            <li><a href="<?= $this->Url->build('/account') ?>">Account</a></li>
-            <li aria-current="page">Addresses</li>
-        </ol>
-    </nav>
+<div class="eg-page-head eg-page-head-start">
+    <span class="eg-eyebrow">Your account</span>
+    <h1 class="section-title">Addresses</h1>
+</div>
 
-    <div class="eg-page-head eg-page-head-start reveal">
-        <span class="eg-eyebrow">Your account</span>
-        <h1 class="section-title">Addresses</h1>
-    </div>
+<?php if (count($addresses) === 0) : ?>
+    <p class="text-muted">No addresses saved yet. Add one below for delivery.</p>
+<?php endif; ?>
 
-    <?= $this->element('account/nav', ['current' => 'addresses']) ?>
-
-    <?php if (count($addresses) === 0) : ?>
-        <p class="text-muted">No addresses saved yet. Add one below for delivery.</p>
-    <?php endif; ?>
-
-    <?php foreach ($addresses as $row) : ?>
-        <div class="eg-card p-4 account-address">
+<?php foreach ($addresses as $row) : ?>
+    <div class="eg-card p-4 account-address">
             <p class="mb-1"><strong><?= h($row->recipient_name) ?></strong>
                 <?php if ($row->label) : ?>
                     <span class="text-muted"> · <?= h($row->label) ?></span>
