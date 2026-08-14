@@ -4,6 +4,8 @@ declare(strict_types=1);
 namespace App\Middleware;
 
 use App\Model\Entity\User;
+use App\Service\Authorization\PermissionService;
+use App\Service\Security\SensitiveSession;
 use Cake\Core\Configure;
 use Cake\Http\Response;
 use Cake\Http\ServerRequest;
@@ -12,6 +14,7 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
+use Throwable;
 
 /**
  * Drops sessions whose auth_version no longer matches, and gates staff MFA.
@@ -44,7 +47,7 @@ final class SessionIntegrityMiddleware implements MiddlewareInterface
         $users = $this->fetchTable('Users');
         try {
             $user = $users->get($userId);
-        } catch (\Throwable) {
+        } catch (Throwable) {
             return $this->forget($request, $handler);
         }
 
@@ -90,8 +93,11 @@ final class SessionIntegrityMiddleware implements MiddlewareInterface
             return false;
         }
         $role = (string)($user->get('role') ?: '');
+        if ($role !== '' && $role !== 'customer') {
+            return true;
+        }
 
-        return $role !== '' && $role !== 'customer';
+        return (new PermissionService())->hasAny((int)$user->id);
     }
 
     /**
@@ -113,10 +119,7 @@ final class SessionIntegrityMiddleware implements MiddlewareInterface
     private function forget(ServerRequest $request, RequestHandlerInterface $handler): ResponseInterface
     {
         $session = $request->getSession();
-        $session->delete('AuthV2');
-        $session->delete('Auth');
-        $session->delete(self::SESSION_VERSION);
-        $session->delete(self::SESSION_MFA);
+        SensitiveSession::clear($session);
         $request = $request->withoutAttribute('identity');
 
         return $handler->handle($request);

@@ -10,6 +10,7 @@ use Cake\Command\Command;
 use Cake\Console\Arguments;
 use Cake\Console\ConsoleIo;
 use Cake\I18n\DateTime;
+use Throwable;
 
 /**
  * Cancels unpaid checkout drafts whose inventory hold has expired.
@@ -43,8 +44,18 @@ class ReleaseExpiredHoldsCommand extends Command
         $service = new OrderService(new InventoryLedger());
         $released = 0;
         foreach ($expired as $order) {
-            $service->failUnpaid($order, (int)($order->created_by_user_id ?: 0), 'Checkout hold expired');
-            $released++;
+            try {
+                $updated = $service->failUnpaid(
+                    $order,
+                    (int)($order->created_by_user_id ?: 0),
+                    'Checkout hold expired',
+                );
+                if ($updated->status === SalesOrder::STATUS_CANCELLED) {
+                    $released++;
+                }
+            } catch (Throwable $exception) {
+                $io->err(sprintf('Hold %s could not be released: %s', $order->order_number, $exception->getMessage()));
+            }
         }
         $io->out(sprintf('Released %d expired checkout hold(s).', $released));
 

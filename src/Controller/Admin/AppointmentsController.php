@@ -41,7 +41,8 @@ class AppointmentsController extends AdminController
             $query->where(['ServiceRequests.status' => $status]);
         }
         $requests = $this->paginate($query, ['limit' => 20]);
-        $this->set(compact('requests', 'status'));
+        $statusCounts = $this->countByField('ServiceRequests', 'status');
+        $this->set(compact('requests', 'status', 'statusCounts'));
     }
 
     /**

@@ -53,7 +53,8 @@ class ContactMessagesController extends AdminController
         }
 
         $contactMessages = $this->paginate($query, ['limit' => 20]);
-        $this->set(compact('contactMessages', 'status'));
+        $statusCounts = $this->countByField('ContactMessages', 'status');
+        $this->set(compact('contactMessages', 'status', 'statusCounts'));
     }
 
     /**

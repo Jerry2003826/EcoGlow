@@ -25,7 +25,7 @@ final class ContentSecurityPolicyMiddleware implements MiddlewareInterface
         $policy = implode('; ', [
             "default-src 'self'",
             "script-src 'self' https://js.stripe.com https://www.google.com https://www.gstatic.com",
-            "frame-src https://js.stripe.com https://hooks.stripe.com https://www.google.com",
+            'frame-src https://js.stripe.com https://hooks.stripe.com https://www.google.com',
             "connect-src 'self' https://api.stripe.com https://www.google.com",
             "img-src 'self' data: https:",
             "style-src 'self' 'unsafe-inline'",
@@ -34,6 +34,7 @@ final class ContentSecurityPolicyMiddleware implements MiddlewareInterface
             "base-uri 'self'",
             "form-action 'self'",
             "frame-ancestors 'self'",
+            'report-uri /csp-report',
         ]);
         $header = filter_var(env('CSP_ENFORCE', false), FILTER_VALIDATE_BOOLEAN)
             && !Configure::read('debug')

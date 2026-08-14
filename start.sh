@@ -25,7 +25,7 @@ find_php() {
   do
     # shellcheck disable=SC2086
     for candidate in $candidate; do
-      if [[ -x "$candidate" ]] && "$candidate" -r 'exit(PHP_VERSION_ID >= 80200 ? 0 : 1);' 2>/dev/null; then
+      if [[ -x "$candidate" ]] && "$candidate" -r 'exit(PHP_VERSION_ID >= 80400 ? 0 : 1);' 2>/dev/null; then
         printf '%s' "$candidate"
         return 0
       fi
@@ -96,7 +96,7 @@ if [[ -z "${PHP_BIN}" ]]; then
 fi
 
 if [[ -z "${PHP_BIN}" ]]; then
-  echo "PHP 8.2+ was not found."
+  echo "PHP 8.4+ was not found."
   echo "macOS: install Homebrew, then run this script again."
   echo "Linux: sudo apt install php php-cli php-mysql php-mbstring php-xml php-intl unzip"
   exit 1
@@ -104,4 +104,12 @@ fi
 
 say "Using PHP $($PHP_BIN -r 'echo PHP_VERSION;')"
 start_mysql
+export ECOGLOW_ALLOW_DEV_BOOTSTRAP=1
+if have mysqladmin && mysqladmin --user=root ping >/dev/null 2>&1; then
+  export ECOGLOW_DB_ADMIN_USER="${ECOGLOW_DB_ADMIN_USER:-root}"
+  export MYSQL_ROOT_PASSWORD="${MYSQL_ROOT_PASSWORD:-}"
+elif have mysqladmin && mysqladmin --user=root --password=root ping >/dev/null 2>&1; then
+  export ECOGLOW_DB_ADMIN_USER="${ECOGLOW_DB_ADMIN_USER:-root}"
+  export MYSQL_ROOT_PASSWORD="${MYSQL_ROOT_PASSWORD:-root}"
+fi
 exec "$PHP_BIN" "$ROOT/bin/dev_up.php" "$@"

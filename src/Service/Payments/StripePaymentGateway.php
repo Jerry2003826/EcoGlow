@@ -5,6 +5,7 @@ namespace App\Service\Payments;
 
 use Cake\Core\Configure;
 use InvalidArgumentException;
+use Stripe\Exception\ApiConnectionException;
 use Stripe\Exception\ApiErrorException;
 use Stripe\StripeClient;
 
@@ -45,11 +46,7 @@ class StripePaymentGateway implements PaymentGatewayInterface
                 'metadata' => $metadata,
             ], $options);
         } catch (ApiErrorException $exception) {
-            throw new InvalidArgumentException(
-                'The payment service could not start this charge. Please try again.',
-                0,
-                $exception,
-            );
+            $this->rethrowStripe($exception, 'The payment service could not start this charge. Please try again.');
         }
 
         return new PaymentIntentResult((string)$intent->id, (string)$intent->client_secret);
@@ -69,11 +66,7 @@ class StripePaymentGateway implements PaymentGatewayInterface
                 ['idempotency_key' => $idempotencyKey],
             );
         } catch (ApiErrorException $exception) {
-            throw new InvalidArgumentException(
-                'The refund could not be completed. Please try again.',
-                0,
-                $exception,
-            );
+            $this->rethrowStripe($exception, 'The refund could not be completed. Please try again.');
         }
 
         return new RefundResult((string)$refund->id, (string)$refund->status);
@@ -91,11 +84,7 @@ class StripePaymentGateway implements PaymentGatewayInterface
         try {
             $intent = $this->client()->paymentIntents->retrieve($paymentIntentId);
         } catch (ApiErrorException $exception) {
-            throw new InvalidArgumentException(
-                'The payment service could not load this charge. Please try again.',
-                0,
-                $exception,
-            );
+            $this->rethrowStripe($exception, 'The payment service could not load this charge. Please try again.');
         }
 
         $status = (string)$intent->status;
@@ -125,5 +114,33 @@ class StripePaymentGateway implements PaymentGatewayInterface
         $this->client = new StripeClient($secret);
 
         return $this->client;
+    }
+
+    /**
+     * @param \Stripe\Exception\ApiErrorException $exception Stripe error.
+     * @param string $message Public message.
+     * @return never
+     */
+    private function rethrowStripe(ApiErrorException $exception, string $message): never
+    {
+        if ($this->isUncertain($exception)) {
+            throw new PaymentUncertainException($message, 0, $exception);
+        }
+
+        throw new InvalidArgumentException($message, 0, $exception);
+    }
+
+    /**
+     * @param \Stripe\Exception\ApiErrorException $exception Stripe error.
+     * @return bool
+     */
+    private function isUncertain(ApiErrorException $exception): bool
+    {
+        if ($exception instanceof ApiConnectionException) {
+            return true;
+        }
+        $status = $exception->getHttpStatus();
+
+        return $status === null || $status >= 500 || $status === 429;
     }
 }

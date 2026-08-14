@@ -51,13 +51,12 @@ $this->assign('breadcrumb', $this->element('admin/breadcrumb', [
                 'body' => 'Orders, payments and refunds dated in the selected Melbourne calendar days will list here.',
             ]) ?>
         <?php else : ?>
-            <div class="table-responsive">
-                <table class="table table-eg align-middle" aria-label="Financial transactions">
+            <div class="table-responsive admin-list-wrap">
+                <table class="table table-eg admin-list-table align-middle" aria-label="Financial transactions">
                     <thead>
                         <tr>
                             <th>Reference</th>
-                            <th>Customer</th>
-                            <th>Amount</th>
+                            <th class="text-end">Amount</th>
                             <th>Status</th>
                             <th>Date</th>
                         </tr>
@@ -65,11 +64,16 @@ $this->assign('breadcrumb', $this->element('admin/breadcrumb', [
                     <tbody>
                         <?php foreach ($transactions as $row) : ?>
                             <tr>
-                                <td class="cell-ref"><?= h($row['reference_number'] ?: '—') ?></td>
-                                <td><?= h($row['customer_name'] ?: 'Walk-in') ?></td>
-                                <td><?= $this->Money->aud((int)$row['amount_cents']) ?></td>
-                                <td><?= $this->element('admin/status_pill', ['status' => (string)$row['status']]) ?></td>
-                                <td class="text-nowrap">
+                                <td class="admin-identity-cell" data-label="Reference">
+                                    <?= $this->element('admin/identity', [
+                                        'title' => (string)($row['customer_name'] ?: 'Walk-in'),
+                                        'code' => (string)($row['reference_number'] ?: '—'),
+                                        'meta' => null,
+                                    ]) ?>
+                                </td>
+                                <td class="cell-qty" data-label="Amount"><?= $this->Money->aud((int)$row['amount_cents']) ?></td>
+                                <td data-label="Status"><?= $this->element('admin/status_pill', ['status' => (string)$row['status']]) ?></td>
+                                <td class="text-nowrap" data-label="Date">
                                     <?= $row['occurred_at']
                                         ? h((new DateTime($row['occurred_at']))->setTimezone('Australia/Melbourne')->format('d M Y, H:i'))
                                         : '—' ?>

@@ -17,6 +17,17 @@ $permissions = iterator_to_array($permissions);
 $users = iterator_to_array($users);
 $overrides = iterator_to_array($overrides);
 $protectedKeys = ['master', 'elevated_staff'];
+$staffCount = count($users);
+$activeCount = 0;
+$inactiveCount = 0;
+foreach ($users as $user) {
+    if ((string)($user->get('status') ?: 'active') === 'active') {
+        $activeCount++;
+    } else {
+        $inactiveCount++;
+    }
+}
+$overrideCount = count($overrides);
 
 $this->assign('title', 'Users & roles');
 $this->assign('breadcrumb', $this->element('admin/breadcrumb', [
@@ -26,6 +37,25 @@ $this->assign('breadcrumb', $this->element('admin/breadcrumb', [
 <div class="admin-page-head">
     <span class="eg-eyebrow">Access</span>
     <h1>Users &amp; roles</h1>
+</div>
+
+<div class="admin-stat-grid">
+    <div class="admin-stat-card">
+        <span class="admin-stat-value"><?= $staffCount ?></span>
+        <span class="eg-eyebrow">Staff accounts</span>
+    </div>
+    <div class="admin-stat-card">
+        <span class="admin-stat-value"><?= $activeCount ?></span>
+        <span class="eg-eyebrow">Active</span>
+    </div>
+    <div class="admin-stat-card">
+        <span class="admin-stat-value"><?= $inactiveCount ?></span>
+        <span class="eg-eyebrow">Inactive</span>
+    </div>
+    <div class="admin-stat-card">
+        <span class="admin-stat-value"><?= $overrideCount ?></span>
+        <span class="eg-eyebrow">Open overrides</span>
+    </div>
 </div>
 
 <p class="admin-note mb-4">
@@ -54,12 +84,11 @@ $this->assign('breadcrumb', $this->element('admin/breadcrumb', [
             <table class="table table-eg align-middle" aria-label="Staff accounts">
                 <thead>
                     <tr>
-                        <th>Email</th>
-                        <th>Name</th>
+                        <th>Account</th>
                         <th>Roles</th>
                         <th>Status</th>
                         <th>Last login</th>
-                        <th class="text-end">Account</th>
+                        <th class="text-end">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -82,8 +111,13 @@ $this->assign('breadcrumb', $this->element('admin/breadcrumb', [
                         $rowSearch = strtolower($user->email . ' ' . $name . ' ' . $status . ' ' . implode(' ', $roleNames));
                         ?>
                         <tr data-admin-fold-row data-search="<?= h($rowSearch) ?>">
-                            <td><?= h($user->email) ?></td>
-                            <td><?= h($name !== '' ? $name : '—') ?></td>
+                            <td class="admin-identity-cell">
+                                <?= $this->element('admin/identity', [
+                                    'title' => (string)$user->email,
+                                    'code' => null,
+                                    'meta' => $name !== '' ? $name : null,
+                                ]) ?>
+                            </td>
                             <td>
                                 <?php foreach ($roles as $role) : ?>
                                     <label class="admin-check">
@@ -133,6 +167,14 @@ $this->assign('breadcrumb', $this->element('admin/breadcrumb', [
                                         [
                                             'class' => 'btn btn-sm btn-eg-ghost',
                                             'confirm' => 'Sign this account out of every device?',
+                                        ],
+                                    ) ?>
+                                    <?= $this->Form->postButton(
+                                        'Reset MFA',
+                                        ['action' => 'resetMfa', $user->id],
+                                        [
+                                            'class' => 'btn btn-sm btn-eg-ghost',
+                                            'confirm' => 'Reset two-factor authentication for this account?',
                                         ],
                                     ) ?>
                                 </div>

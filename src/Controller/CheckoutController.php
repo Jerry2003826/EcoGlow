@@ -14,7 +14,9 @@ use App\Service\FeatureFlagService;
 use App\Service\Inventory\InventoryLedger;
 use App\Service\Orders\OrderService;
 use App\Service\Payments\PaymentGatewayFactory;
+use App\Service\Payments\PaymentUncertainException;
 use App\Service\Security\RateLimitService;
+use App\Service\Security\SensitiveSession;
 use Cake\Core\Configure;
 use Cake\Http\Exception\NotFoundException;
 use Cake\Http\Response;
@@ -116,7 +118,15 @@ class CheckoutController extends AppController
                     $order = $result['order'];
                     $clientSecret = $result['client_secret'];
                     $this->Flash->success(__('Review the payment details below to finish this order.'));
+                } catch (PaymentUncertainException $exception) {
+                    $this->Flash->error(__(
+                        'The payment service timed out. Your basket is still held. Please try again.',
+                    ));
+                    $errors['form'] = $exception->getMessage();
                 } catch (InvalidArgumentException $exception) {
+                    if (str_contains($exception->getMessage(), 'no longer valid')) {
+                        $this->request->getSession()->delete(SensitiveSession::CHECKOUT_ATTEMPT);
+                    }
                     $this->Flash->error($exception->getMessage());
                     $errors['form'] = $exception->getMessage();
                 }
@@ -284,16 +294,31 @@ class CheckoutController extends AppController
      */
     private function checkoutAttemptId(): string
     {
-        $posted = strtolower(trim((string)$this->request->getData('checkout_attempt_id')));
         $session = $this->request->getSession();
-        $stored = strtolower(trim((string)$session->read('Checkout.attempt_id')));
-        $candidate = $posted !== '' ? $posted : $stored;
-        if (!preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/', $candidate)) {
+        $stored = strtolower(trim((string)$session->read(SensitiveSession::CHECKOUT_ATTEMPT)));
+        $posted = strtolower(trim((string)$this->request->getData('checkout_attempt_id')));
+        if ($this->validAttemptId($stored)) {
+            $candidate = $stored;
+        } elseif ($this->validAttemptId($posted)) {
+            $candidate = $posted;
+        } else {
             $candidate = $this->newUuid();
         }
-        $session->write('Checkout.attempt_id', $candidate);
+        $session->write(SensitiveSession::CHECKOUT_ATTEMPT, $candidate);
 
         return $candidate;
+    }
+
+    /**
+     * @param string $value Candidate UUID.
+     * @return bool
+     */
+    private function validAttemptId(string $value): bool
+    {
+        return (bool)preg_match(
+            '/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/',
+            $value,
+        );
     }
 
     /**

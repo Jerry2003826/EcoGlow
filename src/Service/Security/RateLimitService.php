@@ -33,7 +33,11 @@ final class RateLimitService
      */
     public static function hits(string $scope, string $subject): int
     {
-        return (int)Cache::read(self::key($scope, $subject), self::CACHE_CONFIG);
+        try {
+            return (int)Cache::read(self::key($scope, $subject), self::CACHE_CONFIG);
+        } catch (Throwable) {
+            return PHP_INT_MAX;
+        }
     }
 
     /**
@@ -53,24 +57,27 @@ final class RateLimitService
             // FileEngine and similar stores cannot increment atomically.
         }
 
-        $lockPath = CACHE . 'rate_' . $key . '.lock';
-        $handle = fopen($lockPath, 'c+');
-        if ($handle === false) {
-            $next = self::hits($scope, $subject) + 1;
-            Cache::write($key, $next, self::CACHE_CONFIG);
-
-            return $next;
-        }
-
         try {
-            flock($handle, LOCK_EX);
-            $next = (int)Cache::read($key, self::CACHE_CONFIG) + 1;
-            Cache::write($key, $next, self::CACHE_CONFIG);
+            $lockPath = CACHE . 'rate_' . $key . '.lock';
+            $handle = fopen($lockPath, 'c+');
+            if ($handle === false) {
+                return PHP_INT_MAX;
+            }
 
-            return $next;
-        } finally {
-            flock($handle, LOCK_UN);
-            fclose($handle);
+            try {
+                flock($handle, LOCK_EX);
+                $next = (int)Cache::read($key, self::CACHE_CONFIG) + 1;
+                if (!Cache::write($key, $next, self::CACHE_CONFIG)) {
+                    return PHP_INT_MAX;
+                }
+
+                return $next;
+            } finally {
+                flock($handle, LOCK_UN);
+                fclose($handle);
+            }
+        } catch (Throwable) {
+            return PHP_INT_MAX;
         }
     }
 

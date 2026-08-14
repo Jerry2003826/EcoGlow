@@ -6,6 +6,7 @@ namespace App\Controller\Admin;
 use App\Service\AuditLogger;
 use App\Service\Authorization\AccessService;
 use Cake\Http\Response;
+use Cake\Log\Log;
 use InvalidArgumentException;
 
 /**
@@ -172,6 +173,34 @@ class UsersController extends AdminController
         $this->fetchTable('Users')->bumpAuthVersion($user);
         $this->permissions->forget((int)$user->id);
         $this->Flash->success(__('All sessions for that account have been revoked.'));
+
+        return $this->redirect(['action' => 'index']);
+    }
+
+    /**
+     * Clear MFA so the staff member must enrol again.
+     *
+     * @param string|null $id User id.
+     * @return \Cake\Http\Response|null
+     */
+    public function resetMfa(?string $id = null): ?Response
+    {
+        $this->request->allowMethod(['post']);
+        $users = $this->fetchTable('Users');
+        $user = $users->get($this->recordId($id));
+        $user->set('mfa_enabled', false);
+        $user->set('mfa_secret', null);
+        $user->set('mfa_confirmed_at', null);
+        $user->set('mfa_last_timestep', null);
+        $user->set('mfa_recovery_hashes', null);
+        $user->set('auth_version', (int)($user->get('auth_version') ?: 1) + 1);
+        $users->saveOrFail($user);
+        $this->permissions->forget((int)$user->id);
+        Log::info('Staff MFA reset', [
+            'target_user_id' => (int)$user->id,
+            'actor_user_id' => $this->actorId(),
+        ]);
+        $this->Flash->success(__('Two-factor authentication was reset. The user must enrol again.'));
 
         return $this->redirect(['action' => 'index']);
     }

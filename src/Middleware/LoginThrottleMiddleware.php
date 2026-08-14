@@ -64,6 +64,13 @@ class LoginThrottleMiddleware implements MiddlewareInterface
     public const SCOPE_PASSWORD_RESET = 'password_reset';
 
     /**
+     * Counter scope for MFA challenge and enrolment.
+     *
+     * @var string
+     */
+    public const SCOPE_MFA = 'mfa';
+
+    /**
      * Short-circuit locked-out login submissions before authentication runs.
      *
      * @param \Psr\Http\Message\ServerRequestInterface $request The request.

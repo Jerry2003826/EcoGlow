@@ -45,11 +45,13 @@ use Cake\Http\Middleware\HttpsEnforcerMiddleware;
 use Cake\Http\Middleware\SecurityHeadersMiddleware;
 use Cake\Http\MiddlewareQueue;
 use Cake\Http\ServerRequest;
+use Cake\Mailer\Transport\DebugTransport;
 use Cake\ORM\Locator\TableContainer;
 use Cake\ORM\Locator\TableLocator;
 use Cake\Routing\Middleware\AssetMiddleware;
 use Cake\Routing\Middleware\RoutingMiddleware;
 use Psr\Http\Message\ServerRequestInterface;
+use RuntimeException;
 
 /**
  * Application setup class.
@@ -78,6 +80,23 @@ class Application extends BaseApplication implements
             'Table',
             (new TableLocator())->allowFallbackClass(false),
         );
+        $this->assertProductionEmailTransport();
+    }
+
+    /**
+     * Debug transport writes reset tokens to disk. Production must use SMTP.
+     *
+     * @return void
+     */
+    private function assertProductionEmailTransport(): void
+    {
+        if (Configure::read('debug') || defined('PHPUNIT_COMPOSER_INSTALL')) {
+            return;
+        }
+        $class = (string)Configure::read('EmailTransport.default.className');
+        if (in_array($class, [DebugTransport::class, 'Debug'], true)) {
+            throw new RuntimeException('Production must not use the Debug email transport.');
+        }
     }
 
     /**
@@ -164,7 +183,9 @@ class Application extends BaseApplication implements
                 'samesite' => 'Lax',
                 'secure' => !Configure::read('debug'),
             ]))->skipCheckCallback(function (ServerRequestInterface $request): bool {
-                return rtrim($request->getUri()->getPath(), '/') === '/webhooks/stripe';
+                $path = rtrim($request->getUri()->getPath(), '/');
+
+                return in_array($path, ['/webhooks/stripe', '/csp-report'], true);
             }))
 
             // Block locked-out login attempts *before* authentication so a

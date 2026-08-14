@@ -89,7 +89,10 @@ $sortUrl = function (string $column) use ($preset, $from, $to, $sort, $direction
 <div class="admin-split">
     <section class="admin-section">
         <div class="admin-panel">
-            <div class="admin-panel-head"><h2>By channel</h2></div>
+            <div class="admin-panel-head">
+                <h2>By channel</h2>
+                <p class="admin-panel-caption"><?= count($channels) ?> channels</p>
+            </div>
             <?php if ($channels === []) : ?>
                 <?= $this->element('admin/empty', [
                     'title' => 'No channel split',
@@ -97,20 +100,20 @@ $sortUrl = function (string $column) use ($preset, $from, $to, $sort, $direction
                 ]) ?>
             <?php else : ?>
                 <div class="table-responsive">
-                    <table class="table table-eg align-middle" aria-label="Sales by channel">
+                    <table class="table table-eg admin-list-table align-middle" aria-label="Sales by channel">
                         <thead>
                             <tr>
                                 <th>Channel</th>
-                                <th>Orders</th>
-                                <th>Sales (GST inclusive)</th>
+                                <th class="text-end">Orders</th>
+                                <th class="text-end">Sales (GST inclusive)</th>
                             </tr>
                         </thead>
                         <tbody>
                             <?php foreach ($channels as $row) : ?>
                                 <tr>
-                                    <td><?= h(SalesOrder::channelLabels()[$row['source_channel']] ?? $row['source_channel']) ?></td>
-                                    <td><?= (int)$row['order_count'] ?></td>
-                                    <td><?= $this->Money->aud((int)$row['sales_cents']) ?></td>
+                                    <td data-label="Channel"><?= h(SalesOrder::channelLabels()[$row['source_channel']] ?? $row['source_channel']) ?></td>
+                                    <td class="cell-qty" data-label="Orders"><?= (int)$row['order_count'] ?></td>
+                                    <td class="cell-qty" data-label="Sales"><?= $this->Money->aud((int)$row['sales_cents']) ?></td>
                                 </tr>
                             <?php endforeach; ?>
                         </tbody>
@@ -121,7 +124,10 @@ $sortUrl = function (string $column) use ($preset, $from, $to, $sort, $direction
     </section>
     <section class="admin-section">
         <div class="admin-panel">
-            <div class="admin-panel-head"><h2>By category</h2></div>
+            <div class="admin-panel-head">
+                <h2>By category</h2>
+                <p class="admin-panel-caption"><?= count($categories) ?> categories</p>
+            </div>
             <?php if ($categories === []) : ?>
                 <?= $this->element('admin/empty', [
                     'title' => 'No category split',
@@ -129,20 +135,20 @@ $sortUrl = function (string $column) use ($preset, $from, $to, $sort, $direction
                 ]) ?>
             <?php else : ?>
                 <div class="table-responsive">
-                    <table class="table table-eg align-middle" aria-label="Sales by category">
+                    <table class="table table-eg admin-list-table align-middle" aria-label="Sales by category">
                         <thead>
                             <tr>
                                 <th>Category</th>
-                                <th>Lines</th>
-                                <th>Sales (GST inclusive)</th>
+                                <th class="text-end">Lines</th>
+                                <th class="text-end">Sales (GST inclusive)</th>
                             </tr>
                         </thead>
                         <tbody>
                             <?php foreach ($categories as $row) : ?>
                                 <tr>
-                                    <td><?= h($row['category_name']) ?></td>
-                                    <td><?= (int)$row['line_count'] ?></td>
-                                    <td><?= $this->Money->aud((int)$row['sales_cents']) ?></td>
+                                    <td data-label="Category"><?= h($row['category_name']) ?></td>
+                                    <td class="cell-qty" data-label="Lines"><?= (int)$row['line_count'] ?></td>
+                                    <td class="cell-qty" data-label="Sales"><?= $this->Money->aud((int)$row['sales_cents']) ?></td>
                                 </tr>
                             <?php endforeach; ?>
                         </tbody>
@@ -155,19 +161,22 @@ $sortUrl = function (string $column) use ($preset, $from, $to, $sort, $direction
 
 <section class="admin-section">
     <div class="admin-panel">
-        <div class="admin-panel-head"><h2>Recent transactions</h2></div>
+        <div class="admin-panel-head">
+            <h2>Recent transactions</h2>
+            <p class="admin-panel-caption"><?= count($transactions) ?> in range</p>
+        </div>
         <?php if ($transactions === []) : ?>
             <?= $this->element('admin/empty', [
                 'title' => 'No transactions in this range',
                 'body' => 'Orders, payments and refunds dated in the selected Melbourne calendar days will list here. Empty ranges show as 0, not an error.',
             ]) ?>
         <?php else : ?>
-            <div class="table-responsive">
-                <table class="table table-eg align-middle" aria-label="Transactions">
+            <div class="table-responsive admin-list-wrap">
+                <table class="table table-eg admin-list-table align-middle" aria-label="Transactions">
                     <thead>
                         <tr>
                             <th><?= $this->Html->link('Reference', $sortUrl('reference')) ?></th>
-                            <th><?= $this->Html->link('Amount', $sortUrl('amount')) ?></th>
+                            <th class="text-end"><?= $this->Html->link('Amount', $sortUrl('amount')) ?></th>
                             <th><?= $this->Html->link('Status', $sortUrl('status')) ?></th>
                             <th><?= $this->Html->link('Date', $sortUrl('occurred_at')) ?></th>
                         </tr>
@@ -175,10 +184,16 @@ $sortUrl = function (string $column) use ($preset, $from, $to, $sort, $direction
                     <tbody>
                         <?php foreach ($transactions as $row) : ?>
                             <tr>
-                                <td class="cell-ref"><?= h($row['reference_number'] ?: '—') ?></td>
-                                <td><?= $this->Money->aud((int)$row['amount_cents']) ?></td>
-                                <td><?= $this->element('admin/status_pill', ['status' => (string)$row['status']]) ?></td>
-                                <td class="text-nowrap">
+                                <td class="admin-identity-cell" data-label="Reference">
+                                    <?= $this->element('admin/identity', [
+                                        'title' => (string)($row['reference_number'] ?: '—'),
+                                        'code' => null,
+                                        'meta' => null,
+                                    ]) ?>
+                                </td>
+                                <td class="cell-qty" data-label="Amount"><?= $this->Money->aud((int)$row['amount_cents']) ?></td>
+                                <td data-label="Status"><?= $this->element('admin/status_pill', ['status' => (string)$row['status']]) ?></td>
+                                <td class="text-nowrap" data-label="Date">
                                     <?= $row['occurred_at']
                                         ? h((new DateTime($row['occurred_at']))->setTimezone('Australia/Melbourne')->format('d M Y, H:i'))
                                         : '—' ?>

@@ -77,8 +77,31 @@ class OrdersController extends AdminController
         }
 
         $salesOrders = $this->paginate($query, ['limit' => 20]);
+        $statusCounts = $this->countByField('SalesOrders', 'status');
+        $awaitingCount = 0;
+        foreach (SalesOrder::awaitingDispatchStatuses() as $awaitingStatus) {
+            $awaitingCount += $statusCounts[$awaitingStatus] ?? 0;
+        }
+        $overdueCount = $this->fetchTable('SalesOrders')->find()
+            ->where([
+                'promised_delivery_date IS NOT' => null,
+                'promised_delivery_date <' => $today->format('Y-m-d'),
+                'status NOT IN' => SalesOrder::closedStatuses(),
+            ])
+            ->count();
 
-        $this->set(compact('salesOrders', 'status', 'channel', 'q', 'from', 'to', 'today'));
+        $this->set(compact(
+            'salesOrders',
+            'status',
+            'channel',
+            'q',
+            'from',
+            'to',
+            'today',
+            'statusCounts',
+            'awaitingCount',
+            'overdueCount',
+        ));
     }
 
     /**

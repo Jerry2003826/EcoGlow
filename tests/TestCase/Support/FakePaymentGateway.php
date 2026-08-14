@@ -5,7 +5,9 @@ namespace App\Test\TestCase\Support;
 
 use App\Service\Payments\PaymentGatewayInterface;
 use App\Service\Payments\PaymentIntentResult;
+use App\Service\Payments\PaymentUncertainException;
 use App\Service\Payments\RefundResult;
+use InvalidArgumentException;
 
 /**
  * In-process Stripe stand-in. Never opens a network socket.
@@ -35,6 +37,26 @@ final class FakePaymentGateway implements PaymentGatewayInterface
     public ?string $lastIdempotencyKey = null;
 
     /**
+     * @var bool
+     */
+    public bool $throwOnCreate = false;
+
+    /**
+     * @var bool
+     */
+    public bool $uncertainOnCreate = false;
+
+    /**
+     * @var string
+     */
+    public string $refundStatus = 'succeeded';
+
+    /**
+     * @var string
+     */
+    public string $nextRefundId = 're_test_1';
+
+    /**
      * @inheritDoc
      */
     public function createPaymentIntent(
@@ -45,6 +67,12 @@ final class FakePaymentGateway implements PaymentGatewayInterface
     ): PaymentIntentResult {
         $this->lastAmountCents = $amountCents;
         $this->lastIdempotencyKey = $idempotencyKey;
+        if ($this->uncertainOnCreate) {
+            throw new PaymentUncertainException('The payment service timed out.');
+        }
+        if ($this->throwOnCreate) {
+            throw new InvalidArgumentException('The card was declined.');
+        }
         $id = $this->nextIntentId;
         $this->intents[] = [
             'id' => $id,
@@ -62,7 +90,7 @@ final class FakePaymentGateway implements PaymentGatewayInterface
      */
     public function refund(string $paymentIntentId, int $amountCents, string $idempotencyKey): RefundResult
     {
-        return new RefundResult('re_test_1', 'succeeded');
+        return new RefundResult($this->nextRefundId, $this->refundStatus);
     }
 
     /**

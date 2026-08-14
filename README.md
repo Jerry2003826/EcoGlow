@@ -56,7 +56,7 @@ Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
 
 The launcher will:
 
-1. Find PHP 8.2+ (Homebrew, MAMP, XAMPP, Laragon, WAMP, or PATH)
+1. Find PHP 8.4+ (Homebrew, MAMP, XAMPP, Laragon, WAMP, or PATH)
 2. Install PHP / Composer / MySQL when missing (Homebrew on Mac, winget on Windows)
 3. Start MySQL or MariaDB
 4. Create database `ecoglow` and user `ecoglow` / `ecoglow`
@@ -89,9 +89,10 @@ reCAPTCHA is **off** in this local demo. Stripe checkout still needs test keys i
 
 ## Requirements
 
-- PHP >= 8.2 (developed on 8.5) with the PDO MySQL driver
+- PHP >= 8.4.1 (developed on 8.5) with the PDO MySQL driver
 - MySQL / MariaDB
-- [Composer](https://getcomposer.org/) — the one-click scripts can download this
+- [Composer](https://getcomposer.org/) — install it before running the launcher
+- Production cache must be Redis (or another shared store). File cache is not safe across multiple app nodes.
 
 ## Manual setup
 
@@ -158,10 +159,15 @@ keys are accepted only while `debug` is on; they are refused in production.
   CI, and turn on Secret Scanning / Push Protection.
 - If `admin@ecoglow.local` exists in a shared database, rotate its password and
   review roles, last login, and audit rows.
-- Release unpaid checkout holds with `bin/cake orders.release_expired_holds`.
+- Release unpaid checkout holds every minute with `bin/cake orders.release_expired_holds`.
 - Security headers (`X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`,
-  CSP Report-Only) are sent on every response. Set `CSP_ENFORCE=true` after
-  reviewing reports.
+  CSP Report-Only with `report-uri /csp-report`) are sent on every response.
+  Set `CSP_ENFORCE=true` after reviewing reports.
+- Production must set `EMAIL_TRANSPORT=Smtp` (or another real transport). Debug
+  transport is refused when `debug` is off.
+- `.github/CODEOWNERS` names the owner of record. Branch protection must still
+  require an independent second reviewer for payment, identity and schema paths.
+- `bin/dev_up.php` is local-only. The launcher sets `ECOGLOW_ALLOW_DEV_BOOTSTRAP=1`.
 
 ## Tests
 

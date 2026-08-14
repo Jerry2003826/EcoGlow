@@ -349,7 +349,17 @@ class OrderService
                     ->where(['checkout_attempt_id' => $checkoutAttemptId])
                     ->first();
                 if ($existing) {
-                    return $existing;
+                    if (
+                        (int)$existing->customer_id === $customerId
+                        && (int)$existing->created_by_user_id === $userId
+                        && $existing->status === SalesOrder::STATUS_DRAFT
+                        && in_array((string)$existing->payment_status, ['pending', 'failed'], true)
+                    ) {
+                        return $existing;
+                    }
+                    throw new InvalidArgumentException(
+                        'This checkout session is no longer valid. Refresh the page and try again.',
+                    );
                 }
             }
             if ((string)$cart->get('status') === 'converted') {
@@ -468,25 +478,39 @@ class OrderService
     public function confirmPaid(SalesOrder $order, int $actorUserId): SalesOrder
     {
         return $this->connection()->transactional(function () use ($order, $actorUserId) {
+            $this->lockOrder((int)$order->id);
             $order = $this->fetchTable('SalesOrders')->get($order->id);
             if ($order->payment_status === 'refunded') {
                 return $order;
             }
-            $order->payment_status = 'paid';
-            if ($order->status === SalesOrder::STATUS_DRAFT) {
-                $from = $order->status;
-                $order->status = SalesOrder::STATUS_CONFIRMED;
-                $this->fetchTable('SalesOrders')->saveOrFail($order);
-                $this->annotateLatestHistory(
-                    $order,
-                    $from,
-                    SalesOrder::STATUS_CONFIRMED,
-                    $actorUserId,
-                    'Payment captured',
+            if ($order->status === SalesOrder::STATUS_CANCELLED) {
+                throw new InvalidArgumentException(
+                    'Payment succeeded for a cancelled order; queued for reconciliation.',
                 );
-            } else {
-                $this->fetchTable('SalesOrders')->saveOrFail($order);
             }
+            if ($order->payment_status === 'paid') {
+                return $order;
+            }
+            if (
+                $order->status !== SalesOrder::STATUS_DRAFT
+                || !in_array((string)$order->payment_status, ['pending', 'failed'], true)
+            ) {
+                throw new InvalidArgumentException(
+                    'Payment succeeded for an order that is not awaiting capture.',
+                );
+            }
+
+            $from = $order->status;
+            $order->payment_status = 'paid';
+            $order->status = SalesOrder::STATUS_CONFIRMED;
+            $this->fetchTable('SalesOrders')->saveOrFail($order);
+            $this->annotateLatestHistory(
+                $order,
+                $from,
+                SalesOrder::STATUS_CONFIRMED,
+                $actorUserId,
+                'Payment captured',
+            );
             $this->consumeReservations((int)$order->id, $actorUserId, $order->order_number);
 
             return $order;
@@ -504,8 +528,12 @@ class OrderService
     public function failUnpaid(SalesOrder $order, int $actorUserId, string $note = 'Payment failed'): SalesOrder
     {
         return $this->connection()->transactional(function () use ($order, $actorUserId, $note) {
+            $this->lockOrder((int)$order->id);
             $order = $this->fetchTable('SalesOrders')->get($order->id);
             if ($order->payment_status === 'paid' || $order->status === SalesOrder::STATUS_CANCELLED) {
+                return $order;
+            }
+            if ($this->hasCapturedPayment((int)$order->id)) {
                 return $order;
             }
             $order->payment_status = 'failed';
@@ -516,6 +544,32 @@ class OrderService
 
             return $this->fetchTable('SalesOrders')->get($order->id);
         });
+    }
+
+    /**
+     * Lock the order row before any payment/hold state change.
+     *
+     * @param int $orderId Order id.
+     * @return void
+     */
+    public function lockOrder(int $orderId): void
+    {
+        $this->connection()->execute(
+            'SELECT id FROM sales_orders WHERE id = ? FOR UPDATE',
+            [$orderId],
+        );
+    }
+
+    /**
+     * @param int $orderId Order id.
+     * @return bool
+     */
+    public function hasCapturedPayment(int $orderId): bool
+    {
+        return $this->fetchTable('Payments')->exists([
+            'sales_order_id' => $orderId,
+            'status' => 'captured',
+        ]);
     }
 
     /**
@@ -717,6 +771,10 @@ class OrderService
     private function releaseReservations(int $orderId, int $actorUserId, string $orderNumber): void
     {
         $reservations = $this->fetchTable('StockReservations');
+        $this->connection()->execute(
+            'SELECT id FROM stock_reservations WHERE sales_order_id = ? AND status = ? FOR UPDATE',
+            [$orderId, 'active'],
+        );
         $active = $reservations->find()
             ->where(['sales_order_id' => $orderId, 'status' => 'active'])
             ->all();
@@ -755,6 +813,10 @@ class OrderService
     private function consumeReservations(int $orderId, int $actorUserId, string $orderNumber): void
     {
         $reservations = $this->fetchTable('StockReservations');
+        $this->connection()->execute(
+            'SELECT id FROM stock_reservations WHERE sales_order_id = ? AND status = ? FOR UPDATE',
+            [$orderId, 'active'],
+        );
         $active = $reservations->find()
             ->where(['sales_order_id' => $orderId, 'status' => 'active'])
             ->all();

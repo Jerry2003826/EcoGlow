@@ -83,6 +83,7 @@ final class AdminPermissionMap
                 'updateMatrix' => ['access.manage'],
                 'setOverride' => ['access.manage'],
                 'revokeSessions' => ['access.manage'],
+                'resetMfa' => ['access.manage'],
             ],
             'Orders' => [
                 'index' => ['orders.view', 'orders.create', 'orders.manage', 'orders.dispatch'],

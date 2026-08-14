@@ -65,7 +65,9 @@ class InventoryControllerTest extends TestCase
         $this->get('/admin/inventory');
         $this->assertResponseOk();
         $this->assertResponseContains('Needs reorder');
+        $this->assertResponseContains('Adjust stock');
         $this->assertResponseContains('name="reason"');
+        $this->assertResponseContains('Stock balances');
     }
 
     /**

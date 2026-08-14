@@ -44,30 +44,45 @@ class StripeWebhookService
     public function handle(Event $event): array
     {
         $eventId = (string)$event->id;
-        if (!$this->idempotency->claim(IdempotencyService::SCOPE_STRIPE_WEBHOOK, $eventId)) {
+        $claim = $this->idempotency->claimStatus(IdempotencyService::SCOPE_STRIPE_WEBHOOK, $eventId);
+        if ($claim['status'] === IdempotencyService::COMPLETED) {
             return ['status' => 200, 'body' => ['received' => true, 'duplicate' => true]];
         }
+        if ($claim['status'] === IdempotencyService::IN_FLIGHT) {
+            return ['status' => 500, 'body' => ['error' => 'retry']];
+        }
+        $owner = $claim['owner'];
 
         $type = (string)$event->type;
         try {
             if ($type === 'payment_intent.succeeded') {
-                return $this->finish($eventId, $this->onSucceeded($event));
+                return $this->finish($eventId, $this->onSucceeded($event), $owner);
             }
             if ($type === 'payment_intent.payment_failed') {
                 $this->onPaymentFailed($event);
 
-                return $this->finish($eventId, ['status' => 200, 'body' => ['received' => true]]);
+                return $this->finish($eventId, ['status' => 200, 'body' => ['received' => true]], $owner);
             }
             if ($type === 'payment_intent.canceled') {
                 $this->onCanceled($event);
 
-                return $this->finish($eventId, ['status' => 200, 'body' => ['received' => true]]);
+                return $this->finish($eventId, ['status' => 200, 'body' => ['received' => true]], $owner);
+            }
+            if (
+                $type === 'refund.updated'
+                || $type === 'refund.failed'
+                || $type === 'refund.created'
+                || $type === 'charge.refunded'
+            ) {
+                $this->onRefund($event);
+
+                return $this->finish($eventId, ['status' => 200, 'body' => ['received' => true]], $owner);
             }
             Log::info('Ignoring Stripe event type: ' . $type);
 
-            return $this->finish($eventId, ['status' => 200, 'body' => ['received' => true]]);
+            return $this->finish($eventId, ['status' => 200, 'body' => ['received' => true]], $owner);
         } catch (RuntimeException $exception) {
-            $this->idempotency->release(IdempotencyService::SCOPE_STRIPE_WEBHOOK, $eventId);
+            $this->idempotency->release(IdempotencyService::SCOPE_STRIPE_WEBHOOK, $eventId, $owner);
             Log::error('Stripe webhook transient failure: ' . $exception->getMessage());
 
             return ['status' => 500, 'body' => ['error' => 'retry']];
@@ -86,6 +101,7 @@ class StripeWebhookService
                 $eventId,
                 200,
                 $result['body'],
+                $owner,
             );
             Log::error('Stripe webhook conflict [' . $alert . ']: ' . $exception->getMessage());
 
@@ -111,26 +127,40 @@ class StripeWebhookService
         ]);
         $this->assertAmountAndCurrency($intent, $payment, $order);
 
-        if ($order->status === SalesOrder::STATUS_CANCELLED) {
-            throw new InvalidArgumentException(
-                'Payment succeeded for a cancelled order; queued for reconciliation.',
-            );
-        }
-
         $actorId = (int)($order->created_by_user_id ?: 0);
         $amount = $this->capturedAmount($intent);
-        $this->connection()->transactional(function () use ($order, $payment, $amount, $actorId, $intent): void {
+        $firstCapture = false;
+        $this->connection()->transactional(function () use (
+            $order,
+            $payment,
+            $amount,
+            $actorId,
+            $intent,
+            &$firstCapture,
+        ): void {
+            $this->orders->lockOrder((int)$order->id);
+            $order = $this->fetchTable('SalesOrders')->get((int)$order->id);
+            if ($order->status === SalesOrder::STATUS_CANCELLED) {
+                throw new InvalidArgumentException(
+                    'Payment succeeded for a cancelled order; queued for reconciliation.',
+                );
+            }
             $this->lockPayment((int)$payment->id);
             $payment = $this->fetchTable('Payments')->get((int)$payment->id);
-            $this->markCaptured($payment, $amount, $intent);
+            $firstCapture = $this->markCaptured($payment, $amount, $intent);
+            if (!$firstCapture) {
+                return;
+            }
             $this->orders->confirmPaid($order, $actorId > 0 ? $actorId : (int)$order->customer_id);
-            $this->creditInvoiceIfPresent($order, $amount);
+            $this->creditInvoiceIfPresent($order, $amount, $payment);
         });
 
-        try {
-            $this->queueConfirmation($order);
-        } catch (Throwable $exception) {
-            Log::error('Order confirmation email could not be queued: ' . $exception->getMessage());
+        if ($firstCapture) {
+            try {
+                $this->queueConfirmation($order);
+            } catch (Throwable $exception) {
+                Log::error('Order confirmation email could not be queued: ' . $exception->getMessage());
+            }
         }
 
         return ['status' => 200, 'body' => ['received' => true]];
@@ -168,6 +198,7 @@ class StripeWebhookService
         $order = $this->fetchTable('SalesOrders')->get((int)$payment->sales_order_id);
         $actorId = (int)($order->created_by_user_id ?: 0);
         $this->connection()->transactional(function () use ($order, $payment, $actorId, $intent): void {
+            $this->orders->lockOrder((int)$order->id);
             $this->lockPayment((int)$payment->id);
             $payment = $this->fetchTable('Payments')->get((int)$payment->id);
             if ($payment->status !== 'captured') {
@@ -182,6 +213,25 @@ class StripeWebhookService
                 'Stripe payment_intent.canceled',
             );
         });
+    }
+
+    /**
+     * @param \Stripe\Event $event Event.
+     * @return void
+     */
+    private function onRefund(Event $event): void
+    {
+        $object = $event->data->object;
+        $refundId = (string)($object->id ?? '');
+        $status = (string)($event->type === 'refund.failed' ? 'failed' : ($object->status ?? ''));
+        $intentId = (string)($object->payment_intent ?? '');
+        if ($event->type === 'charge.refunded' && isset($object->refunds->data[0])) {
+            $first = $object->refunds->data[0];
+            $refundId = (string)($first->id ?? $refundId);
+            $status = (string)($first->status ?? 'succeeded');
+            $intentId = (string)($object->payment_intent ?? $intentId);
+        }
+        $this->refunds()->applyWebhookStatus($refundId, $status !== '' ? $status : 'pending', $intentId);
     }
 
     /**
@@ -279,12 +329,12 @@ class StripeWebhookService
      * @param \App\Model\Entity\Payment $payment Payment.
      * @param int $amountCents Captured amount.
      * @param object $intent Stripe object.
-     * @return void
+     * @return bool True when this call flipped pending/failed to captured.
      */
-    private function markCaptured(Payment $payment, int $amountCents, object $intent): void
+    private function markCaptured(Payment $payment, int $amountCents, object $intent): bool
     {
         if ((string)$payment->status === 'captured') {
-            return;
+            return false;
         }
         $payment->status = 'captured';
         $payment->amount_cents = $amountCents;
@@ -292,6 +342,8 @@ class StripeWebhookService
         $payment->authorised_at = DateTime::now('UTC');
         $payment->provider_metadata = ['payment_intent' => (string)$intent->id];
         $this->fetchTable('Payments')->saveOrFail($payment);
+
+        return true;
     }
 
     /**
@@ -306,15 +358,45 @@ class StripeWebhookService
     /**
      * @param \App\Model\Entity\SalesOrder $order Paid order.
      * @param int $amountCents Captured amount.
+     * @param \App\Model\Entity\Payment $payment Captured payment.
      * @return void
      */
-    private function creditInvoiceIfPresent(SalesOrder $order, int $amountCents): void
+    private function creditInvoiceIfPresent(SalesOrder $order, int $amountCents, Payment $payment): void
     {
         $invoice = $this->fetchTable('Invoices')->find()
             ->where(['sales_order_id' => $order->id, 'status !=' => 'void'])
             ->first();
         if ($invoice === null) {
             return;
+        }
+        $allocations = $this->fetchTable('PaymentAllocations');
+        $existing = $allocations->find()
+            ->where([
+                'payment_id' => $payment->id,
+                'invoice_id' => $invoice->id,
+                'allocation_type' => 'capture',
+            ])
+            ->first();
+        if ($existing !== null) {
+            return;
+        }
+        $row = $allocations->newEmptyEntity();
+        $row->set('payment_id', $payment->id);
+        $row->set('invoice_id', $invoice->id);
+        $row->set('allocation_type', 'capture');
+        $row->set('amount_cents', $amountCents);
+        $row->set('allocated_at', DateTime::now('UTC'));
+        $row->set('created', DateTime::now('UTC'));
+        try {
+            $allocations->saveOrFail($row);
+        } catch (Throwable $exception) {
+            if (
+                str_contains($exception->getMessage(), 'UNIQUE')
+                || str_contains($exception->getMessage(), 'Duplicate')
+            ) {
+                return;
+            }
+            throw $exception;
         }
         $this->connection()->execute('SELECT id FROM invoices WHERE id = ? FOR UPDATE', [$invoice->id]);
         $invoice = $this->fetchTable('Invoices')->get($invoice->id);
@@ -349,18 +431,28 @@ class StripeWebhookService
     /**
      * @param string $eventId Event id.
      * @param array{status: int, body: array<string, mixed>} $result Result.
+     * @param string $owner Lease owner.
      * @return array{status: int, body: array<string, mixed>}
      */
-    private function finish(string $eventId, array $result): array
+    private function finish(string $eventId, array $result, string $owner = ''): array
     {
         $this->idempotency->complete(
             IdempotencyService::SCOPE_STRIPE_WEBHOOK,
             $eventId,
             $result['status'],
             $result['body'],
+            $owner,
         );
 
         return $result;
+    }
+
+    /**
+     * @return \App\Service\Payments\RefundService
+     */
+    private function refunds(): RefundService
+    {
+        return new RefundService($this->orders, new StripePaymentGateway());
     }
 
     /**

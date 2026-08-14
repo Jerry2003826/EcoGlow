@@ -33,6 +33,11 @@ $emailLogging = $emailTransport === 'Debug'
     ? ['log' => ['level' => 'debug', 'scope' => []]]
     : [];
 
+$testUrl = (string)env('DATABASE_TEST_URL', '');
+$testInit = str_starts_with($testUrl, 'sqlite')
+    ? []
+    : ['SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci'];
+
 return [
     /*
      * Debug Level:
@@ -388,7 +393,8 @@ return [
             'cacheMetadata' => true,
             'quoteIdentifiers' => false,
             'log' => false,
-            'init' => ['SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci'],
+            'init' => $testInit,
+            'url' => env('DATABASE_TEST_URL', null),
         ],
     ],
 

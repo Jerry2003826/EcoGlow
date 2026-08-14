@@ -185,4 +185,32 @@ class AdminController extends AppController
     {
         return $this->permissions->has($this->actorId(), 'customers.view');
     }
+
+    /**
+     * Count rows grouped by a single column.
+     *
+     * @param string $table Table name.
+     * @param string $field Column to group by.
+     * @param array<string, mixed> $where Optional extra conditions.
+     * @return array<string, int>
+     */
+    protected function countByField(string $table, string $field, array $where = []): array
+    {
+        $query = $this->fetchTable($table)->find();
+        if ($where !== []) {
+            $query->where($where);
+        }
+        $rows = $query
+            ->select([$field, 'c' => $query->func()->count('*')])
+            ->groupBy([$field])
+            ->enableHydration(false)
+            ->all();
+
+        $counts = [];
+        foreach ($rows as $row) {
+            $counts[(string)$row[$field]] = (int)$row['c'];
+        }
+
+        return $counts;
+    }
 }

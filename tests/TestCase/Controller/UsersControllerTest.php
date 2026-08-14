@@ -3,12 +3,15 @@ declare(strict_types=1);
 
 namespace App\Test\TestCase\Controller;
 
+use App\Middleware\LoginThrottleMiddleware;
+use App\Service\Security\TotpService;
 use Cake\Cache\Cache;
 use Cake\I18n\DateTime;
 use Cake\TestSuite\EmailTrait;
 use Cake\TestSuite\IntegrationTestTrait;
 use Cake\TestSuite\TestCase;
 use Cake\TestSuite\TestEmailTransport;
+use ReflectionMethod;
 
 /**
  * App\Controller\UsersController Test Case
@@ -100,6 +103,26 @@ class UsersControllerTest extends TestCase
     }
 
     /**
+     * A leftover enrolment secret must not survive a new sign-in.
+     *
+     * @return void
+     */
+    public function testLoginClearsMfaSetupSecret(): void
+    {
+        $this->session([
+            'MfaSetup' => ['user_id' => 2, 'secret' => 'LEAKED-SECRET'],
+            'Checkout.attempt_id' => '11111111-1111-4111-8111-111111111111',
+        ]);
+        $this->post('/login', [
+            'email' => 'admin@example.com',
+            'password' => 'password',
+        ]);
+        $this->assertResponseCode(302);
+        $this->assertNull($this->getSession()->read('MfaSetup'));
+        $this->assertNull($this->getSession()->read('Checkout.attempt_id'));
+    }
+
+    /**
      * Test that invalid credentials show an error and stay on the page.
      *
      * @return void
@@ -169,15 +192,21 @@ class UsersControllerTest extends TestCase
         $this->session([
             'AuthV2' => 1,
             'AuthVersion' => 1,
+            'MfaSetup' => ['user_id' => 1, 'secret' => 'LEAKED'],
+            'Checkout.attempt_id' => '11111111-1111-4111-8111-111111111111',
         ]);
 
         $this->get('/logout');
-        $this->assertResponseCode(405);
+        $this->assertResponseOk();
+        $this->assertResponseContains('Log out');
+        $this->assertNotNull($this->getSession()->read('AuthV2'));
 
         $this->post('/logout');
         $this->assertResponseCode(302);
         $this->assertRedirectContains('/login');
         $this->assertNull($this->getSession()->read('AuthV2'));
+        $this->assertNull($this->getSession()->read('MfaSetup'));
+        $this->assertNull($this->getSession()->read('Checkout.attempt_id'));
     }
 
     /**
@@ -187,6 +216,11 @@ class UsersControllerTest extends TestCase
      */
     public function testLogoutWhileUnauthenticated(): void
     {
+        $this->get('/logout');
+        $this->assertResponseCode(302);
+        $this->assertRedirectContains('/login');
+        $this->assertRedirectNotContains('redirect=');
+
         $this->post('/logout');
 
         $this->assertResponseCode(302);
@@ -393,6 +427,25 @@ class UsersControllerTest extends TestCase
         $this->assertResponseOk();
         $this->assertResponseContains('Too many password reset requests');
         $this->assertMailCount(5, 'The throttled request must not send a sixth email.');
+    }
+
+    /**
+     * Email-dimension lockout is checked even when the client IP is new.
+     *
+     * @return void
+     */
+    public function testForgotPasswordLocksOnEmailAcrossIps(): void
+    {
+        $scope = LoginThrottleMiddleware::SCOPE_PASSWORD_RESET;
+        for ($i = 0; $i < 5; $i++) {
+            LoginThrottleMiddleware::registerAttempt('10.0.0.' . $i, $scope, 'admin@example.com');
+        }
+        $this->assertTrue(
+            LoginThrottleMiddleware::isLockedOut('203.0.113.9', $scope, 'admin@example.com'),
+        );
+        $this->assertFalse(
+            LoginThrottleMiddleware::isLockedOut('203.0.113.9', $scope, 'other@example.com'),
+        );
     }
 
     /**
@@ -627,6 +680,68 @@ class UsersControllerTest extends TestCase
     }
 
     /**
+     * Five wrong MFA codes lock the challenge.
+     *
+     * @return void
+     */
+    public function testMfaLocksAfterFiveFailures(): void
+    {
+        $this->enableStaffMfa($this->totpSecret());
+        $this->session(['AuthV2' => 1, 'AuthVersion' => 1]);
+        for ($i = 0; $i < 5; $i++) {
+            $this->post('/login/mfa', ['code' => '000000']);
+            $this->assertResponseOk();
+        }
+        $this->post('/login/mfa', ['code' => '000000']);
+        $this->assertResponseContains('Too many authentication codes');
+    }
+
+    /**
+     * The same TOTP timestep cannot be reused.
+     *
+     * @return void
+     */
+    public function testMfaRejectsReplayedTimestep(): void
+    {
+        $secret = $this->totpSecret();
+        $this->enableStaffMfa($secret);
+        $this->session(['AuthV2' => 1, 'AuthVersion' => 1]);
+        $code = $this->totpCode($secret);
+        $this->post('/login/mfa', ['code' => $code]);
+        $this->assertResponseCode(302);
+        $this->assertRedirectContains('/admin');
+
+        $this->session(['AuthV2' => 1, 'AuthVersion' => 1, 'MfaVerified' => false]);
+        $this->post('/login/mfa', ['code' => $code]);
+        $this->assertResponseOk();
+        $this->assertResponseContains('That code was not recognised');
+    }
+
+    /**
+     * Enrolment secrets are bound to the signed-in user.
+     *
+     * @return void
+     */
+    public function testMfaSetupIgnoresAnotherUsersSecret(): void
+    {
+        $this->session([
+            'AuthV2' => 1,
+            'AuthVersion' => 1,
+            'MfaSetup' => [
+                'user_id' => 2,
+                'secret' => 'OTHERUSERSECRETABCD',
+                'expires_at' => time() + 600,
+            ],
+        ]);
+        $this->get('/login/mfa-setup');
+        $this->assertResponseOk();
+        $setup = $this->getSession()->read('MfaSetup');
+        $this->assertIsArray($setup);
+        $this->assertSame(1, (int)$setup['user_id']);
+        $this->assertNotSame('OTHERUSERSECRETABCD', $setup['secret']);
+    }
+
+    /**
      * Write a reset token straight onto the seeded account.
      *
      * Bypasses the entity so the test sets up state the same way the database
@@ -678,5 +793,40 @@ class UsersControllerTest extends TestCase
         $path = parse_url($location, PHP_URL_PATH);
 
         return is_string($path) && $path !== '' ? $path : $location;
+    }
+
+    /**
+     * @return string
+     */
+    private function totpSecret(): string
+    {
+        return TotpService::generateSecret();
+    }
+
+    /**
+     * @param string $secret Base32 secret.
+     * @return string
+     */
+    private function totpCode(string $secret): string
+    {
+        $at = new ReflectionMethod(TotpService::class, 'at');
+
+        return (string)$at->invoke(null, $secret, (int)floor(time() / 30));
+    }
+
+    /**
+     * @param string $secret Base32 secret.
+     * @return void
+     */
+    private function enableStaffMfa(string $secret): void
+    {
+        $this->fetchTable('Users')->updateAll(
+            [
+                'mfa_enabled' => true,
+                'mfa_secret' => TotpService::seal($secret),
+                'mfa_last_timestep' => null,
+            ],
+            ['id' => 1],
+        );
     }
 }

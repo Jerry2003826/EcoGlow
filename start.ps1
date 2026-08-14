@@ -29,7 +29,7 @@ function Find-Php {
         if (-not (Test-Path $path)) { continue }
         try {
             $version = & $path -r "echo PHP_VERSION_ID;"
-            if ([int]$version -ge 80200) { return $path }
+            if ([int]$version -ge 80400) { return $path }
         } catch {
             continue
         }
@@ -82,7 +82,7 @@ function Start-LocalMysql {
 Add-TypicalPaths
 $php = Find-Php
 if (-not $php) {
-    Write-Step "PHP 8.2+ not found. Trying winget..."
+    Write-Step "PHP 8.4+ not found. Trying winget..."
     Install-WithWinget "PHP.PHP.8.4" | Out-Null
     Add-TypicalPaths
     $env:Path = [System.Environment]::GetEnvironmentVariable("Path", "Machine") + ";" +
@@ -92,7 +92,7 @@ if (-not $php) {
 }
 
 if (-not $php) {
-    Write-Host "PHP 8.2+ is required."
+    Write-Host "PHP 8.4+ is required."
     Write-Host "Install XAMPP (https://www.apachefriends.org/) or run:"
     Write-Host "  winget install PHP.PHP.8.4"
     exit 1
@@ -113,6 +113,9 @@ if (-not $mysql) {
 }
 
 Start-LocalMysql
+$env:ECOGLOW_ALLOW_DEV_BOOTSTRAP = "1"
+if (-not $env:ECOGLOW_DB_ADMIN_USER) { $env:ECOGLOW_DB_ADMIN_USER = "root" }
+if ($null -eq $env:MYSQL_ROOT_PASSWORD) { $env:MYSQL_ROOT_PASSWORD = "" }
 Write-Step "Using PHP $(& $php -r 'echo PHP_VERSION;')"
 & $php (Join-Path $Root "bin\dev_up.php") @args
 exit $LASTEXITCODE

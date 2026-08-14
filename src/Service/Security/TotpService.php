@@ -48,18 +48,90 @@ final class TotpService
      */
     public static function verify(string $secret, string $code): bool
     {
+        return self::acceptedTimestep($secret, $code) !== null;
+    }
+
+    /**
+     * @param string $secret Base32 secret.
+     * @param string $code Submitted digits.
+     * @return int|null Matching timestep, or null when the code is wrong.
+     */
+    public static function acceptedTimestep(string $secret, string $code): ?int
+    {
         $code = preg_replace('/\s+/', '', $code) ?? '';
         if (!preg_match('/^\d{6}$/', $code)) {
-            return false;
+            return null;
         }
         $window = (int)floor(time() / self::PERIOD);
         for ($offset = -1; $offset <= 1; $offset++) {
-            if (hash_equals(self::at($secret, $window + $offset), $code)) {
-                return true;
+            $step = $window + $offset;
+            if (hash_equals(self::at($secret, $step), $code)) {
+                return $step;
             }
         }
 
-        return false;
+        return null;
+    }
+
+    /**
+     * @param int $count How many one-time codes to issue.
+     * @return list<string>
+     */
+    public static function generateRecoveryCodes(int $count = 8): array
+    {
+        $codes = [];
+        for ($i = 0; $i < $count; $i++) {
+            $raw = strtoupper(bin2hex(random_bytes(4)));
+            $codes[] = substr($raw, 0, 4) . '-' . substr($raw, 4, 4);
+        }
+
+        return $codes;
+    }
+
+    /**
+     * @param list<string> $codes Plain recovery codes.
+     * @return string JSON of password hashes.
+     */
+    public static function hashRecoveryCodes(array $codes): string
+    {
+        $hashes = [];
+        foreach ($codes as $code) {
+            $hashes[] = password_hash(self::normalizeRecovery($code), PASSWORD_DEFAULT);
+        }
+
+        return json_encode($hashes, JSON_THROW_ON_ERROR);
+    }
+
+    /**
+     * @param string $storedJson Stored hashes.
+     * @param string $code Submitted recovery code.
+     * @return string|null Remaining hashes JSON, or null when the code is unknown.
+     */
+    public static function consumeRecoveryCode(string $storedJson, string $code): ?string
+    {
+        $hashes = json_decode($storedJson !== '' ? $storedJson : '[]', true);
+        if (!is_array($hashes)) {
+            return null;
+        }
+        $normalized = self::normalizeRecovery($code);
+        foreach ($hashes as $index => $hash) {
+            if (is_string($hash) && password_verify($normalized, $hash)) {
+                unset($hashes[$index]);
+
+                return json_encode(array_values($hashes), JSON_THROW_ON_ERROR);
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @param string $code Raw recovery code.
+     * @return string
+     */
+    public static function normalizeRecovery(string $code): string
+    {
+        return strtoupper(preg_replace('/[^A-Z0-9]/i', '', $code) ?? '');
     }
 
     /**

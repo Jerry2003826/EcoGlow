@@ -1,8 +1,19 @@
-# Payment, RBAC and schema changes need a second reviewer.
+# Payment, identity and schema changes need a second human reviewer.
+# This file lists the owner of record. GitHub/GitLab branch protection
+# must still require an independent reviewer — do not merge these paths
+# with only the author approving their own change.
 /src/Service/Payments/ @Jerry2003826
 /src/Service/Checkout/ @Jerry2003826
 /src/Service/Orders/ @Jerry2003826
+/src/Service/Security/ @Jerry2003826
+/src/Service/Authorization/ @Jerry2003826
 /src/Authorization/ @Jerry2003826
+/src/Middleware/ @Jerry2003826
+/src/Controller/UsersController.php @Jerry2003826
+/src/Controller/CheckoutController.php @Jerry2003826
+/src/Controller/WebhooksController.php @Jerry2003826
+/src/Model/Table/UsersTable.php @Jerry2003826
+/config/app.php @Jerry2003826
 /config/Migrations/ @Jerry2003826
 /config/Seeds/ @Jerry2003826
 /.github/ @Jerry2003826

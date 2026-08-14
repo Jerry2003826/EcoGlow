@@ -301,8 +301,8 @@ class AccountController extends AppController
         $user->set('pending_email', null);
         $user->set('pending_email_token', null);
         $user->set('pending_email_expires', null);
+        $user->set('auth_version', (int)($user->get('auth_version') ?: 1) + 1);
         $users->saveOrFail($user);
-        $users->bumpAuthVersion($user);
         $customer = $this->fetchTable('Customers')->find()
             ->where(['user_id' => $user->id])
             ->first();

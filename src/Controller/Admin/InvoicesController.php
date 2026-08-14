@@ -68,7 +68,16 @@ class InvoicesController extends AdminController
         }
 
         $invoices = $this->paginate($query, ['limit' => 20]);
-        $this->set(compact('invoices', 'status', 'q', 'today'));
+        $statusCounts = $this->countByField('Invoices', 'status');
+        $overdueCount = $this->fetchTable('Invoices')->find()
+            ->where([
+                'status NOT IN' => [Invoice::STATUS_PAID, Invoice::STATUS_VOID],
+                'due_date <' => $today->format('Y-m-d'),
+                'balance_due_cents >' => 0,
+            ])
+            ->count();
+
+        $this->set(compact('invoices', 'status', 'q', 'today', 'statusCounts', 'overdueCount'));
     }
 
     /**

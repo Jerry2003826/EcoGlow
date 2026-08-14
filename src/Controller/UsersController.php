@@ -8,6 +8,7 @@ use App\Middleware\SessionIntegrityMiddleware;
 use App\Model\Entity\User;
 use App\Model\Table\UsersTable;
 use App\Service\Cart\CartService;
+use App\Service\Security\SensitiveSession;
 use App\Service\Security\TotpService;
 use Cake\Datasource\ConnectionInterface;
 use Cake\Http\Response;
@@ -115,6 +116,9 @@ class UsersController extends AppController
                     }
                     $user->set('last_login_at', DateTime::now('UTC'));
                     $this->Users->save($user);
+                    $session = $this->request->getSession();
+                    $session->delete(SensitiveSession::MFA_SETUP);
+                    $session->delete(SensitiveSession::CHECKOUT_ATTEMPT);
                 }
             }
 
@@ -267,13 +271,23 @@ class UsersController extends AppController
     /**
      * Logout method.
      *
+     * GET never destroys the session (that would be CSRF-logout). It shows a
+     * confirm form when signed in, or redirects to login when already signed out.
+     * Only POST + CSRF token actually signs the user out.
+     *
      * @return \Cake\Http\Response|null
      */
     public function logout(): ?Response
     {
-        $this->request->allowMethod(['post']);
-
         $identity = $this->Authentication->getIdentity();
+        if (!$this->request->is('post')) {
+            if ($identity === null) {
+                return $this->redirect(['action' => 'login']);
+            }
+
+            return null;
+        }
+
         $wasCustomer = false;
         if ($identity !== null) {
             $user = $this->Users->get((int)$identity->getIdentifier());
@@ -281,10 +295,7 @@ class UsersController extends AppController
         }
         $this->Authentication->logout();
         $session = $this->request->getSession();
-        $session->delete('Auth');
-        $session->delete('AuthV2');
-        $session->delete(SessionIntegrityMiddleware::SESSION_VERSION);
-        $session->delete(SessionIntegrityMiddleware::SESSION_MFA);
+        SensitiveSession::clear($session);
         $session->renew();
 
         return $this->redirect($wasCustomer ? '/account/login' : ['action' => 'login']);
@@ -310,31 +321,29 @@ class UsersController extends AppController
             return null;
         }
 
+        $started = hrtime(true);
         $ip = $this->request->clientIp() ?: 'unknown';
         $scope = LoginThrottleMiddleware::SCOPE_PASSWORD_RESET;
+        $email = trim((string)$this->request->getData('email'));
 
-        if (LoginThrottleMiddleware::isLockedOut($ip, $scope)) {
+        if (LoginThrottleMiddleware::isLockedOut($ip, $scope, $email)) {
             $this->Flash->error(
                 __('Too many password reset requests. Please wait a few minutes and try again.'),
             );
+            $this->padForgotPasswordTiming($started);
 
             return null;
         }
 
         // Count the attempt before any lookup so the counter cannot be
         // out-run by a script hammering the endpoint.
-        LoginThrottleMiddleware::registerAttempt(
-            $ip,
-            $scope,
-            trim((string)$this->request->getData('email')),
-        );
-
-        $email = trim((string)$this->request->getData('email'));
+        LoginThrottleMiddleware::registerAttempt($ip, $scope, $email);
 
         // A malformed address is rejected on the spot. This reveals nothing
         // about who holds an account, so it is safe to be specific here.
         if (!Validation::email($email)) {
             $this->Flash->error(__('Please enter a valid email address.'));
+            $this->padForgotPasswordTiming($started);
 
             return null;
         }
@@ -350,6 +359,7 @@ class UsersController extends AppController
         $this->Flash->success(__(
             'If that email address has an account, we have sent a password reset link. Please check your inbox.',
         ));
+        $this->padForgotPasswordTiming($started);
 
         return $this->redirect($loginPath);
     }
@@ -394,9 +404,9 @@ class UsersController extends AppController
                 // password is what makes a link single-use.
                 $user->set('password_reset_token', null);
                 $user->set('password_reset_expires', null);
+                $user->set('auth_version', (int)($user->get('auth_version') ?: 1) + 1);
 
                 if ($this->Users->save($user)) {
-                    $this->Users->bumpAuthVersion($user);
                     LoginThrottleMiddleware::clear(
                         $this->request->clientIp() ?: 'unknown',
                         LoginThrottleMiddleware::SCOPE_PASSWORD_RESET,
@@ -557,6 +567,7 @@ class UsersController extends AppController
         $user->set('email_verified_at', DateTime::now('UTC'));
         $user->set('email_verification_token', null);
         $user->set('email_verification_expires', null);
+        $user->set('auth_version', (int)($user->get('auth_version') ?: 1) + 1);
         $this->Users->saveOrFail($user);
         $this->Flash->success(__('Your email is confirmed. You can complete checkout.'));
 
@@ -578,18 +589,22 @@ class UsersController extends AppController
             return $this->redirect('/login/mfa-setup');
         }
         if ($this->request->is('post')) {
-            try {
-                $secret = TotpService::open((string)$user->get('mfa_secret'));
-            } catch (Throwable) {
-                $this->Flash->error(__('Two-factor authentication is not available. Please set it up again.'));
+            if ($this->mfaLocked($user)) {
+                $this->Flash->error(__('Too many authentication codes. Please wait a few minutes and try again.'));
 
-                return $this->redirect('/login/mfa-setup');
+                return null;
             }
-            if (TotpService::verify($secret, (string)$this->request->getData('code'))) {
+            $code = (string)$this->request->getData('code');
+            $accepted = $this->acceptMfaCode($user, $code);
+            if ($accepted) {
+                $this->clearMfaThrottle($user);
                 $this->request->getSession()->write(SessionIntegrityMiddleware::SESSION_MFA, true);
+                Log::info('Staff MFA succeeded', ['user_id' => (int)$user->id]);
 
                 return $this->redirect('/admin');
             }
+            $this->registerMfaFailure($user);
+            Log::info('Staff MFA failed', ['user_id' => (int)$user->id]);
             $this->Flash->error(__('That code was not recognised. Try again.'));
         }
 
@@ -608,28 +623,49 @@ class UsersController extends AppController
             return $user;
         }
         $session = $this->request->getSession();
-        $plain = (string)$session->read('MfaSetup.secret');
-        if ($plain === '') {
-            $plain = TotpService::generateSecret();
-            $session->write('MfaSetup.secret', $plain);
-        }
+        $setup = $this->mfaSetupState((int)$user->id);
+        $plain = (string)($setup['secret'] ?? '');
         if ($this->request->is('post')) {
-            if (TotpService::verify($plain, (string)$this->request->getData('code'))) {
+            if ($this->mfaLocked($user)) {
+                $this->Flash->error(__('Too many authentication codes. Please wait a few minutes and try again.'));
+                $this->set([
+                    'secret' => $plain,
+                    'otpauth' => TotpService::provisioningUri($plain, (string)$user->email),
+                    'recoveryCodes' => [],
+                ]);
+
+                return null;
+            }
+            $step = TotpService::acceptedTimestep($plain, (string)$this->request->getData('code'));
+            if ($step !== null) {
+                $codes = TotpService::generateRecoveryCodes();
                 $user->set('mfa_secret', TotpService::seal($plain));
                 $user->set('mfa_enabled', true);
                 $user->set('mfa_confirmed_at', DateTime::now('UTC'));
+                $user->set('mfa_last_timestep', $step);
+                $user->set('mfa_recovery_hashes', TotpService::hashRecoveryCodes($codes));
                 $this->Users->saveOrFail($user);
-                $session->delete('MfaSetup.secret');
+                $session->delete(SensitiveSession::MFA_SETUP);
                 $session->write(SessionIntegrityMiddleware::SESSION_MFA, true);
-                $this->Flash->success(__('Two-factor authentication is now enabled.'));
+                $this->clearMfaThrottle($user);
+                Log::info('Staff MFA enrolled', ['user_id' => (int)$user->id]);
+                $this->Flash->success(__('Two-factor authentication is now enabled. Store the recovery codes below.'));
+                $this->set([
+                    'secret' => $plain,
+                    'otpauth' => TotpService::provisioningUri($plain, (string)$user->email),
+                    'recoveryCodes' => $codes,
+                ]);
 
-                return $this->redirect('/admin');
+                return null;
             }
+            $this->registerMfaFailure($user);
+            Log::info('Staff MFA setup failed', ['user_id' => (int)$user->id]);
             $this->Flash->error(__('That code was not recognised. Try again.'));
         }
         $this->set([
             'secret' => $plain,
             'otpauth' => TotpService::provisioningUri($plain, (string)$user->email),
+            'recoveryCodes' => [],
         ]);
 
         return null;
@@ -722,6 +758,125 @@ class UsersController extends AppController
         }
 
         return $user;
+    }
+
+    /**
+     * @param \App\Model\Entity\User $user Staff user.
+     * @param string $code TOTP or recovery code.
+     * @return bool
+     */
+    private function acceptMfaCode(User $user, string $code): bool
+    {
+        $remaining = TotpService::consumeRecoveryCode((string)$user->get('mfa_recovery_hashes'), $code);
+        if ($remaining !== null) {
+            $user->set('mfa_recovery_hashes', $remaining);
+            $this->Users->saveOrFail($user);
+
+            return true;
+        }
+        try {
+            $secret = TotpService::open((string)$user->get('mfa_secret'));
+        } catch (Throwable) {
+            return false;
+        }
+        $step = TotpService::acceptedTimestep($secret, $code);
+        if ($step === null) {
+            return false;
+        }
+        $last = $user->get('mfa_last_timestep');
+        if ($last !== null && (int)$last === $step) {
+            return false;
+        }
+        $user->set('mfa_last_timestep', $step);
+        $this->Users->saveOrFail($user);
+
+        return true;
+    }
+
+    /**
+     * @param int $userId Current user.
+     * @return array<string, mixed>
+     */
+    private function mfaSetupState(int $userId): array
+    {
+        $session = $this->request->getSession();
+        $setup = $session->read(SensitiveSession::MFA_SETUP);
+        $now = time();
+        if (
+            is_array($setup)
+            && (int)($setup['user_id'] ?? 0) === $userId
+            && (int)($setup['expires_at'] ?? 0) > $now
+            && (string)($setup['secret'] ?? '') !== ''
+        ) {
+            return $setup;
+        }
+        $setup = [
+            'user_id' => $userId,
+            'secret' => TotpService::generateSecret(),
+            'created_at' => $now,
+            'expires_at' => $now + 600,
+            'attempts' => 0,
+            'nonce' => bin2hex(random_bytes(8)),
+        ];
+        $session->write(SensitiveSession::MFA_SETUP, $setup);
+
+        return $setup;
+    }
+
+    /**
+     * @param \App\Model\Entity\User $user Staff user.
+     * @return bool
+     */
+    private function mfaLocked(User $user): bool
+    {
+        $ip = $this->request->clientIp() ?: 'unknown';
+        $sessionId = (string)$this->request->getSession()->id();
+
+        return LoginThrottleMiddleware::isLockedOut($ip, LoginThrottleMiddleware::SCOPE_MFA)
+            || LoginThrottleMiddleware::isLockedOut('user:' . $user->id, LoginThrottleMiddleware::SCOPE_MFA)
+            || LoginThrottleMiddleware::isLockedOut('session:' . $sessionId, LoginThrottleMiddleware::SCOPE_MFA);
+    }
+
+    /**
+     * @param \App\Model\Entity\User $user Staff user.
+     * @return void
+     */
+    private function registerMfaFailure(User $user): void
+    {
+        $ip = $this->request->clientIp() ?: 'unknown';
+        $sessionId = (string)$this->request->getSession()->id();
+        LoginThrottleMiddleware::registerAttempt($ip, LoginThrottleMiddleware::SCOPE_MFA);
+        LoginThrottleMiddleware::registerAttempt('user:' . $user->id, LoginThrottleMiddleware::SCOPE_MFA);
+        LoginThrottleMiddleware::registerAttempt('session:' . $sessionId, LoginThrottleMiddleware::SCOPE_MFA);
+    }
+
+    /**
+     * @param \App\Model\Entity\User $user Staff user.
+     * @return void
+     */
+    private function clearMfaThrottle(User $user): void
+    {
+        $ip = $this->request->clientIp() ?: 'unknown';
+        $sessionId = (string)$this->request->getSession()->id();
+        LoginThrottleMiddleware::clear($ip, LoginThrottleMiddleware::SCOPE_MFA);
+        LoginThrottleMiddleware::clear('user:' . $user->id, LoginThrottleMiddleware::SCOPE_MFA);
+        LoginThrottleMiddleware::clear('session:' . $sessionId, LoginThrottleMiddleware::SCOPE_MFA);
+    }
+
+    /**
+     * @param float|int $started hrtime(true) at the start of the action.
+     * @return void
+     */
+    private function padForgotPasswordTiming(int|float $started): void
+    {
+        if (defined('PHPUNIT_COMPOSER_INSTALL')) {
+            return;
+        }
+        $elapsedMs = (hrtime(true) - $started) / 1_000_000;
+        $minimum = 250 + random_int(0, 80);
+        if ($elapsedMs < $minimum) {
+            usleep((int)(($minimum - $elapsedMs) * 1000));
+        }
     }
 
     /**

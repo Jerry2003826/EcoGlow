@@ -355,6 +355,121 @@
                 }
             });
         });
+
+        bindInventory(root);
+    }
+
+    function bindInventory(root) {
+        var table = root.querySelector('[data-inv-table]');
+        if (!table) {
+            return;
+        }
+
+        var search = root.querySelector('[data-inv-search]');
+        var empty = root.querySelector('[data-inv-empty]');
+        var caption = root.querySelector('[data-inv-caption]');
+        var locationLabel = caption ? (caption.getAttribute('data-location') || 'this location') : '';
+        var rows = root.querySelectorAll('[data-inv-row]');
+        var filter = 'all';
+
+        function rowMatches(row) {
+            var stock = row.getAttribute('data-stock') || '';
+            if (filter === 'low') {
+                return row.getAttribute('data-low') === '1';
+            }
+            if (filter === 'out' || filter === 'in') {
+                return stock === filter;
+            }
+            return true;
+        }
+
+        function applyFilter() {
+            var needle = search ? search.value.trim().toLowerCase() : '';
+            var shown = 0;
+            Array.prototype.forEach.call(rows, function (row) {
+                var hay = (row.getAttribute('data-search') || '').toLowerCase();
+                var matchText = needle === '' || hay.indexOf(needle) !== -1;
+                var match = matchText && rowMatches(row);
+                row.hidden = !match;
+                if (match) {
+                    shown += 1;
+                }
+            });
+            if (empty) {
+                empty.hidden = shown !== 0;
+            }
+            if (caption) {
+                caption.textContent = shown === rows.length
+                    ? rows.length + ' SKUs at ' + locationLabel
+                    : shown + ' of ' + rows.length + ' SKUs';
+            }
+        }
+
+        function setFilter(next) {
+            filter = next || 'all';
+            root.querySelectorAll('[data-inv-filter]').forEach(function (el) {
+                var on = el.getAttribute('data-inv-filter') === filter;
+                el.classList.toggle('is-active', on);
+                if (el.hasAttribute('aria-pressed')) {
+                    el.setAttribute('aria-pressed', on ? 'true' : 'false');
+                }
+            });
+            applyFilter();
+        }
+
+        root.querySelectorAll('[data-inv-filter]').forEach(function (el) {
+            el.addEventListener('click', function (event) {
+                event.preventDefault();
+                var next = el.getAttribute('data-inv-filter') || 'all';
+                setFilter(filter === next && next !== 'all' ? 'all' : next);
+            });
+        });
+
+        if (search) {
+            search.addEventListener('input', applyFilter);
+        }
+
+        var form = root.querySelector('[data-inv-form]');
+        var variant = form ? form.querySelector('[name="product_variant_id"]') : null;
+        var qty = form ? form.querySelector('[name="quantity"]') : null;
+        var preview = root.querySelector('[data-inv-preview]');
+
+        function updatePreview(button) {
+            if (!preview) {
+                return;
+            }
+            if (!button) {
+                preview.hidden = true;
+                preview.textContent = '';
+                return;
+            }
+            preview.hidden = false;
+            preview.textContent = (button.getAttribute('data-label') || '') +
+                ' — ' + (button.getAttribute('data-counts') || '');
+        }
+
+        root.querySelectorAll('[data-inv-adjust]').forEach(function (button) {
+            button.addEventListener('click', function () {
+                if (variant) {
+                    variant.value = button.getAttribute('data-variant') || '';
+                }
+                if (qty) {
+                    qty.value = '1';
+                    qty.focus();
+                }
+                updatePreview(button);
+                if (form) {
+                    form.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }
+            });
+        });
+
+        if (variant) {
+            variant.addEventListener('change', function () {
+                var button = root.querySelector('[data-inv-adjust][data-variant="' + variant.value + '"]');
+                updatePreview(button);
+            });
+        }
     }
 
     bindStage(document.querySelector('.admin-stage') || document);

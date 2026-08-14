@@ -5,11 +5,16 @@ declare(strict_types=1);
 /**
  * One-click local bootstrap: write app_local.php, migrate, seed, then serve.
  *
- * Usage: php bin/dev_up.php [--no-serve] [--port=8765]
+ * Usage: ECOGLOW_ALLOW_DEV_BOOTSTRAP=1 php bin/dev_up.php [--no-serve] [--port=8765]
  */
 
 $root = dirname(__DIR__);
 chdir($root);
+
+if (getenv('ECOGLOW_ALLOW_DEV_BOOTSTRAP') !== '1') {
+    fwrite(STDERR, "Refusing to run. Set ECOGLOW_ALLOW_DEV_BOOTSTRAP=1 on a local machine only.\n");
+    exit(1);
+}
 
 $options = getopt('', ['no-serve', 'port:']);
 $port = isset($options['port']) ? (int)$options['port'] : (int)(getenv('ECOGLOW_PORT') ?: 8765);
@@ -22,8 +27,8 @@ fwrite(STDOUT, "Eco Glow — local one-click setup\n");
 fwrite(STDOUT, str_repeat('=', 40) . "\n");
 
 $php = PHP_BINARY;
-if (PHP_VERSION_ID < 80200) {
-    fwrite(STDERR, "PHP 8.2+ is required. This runtime is " . PHP_VERSION . ".\n");
+if (PHP_VERSION_ID < 80400) {
+    fwrite(STDERR, "PHP 8.4+ is required. This runtime is " . PHP_VERSION . ".\n");
     exit(1);
 }
 if (!in_array('mysql', PDO::getAvailableDrivers(), true)) {
@@ -80,6 +85,19 @@ function ensureDatabase(): array
         'database' => getenv('ECOGLOW_DB_NAME') ?: 'ecoglow',
     ];
 
+    $existing = probeMysql(
+        $preferred['host'],
+        $preferred['port'],
+        $preferred['user'],
+        $preferred['password'],
+        $preferred['database'],
+    );
+    if ($existing instanceof PDO) {
+        fwrite(STDOUT, "Database {$preferred['database']} is ready (user {$preferred['user']}).\n");
+
+        return $preferred;
+    }
+
     $admin = null;
     for ($attempt = 1; $attempt <= 15; $attempt++) {
         $admin = findMysqlAdmin($preferred['host'], $preferred['port']);
@@ -91,7 +109,7 @@ function ensureDatabase(): array
     }
     if ($admin === null) {
         fwrite(STDERR, "Could not connect to MySQL/MariaDB on {$preferred['host']}:{$preferred['port']}.\n");
-        fwrite(STDERR, "Start MySQL first, or set ECOGLOW_DB_HOST / MYSQL_ROOT_PASSWORD.\n");
+        fwrite(STDERR, "Set ECOGLOW_DB_ADMIN_USER and MYSQL_ROOT_PASSWORD, or create the app user first.\n");
         exit(1);
     }
 
@@ -112,14 +130,9 @@ function ensureDatabase(): array
 
         return $preferred;
     } catch (Throwable $exception) {
-        fwrite(STDOUT, "Could not create app user, falling back to the admin MySQL account.\n");
-        $preferred['user'] = $admin->query('SELECT CURRENT_USER()')->fetchColumn() ?: 'root';
-        // CURRENT_USER() is like root@localhost — keep the login we actually used.
-        $preferred['user'] = (string)($GLOBALS['_ecoglow_mysql_user'] ?? 'root');
-        $preferred['password'] = (string)($GLOBALS['_ecoglow_mysql_password'] ?? '');
-        fwrite(STDOUT, "Database {$preferred['database']} is ready (user {$preferred['user']}).\n");
-
-        return $preferred;
+        fwrite(STDERR, "Could not create the application MySQL user. Refusing to reuse a guessed admin account.\n");
+        fwrite(STDERR, $exception->getMessage() . "\n");
+        exit(1);
     }
 }
 
@@ -128,27 +141,22 @@ function ensureDatabase(): array
  */
 function findMysqlAdmin(string $host, int $port): ?PDO
 {
-    $passwords = [
-        (string)(getenv('MYSQL_ROOT_PASSWORD') ?: ''),
-        'root',
-        'password',
-        'secret',
-        'ecoglow',
-    ];
-    $users = ['root', 'ecoglow', 'my_app'];
+    $user = (string)(getenv('ECOGLOW_DB_ADMIN_USER') ?: getenv('MYSQL_USER') ?: '');
+    $password = getenv('MYSQL_ROOT_PASSWORD');
+    if ($password === false) {
+        $password = getenv('ECOGLOW_DB_ADMIN_PASSWORD');
+    }
+    if ($user === '' || $password === false) {
+        return null;
+    }
     $hosts = array_values(array_unique([$host, '127.0.0.1', 'localhost']));
-
     foreach ($hosts as $tryHost) {
-        foreach ($users as $user) {
-            foreach ($passwords as $password) {
-                $pdo = probeMysql($tryHost, $port, $user, $password, null);
-                if ($pdo instanceof PDO) {
-                    $GLOBALS['_ecoglow_mysql_user'] = $user;
-                    $GLOBALS['_ecoglow_mysql_password'] = $password;
+        $pdo = probeMysql($tryHost, $port, $user, (string)$password, null);
+        if ($pdo instanceof PDO) {
+            $GLOBALS['_ecoglow_mysql_user'] = $user;
+            $GLOBALS['_ecoglow_mysql_password'] = (string)$password;
 
-                    return $pdo;
-                }
-            }
+            return $pdo;
         }
     }
 
@@ -242,11 +250,11 @@ function ensureWritableDirs(string $root): void
 {
     foreach (['logs', 'tmp', 'tmp/cache', 'tmp/cache/models', 'tmp/cache/persistent', 'tmp/cache/views', 'tmp/sessions', 'tmp/tests'] as $relative) {
         $path = $root . '/' . $relative;
-        if (!is_dir($path) && !mkdir($path, 0777, true) && !is_dir($path)) {
+        if (!is_dir($path) && !mkdir($path, 0750, true) && !is_dir($path)) {
             fwrite(STDERR, "Could not create {$path}\n");
             exit(1);
         }
-        @chmod($path, 0777);
+        @chmod($path, 0750);
     }
 }
 
@@ -263,23 +271,8 @@ function ensureComposer(string $root, string $php): array
     if ($global !== null) {
         return [$global];
     }
-    fwrite(STDOUT, "Downloading Composer...\n");
-    $url = 'https://getcomposer.org/download/latest-stable/composer.phar';
-    $data = @file_get_contents($url);
-    if ($data === false) {
-        $tmp = $root . '/tmp/composer-setup.php';
-        run($php, ['-r', 'copy("https://getcomposer.org/installer", ' . var_export($tmp, true) . ');'], $root);
-        run($php, [$tmp, '--install-dir=' . $root . '/bin', '--filename=composer.phar'], $root);
-        @unlink($tmp);
-    } else {
-        file_put_contents($phar, $data);
-    }
-    if (!is_file($phar)) {
-        fwrite(STDERR, "Composer could not be downloaded. Install it from https://getcomposer.org/\n");
-        exit(1);
-    }
-
-    return [$php, $phar];
+    fwrite(STDERR, "Composer is not installed. Install it from https://getcomposer.org/ and retry.\n");
+    exit(1);
 }
 
 function findOnPath(string $name): ?string

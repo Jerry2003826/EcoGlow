@@ -18,17 +18,32 @@ class IdempotencyService
 
     public const SCOPE_STRIPE_WEBHOOK = 'stripe_webhook';
 
+    public const ACQUIRED = 'acquired';
+
+    public const IN_FLIGHT = 'in_flight';
+
+    public const COMPLETED = 'completed';
+
     /**
-     * Insert the key. Returns false when another worker already claimed it
-     * and finished. Reclaims stale in-flight rows with a conditional UPDATE.
-     *
      * @param string $scope Scope, e.g. stripe_webhook.
      * @param string $key Provider event id.
      * @return bool True when this caller should process the event.
      */
     public function claim(string $scope, string $key): bool
     {
-        return (bool)$this->connection()->transactional(function () use ($scope, $key) {
+        return $this->claimStatus($scope, $key)['status'] === self::ACQUIRED;
+    }
+
+    /**
+     * @param string $scope Scope, e.g. stripe_webhook.
+     * @param string $key Provider event id.
+     * @return array{status: string, owner: string}
+     */
+    public function claimStatus(string $scope, string $key): array
+    {
+        $owner = bin2hex(random_bytes(16));
+
+        return $this->connection()->transactional(function () use ($scope, $key, $owner) {
             $table = $this->fetchTable('IdempotencyRecords');
             $existing = $table->find()
                 ->where(['scope' => $scope, 'idempotency_key' => $key])
@@ -38,6 +53,7 @@ class IdempotencyService
                 $row = $table->newEmptyEntity();
                 $row->set('scope', $scope);
                 $row->set('idempotency_key', $key);
+                $row->set('lease_owner', $owner);
                 $row->set('expires_at', DateTime::now('UTC')->addDays(7));
                 $row->set('locked_until', DateTime::now('UTC')->addMinutes(2));
                 try {
@@ -47,33 +63,42 @@ class IdempotencyService
                         throw $exception;
                     }
 
-                    return false;
+                    return ['status' => self::IN_FLIGHT, 'owner' => ''];
                 }
 
-                return true;
+                return ['status' => self::ACQUIRED, 'owner' => $owner];
             }
 
             if ($existing->get('completed_at') !== null) {
-                return false;
+                return ['status' => self::COMPLETED, 'owner' => (string)$existing->get('lease_owner')];
             }
 
-            $lockedUntil = DateTime::now('UTC')->addMinutes(2);
+            $lockedUntil = $existing->get('locked_until');
+            if ($lockedUntil instanceof DateTime && $lockedUntil->greaterThan(DateTime::now('UTC'))) {
+                return ['status' => self::IN_FLIGHT, 'owner' => ''];
+            }
+
             $statement = $this->connection()->execute(
                 'UPDATE idempotency_records
-                    SET locked_until = ?
+                    SET locked_until = ?, lease_owner = ?
                   WHERE scope = ?
                     AND idempotency_key = ?
                     AND completed_at IS NULL
                     AND locked_until <= ?',
                 [
-                    $lockedUntil,
+                    DateTime::now('UTC')->addMinutes(2),
+                    $owner,
                     $scope,
                     $key,
                     DateTime::now('UTC'),
                 ],
             );
 
-            return $statement->rowCount() === 1;
+            if ($statement->rowCount() === 1) {
+                return ['status' => self::ACQUIRED, 'owner' => $owner];
+            }
+
+            return ['status' => self::IN_FLIGHT, 'owner' => ''];
         });
     }
 
@@ -82,21 +107,27 @@ class IdempotencyService
      * @param string $key Event id.
      * @param int $status HTTP status stored for replays.
      * @param array<string, mixed> $body Response body snapshot.
+     * @param string $owner Lease owner from claimStatus().
      * @return void
      */
-    public function complete(string $scope, string $key, int $status, array $body): void
+    public function complete(string $scope, string $key, int $status, array $body, string $owner = ''): void
     {
-        $table = $this->fetchTable('IdempotencyRecords');
-        $row = $table->find()
-            ->where(['scope' => $scope, 'idempotency_key' => $key])
-            ->first();
-        if ($row === null) {
-            return;
-        }
-        $row->set('response_status', $status);
-        $row->set('response_body', $body);
-        $row->set('completed_at', DateTime::now('UTC'));
-        $table->saveOrFail($row);
+        $this->connection()->transactional(function () use ($scope, $key, $status, $body, $owner): void {
+            $table = $this->fetchTable('IdempotencyRecords');
+            $row = $table->find()
+                ->where(['scope' => $scope, 'idempotency_key' => $key])
+                ->first();
+            if ($row === null) {
+                return;
+            }
+            if ($owner !== '' && (string)$row->get('lease_owner') !== $owner) {
+                return;
+            }
+            $row->set('response_status', $status);
+            $row->set('response_body', $body);
+            $row->set('completed_at', DateTime::now('UTC'));
+            $table->saveOrFail($row);
+        });
     }
 
     /**
@@ -104,18 +135,22 @@ class IdempotencyService
      *
      * @param string $scope Scope.
      * @param string $key Event id.
+     * @param string $owner Lease owner from claimStatus().
      * @return void
      */
-    public function release(string $scope, string $key): void
+    public function release(string $scope, string $key, string $owner = ''): void
     {
-        $this->connection()->execute(
-            'UPDATE idempotency_records
+        $sql = 'UPDATE idempotency_records
                 SET locked_until = ?
               WHERE scope = ?
                 AND idempotency_key = ?
-                AND completed_at IS NULL',
-            [DateTime::now('UTC'), $scope, $key],
-        );
+                AND completed_at IS NULL';
+        $params = [DateTime::now('UTC'), $scope, $key];
+        if ($owner !== '') {
+            $sql .= ' AND lease_owner = ?';
+            $params[] = $owner;
+        }
+        $this->connection()->execute($sql, $params);
     }
 
     /**
@@ -127,10 +162,12 @@ class IdempotencyService
         $previous = $exception->getPrevious();
         if ($previous instanceof PDOException) {
             return (int)($previous->errorInfo[1] ?? 0) === 1062
-                || str_contains($previous->getMessage(), 'Duplicate');
+                || str_contains($previous->getMessage(), 'Duplicate')
+                || str_contains($previous->getMessage(), 'UNIQUE');
         }
 
         return str_contains($exception->getMessage(), 'Duplicate')
+            || str_contains($exception->getMessage(), 'UNIQUE')
             || str_contains($exception->getMessage(), '1062');
     }
 

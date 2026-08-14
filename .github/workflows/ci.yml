@@ -10,34 +10,50 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   testsuite:
     runs-on: ubuntu-24.04
+    timeout-minutes: 25
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - php-version: '8.2'
-            dependencies: 'lowest'
-          - php-version: '8.5'
-            dependencies: 'highest'
+        php-version: ['8.4', '8.5']
+
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: test_ecoglow
+          MYSQL_USER: my_app
+          MYSQL_PASSWORD: secret
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -proot"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
 
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      with:
+        persist-credentials: false
 
     - name: Setup PHP
       uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # v2
       with:
         php-version: ${{ matrix.php-version }}
-        extensions: mbstring, intl, pdo_sqlite
+        extensions: mbstring, intl, pdo_mysql
         ini-values: zend.assertions=1
         coverage: none
 
     - name: Composer install
-      uses: ramsey/composer-install@26d8a556604053a9612623447203a691f406fbe6 # v4
-      with:
-        dependency-versions: ${{ matrix.dependencies }}
-        composer-options: ${{ matrix.composer-options }}
+      run: composer install --no-interaction --prefer-dist --no-progress --locked
 
     - name: Composer post install
       run: composer run-script post-install-cmd --no-interaction
@@ -45,25 +61,29 @@ jobs:
     - name: Run PHPUnit
       run: vendor/bin/phpunit
       env:
-        DATABASE_TEST_URL: sqlite://./testdb.sqlite
+        SECURITY_SALT: f76f1c8475585c46c6acd3ddcb8f5e0f15de524637bb4080a08c4afe7cfc9144
+        DATABASE_TEST_URL: mysql://my_app:secret@127.0.0.1:3306/test_ecoglow?encoding=utf8mb4
 
   coding-standard:
     name: Coding Standard & Static Analysis
     runs-on: ubuntu-24.04
+    timeout-minutes: 15
 
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      with:
+        persist-credentials: false
 
     - name: Setup PHP
       uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # v2
       with:
-        php-version: '8.2'
+        php-version: '8.4'
         extensions: mbstring, intl
         coverage: none
         tools: cs2pr, phpstan:2.1
 
     - name: Composer install
-      uses: ramsey/composer-install@26d8a556604053a9612623447203a691f406fbe6 # v4
+      run: composer install --no-interaction --prefer-dist --no-progress --locked
 
     - name: Composer validate
       run: composer validate --strict
@@ -75,7 +95,6 @@ jobs:
       run: vendor/bin/phpcs --report=checkstyle | cs2pr
 
     - name: Run phpstan
-      if: always()
       run: phpstan
       env:
         SECURITY_SALT: f76f1c8475585c46c6acd3ddcb8f5e0f15de524637bb4080a08c4afe7cfc9144

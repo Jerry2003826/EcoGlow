@@ -10,9 +10,16 @@
  * @var string $from
  * @var string $to
  * @var \Cake\I18n\Date $today
+ * @var array<string, int> $statusCounts
+ * @var int $awaitingCount
+ * @var int $overdueCount
  */
 
 use App\Model\Entity\SalesOrder;
+
+$statusCounts = $statusCounts ?? [];
+$orderTotal = array_sum($statusCounts);
+$onHoldCount = $statusCounts[SalesOrder::STATUS_ON_HOLD] ?? 0;
 
 $this->assign('title', 'Orders');
 $this->assign('breadcrumb', $this->element('admin/breadcrumb', [
@@ -25,6 +32,39 @@ $this->assign('breadcrumb', $this->element('admin/breadcrumb', [
         <h1>Orders</h1>
     </div>
     <?= $this->Html->link('Record order', ['action' => 'add'], ['class' => 'btn btn-eg-primary']) ?>
+</div>
+
+<div class="admin-stat-grid">
+    <div class="admin-stat-card">
+        <span class="admin-stat-value"><?= $orderTotal ?></span>
+        <span class="eg-eyebrow">All orders</span>
+    </div>
+    <a class="admin-stat-card<?= $status === SalesOrder::STATUS_CONFIRMED ? ' is-active' : '' ?>"
+       href="<?= $this->Url->build(['action' => 'index', '?' => array_filter([
+           'status' => SalesOrder::STATUS_CONFIRMED,
+           'channel' => $channel !== '' ? $channel : null,
+           'q' => $q !== '' ? $q : null,
+           'from' => $from !== '' ? $from : null,
+           'to' => $to !== '' ? $to : null,
+       ])]) ?>">
+        <span class="admin-stat-value"><?= (int)$awaitingCount ?></span>
+        <span class="eg-eyebrow">Awaiting dispatch</span>
+    </a>
+    <div class="admin-stat-card">
+        <span class="admin-stat-value"><?= (int)$overdueCount ?></span>
+        <span class="eg-eyebrow">Overdue</span>
+    </div>
+    <a class="admin-stat-card<?= $status === SalesOrder::STATUS_ON_HOLD ? ' is-active' : '' ?>"
+       href="<?= $this->Url->build(['action' => 'index', '?' => array_filter([
+           'status' => SalesOrder::STATUS_ON_HOLD,
+           'channel' => $channel !== '' ? $channel : null,
+           'q' => $q !== '' ? $q : null,
+           'from' => $from !== '' ? $from : null,
+           'to' => $to !== '' ? $to : null,
+       ])]) ?>">
+        <span class="admin-stat-value"><?= $onHoldCount ?></span>
+        <span class="eg-eyebrow">On hold</span>
+    </a>
 </div>
 
 <form class="admin-filters" method="get" action="<?= $this->Url->build(['action' => 'index']) ?>">
@@ -42,9 +82,13 @@ $this->assign('breadcrumb', $this->element('admin/breadcrumb', [
             return ['action' => 'index', '?' => $query];
         };
         ?>
-        <a class="eg-chip<?= $status === '' ? ' is-active' : '' ?>" href="<?= $this->Url->build($statusUrl(null)) ?>">All</a>
+        <a class="eg-chip<?= $status === '' ? ' is-active' : '' ?>" href="<?= $this->Url->build($statusUrl(null)) ?>">
+            All <span class="admin-chip-count"><?= $orderTotal ?></span>
+        </a>
         <?php foreach (SalesOrder::statusLabels() as $key => $label) : ?>
-            <a class="eg-chip<?= $status === $key ? ' is-active' : '' ?>" href="<?= $this->Url->build($statusUrl($key)) ?>"><?= h($label) ?></a>
+            <a class="eg-chip<?= $status === $key ? ' is-active' : '' ?>" href="<?= $this->Url->build($statusUrl($key)) ?>">
+                <?= h($label) ?> <span class="admin-chip-count"><?= (int)($statusCounts[$key] ?? 0) ?></span>
+            </a>
         <?php endforeach; ?>
     </div>
 
@@ -86,18 +130,23 @@ $this->assign('breadcrumb', $this->element('admin/breadcrumb', [
     </div>
 <?php else : ?>
     <div class="admin-panel">
-        <div class="table-responsive">
-            <table class="table table-eg table-hover align-middle" aria-label="Sales orders">
+        <div class="admin-panel-head">
+            <h2>Sales orders</h2>
+            <p class="admin-panel-caption">
+                <?= (int)$salesOrders->totalCount() ?> matching
+            </p>
+        </div>
+        <div class="table-responsive admin-list-wrap">
+            <table class="table table-eg admin-list-table align-middle" aria-label="Sales orders">
                 <thead>
                     <tr>
                         <th><?= $this->Paginator->sort('order_number', 'Order') ?></th>
-                        <th>Customer</th>
                         <th><?= $this->Paginator->sort('source_channel', 'Channel') ?></th>
-                        <th><?= $this->Paginator->sort('grand_total_cents', 'Amount') ?></th>
+                        <th class="text-end"><?= $this->Paginator->sort('grand_total_cents', 'Amount') ?></th>
                         <th><?= $this->Paginator->sort('status') ?></th>
                         <th><?= $this->Paginator->sort('placed_at', 'Placed') ?></th>
                         <th><?= $this->Paginator->sort('promised_delivery_date', 'Promised') ?></th>
-                        <th class="text-end">Actions</th>
+                        <th class="text-end"> </th>
                     </tr>
                 </thead>
                 <tbody>
@@ -105,21 +154,27 @@ $this->assign('breadcrumb', $this->element('admin/breadcrumb', [
                         <?php
                         $overdue = $order->isDeliveryOverdue($today);
                         $channels = SalesOrder::channelLabels();
+                        $channelLabel = $channels[$order->source_channel] ?? $order->source_channel;
                         ?>
                         <tr class="<?= $overdue ? 'is-overdue' : '' ?>">
-                            <td class="cell-id"><?= h($order->order_number) ?></td>
-                            <td><?= h($order->customer_label) ?></td>
-                            <td><?= h($channels[$order->source_channel] ?? $order->source_channel) ?></td>
-                            <td><?= $this->Money->aud((int)$order->grand_total_cents) ?></td>
-                            <td><?= $this->element('admin/status_pill', ['status' => $order->status]) ?></td>
-                            <td class="text-nowrap"><?= h(($order->placed_at ?? $order->created)?->format('d M Y')) ?></td>
-                            <td class="text-nowrap">
+                            <td class="admin-identity-cell" data-label="Order">
+                                <?= $this->element('admin/identity', [
+                                    'title' => (string)$order->customer_label,
+                                    'code' => (string)$order->order_number,
+                                    'meta' => null,
+                                ]) ?>
+                            </td>
+                            <td data-label="Channel"><?= h($channelLabel) ?></td>
+                            <td class="cell-qty" data-label="Amount"><?= $this->Money->aud((int)$order->grand_total_cents) ?></td>
+                            <td data-label="Status"><?= $this->element('admin/status_pill', ['status' => $order->status]) ?></td>
+                            <td class="text-nowrap" data-label="Placed"><?= h(($order->placed_at ?? $order->created)?->format('d M Y')) ?></td>
+                            <td class="text-nowrap" data-label="Promised">
                                 <?= $order->promised_delivery_date ? h($order->promised_delivery_date->format('d M Y')) : '—' ?>
                                 <?php if ($overdue) : ?>
                                     <span class="admin-overdue-flag">Overdue <?= (int)$order->overdueDays($today) ?> days</span>
                                 <?php endif; ?>
                             </td>
-                            <td class="text-end">
+                            <td class="text-end admin-list-action" data-label="">
                                 <?= $this->Html->link('View', ['action' => 'view', $order->id], ['class' => 'btn btn-sm btn-eg-ghost']) ?>
                             </td>
                         </tr>

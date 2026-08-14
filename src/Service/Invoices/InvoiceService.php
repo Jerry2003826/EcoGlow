@@ -41,23 +41,27 @@ class InvoiceService
         if ($order->status === SalesOrder::STATUS_CANCELLED) {
             throw new InvalidArgumentException('A cancelled order cannot be invoiced.');
         }
-        $existing = $this->fetchTable('Invoices')->find()
-            ->where([
-                'sales_order_id' => $order->id,
-                'status !=' => Invoice::STATUS_VOID,
-            ])
-            ->first();
-        if ($existing) {
-            throw new InvalidArgumentException(sprintf(
-                'Order %s already has invoice %s.',
-                $order->order_number,
-                $existing->invoice_number,
-            ));
-        }
-
         $order = $this->fetchTable('SalesOrders')->get($order->id, finder: 'detail');
 
         return $this->connection()->transactional(function () use ($order, $actorUserId) {
+            $this->connection()->execute(
+                'SELECT id FROM sales_orders WHERE id = ? FOR UPDATE',
+                [$order->id],
+            );
+            $existing = $this->fetchTable('Invoices')->find()
+                ->where([
+                    'sales_order_id' => $order->id,
+                    'status !=' => Invoice::STATUS_VOID,
+                ])
+                ->first();
+            if ($existing) {
+                throw new InvalidArgumentException(sprintf(
+                    'Order %s already has invoice %s.',
+                    $order->order_number,
+                    $existing->invoice_number,
+                ));
+            }
+
             $today = Date::now('Australia/Melbourne');
             $invoices = $this->fetchTable('Invoices');
             $alreadyPaid = $this->capturedPaymentsTotal((int)$order->id);
@@ -87,6 +91,7 @@ class InvoiceService
             $invoice->metadata = [
                 'source_order_number' => $order->order_number,
             ];
+            $invoice->set('open_order_key', (int)$order->id);
             $invoices->saveOrFail($invoice);
 
             $itemsTable = $this->fetchTable('InvoiceItems');

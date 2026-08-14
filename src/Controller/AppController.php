@@ -86,7 +86,7 @@ class AppController extends Controller
             $user = $this->fetchTable('Users')->get($userId);
             $isStaff = $this->isStaffUser($user);
             $isCustomer = $this->isCustomerUser($user);
-            if ($isStaff) {
+            if ($isStaff && (new PermissionService())->has($userId, 'messages.manage')) {
                 $unreadCount = $this->fetchTable('ContactMessages')
                     ->find()
                     ->where(['ContactMessages.is_read' => false])

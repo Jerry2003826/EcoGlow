@@ -90,6 +90,7 @@ return function (RouteBuilder $routes): void {
             ->setPass(['id'])
             ->setPatterns(['id' => '\d+']);
         $builder->connect('/webhooks/stripe', ['controller' => 'Webhooks', 'action' => 'stripe']);
+        $builder->connect('/csp-report', ['controller' => 'CspReports', 'action' => 'report']);
         $builder->connect('/services/book', ['controller' => 'Services', 'action' => 'book']);
         $builder->connect('/register', ['controller' => 'Users', 'action' => 'register']);
         $builder->connect('/account/login', ['controller' => 'Users', 'action' => 'customerLogin']);
