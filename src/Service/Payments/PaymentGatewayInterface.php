@@ -23,4 +23,12 @@ interface PaymentGatewayInterface
      * @return \App\Service\Payments\RefundResult
      */
     public function refund(string $paymentIntentId, int $amountCents, string $idempotencyKey): RefundResult;
+
+    /**
+     * Client secret for an unpaid PaymentIntent, or null when it cannot be paid.
+     *
+     * @param string $paymentIntentId Stripe PaymentIntent id.
+     * @return string|null
+     */
+    public function retrieveClientSecret(string $paymentIntentId): ?string;
 }

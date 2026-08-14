@@ -82,6 +82,49 @@ class CheckoutService
     }
 
     /**
+     * Re-open the latest unpaid web checkout so a refresh can finish the card form.
+     *
+     * @param \App\Model\Entity\Customer $customer Signed-in customer.
+     * @return array{order: \App\Model\Entity\SalesOrder, client_secret: string}|null
+     */
+    public function resumePending(Customer $customer): ?array
+    {
+        $order = $this->fetchTable('SalesOrders')->find()
+            ->contain(['SalesOrderItems'])
+            ->where([
+                'customer_id' => $customer->id,
+                'source_channel' => SalesOrder::CHANNEL_WEB,
+                'payment_status' => 'pending',
+                'status' => SalesOrder::STATUS_DRAFT,
+            ])
+            ->orderBy(['id' => 'DESC'])
+            ->first();
+        if ($order === null) {
+            return null;
+        }
+
+        $meta = is_array($order->metadata) ? $order->metadata : [];
+        $intentId = (string)($meta['stripe_payment_intent_id'] ?? '');
+        if ($intentId === '') {
+            return null;
+        }
+
+        try {
+            $secret = $this->gateway->retrieveClientSecret($intentId);
+        } catch (Throwable) {
+            return null;
+        }
+        if ($secret === null || $secret === '') {
+            return null;
+        }
+
+        return [
+            'order' => $order,
+            'client_secret' => $secret,
+        ];
+    }
+
+    /**
      * Live totals for the checkout page. Posted amounts are never read.
      *
      * @param \App\Model\Entity\Cart|null $cart Cart.

@@ -35,6 +35,8 @@ $formError = (string)($errors['form'] ?? '');
 $confirmationUrl = $order
     ? Router::url('/checkout/confirmation/' . (int)$order->id, true)
     : '';
+$billingName = trim((string)($customer->first_name ?? '') . ' ' . (string)($customer->last_name ?? ''));
+$billingEmail = (string)($customer->email ?? '');
 ?>
 <div class="container py-5 checkout-page account-page">
     <nav aria-label="Breadcrumb" class="mb-4 reveal">
@@ -177,7 +179,7 @@ $confirmationUrl = $order
                         <?php else : ?>
                             <div id="payment-element" class="checkout-payment-element"></div>
                             <p id="payment-message" class="checkout-alert mt-3" role="alert" hidden></p>
-                            <div class="d-grid mt-3">
+                            <div class="d-grid mt-3 checkout-pay-actions">
                                 <button type="button" class="btn btn-eg-primary" id="pay-button">
                                     Pay <?= $this->Money->aud((int)($totals['total_cents'] ?? 0)) ?>
                                 </button>
@@ -243,6 +245,18 @@ $confirmationUrl = $order
 <script src="https://js.stripe.com/v3/"></script>
 <script>
 (function () {
+    var payButton = document.getElementById('pay-button');
+    var messageEl = document.getElementById('payment-message');
+    if (!payButton || !messageEl) {
+        return;
+    }
+
+    var showError = function (message) {
+        messageEl.hidden = false;
+        messageEl.textContent = message || 'Payment could not be completed.';
+        payButton.disabled = false;
+    };
+
     var stripe = Stripe(<?= json_encode($publishableKey) ?>);
     var elements = stripe.elements({
         clientSecret: <?= json_encode($clientSecret) ?>,
@@ -274,23 +288,48 @@ $confirmationUrl = $order
             }
         }
     });
-    var paymentElement = elements.create('payment');
+    var paymentElement = elements.create('payment', {
+        layout: 'tabs',
+        wallets: {
+            applePay: 'never',
+            googlePay: 'never',
+            link: 'never'
+        },
+        defaultValues: {
+            billingDetails: {
+                name: <?= json_encode($billingName) ?>,
+                email: <?= json_encode($billingEmail) ?>
+            }
+        }
+    });
     paymentElement.mount('#payment-element');
-    var payButton = document.getElementById('pay-button');
-    var messageEl = document.getElementById('payment-message');
+
     payButton.addEventListener('click', function () {
         payButton.disabled = true;
-        stripe.confirmPayment({
-            elements: elements,
-            confirmParams: {
-                return_url: <?= json_encode($confirmationUrl) ?>
+        messageEl.hidden = true;
+
+        var submit = typeof elements.submit === 'function'
+            ? elements.submit()
+            : Promise.resolve({});
+
+        submit.then(function (submitted) {
+            if (submitted && submitted.error) {
+                showError(submitted.error.message);
+                return;
             }
-        }).then(function (result) {
-            if (result.error) {
-                messageEl.hidden = false;
-                messageEl.textContent = result.error.message || 'Payment could not be completed.';
-                payButton.disabled = false;
-            }
+
+            return stripe.confirmPayment({
+                elements: elements,
+                confirmParams: {
+                    return_url: <?= json_encode($confirmationUrl) ?>
+                }
+            }).then(function (result) {
+                if (result.error) {
+                    showError(result.error.message);
+                }
+            });
+        }).catch(function (error) {
+            showError(error && error.message ? error.message : null);
         });
     });
 })();

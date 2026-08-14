@@ -53,4 +53,16 @@ final class FakePaymentGateway implements PaymentGatewayInterface
     {
         return new RefundResult('re_test_1', 'succeeded');
     }
+
+    /**
+     * @inheritDoc
+     */
+    public function retrieveClientSecret(string $paymentIntentId): ?string
+    {
+        if ($paymentIntentId === '' || str_starts_with($paymentIntentId, 'pi_done_')) {
+            return null;
+        }
+
+        return $paymentIntentId . '_secret_test';
+    }
 }

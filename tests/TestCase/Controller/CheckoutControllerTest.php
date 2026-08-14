@@ -239,6 +239,40 @@ class CheckoutControllerTest extends TestCase
     }
 
     /**
+     * The Pay control must stay clickable in HTML; a refresh reopens the same unpaid intent.
+     *
+     * @return void
+     */
+    public function testPayButtonStaysEnabledAndGetResumesPendingIntent(): void
+    {
+        $this->fillCart(4, 'resume-token', 1, 1);
+        $this->loginCustomer(4, 'resume-token');
+        $this->post('/checkout', [
+            'recipient_name' => 'Casey Aitken',
+            'line1' => '10 Flinders Lane',
+            'suburb' => 'Melbourne',
+            'state' => 'VIC',
+            'postcode' => '3000',
+            'phone' => '0400000004',
+        ]);
+        $this->assertResponseOk();
+        $this->assertResponseContains('id="pay-button"');
+        $this->assertDoesNotMatchRegularExpression(
+            '/id="pay-button"[^>]*\bdisabled\b/',
+            (string)$this->_getBodyAsString(),
+        );
+        $this->assertResponseContains('pi_test_1_secret_test');
+
+        $this->loginCustomer(4, 'resume-token');
+        $this->get('/checkout');
+        $this->assertResponseOk();
+        $this->assertResponseContains('held pending payment');
+        $this->assertResponseContains('id="pay-button"');
+        $this->assertResponseContains('pi_test_1_secret_test');
+        $this->assertResponseContains('Marlow Floor Lamp');
+    }
+
+    /**
      * @param int $userId UsersFixture id.
      * @param string|null $cartToken Session cart token.
      * @return void

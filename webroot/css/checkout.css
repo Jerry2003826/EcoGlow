@@ -1,6 +1,9 @@
 /*
- * Checkout and service-booking extras. Tokens from site.css only.
- * Do not edit site.css.
+ * Checkout and service-booking surfaces (modern redesign).
+ * Tokens from site.css only. Do not edit site.css.
+ *
+ * Scoped to .checkout-page. Stripe Payment Element z-index rules and every
+ * functional selector are preserved unchanged.
  */
 
 .checkout-page {
@@ -32,21 +35,38 @@
 .checkout-aside {
     display: flex;
     flex-direction: column;
-    gap: 0.75rem;
+    gap: 0.9rem;
 }
 
 .checkout-aside-card {
-    padding: 1.25rem 1.35rem;
+    padding: 1.3rem 1.4rem;
 }
 
+/* ---------- Section titles — small caps over a hairline ---------- */
+
 .checkout-section-title {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
     font-family: var(--eg-font-body);
-    font-size: 0.95rem;
+    font-size: 0.88rem;
     font-weight: 600;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.1em;
     text-transform: uppercase;
     margin: 0 0 1.25rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid rgba(201, 188, 169, 0.55);
     color: var(--eg-text);
+}
+
+.checkout-section-title::before {
+    content: '';
+    width: 0.5rem;
+    height: 0.5rem;
+    flex: none;
+    border-radius: 2px;
+    background: var(--eg-brand);
+    box-shadow: 2.5px 2.5px 0 var(--eg-accent);
 }
 
 .checkout-aside-card .checkout-section-title {
@@ -63,27 +83,33 @@
     color: var(--eg-text);
 }
 
+/* ---------- Alerts & notices ---------- */
+
 .checkout-alert {
     background: var(--eg-error-tint);
     color: var(--eg-error);
-    border: 1px solid var(--eg-border);
+    border: 1px solid rgba(122, 38, 23, 0.25);
     border-left: 3px solid var(--eg-error);
-    border-radius: var(--eg-radius-sm);
-    padding: 0.85rem 1rem;
+    border-radius: var(--eg-radius);
+    padding: 0.95rem 1.1rem;
     margin-bottom: 0;
     font-weight: 600;
+    box-shadow: 0 1px 2px rgba(47, 46, 44, 0.05);
 }
 
 .checkout-notice {
     background: var(--eg-warning-tint);
     color: var(--eg-warning);
-    border: 1px solid var(--eg-border);
+    border: 1px solid rgba(126, 83, 19, 0.22);
     border-left: 3px solid var(--eg-warning);
-    border-radius: var(--eg-radius-sm);
-    padding: 0.85rem 1rem;
+    border-radius: var(--eg-radius);
+    padding: 0.95rem 1.1rem;
     margin-bottom: 0;
     font-weight: 600;
+    box-shadow: 0 1px 2px rgba(47, 46, 44, 0.05);
 }
+
+/* ---------- Order review lines ---------- */
 
 .checkout-lines {
     list-style: none;
@@ -95,13 +121,29 @@
     display: flex;
     justify-content: space-between;
     gap: 1rem;
-    padding: 0.5rem 0;
-    border-bottom: 1px solid var(--eg-border);
+    padding: 0.6rem 0;
+    border-bottom: 1px solid rgba(201, 188, 169, 0.45);
 }
 
+.checkout-lines li:last-child {
+    border-bottom: 0;
+}
+
+/* ---------- Stripe element & pay actions (functional, unchanged) ---------- */
+
 .checkout-payment-element {
+    position: relative;
+    z-index: 0;
     min-height: 12rem;
 }
+
+/* Stripe's iframe is taller than the visible fields and was eating Pay clicks. */
+.checkout-pay-actions {
+    position: relative;
+    z-index: 2;
+}
+
+/* ---------- Selectable radio/check rows (saved addresses, options) ---------- */
 
 .checkout-check,
 .checkout-page .form-check {
@@ -112,6 +154,31 @@
     margin: 0;
     cursor: pointer;
     font-weight: 500;
+}
+
+.checkout-check {
+    padding: 0.7rem 1rem;
+    border: 1px solid var(--eg-border);
+    border-radius: 0.65rem;
+    background: #FFFFFF;
+    transition: border-color 0.15s var(--eg-ease), background 0.15s var(--eg-ease), box-shadow 0.15s var(--eg-ease);
+}
+
+fieldset .checkout-check + .checkout-check {
+    margin-top: 0.55rem;
+}
+
+.checkout-check:hover {
+    border-color: var(--eg-brand);
+    background: var(--eg-brand-tint);
+}
+
+/* Checked state: tint + ring + filled control — never colour alone. */
+.checkout-check:has(input:checked) {
+    border-color: var(--eg-brand);
+    background: var(--eg-brand-tint);
+    box-shadow: 0 0 0 1px var(--eg-brand);
+    color: var(--eg-brand); /* 8.53:1 on the tint */
 }
 
 .checkout-page input[type="checkbox"],
@@ -125,15 +192,22 @@
     flex: none;
     border: 1.5px solid var(--eg-border);
     border-radius: var(--eg-radius-sm);
-    background-color: var(--eg-bg);
+    background-color: #FFFFFF;
     background-image: none;
     accent-color: var(--eg-brand);
     cursor: pointer;
+    transition: border-color 0.15s var(--eg-ease), background-color 0.15s var(--eg-ease), box-shadow 0.15s var(--eg-ease);
 }
 
 .checkout-page input[type="radio"],
 .checkout-page .form-check-input[type="radio"] {
     border-radius: 50%;
+}
+
+.checkout-page input[type="checkbox"]:hover,
+.checkout-page input[type="radio"]:hover,
+.checkout-page .form-check-input:hover {
+    border-color: var(--eg-brand);
 }
 
 .checkout-page input[type="checkbox"]:checked,
@@ -148,7 +222,7 @@
 
 .checkout-page input[type="radio"]:checked,
 .checkout-page .form-check-input[type="radio"]:checked {
-    background-color: var(--eg-bg);
+    background-color: #FFFFFF;
     background-image: none;
     border-color: var(--eg-brand);
     box-shadow: inset 0 0 0 0.28rem var(--eg-brand);
@@ -180,5 +254,6 @@
     .checkout-lines li {
         flex-direction: column;
         align-items: flex-start;
+        gap: 0.25rem;
     }
 }

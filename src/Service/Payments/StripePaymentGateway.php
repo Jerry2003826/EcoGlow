@@ -33,7 +33,7 @@ class StripePaymentGateway implements PaymentGatewayInterface
             $intent = $this->client()->paymentIntents->create([
                 'amount' => $amountCents,
                 'currency' => strtolower($currency),
-                'automatic_payment_methods' => ['enabled' => true],
+                'payment_method_types' => ['card'],
                 'metadata' => $metadata,
             ]);
         } catch (ApiErrorException $exception) {
@@ -69,6 +69,35 @@ class StripePaymentGateway implements PaymentGatewayInterface
         }
 
         return new RefundResult((string)$refund->id, (string)$refund->status);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function retrieveClientSecret(string $paymentIntentId): ?string
+    {
+        if ($paymentIntentId === '') {
+            return null;
+        }
+
+        try {
+            $intent = $this->client()->paymentIntents->retrieve($paymentIntentId);
+        } catch (ApiErrorException $exception) {
+            throw new InvalidArgumentException(
+                'The payment service could not load this charge. Please try again.',
+                0,
+                $exception,
+            );
+        }
+
+        $status = (string)$intent->status;
+        if (in_array($status, ['succeeded', 'canceled'], true)) {
+            return null;
+        }
+
+        $secret = (string)$intent->client_secret;
+
+        return $secret !== '' ? $secret : null;
     }
 
     /**

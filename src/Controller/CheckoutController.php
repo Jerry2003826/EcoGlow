@@ -5,6 +5,7 @@ namespace App\Controller;
 
 use App\Model\Entity\Cart;
 use App\Model\Entity\Customer;
+use App\Model\Entity\SalesOrder;
 use App\Service\AustralianStates;
 use App\Service\Cart\CartService;
 use App\Service\Checkout\CheckoutService;
@@ -88,6 +89,14 @@ class CheckoutController extends AppController
                     $this->Flash->error($exception->getMessage());
                     $errors['form'] = $exception->getMessage();
                 }
+            }
+        } elseif ($paymentsEnabled && $stripeConfigured) {
+            $pending = $checkout->resumePending($customer);
+            if ($pending !== null) {
+                $order = $pending['order'];
+                $clientSecret = $pending['client_secret'];
+                $lines = $this->reviewLinesFromOrder($order);
+                $totals = $this->totalsFromOrder($order, $totals);
             }
         }
 
@@ -189,6 +198,40 @@ class CheckoutController extends AppController
         }
 
         return $lines;
+    }
+
+    /**
+     * @param \App\Model\Entity\SalesOrder $order Held unpaid checkout.
+     * @return list<array<string, mixed>>
+     */
+    private function reviewLinesFromOrder(SalesOrder $order): array
+    {
+        $lines = [];
+        foreach ($order->sales_order_items ?? [] as $item) {
+            $lines[] = [
+                'name' => (string)$item->item_name_snapshot,
+                'variant' => (string)($item->variant_name_snapshot ?? ''),
+                'qty' => (int)$item->quantity,
+                'line_total_cents' => (int)$item->line_total_cents,
+            ];
+        }
+
+        return $lines;
+    }
+
+    /**
+     * @param \App\Model\Entity\SalesOrder $order Held unpaid checkout.
+     * @param array<string, int|string> $defaults Live cart totals (threshold, rates).
+     * @return array<string, int|string>
+     */
+    private function totalsFromOrder(SalesOrder $order, array $defaults): array
+    {
+        $defaults['subtotal_cents'] = (int)$order->subtotal_cents;
+        $defaults['shipping_cents'] = (int)$order->shipping_cents;
+        $defaults['total_cents'] = (int)$order->grand_total_cents;
+        $defaults['gst_cents'] = (int)$order->tax_cents;
+
+        return $defaults;
     }
 
     /**
