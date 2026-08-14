@@ -1,0 +1,734 @@
+"""Source data for the Team 236 AI Prompt Register (Jiarui Li).
+
+Dates use DD/MM/YYYY as required by the FIT3047/8 AI Registry instructions.
+Prompts are the material operator requests. Follow-up micro-edits are grouped.
+Secrets (live keys, passwords) are redacted.
+"""
+
+from __future__ import annotations
+
+from typing import Any
+
+MEMBER = {
+    "name": "Jiarui Li",
+    "email": "jlii0474@student.monash.edu",
+    "username": "jiaruili23",
+    "team": "Team 236",
+    "unit": "FIT3047 / FIT3048 Industry Experience",
+    "client": "Eco Glow Lighting",
+    "period": "30/07/2026 – 14/08/2026",
+    "primary_tool": "Cursor IDE agent (Grok 4.6 / Composer)",
+    "image_tool": "Cursor image generation",
+    "app_repo": "team236-app_fit3047 (branch jiarui)",
+    "compiled": "14/08/2026",
+}
+
+DOCUMENT_CONTROL: list[dict[str, str]] = [
+    {"field": "Unit", "content": "FIT3047 / FIT3048 Industry Experience"},
+    {"field": "Project", "content": "Eco Glow Lighting (CakePHP 5 storefront and staff console)"},
+    {"field": "Team", "content": "Team 236"},
+    {"field": "Member", "content": "Jiarui Li (jlii0474@student.monash.edu)"},
+    {"field": "Period covered", "content": "30 July 2026 – 14 August 2026"},
+    {"field": "Primary tool", "content": "Cursor IDE agent (Grok 4.6)"},
+    {"field": "Last updated", "content": "14 August 2026"},
+    {
+        "field": "Intended PGP folders",
+        "content": (
+            "BV AI Registry; Requirements AI Registry; Architecture AI Registry; "
+            "Database AI Registry; UIUX AI Registry; Coding / Implementation AI Registry; "
+            "Checkout AI Registry; Admin UI AI Registry; Testing AI Registry; "
+            "Debugging AI Registry; Security AI Registry; Report AI Registry"
+        ),
+    },
+    {
+        "field": "Sources merged",
+        "content": (
+            "This file merges (1) the chronological PGP register compiled from Cursor "
+            "transcripts (30/07–14/08) with (2) the 14/08 artefact-level register that "
+            "recorded Stripe sandbox, Pay-button recovery, Admin Users folds, sidebar "
+            "navigation, account/checkout restyle, and the individual diary trail. "
+            "IDs stay chronological. The six 14/08 rows from the shorter register map to "
+            "AI-016, AI-021, AI-017, AI-020, AI-027, and AI-023."
+        ),
+    },
+]
+
+REJECTED: list[str] = [
+    "Locking body overflow to hide page scroll (blanked the lower admin stage).",
+    "CSS view-transitions on the admin rail (the rail slid toward Orders).",
+    "sessionStorage scroll restore plus visibility:hidden (still flashed on Users / Feature flags).",
+    "1-second scroll locks and hide-until-positioned (still flashed).",
+]
+
+INDIVIDUAL_ENTRIES: list[dict[str, Any]] = [
+    {
+        "id": "AI-IND-001",
+        "date": "14/08/2026",
+        "tool": "Cursor IDE agent (Grok 4.6)",
+        "phase": "Individual reflective diary",
+        "purpose": "Understand the HD structure and turn a Chinese outline into an English draft",
+        "prompt": (
+            "Translate the FIT3047/3048 Individual Reflective Diary specification and the good examples; "
+            "recommend an HD structure; then turn my Chinese six-part draft into an English submission "
+            "of about 500 words."
+        ),
+        "response": (
+            "English draft using I-voice, one pattern (freezing when watched), evaluation, analysis, "
+            "a trial already run, and a three-part action plan with a next-week check. "
+            "This register does not reproduce the diary text."
+        ),
+        "validation": (
+            "Read against the unit rubric: evaluation/analysis of self, and an action plan with tried steps. "
+            "Word count about 500. No fabricated team incidents."
+        ),
+        "outcome": "Modified. I will edit the draft in my own words before Moodle submit.",
+    },
+]
+
+# PGP folder name -> AI Registry folder name (as the instructions require)
+CATEGORIES: list[dict[str, str]] = [
+    {
+        "id": "bv",
+        "pgp_folder": "Business Vision",
+        "registry_folder": "BV AI Registry",
+        "title": "Business Vision",
+    },
+    {
+        "id": "requirements",
+        "pgp_folder": "Requirements / User Stories",
+        "registry_folder": "Requirements AI Registry",
+        "title": "Requirements and user stories",
+    },
+    {
+        "id": "architecture",
+        "pgp_folder": "Architecture",
+        "registry_folder": "Architecture AI Registry",
+        "title": "Architecture",
+    },
+    {
+        "id": "database",
+        "pgp_folder": "Database / ER Diagram",
+        "registry_folder": "Database AI Registry",
+        "title": "Database design",
+    },
+    {
+        "id": "uiux",
+        "pgp_folder": "UI/UX / Wireframes",
+        "registry_folder": "UIUX AI Registry",
+        "title": "UI/UX design",
+    },
+    {
+        "id": "coding",
+        "pgp_folder": "Development / Source Code",
+        "registry_folder": "Coding AI Registry",
+        "title": "Coding assistance",
+    },
+    {
+        "id": "testing",
+        "pgp_folder": "Test Cases",
+        "registry_folder": "Testing AI Registry",
+        "title": "Test case generation",
+    },
+    {
+        "id": "debugging",
+        "pgp_folder": "Development / Source Code",
+        "registry_folder": "Debugging AI Registry",
+        "title": "Debugging",
+    },
+    {
+        "id": "security",
+        "pgp_folder": "Security",
+        "registry_folder": "Security AI Registry",
+        "title": "Security reviews",
+    },
+    {
+        "id": "report",
+        "pgp_folder": "Reports / Individual Reflections / Governance",
+        "registry_folder": "Report AI Registry",
+        "title": "Report writing and governance",
+    },
+]
+
+NIL_RETURNS: list[dict[str, str]] = [
+    {
+        "category": "Presentation preparation",
+        "statement": "No GenAI was used to draft or generate presentation slides in this period.",
+    },
+    {
+        "category": "Meeting minutes",
+        "statement": "Meeting minutes were not authored by GenAI. AI was not asked to invent attendance, decisions, or quotes.",
+    },
+    {
+        "category": "Academic literature / references",
+        "statement": "No AI-generated citations were used. No literature review was produced by GenAI.",
+    },
+    {
+        "category": "Interviews, surveys, or fabricated evidence",
+        "statement": "GenAI was not used to invent stakeholder interviews, survey results, or test outcomes. Automated tests were executed with PHPUnit; manual checks were done in a browser.",
+    },
+]
+
+ENTRIES: list[dict[str, Any]] = [
+    {
+        "id": "AI-001",
+        "date": "10/08/2026",
+        "tool": "Cursor (Grok 4.6 / Composer)",
+        "phase": "Analysis",
+        "purpose": "Requirements elicitation — gap analysis against the onboarding brief",
+        "category": "requirements",
+        "prompt": (
+            "Pasted the unit handout “FIT3047 - Onboarding project. User stories + acceptance "
+            "criteria + an example of test case for one aspect - V1” (Landing Page, Contact Form, "
+            "Admin Login, and TC1–TC9) and asked: 阅读这些资料，我们还差什么 "
+            "(Read this. What are we still missing?)"
+        ),
+        "response": (
+            "Produced a gap analysis against the live CakePHP site: accessibility (labels vs "
+            "placeholders, contrast, skip-link), password reset, HTTPS enforcement, test-case "
+            "document for PGP/Trello links, and several security/validation defects already "
+            "partially present in code."
+        ),
+        "validation": (
+            "Compared each claimed gap to templates, controllers, phpunit tests, and the Trello "
+            "instruction that acceptance checklists must link to test cases in the PGP. Discarded "
+            "items that were already implemented."
+        ),
+        "outcome": "Modified and adopted — became the 10/08 repair plan; not treated as a new requirements spec.",
+    },
+    {
+        "id": "AI-002",
+        "date": "13/08/2026",
+        "tool": "Cursor (Grok 4.6 / Composer)",
+        "phase": "Analysis",
+        "purpose": "Requirement generation — plan from the client needs document",
+        "category": "requirements",
+        "prompt": (
+            "阅读 /Users/lijiarui/Movies/2026-08-13 15-37-13_用户需求分析.md，就目前而言，排一个什么计划？"
+            " (Read this user-needs document. Given where we are now, what plan should we make?)"
+        ),
+        "response": (
+            "Proposed a phased Eco Glow plan: keep existing auth/security; evolve the storefront "
+            "from a contact-only site into catalogue, cart, accounts, and later services/admin."
+        ),
+        "validation": (
+            "Checked the document against the current routes and templates. Later cross-checked "
+            "against Trello user stories and the Vision Board so the plan did not invent scope."
+        ),
+        "outcome": "Modified and adopted — frontend first, then database pack, then staff console.",
+    },
+    {
+        "id": "AI-003",
+        "date": "14/08/2026",
+        "tool": "Cursor (Grok 4.6 / Composer) + Trello",
+        "phase": "Analysis",
+        "purpose": "User story development — compare Trello stories to the running app",
+        "category": "requirements",
+        "prompt": "阅读 trello 里面的 story，看看有没有我们缺少的？ (Read the Trello stories. What are we missing?)",
+        "response": (
+            "Mapped open Trello cards (US-1.x landing/catalogue, US-2.x enquiry, later commerce "
+            "and staff work) to implemented pages and listed gaps: persistent cart, customer "
+            "account, checkout, staff order/inventory console."
+        ),
+        "validation": (
+            "Opened the live board UGIE 26S2 Team 236 (FIT3047) and compared card titles to "
+            "routes/controllers. Did not rewrite official user-story wording on Trello."
+        ),
+        "outcome": "Modified and adopted — used to scope the 14/08 console and checkout work.",
+    },
+    {
+        "id": "AI-004",
+        "date": "13/08/2026",
+        "tool": "Cursor (Grok 4.6 / Composer)",
+        "phase": "Design",
+        "purpose": "Architecture design — decide what survives a frontend rewrite",
+        "category": "architecture",
+        "prompt": (
+            "咱们的前端内容可能要重做，但是其他的可以保留吧，比如安全性那些 "
+            "(The frontend may need a redo, but we can keep the rest, such as the security work, right?)"
+        ),
+        "response": (
+            "Confirmed that middleware (CSRF, login throttle, security headers, HTTPS enforcer), "
+            "Authentication, RecaptchaVerifier, password-reset flow, and PHPUnit tests can stay. "
+            "Templates, CSS, and public IA can be replaced without discarding that stack."
+        ),
+        "validation": "Read src/Application.php, UsersController, and the middleware tests before agreeing.",
+        "outcome": "Accepted",
+    },
+    {
+        "id": "AI-005",
+        "date": "14/08/2026",
+        "tool": "Cursor (Grok 4.6 / Composer) with Grok sub-agents",
+        "phase": "Design",
+        "purpose": "Architecture design — staff console, customer area, Stripe, bookings",
+        "category": "architecture",
+        "prompt": (
+            "Student pasted the team’s website/staff requirements, then: "
+            "先按照你的想法做完。数据库确定没有问题后，请你使用子代理 grok 4.6 extra high fast "
+            "完整做完整个控制台还有其他内容，注意风格需要美观。……我去睡觉了，所以你不要老是问问题。"
+            "我需要你做一个很完整的版本，就像我之前发送过的条件那样。具体支付请使用 stripe 接口。"
+            " (Finish it your way. After the database is sound, delegate the console and the rest "
+            "to a Grok sub-agent. Make it complete. Use Stripe for payment. Do not keep asking questions.)"
+        ),
+        "response": (
+            "Designed Admin prefix + RBAC, orders/inventory/customers/messages, /account for "
+            "customers, persistent carts, outbound mail consumer, Stripe Payment Element + webhook, "
+            "and service booking. Implementation was delegated, then reviewed."
+        ),
+        "validation": (
+            "Checked routes, permission seed against the required Standard-role set "
+            "(refunds.process, invoices.issue, orders.dispatch, payments.record, orders.view, "
+            "customers.view), and that Stripe keys are not committed. Visual pass on admin CSS."
+        ),
+        "outcome": "Modified and adopted — Standard role narrowed; Stripe remains sandbox-only.",
+    },
+    {
+        "id": "AI-006",
+        "date": "14/08/2026",
+        "tool": "Cursor (Grok 4.6 / Composer)",
+        "phase": "Design",
+        "purpose": "Database design — review Database Pack v2",
+        "category": "database",
+        "prompt": (
+            "打开 Eco_Glow_Lighting_Database_Pack_v2_Expanded.zip。"
+            "你和我说你想修改什么，我改完了发给你。或者如果你愿意自己做，我可以只发送给你 sql 脚本。"
+            " (Look at this pack. Tell me what you want changed, and I will send it back — or just send SQL.)"
+        ),
+        "response": (
+            "Reported that v2 was PostgreSQL-oriented (JSONB, TIMESTAMPTZ, CITEXT, generated "
+            "columns, stored procedures) and would not run cleanly on the team’s MariaDB / future "
+            "cPanel MySQL host. Listed concrete incompatibilities."
+        ),
+        "validation": "Compared pack SQL to local MariaDB 12.2.2 behaviour and CakePHP 5 conventions.",
+        "outcome": "Modified — waited for the MySQL/CakePHP v3 pack instead of forcing v2 onto MariaDB.",
+    },
+    {
+        "id": "AI-007",
+        "date": "14/08/2026",
+        "tool": "Cursor (Grok 4.6 / Composer)",
+        "phase": "Design",
+        "purpose": "Database design — export fields the storefront already uses",
+        "category": "database",
+        "prompt": (
+            "我们之前做的所有东西得保留（指的是和咱们的前端相关的）。这个前提下，你给出你的修改建议。"
+            "这样，你提供一下我们的现有字段。其他的我自己来做。"
+            " (Keep everything frontend-related we already built. Give modification advice, then "
+            "just list our existing fields — I will do the rest.)"
+        ),
+        "response": (
+            "Wrote docs/current-schema-and-data.md and docs/frontend-seed-data.json describing "
+            "live MySQL tables plus the hardcoded catalogue/copy used by the storefront."
+        ),
+        "validation": "Read templates and information_schema / migrations. Student used the field list to brief the database author.",
+        "outcome": "Accepted",
+    },
+    {
+        "id": "AI-008",
+        "date": "14/08/2026",
+        "tool": "Cursor (Grok 4.6 / Composer)",
+        "phase": "Development",
+        "purpose": "Database design — integrate MySQL CakePHP Database Pack v3",
+        "category": "database",
+        "prompt": (
+            "Provided Eco_Glow_Lighting_MySQL_CakePHP_Database_Pack_v3.zip and: "
+            "只需要支持 CakePHP 的就行了，咱们本地的可以换，未来支持 cPanel 就行。"
+            " (CakePHP support is enough. We can change the local stack. Future host is cPanel.)"
+        ),
+        "response": (
+            "Adapted SQL migrations for MariaDB/MySQL 8, wired CakePHP migrations/seeds, and "
+            "documented leftover service-layer constraints (price-list uniqueness, appointment "
+            "overlap) that the engine cannot enforce the same way as PostgreSQL."
+        ),
+        "validation": (
+            "Ran migrations and seeds locally. Recorded remaining constraints in "
+            "docs/database/service-layer-constraints.md. Confirmed frontend seed data still matched the redesigned pages."
+        ),
+        "outcome": "Modified and adopted — some uniqueness/overlap checks stay in PHP by design.",
+    },
+    {
+        "id": "AI-009",
+        "date": "13/08/2026",
+        "tool": "Cursor (Grok 4.6 / Composer)",
+        "phase": "Design",
+        "purpose": "UI/UX design — rebuild the storefront from the Vision Board",
+        "category": "uiux",
+        "prompt": (
+            "目前只考虑前端。/Users/lijiarui/Downloads/Eco Glow Lighting Vision Board.pdf，"
+            "美术给了我设计稿，我感觉咱们可以重新做了。"
+            " (Frontend only. The art team gave this Vision Board. I think we should redo it.)"
+        ),
+        "response": (
+            "Replaced the earlier night-glow theme with a warm earthy system: self-hosted "
+            "Playfair Display + Inter, e-commerce IA (Shop / Categories / About / Contact), "
+            "and new shop, product, cart, and register templates. Security pages kept their behaviour."
+        ),
+        "validation": (
+            "Compared type and palette to the Vision Board. Checked contrast notes in site.css. "
+            "Student then rejected several AI-looking layouts in later prompts (see AI-010)."
+        ),
+        "outcome": "Modified and adopted — first pass was not accepted as-is.",
+    },
+    {
+        "id": "AI-010",
+        "date": "13/08/2026–14/08/2026",
+        "tool": "Cursor (Grok 4.6 / Composer)",
+        "phase": "Design",
+        "purpose": "UI/UX design — student-directed visual corrections",
+        "category": "uiux",
+        "prompt": (
+            "A sequence of pointed visual prompts, not a single brief: "
+            "这里有点丑 (filters look ugly); "
+            "这些地方鼠标放上去是两条线 (hover shows two underlines); "
+            "这里的 ai 感很重，参考 PDF (too AI; follow the PDF); "
+            "不要有边缘 (no edges on the hero); "
+            "这些地方有奇怪的重叠 / 这里不如原来的布局 (overlaps; best-sellers worse than before); "
+            "这里的 ai 味道有点太大 (installation/about still feel generated); "
+            "比例太大一个屏幕塞不下 / 这里最好也小一点 (hero and product image too large); "
+            "两边拉开，购买抬上去 / 你搞错了是左右靠拢 / 右边不要空 / 这两个紧凑一些 "
+            "(product-detail column and option spacing)."
+        ),
+        "response": (
+            "Collapsible filters, hover underline fix, full-bleed hero, equal category and "
+            "best-seller grids, material swatches, before/after photos, and a two-column product page."
+        ),
+        "validation": (
+            "Each change was accepted or rejected by the student against the live page. "
+            "Layout was measured in the browser, not only inferred from CSS."
+        ),
+        "outcome": "Modified and adopted — human direction overrode the first AI layout.",
+    },
+    {
+        "id": "AI-011",
+        "date": "13/08/2026",
+        "tool": "Cursor image generation",
+        "phase": "Design",
+        "purpose": "UI/UX design — catalogue and material photographs",
+        "category": "uiux",
+        "prompt": (
+            "Generate product, material-macro, and before/after lighting photographs that match "
+            "the Vision Board (warm earthy, oak / linen / opal / brass / powder). Use them on "
+            "home, shop, product, and cart. Student later: 算了，先用替代字符吧先 — then reversed "
+            "to using generated images as stand-ins."
+        ),
+        "response": (
+            "Wrote WebP assets under webroot/img/ (products, materials, before/after, "
+            "marlow-detail-wide). These are generated images, not studio photography."
+        ),
+        "validation": (
+            "Student reviewed on the page and still flagged “AI feel” on some sections; those "
+            "sections were rewritten around materials and real before/after framing. Images are "
+            "not claimed as client photography in copy."
+        ),
+        "outcome": "Modified and adopted as labelled placeholders only.",
+    },
+    {
+        "id": "AI-012",
+        "date": "06/08/2026",
+        "tool": "Cursor (Grok 4.6 / Composer)",
+        "phase": "Development",
+        "purpose": "Coding assistance — start the server and fix defects",
+        "category": "coding",
+        "prompt": "启动服务器，检查 bug。然后：完全修复。 (Start the server, check for bugs. Then: fix them completely.)",
+        "response": (
+            "Fixed contact maxLength validation (SQLSTATE data-too-long), invalid admin IDs, "
+            "logout redirect loop, non-idempotent UsersSeed, layout unread-count query, and "
+            "related tests."
+        ),
+        "validation": "PHPUnit and PHPCS. Reproduced the overlong-email 500 before/after the Table validation change.",
+        "outcome": "Accepted",
+    },
+    {
+        "id": "AI-013",
+        "date": "10/08/2026",
+        "tool": "Cursor (Grok 4.6 / Composer)",
+        "phase": "Development",
+        "purpose": "Coding assistance — password reset and onboarding acceptance gaps",
+        "category": "coding",
+        "prompt": (
+            "切换到计划模式列举个完整的修复计划 — then Build. "
+            "(Switch to plan mode and list a complete repair plan. Then implement it.)"
+        ),
+        "response": (
+            "Implemented forgot/reset password (hashed token, anti-enumeration), env-driven mail, "
+            "HTTPS enforcer in non-debug, contrast/label fixes, and docs/test-cases.md."
+        ),
+        "validation": "UsersControllerTest for reset, invalid/expired token, and enumeration. Manual login-page link check.",
+        "outcome": "Accepted",
+    },
+    {
+        "id": "AI-014",
+        "date": "14/08/2026",
+        "tool": "Cursor (Grok 4.6 / Composer) with Grok sub-agents",
+        "phase": "Development",
+        "purpose": "Coding assistance — staff console (RBAC, orders, inventory)",
+        "category": "coding",
+        "prompt": "Same overnight brief as AI-005, focused on “完整的控制台功能” (a complete staff console).",
+        "response": (
+            "Added admin layout, dashboard, orders, inventory adjustments, customers, messages, "
+            "invoices/reports placeholders where needed, and permission maps."
+        ),
+        "validation": (
+            "Logged in with the seeded staff account. Checked that Standard role is not a "
+            "superuser. Later visual fixes in admin.css (pagination, code colour, checkboxes)."
+        ),
+        "outcome": "Modified and adopted",
+    },
+    {
+        "id": "AI-015",
+        "date": "14/08/2026",
+        "tool": "Cursor (Grok 4.6 / Composer) with Grok sub-agents",
+        "phase": "Development",
+        "purpose": "Coding assistance — storefront data, customer accounts, cart, mail queue",
+        "category": "coding",
+        "prompt": "Implied by the same complete-product brief: connect the redesigned pages to the database and customer accounts.",
+        "response": (
+            "Replaced hardcoded catalogue arrays with CatalogService queries, added /account "
+            "register/login, persistent carts with merge-on-login, save-for-later, and "
+            "SendOutboundMessagesCommand."
+        ),
+        "validation": (
+            "Confirmed shop/product/cart read seeded products. Registration creates a users row "
+            "linked to customers without privilege escalation. Mail consumer is idempotent in tests."
+        ),
+        "outcome": "Accepted. Account/checkout visual refresh is recorded separately as AI-027.",
+    },
+    {
+        "id": "AI-016",
+        "date": "14/08/2026",
+        "tool": "Cursor IDE agent (Grok 4.6)",
+        "phase": "Development",
+        "purpose": "Coding assistance — Stripe test-mode checkout, CLI webhook, feature flag",
+        "category": "coding",
+        "prompt": (
+            "具体支付请使用 stripe 接口。我要导入沙盒 stripe，我需要什么。帮我操作完成直到可以使用。"
+            " (Use Stripe for payment. Set up Stripe sandbox for Eco Glow checkout: check the "
+            "feature flag, install or use Stripe CLI, forward webhooks to the local CakePHP server, "
+            "store the webhook secret in local config only, and confirm a test customer can pay.)"
+        ),
+        "response": (
+            "Identified commerce.online_payments, wrote test publishable/secret keys into gitignored "
+            "config/app_local.php, started stripe listen to /webhooks/stripe, stored the whsec locally, "
+            "and used the demo customer account. CheckoutController, Payment Element, webhook endpoint, "
+            "and service booking were already in the overnight build. Secrets were not printed in chat "
+            "and are not repeated here."
+        ),
+        "validation": (
+            "Opened /checkout as customer@ecoglow.local. Completed a test-card payment. "
+            "Order ORD-2026-001001 moved to paid. A later order ORD-2026-001002 stayed pending "
+            "until the Pay-button work in AI-021. Keys never committed."
+        ),
+        "outcome": "Modified and adopted. Local-only secrets; feature flag left on for demonstration.",
+    },
+    {
+        "id": "AI-017",
+        "date": "14/08/2026",
+        "tool": "Cursor IDE agent (Grok 4.6)",
+        "phase": "UI / UX",
+        "purpose": "UI/UX — Admin Users page: foldable, searchable sections",
+        "category": "coding",
+        "prompt": (
+            "我希望 staff account 这里可以折叠，可以搜索。这一页其他的也都是。"
+            " (On Admin Users, make Staff accounts, Permission matrix, and Per-user overrides "
+            "collapsible and searchable.)"
+        ),
+        "response": (
+            "Wrapped each section in data-admin-fold with a toggle, search field, and empty state. "
+            "admin.js filters rows from data-search. UsersControllerTest asserts the fold hooks and search labels."
+        ),
+        "validation": (
+            "Opened /admin/users as master. Toggles and search fields render. "
+            "PHPUnit UsersControllerTest::testIndexOkForMaster passed the new assertions."
+        ),
+        "outcome": "Modified and adopted",
+    },
+    {
+        "id": "AI-018",
+        "date": "10/08/2026",
+        "tool": "Cursor (Grok 4.6 / Composer)",
+        "phase": "Testing",
+        "purpose": "Test case generation — TC1–TC9 for PGP / Trello",
+        "category": "testing",
+        "prompt": (
+            "Included in the 10/08 Build plan: write the onboarding test-case document so Trello "
+            "acceptance checklists can link into the PGP."
+        ),
+        "response": (
+            "Wrote docs/test-cases.md mapping TC1–TC9 to PHPUnit methods or manual steps, with "
+            "stable anchors (for example docs/test-cases.md#tc4-verify-contact-form-valid-input)."
+        ),
+        "validation": (
+            "Each automated claim names a real test method. Load-time notes used curl, not invented timings. "
+            "Suite was run (50 tests / 190 assertions at last recorded execution on 10/08/2026)."
+        ),
+        "outcome": "Accepted",
+    },
+    {
+        "id": "AI-019",
+        "date": "06/08/2026",
+        "tool": "Cursor (Grok 4.6 / Composer)",
+        "phase": "Development",
+        "purpose": "Debugging — reCAPTCHA test-key warning",
+        "category": "debugging",
+        "prompt": "这个怎么处理 (How should we handle this?) — screenshot of the Google reCAPTCHA test-key warning.",
+        "response": (
+            "Explained test keys vs site keys. Student later supplied localhost keys (not repeated "
+            "here). RecaptchaVerifier was already fail-closed in production if Google’s published "
+            "test secret is used."
+        ),
+        "validation": "RecaptchaVerifierTest. Keys stored in config/app_local.php, which is gitignored.",
+        "outcome": "Accepted",
+    },
+    {
+        "id": "AI-020",
+        "date": "14/08/2026",
+        "tool": "Cursor IDE agent (Grok 4.6)",
+        "phase": "UI / UX",
+        "purpose": "Debugging — keep the staff sidebar still across admin navigation",
+        "category": "debugging",
+        "prompt": (
+            "左边在右边下拉的时候不应该上去。左侧栏刷新有问题，点一下就会自动刷到最上面。"
+            "会闪烁一下。点击最下面的两个选项依旧会跳动。"
+            " (The left sidebar still flickers. It must stay put while the right side scrolls. "
+            "Clicking the bottom two items — Users & roles and Feature flags — jumps the rail up toward Orders. Fix it properly.)"
+        ),
+        "response": (
+            "Scroll-restore, visibility hiding, and view-transitions were tried and rejected: a full "
+            "page reload always paints the nav at scrollTop 0 first. Final design: intercept /admin GET "
+            "links, fetch HTML, replace only .admin-stage, sync current-item classes, leave the sidebar "
+            "DOM in place. Brand and storefront link stay outside the scroller."
+        ),
+        "validation": (
+            "Reproduced in a desktop-width browser. After clicking Users and Feature flags, the same "
+            "sidebar node remained (sameSidebar = true) and scrollTop stayed at 43.5. URL, title, and "
+            "heading updated. Failed earlier CSS/JS restore approaches were discarded (see § What was rejected)."
+        ),
+        "outcome": "Modified and adopted. Rejected: view-transitions, 1-second scroll locks, and hide-until-positioned.",
+    },
+    {
+        "id": "AI-021",
+        "date": "14/08/2026",
+        "tool": "Cursor IDE agent (Grok 4.6)",
+        "phase": "Development",
+        "purpose": "Debugging — card-only PaymentIntent, Pay button recovery, resume unpaid checkout",
+        "category": "debugging",
+        "prompt": (
+            "无法点击这个按钮。"
+            " (The Pay button stayed disabled after confirmPayment hung on a Link / Klarna / Zip overlay. "
+            "Restrict PaymentIntents to cards, turn off Link wallets, re-enable the button on error, "
+            "keep the button above the iframe, and resume the latest unpaid web checkout on GET /checkout.)"
+        ),
+        "response": (
+            "StripePaymentGateway now creates card-only PaymentIntents. Checkout JS wraps confirmPayment, "
+            "re-enables Pay on failure, and pre-fills billing name/email. CheckoutService.resumePending "
+            "reloads the latest draft web order and retrieveClientSecret. FakePaymentGateway and "
+            "CheckoutControllerTest were updated."
+        ),
+        "validation": (
+            "Ran testPayButtonStaysEnabledAndGetResumesPendingIntent. Confirmed the Pay control is not "
+            "rendered disabled. GET /checkout after POST showed the held pending payment and the same "
+            "client secret. Manual checkout on localhost:8765. No live card data was used."
+        ),
+        "outcome": "Modified and adopted. Wallet methods were deliberately rejected for this demo path.",
+    },
+    {
+        "id": "AI-022",
+        "date": "06/08/2026",
+        "tool": "Cursor (Grok 4.6 / Composer)",
+        "phase": "Development",
+        "purpose": "Security review — full pass then fix",
+        "category": "security",
+        "prompt": "/code-review 再次检查有无报错等等。还有一些可以改善的情况，充分完整检查。然后：完全修复。",
+        "response": (
+            "Mass-assignment lockdown on ContactMessage/User, login throttle middleware, "
+            "security headers, CSRF SameSite/secure cookies, recaptcha fail-closed in production, "
+            "and tests for those behaviours."
+        ),
+        "validation": (
+            "New unit/controller/middleware tests. ApplicationTest middleware order updated. "
+            "Did not treat the review as a penetration-test report."
+        ),
+        "outcome": "Accepted",
+    },
+    {
+        "id": "AI-023",
+        "date": "14/08/2026",
+        "tool": "Cursor IDE agent (Grok 4.6)",
+        "phase": "Documentation",
+        "purpose": "Report writing — compile and merge this AI Prompt Register",
+        "category": "report",
+        "prompt": (
+            "FIT3047_8 - 2026 Using GenAI Tools (AI Registry) Instructions.pdf。根据内容，帮我完整整理完毕。"
+            " Then: merge with FIT3047_AI_Prompt_Register_Jiarui_Li.docx."
+            " (Organise the register from the unit PDF, then merge it with the shorter 14/08 Word file.)"
+        ),
+        "response": (
+            "Built the PGP-aligned folder set and a chronological register from Cursor transcripts, "
+            "then merged the 14/08 artefact-level file: Stripe sandbox evidence, Pay-button recovery, "
+            "Admin Users folds, sidebar SPA replacement, account/checkout restyle, rejected sidebar "
+            "hacks, and the individual diary trail (AI-IND-001, not a project artefact)."
+        ),
+        "validation": (
+            "Checked required fields from the unit PDF. Cross-checked the 14/08 rows against git "
+            "history on branch jiarui (bf9474a), the named PHPUnit methods, and live admin/checkout "
+            "behaviour. Secrets redacted. Nil returns kept. Student must still read and sign."
+        ),
+        "outcome": "Modified and adopted — two registers merged; student owns the signed copy.",
+    },
+    {
+        "id": "AI-027",
+        "date": "14/08/2026",
+        "tool": "Cursor IDE agent (Grok 4.6)",
+        "phase": "UI / UX",
+        "purpose": "UI/UX — refresh account/auth and checkout visuals without breaking Stripe or tokens",
+        "category": "uiux",
+        "prompt": (
+            "Restyle the customer account navigation and checkout surfaces using existing site.css "
+            "tokens. Keep Payment Element z-index rules so Pay stays clickable."
+        ),
+        "response": (
+            "account.css: pill tabs, card lift, form focus. checkout.css: section titles, alerts, "
+            ".checkout-pay-actions { z-index: 2 }. Functional selectors preserved (commit 2d4f5ef)."
+        ),
+        "validation": (
+            "Visual check on /account and /checkout. Pay button remains above the Stripe iframe. "
+            "No site.css token changes."
+        ),
+        "outcome": "Modified and adopted",
+    },
+    {
+        "id": "AI-025",
+        "date": "13/08/2026",
+        "tool": "Cursor (Grok 4.6 / Composer)",
+        "phase": "Analysis",
+        "purpose": "Research / brainstorming — interpret the Vision Board for product direction",
+        "category": "bv",
+        "prompt": (
+            "Read Eco Glow Lighting Vision Board.pdf and the user-needs note, and plan the "
+            "storefront. AI was not asked to write the official Business Vision as original research."
+        ),
+        "response": (
+            "Summarised the board as warm earthy materials, photography-led, usable over decorative. "
+            "That reading informed the frontend redo (AI-009), not a substitute BV document."
+        ),
+        "validation": (
+            "Student confirmed the PDF is the design authority from the art teammate. Official BV "
+            "prose, if required in PGP, remains a team-authored artefact. AI output was not "
+            "presented as stakeholder research."
+        ),
+        "outcome": "Modified — used as design interpretation only; rejected as a stand-in BV.",
+    },
+    {
+        "id": "AI-026",
+        "date": "30/07/2026",
+        "tool": "Cursor",
+        "phase": "Design",
+        "purpose": "Architecture design — login TDD planning notes",
+        "category": "architecture",
+        "prompt": "Internal planning for a login TDD demonstration (docs/superpowers specs and plan dated 30/07/2026).",
+        "response": (
+            "Wrote docs/superpowers/specs/2026-07-30-login-tdd-demo-design.md and the matching plan. "
+            "Later superseded by the production auth/reset work."
+        ),
+        "validation": "Files remain in the repo as planning notes, not as the shipped design.",
+        "outcome": "Accepted as internal notes only.",
+    },
+]
