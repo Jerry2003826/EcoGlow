@@ -3,8 +3,6 @@ declare(strict_types=1);
 
 namespace App\Test\TestCase\Controller\Admin;
 
-use Authentication\Identity;
-
 /**
  * Shared login helper and fixture list for staff-console tests.
  */
@@ -53,10 +51,10 @@ trait AdminAuthTrait
      */
     protected function loginAs(int $userId): void
     {
+        $user = $this->fetchTable('Users')->get($userId);
         $this->session([
-            'Auth' => new Identity(
-                $this->fetchTable('Users')->get($userId),
-            ),
+            'AuthV2' => $userId,
+            'AuthVersion' => (int)($user->get('auth_version') ?: 1),
         ]);
     }
 }

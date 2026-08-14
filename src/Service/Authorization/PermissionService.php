@@ -135,6 +135,20 @@ class PermissionService
             return;
         }
 
+        $user = $this->fetchTable('Users')->find()
+            ->where([
+                'Users.id' => $userId,
+                'Users.status' => 'active',
+                'Users.deleted IS' => null,
+            ])
+            ->first();
+        if ($user === null) {
+            $this->roles[$userId] = [];
+            $this->resolved[$userId] = [];
+
+            return;
+        }
+
         $connection = $this->connection();
         $nowSql = 'UTC_TIMESTAMP(6)';
 

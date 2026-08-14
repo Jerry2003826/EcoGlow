@@ -14,7 +14,12 @@ interface PaymentGatewayInterface
      * @param array<string, string> $metadata Values stored on the PaymentIntent.
      * @return \App\Service\Payments\PaymentIntentResult
      */
-    public function createPaymentIntent(int $amountCents, string $currency, array $metadata): PaymentIntentResult;
+    public function createPaymentIntent(
+        int $amountCents,
+        string $currency,
+        array $metadata,
+        ?string $idempotencyKey = null,
+    ): PaymentIntentResult;
 
     /**
      * @param string $paymentIntentId Stripe PaymentIntent id.

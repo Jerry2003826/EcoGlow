@@ -18,6 +18,13 @@ use InvalidArgumentException;
 class WebhooksController extends AppController
 {
     /**
+     * Stripe bodies are small JSON events. Larger payloads are refused.
+     *
+     * @var int
+     */
+    private const MAX_BODY_BYTES = 262144;
+
+    /**
      * @inheritDoc
      */
     public function initialize(): void
@@ -33,16 +40,16 @@ class WebhooksController extends AppController
     public function stripe(): Response
     {
         $this->request->allowMethod(['post']);
-        $payload = $this->rawBody();
         $signature = $this->request->getHeaderLine('Stripe-Signature');
 
         try {
+            $payload = $this->rawBody();
             $event = (new StripeWebhookVerifier())->parse($payload, $signature);
         } catch (InvalidArgumentException $exception) {
             return $this->response
                 ->withStatus(400)
                 ->withType('application/json')
-                ->withStringBody(json_encode(['error' => $exception->getMessage()]) ?: '{}');
+                ->withStringBody('{"error":"invalid_webhook"}');
         }
 
         $service = new StripeWebhookService(
@@ -69,7 +76,11 @@ class WebhooksController extends AppController
         if ($stream->isSeekable()) {
             $stream->rewind();
         }
+        $payload = $stream->getContents();
+        if (strlen($payload) > self::MAX_BODY_BYTES) {
+            throw new InvalidArgumentException('payload_too_large');
+        }
 
-        return $stream->getContents();
+        return $payload;
     }
 }

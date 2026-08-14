@@ -81,9 +81,15 @@ $navLinks = [
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                             </a>
                         <?php endif; ?>
-                        <a class="eg-icon-btn" href="<?= $this->Url->build('/logout') ?>" aria-label="Log out">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 17v2a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7a2 2 0 0 1 2 2v2"/><path d="M19 12H9"/><path d="m16 9 3 3-3 3"/></svg>
-                        </a>
+                        <?= $this->Form->postLink(
+                            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 17v2a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7a2 2 0 0 1 2 2v2"/><path d="M19 12H9"/><path d="m16 9 3 3-3 3"/></svg>',
+                            '/logout',
+                            [
+                                'class' => 'eg-icon-btn',
+                                'escape' => false,
+                                'aria-label' => 'Log out',
+                            ],
+                        ) ?>
                     <?php else : ?>
                         <a class="eg-icon-btn" href="<?= $this->Url->build('/account/login') ?>" aria-label="Account">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>

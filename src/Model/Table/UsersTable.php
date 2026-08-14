@@ -3,6 +3,9 @@ declare(strict_types=1);
 
 namespace App\Model\Table;
 
+use App\Model\Entity\User;
+use App\Service\Security\PasswordPolicy;
+use Cake\ORM\Query\SelectQuery;
 use Cake\ORM\Table;
 use Cake\Validation\Validator;
 
@@ -31,7 +34,7 @@ class UsersTable extends Table
      *
      * @var int
      */
-    public const MIN_PASSWORD_LENGTH = 8;
+    public const MIN_PASSWORD_LENGTH = PasswordPolicy::MIN_LENGTH;
 
     /**
      * Initialize method
@@ -50,6 +53,33 @@ class UsersTable extends Table
         $this->addBehavior('Timestamp');
         $this->hasMany('UserRoles', ['foreignKey' => 'user_id']);
         $this->hasOne('Customers', ['foreignKey' => 'user_id']);
+    }
+
+    /**
+     * Identity lookup for both password login and primary-key sessions.
+     *
+     * @param \Cake\ORM\Query\SelectQuery $query Query.
+     * @return \Cake\ORM\Query\SelectQuery
+     */
+    public function findActiveForAuthentication(SelectQuery $query): SelectQuery
+    {
+        return $query->where([
+            'Users.status' => 'active',
+            'Users.deleted IS' => null,
+        ]);
+    }
+
+    /**
+     * Invalidate every other session for this account.
+     *
+     * @param \App\Model\Entity\User $user User.
+     * @return \App\Model\Entity\User
+     */
+    public function bumpAuthVersion(User $user): User
+    {
+        $user->set('auth_version', (int)($user->get('auth_version') ?: 1) + 1);
+
+        return $this->saveOrFail($user);
     }
 
     /**
@@ -89,15 +119,7 @@ class UsersTable extends Table
      */
     public function validationResetPassword(Validator $validator): Validator
     {
-        $validator
-            ->scalar('password')
-            ->requirePresence('password')
-            ->notEmptyString('password', __('Please enter a new password.'))
-            ->minLength('password', self::MIN_PASSWORD_LENGTH, __(
-                'Passwords must be at least {0} characters long.',
-                self::MIN_PASSWORD_LENGTH,
-            ))
-            ->maxLength('password', 255);
+        $this->addPasswordRules($validator, 'password');
 
         $validator
             ->scalar('confirm_password')
@@ -127,15 +149,7 @@ class UsersTable extends Table
                 'message' => __('An account with that email already exists.'),
             ]);
 
-        $validator
-            ->scalar('password')
-            ->requirePresence('password', 'create')
-            ->notEmptyString('password', __('Please enter a password.'))
-            ->minLength('password', self::MIN_PASSWORD_LENGTH, __(
-                'Passwords must be at least {0} characters long.',
-                self::MIN_PASSWORD_LENGTH,
-            ))
-            ->maxLength('password', 255);
+        $this->addPasswordRules($validator, 'password');
 
         $validator
             ->scalar('confirm_password')
@@ -144,5 +158,27 @@ class UsersTable extends Table
             ->sameAs('confirm_password', 'password', __('The two passwords do not match.'));
 
         return $validator;
+    }
+
+    /**
+     * @param \Cake\Validation\Validator $validator Validator.
+     * @param string $field Password field.
+     * @return void
+     */
+    private function addPasswordRules(Validator $validator, string $field): void
+    {
+        $validator
+            ->scalar($field)
+            ->requirePresence($field)
+            ->notEmptyString($field, __('Please enter a password.'))
+            ->minLength($field, self::MIN_PASSWORD_LENGTH, __(
+                'Passwords must be at least {0} characters long.',
+                self::MIN_PASSWORD_LENGTH,
+            ))
+            ->maxLength($field, 255)
+            ->add($field, 'notCommon', [
+                'rule' => static fn($value): bool => !PasswordPolicy::isRejected((string)$value),
+                'message' => __('Please choose a longer password that is not a commonly used phrase.'),
+            ]);
     }
 }

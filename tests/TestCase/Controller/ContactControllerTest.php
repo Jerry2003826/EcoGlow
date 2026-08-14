@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\Test\TestCase\Controller;
 
+use Cake\Cache\Cache;
 use Cake\Core\Configure;
 use Cake\TestSuite\IntegrationTestTrait;
 use Cake\TestSuite\TestCase;
@@ -76,6 +77,7 @@ class ContactControllerTest extends TestCase
 
         $this->enableCsrfToken();
         $this->enableRetainFlashMessages();
+        Cache::clear('login_throttle');
     }
 
     /**

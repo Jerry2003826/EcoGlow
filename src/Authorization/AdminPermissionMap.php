@@ -5,16 +5,12 @@ namespace App\Authorization;
 
 /**
  * Maps admin controller actions onto permission_key values that already exist
- * in the permissions table. The keys themselves are never invented here —
- * only which action requires which existing key.
- *
- * Batch 2 can extend this map when the remaining modules land; the resolver
- * stays data-driven against roles / role_permissions / overrides.
+ * in the permissions table. Unknown actions are denied.
  */
 final class AdminPermissionMap
 {
     /**
-     * Sentinel meaning "any active RBAC permission".
+     * Sentinel kept for callers that still test the any-permission path.
      *
      * @var string
      */
@@ -33,31 +29,64 @@ final class AdminPermissionMap
     {
         $map = [
             'Dashboard' => [
-                self::ANY => [self::ANY],
+                'index' => [
+                    'orders.view',
+                    'customers.view',
+                    'messages.manage',
+                    'inventory.view',
+                    'reports.view',
+                    'reports.financial',
+                ],
             ],
             'ComingSoon' => [
-                self::ANY => [self::ANY],
+                'index' => [
+                    'orders.view',
+                    'customers.view',
+                    'inventory.view',
+                    'access.manage',
+                    'invoices.issue',
+                    'reports.view',
+                    'catalogue.manage',
+                    'quotations.manage',
+                ],
             ],
             'ContactMessages' => [
-                self::ANY => ['messages.manage'],
+                'index' => ['messages.manage'],
+                'view' => ['messages.manage'],
+                'markRead' => ['messages.manage'],
+                'reply' => ['messages.manage'],
+                'updateStatus' => ['messages.manage'],
+                'assign' => ['messages.manage'],
+                'delete' => ['messages.manage'],
             ],
             'Customers' => [
-                self::ANY => ['customers.view', 'customers.edit'],
+                'index' => ['customers.view', 'customers.edit'],
+                'view' => ['customers.view', 'customers.edit'],
             ],
             'Invoices' => [
+                'index' => ['invoices.issue'],
+                'view' => ['invoices.issue'],
                 'createFromOrder' => ['invoices.issue'],
                 'send' => ['invoices.issue'],
                 'recordPayment' => ['payments.record'],
                 'refund' => ['refunds.process'],
-                self::ANY => ['invoices.issue'],
             ],
             'Reports' => [
-                self::ANY => ['reports.view', 'reports.financial'],
+                'index' => ['reports.view'],
+                'financial' => ['reports.financial'],
             ],
             'Users' => [
-                self::ANY => ['access.manage'],
+                'index' => ['access.manage'],
+                'toggleActive' => ['access.manage'],
+                'updateRoles' => ['access.manage'],
+                'updateRolePermissions' => ['access.manage'],
+                'updateMatrix' => ['access.manage'],
+                'setOverride' => ['access.manage'],
+                'revokeSessions' => ['access.manage'],
             ],
             'Orders' => [
+                'index' => ['orders.view', 'orders.create', 'orders.manage', 'orders.dispatch'],
+                'view' => ['orders.view', 'orders.create', 'orders.manage', 'orders.dispatch'],
                 'add' => ['orders.create'],
                 'searchProducts' => ['orders.create'],
                 'searchCustomers' => ['orders.create'],
@@ -65,33 +94,21 @@ final class AdminPermissionMap
                 'addNote' => ['orders.manage'],
                 'updateStatus' => ['orders.manage', 'orders.dispatch'],
                 'refund' => ['refunds.process'],
-                self::ANY => ['orders.view', 'orders.create', 'orders.manage', 'orders.dispatch'],
             ],
             'Appointments' => [
+                'index' => ['services.manage', 'services.dispatch'],
+                'view' => ['services.manage', 'services.dispatch'],
                 'schedule' => ['services.dispatch'],
                 'updateStatus' => ['services.manage', 'services.dispatch'],
                 'addWorkLog' => ['services.manage'],
                 'addPart' => ['services.manage'],
-                self::ANY => ['services.manage', 'services.dispatch'],
             ],
             'Inventory' => [
+                'index' => ['inventory.view', 'inventory.adjust'],
                 'adjust' => ['inventory.adjust'],
-                self::ANY => ['inventory.view', 'inventory.adjust'],
             ],
         ];
 
-        if (!isset($map[$controller])) {
-            return [];
-        }
-
-        $actions = $map[$controller];
-        if (isset($actions[$action])) {
-            return $actions[$action];
-        }
-        if (isset($actions[self::ANY])) {
-            return $actions[self::ANY];
-        }
-
-        return [];
+        return $map[$controller][$action] ?? [];
     }
 }

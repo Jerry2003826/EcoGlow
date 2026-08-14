@@ -65,8 +65,31 @@ class ReportsControllerTest extends TestCase
         $this->loginAs(1);
         $this->get('/admin/reports');
         $this->assertResponseOk();
-        $this->assertResponseContains('estimated gross profit');
+        $this->assertResponseNotContains('estimated gross profit');
         $this->assertResponseContains('GST inclusive');
         $this->assertResponseContains('Sales (GST inclusive)');
+    }
+
+    /**
+     * Profit and COGS stay on the financial action.
+     *
+     * @return void
+     */
+    public function testFinancialOkForMaster(): void
+    {
+        $this->loginAs(1);
+        $this->get('/admin/reports/financial');
+        $this->assertResponseOk();
+        $this->assertResponseContains('estimated gross profit');
+    }
+
+    /**
+     * @return void
+     */
+    public function testFinancialForbiddenForStandardStaff(): void
+    {
+        $this->loginAs(2);
+        $this->get('/admin/reports/financial');
+        $this->assertResponseCode(403);
     }
 }

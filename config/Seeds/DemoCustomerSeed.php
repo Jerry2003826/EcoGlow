@@ -1,6 +1,7 @@
 <?php
 declare(strict_types=1);
 
+use App\Service\Security\SeedPassword;
 use Authentication\PasswordHasher\DefaultPasswordHasher;
 use Migrations\BaseSeed;
 
@@ -27,15 +28,14 @@ class DemoCustomerSeed extends BaseSeed
     public function run(): void
     {
         $email = 'customer@ecoglow.local';
-        $existing = $this->fetchRow(
-            sprintf("SELECT id FROM users WHERE email = '%s'", $email),
-        );
+        $quoted = $this->getAdapter()->getConnection()->quote($email);
+        $existing = $this->fetchRow('SELECT id FROM users WHERE email = ' . $quoted);
         if ($existing) {
             return;
         }
 
         $hasher = new DefaultPasswordHasher();
-        $password = env('CUSTOMER_SEED_PASSWORD') ?: 'customer123';
+        $password = SeedPassword::require('CUSTOMER_SEED_PASSWORD');
         $now = date('Y-m-d H:i:s');
 
         $this->table('users')->insert([
@@ -47,14 +47,14 @@ class DemoCustomerSeed extends BaseSeed
                 'phone' => '0400000000',
                 'role' => 'customer',
                 'status' => 'active',
+                'auth_version' => 1,
+                'email_verified_at' => $now,
                 'created' => $now,
                 'modified' => $now,
             ],
         ])->save();
 
-        $user = $this->fetchRow(
-            sprintf("SELECT id FROM users WHERE email = '%s'", $email),
-        );
+        $user = $this->fetchRow('SELECT id FROM users WHERE email = ' . $quoted);
         if (!$user || !isset($user['id'])) {
             throw new RuntimeException('Demo customer user could not be created.');
         }

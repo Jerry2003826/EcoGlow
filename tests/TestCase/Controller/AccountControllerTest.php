@@ -4,7 +4,6 @@ declare(strict_types=1);
 namespace App\Test\TestCase\Controller;
 
 use App\Service\Authorization\PermissionService;
-use Authentication\Identity;
 use Cake\I18n\Date;
 use Cake\TestSuite\IntegrationTestTrait;
 use Cake\TestSuite\TestCase;
@@ -53,8 +52,8 @@ class AccountControllerTest extends TestCase
             'name' => 'Jordan Lee',
             'email' => 'jordan@example.com',
             'phone' => '0411111111',
-            'password' => 'password1',
-            'password_confirm' => 'password1',
+            'password' => 'EcoGlow-Test-99',
+            'password_confirm' => 'EcoGlow-Test-99',
             'role' => 'owner',
             'status' => 'active',
         ]);
@@ -88,8 +87,8 @@ class AccountControllerTest extends TestCase
             'name' => 'Riley Chen',
             'email' => 'riley@example.com',
             'phone' => '0411222333',
-            'password' => 'password1',
-            'password_confirm' => 'password1',
+            'password' => 'EcoGlow-Test-99',
+            'password_confirm' => 'EcoGlow-Test-99',
             'role' => 'owner',
             'status' => 'active',
         ]);
@@ -209,10 +208,10 @@ class AccountControllerTest extends TestCase
      */
     private function loginAs(int $userId): void
     {
+        $user = $this->fetchTable('Users')->get($userId);
         $this->session([
-            'Auth' => new Identity(
-                $this->fetchTable('Users')->get($userId),
-            ),
+            'AuthV2' => $userId,
+            'AuthVersion' => (int)($user->get('auth_version') ?: 1),
         ]);
     }
 }

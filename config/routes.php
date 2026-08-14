@@ -60,8 +60,6 @@ return function (RouteBuilder $routes): void {
         /*
          * ...and connect the rest of 'Pages' controller's URLs.
          */
-        $builder->connect('/pages/*', 'Pages::display');
-
         /*
          * Storefront. These are static templates under templates/Pages for now:
          * there is no products table, so PagesController::display renders each
@@ -119,7 +117,12 @@ return function (RouteBuilder $routes): void {
          * Admin authentication.
          */
         $builder->connect('/login', ['controller' => 'Users', 'action' => 'login']);
+        $builder->connect('/login/mfa', ['controller' => 'Users', 'action' => 'mfa']);
+        $builder->connect('/login/mfa-setup', ['controller' => 'Users', 'action' => 'mfaSetup']);
         $builder->connect('/logout', ['controller' => 'Users', 'action' => 'logout']);
+        $builder->connect('/verify-email/*', ['controller' => 'Users', 'action' => 'verifyEmail']);
+        $builder->connect('/account/confirm-email/*', ['controller' => 'Account', 'action' => 'confirmEmail']);
+        $builder->connect('/account/resend-verification', ['controller' => 'Account', 'action' => 'resendVerification']);
 
         /*
          * Self-service password reset. The trailing `*` carries the token
@@ -141,7 +144,6 @@ return function (RouteBuilder $routes): void {
          * It is NOT recommended to use fallback routes after your initial prototyping phase!
          * See https://book.cakephp.org/5/en/development/routing.html#fallbacks-method for more information
          */
-        $builder->fallbacks();
     });
 
     /*

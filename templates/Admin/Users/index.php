@@ -127,6 +127,14 @@ $this->assign('breadcrumb', $this->element('admin/breadcrumb', [
                                                 : null,
                                         ],
                                     ) ?>
+                                    <?= $this->Form->postButton(
+                                        'Revoke sessions',
+                                        ['action' => 'revokeSessions', $user->id],
+                                        [
+                                            'class' => 'btn btn-sm btn-eg-ghost',
+                                            'confirm' => 'Sign this account out of every device?',
+                                        ],
+                                    ) ?>
                                 </div>
                             </td>
                         </tr>

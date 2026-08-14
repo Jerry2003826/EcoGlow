@@ -25,11 +25,20 @@ $this->assign('breadcrumb', $this->element('admin/breadcrumb', [
         <span class="eg-eyebrow">Message</span>
         <h1>Message Details</h1>
     </div>
-    <?= $this->element('admin/status_pill', [
-        'status' => $status,
-        'label' => $labels[$status] ?? $status,
-        'toneOverride' => ContactMessage::statusTone($status),
-    ]) ?>
+    <div class="d-flex flex-wrap gap-2 align-items-center">
+        <?= $this->element('admin/status_pill', [
+            'status' => $status,
+            'label' => $labels[$status] ?? $status,
+            'toneOverride' => ContactMessage::statusTone($status),
+        ]) ?>
+        <?php if (!$contactMessage->is_read) : ?>
+            <?= $this->Form->postButton(
+                'Mark as read',
+                ['action' => 'markRead', $contactMessage->id],
+                ['class' => 'btn btn-sm btn-eg-ghost'],
+            ) ?>
+        <?php endif; ?>
+    </div>
 </div>
 
 <div class="admin-detail">

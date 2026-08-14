@@ -43,6 +43,9 @@ class User extends Entity
     protected array $_hidden = [
         'password',
         'password_reset_token',
+        'email_verification_token',
+        'pending_email_token',
+        'mfa_secret',
     ];
 
     /**

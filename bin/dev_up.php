@@ -36,9 +36,11 @@ $account = ensureDatabase();
 writeAppLocal($root, $account);
 $composer = ensureComposer($root, $php);
 runArgv(array_merge($composer, ['install', '--no-interaction', '--prefer-dist']), $root);
+$adminPassword = getenv('ADMIN_SEED_PASSWORD') ?: bin2hex(random_bytes(12));
+$customerPassword = getenv('CUSTOMER_SEED_PASSWORD') ?: bin2hex(random_bytes(12));
 putenv('MASTER_USER_EMAIL=admin@ecoglow.local');
-putenv('ADMIN_SEED_PASSWORD=admin123');
-putenv('CUSTOMER_SEED_PASSWORD=customer123');
+putenv('ADMIN_SEED_PASSWORD=' . $adminPassword);
+putenv('CUSTOMER_SEED_PASSWORD=' . $customerPassword);
 putenv('RECAPTCHA_ENABLED=false');
 
 runArgv([$php, $root . '/bin/cake.php', 'migrations', 'migrate'], $root);
@@ -50,9 +52,10 @@ $url = 'http://127.0.0.1:' . $port;
 fwrite(STDOUT, "\nReady.\n");
 fwrite(STDOUT, "  Storefront  {$url}\n");
 fwrite(STDOUT, "  Staff login {$url}/login\n");
-fwrite(STDOUT, "      admin@ecoglow.local / admin123\n");
+fwrite(STDOUT, "      admin@ecoglow.local / {$adminPassword}\n");
 fwrite(STDOUT, "  Customer    {$url}/account/login\n");
-fwrite(STDOUT, "      customer@ecoglow.local / customer123\n");
+fwrite(STDOUT, "      customer@ecoglow.local / {$customerPassword}\n");
+fwrite(STDOUT, "  These passwords are generated for this machine only. Do not commit them.\n");
 fwrite(STDOUT, "  Stripe is optional. Add test keys to config/app_local.php to pay.\n\n");
 
 if (!$serve) {

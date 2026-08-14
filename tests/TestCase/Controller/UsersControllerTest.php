@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace App\Test\TestCase\Controller;
 
-use Authentication\Identity;
 use Cake\Cache\Cache;
 use Cake\I18n\DateTime;
 use Cake\TestSuite\EmailTrait;
@@ -133,6 +132,31 @@ class UsersControllerTest extends TestCase
 
         $this->assertResponseCode(302);
         $this->assertRedirectContains('/admin');
+        $this->assertRedirectNotContains('evil');
+    }
+
+    /**
+     * Encoded, nested and scheme-case redirects must stay on this host.
+     *
+     * @return void
+     */
+    public function testLoginRejectsEncodedAndNestedRedirects(): void
+    {
+        $targets = [
+            'HTTP://evil.example',
+            '//evil.example',
+            '/\\\\evil.example',
+        ];
+        foreach ($targets as $redirect) {
+            $this->post('/logout');
+            $this->post('/login?redirect=' . rawurlencode($redirect), [
+                'email' => 'admin@example.com',
+                'password' => 'password',
+            ]);
+            $this->assertResponseCode(302, $redirect);
+            $this->assertRedirectContains('/admin', $redirect);
+            $this->assertRedirectNotContains('evil', $redirect);
+        }
     }
 
     /**
@@ -143,15 +167,17 @@ class UsersControllerTest extends TestCase
     public function testLogout(): void
     {
         $this->session([
-            'Auth' => new Identity(
-                $this->fetchTable('Users')->get(1),
-            ),
+            'AuthV2' => 1,
+            'AuthVersion' => 1,
         ]);
 
         $this->get('/logout');
+        $this->assertResponseCode(405);
 
+        $this->post('/logout');
         $this->assertResponseCode(302);
         $this->assertRedirectContains('/login');
+        $this->assertNull($this->getSession()->read('AuthV2'));
     }
 
     /**
@@ -161,7 +187,7 @@ class UsersControllerTest extends TestCase
      */
     public function testLogoutWhileUnauthenticated(): void
     {
-        $this->get('/logout');
+        $this->post('/logout');
 
         $this->assertResponseCode(302);
         $this->assertRedirectContains('/login');
@@ -504,6 +530,7 @@ class UsersControllerTest extends TestCase
         $this->assertResponseOk();
         $this->assertResponseNotContains('Your account is ready');
         $this->assertNull($this->getSession()->read('Auth'));
+        $this->assertNull($this->getSession()->read('AuthV2'));
 
         $this->get('/admin/contact-messages');
         $this->assertResponseCode(302);
@@ -523,9 +550,9 @@ class UsersControllerTest extends TestCase
         ]);
         $this->assertResponseCode(302);
         $this->assertRedirectContains('/admin');
-        $this->assertNotNull($this->getSession()->read('Auth'));
+        $this->assertNotNull($this->getSession()->read('AuthV2'));
 
-        $this->get('/logout');
+        $this->post('/logout');
 
         $this->post('/account/login', [
             'email' => 'customer-a@example.com',

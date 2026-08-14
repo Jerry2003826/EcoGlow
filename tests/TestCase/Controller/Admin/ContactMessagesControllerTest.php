@@ -107,17 +107,24 @@ class ContactMessagesControllerTest extends TestCase
         $this->get('/admin/contact-messages');
 
         $this->assertResponseOk();
+        $this->assertSame(1, $this->viewVariable('unreadCount'));
+        $this->assertResponseContains('1 unread');
+
+        $this->post('/admin/contact-messages/mark-read/1');
+        $this->get('/admin/contact-messages');
+
+        $this->assertResponseOk();
         $this->assertSame(0, $this->viewVariable('unreadCount'));
         $this->assertResponseNotContains('1 unread');
         $this->assertResponseNotContains('badge-count');
     }
 
     /**
-     * Test viewing a message marks it as read.
+     * GET view is read-only; POST markRead writes the flag.
      *
      * @return void
      */
-    public function testViewMarksMessageAsRead(): void
+    public function testViewDoesNotMarkMessageAsRead(): void
     {
         $this->loginAsAdmin();
 
@@ -128,6 +135,10 @@ class ContactMessagesControllerTest extends TestCase
 
         $this->assertResponseOk();
         $this->assertResponseContains('Do your smart bulbs work with Google Home?');
+        $this->assertFalse((bool)$table->get(1)->is_read);
+
+        $this->post('/admin/contact-messages/mark-read/1');
+        $this->assertResponseCode(302);
         $this->assertTrue((bool)$table->get(1)->is_read);
     }
 

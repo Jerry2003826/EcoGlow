@@ -5,6 +5,7 @@ namespace App\Controller\Admin;
 
 use App\Service\Inventory\InventoryLedger;
 use Cake\Http\Response;
+use Cake\Log\Log;
 use InvalidArgumentException;
 use Throwable;
 
@@ -179,7 +180,9 @@ class InventoryController extends AdminController
         } catch (InvalidArgumentException $exception) {
             $this->Flash->error($exception->getMessage());
         } catch (Throwable $exception) {
-            $this->Flash->error(__('The stock change could not be saved: {0}', $exception->getMessage()));
+            $reference = strtoupper(bin2hex(random_bytes(4)));
+            Log::error('Inventory adjust failed [' . $reference . ']: ' . $exception->getMessage());
+            $this->Flash->error(__('The stock change could not be saved. Reference {0}.', $reference));
         }
 
         return $this->redirect(['action' => 'index', '?' => ['location' => $locationId]]);

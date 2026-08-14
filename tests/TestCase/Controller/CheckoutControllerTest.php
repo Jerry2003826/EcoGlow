@@ -5,7 +5,6 @@ namespace App\Test\TestCase\Controller;
 
 use App\Service\Cart\CartService;
 use App\Test\TestCase\Support\FakePaymentGateway;
-use Authentication\Identity;
 use Cake\Core\Configure;
 use Cake\TestSuite\IntegrationTestTrait;
 use Cake\TestSuite\TestCase;
@@ -279,8 +278,10 @@ class CheckoutControllerTest extends TestCase
      */
     private function loginCustomer(int $userId, ?string $cartToken = null): void
     {
+        $user = $this->fetchTable('Users')->get($userId);
         $session = [
-            'Auth' => new Identity($this->fetchTable('Users')->get($userId)),
+            'AuthV2' => $userId,
+            'AuthVersion' => (int)($user->get('auth_version') ?: 1),
         ];
         if ($cartToken !== null) {
             $session[CartService::SESSION_KEY] = $cartToken;

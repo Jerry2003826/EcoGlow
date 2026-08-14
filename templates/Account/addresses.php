@@ -44,10 +44,10 @@ $this->assign('breadcrumb', $this->element('admin/breadcrumb', [
                     'confirm' => 'Remove this address?',
                 ],
             ) ?>
-        </div>
-    <?php endforeach; ?>
+    </div>
+<?php endforeach; ?>
 
-    <div class="eg-card p-4 p-md-5 mt-4" style="max-width: 36rem;">
+<div class="eg-card p-4 p-md-5 mt-4" style="max-width: 36rem;">
         <h2 class="h5 mb-3">Add an address</h2>
         <?= $this->Form->create($address, ['url' => '/account/addresses/add']) ?>
         <div class="mb-3">
@@ -121,5 +121,4 @@ $this->assign('breadcrumb', $this->element('admin/breadcrumb', [
             <?= $this->Form->button(__('Save address'), ['class' => 'btn btn-eg-primary']) ?>
         </div>
         <?= $this->Form->end() ?>
-    </div>
 </div>

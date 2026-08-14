@@ -70,6 +70,7 @@ $billingEmail = (string)($customer->email ?? '');
                         'id' => 'checkout-form',
                         'novalidate' => true,
                     ]) ?>
+                    <?= $this->Form->hidden('checkout_attempt_id', ['value' => $attemptId ?? '']) ?>
 
                     <section class="eg-card p-4 p-md-5 mb-4" aria-labelledby="checkout-address-heading">
                         <h2 id="checkout-address-heading" class="checkout-section-title">Delivery address</h2>

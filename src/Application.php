@@ -16,8 +16,12 @@ declare(strict_types=1);
  */
 namespace App;
 
+use App\Middleware\AbuseThrottleMiddleware;
+use App\Middleware\ContentSecurityPolicyMiddleware;
 use App\Middleware\HostHeaderMiddleware;
 use App\Middleware\LoginThrottleMiddleware;
+use App\Middleware\SessionIntegrityMiddleware;
+use App\Middleware\TrustedProxyMiddleware;
 use App\Policy\RequestPolicy;
 use Authentication\AuthenticationService;
 use Authentication\AuthenticationServiceInterface;
@@ -84,10 +88,22 @@ class Application extends BaseApplication implements
      */
     public function middleware(MiddlewareQueue $middlewareQueue): MiddlewareQueue
     {
+        $trustedProxies = array_values(array_filter(
+            array_map(
+                'trim',
+                explode(',', (string)(getenv('TRUSTED_PROXIES') ?: '')),
+            ),
+            static fn(string $ip): bool => filter_var($ip, FILTER_VALIDATE_IP) !== false,
+        ));
+
         $middlewareQueue
             // Catch any exceptions in the lower layers,
             // and make an error page/response
             ->add(new ErrorHandlerMiddleware(Configure::read('Error'), $this))
+
+            // Strip spoofable proxy headers from direct clients. Forwarded
+            // headers are trusted only when REMOTE_ADDR is explicitly listed.
+            ->add(new TrustedProxyMiddleware($trustedProxies))
 
             // Validate Host header to prevent Host Header Injection attacks.
             // In production, ensures App.fullBaseUrl is configured and validates
@@ -100,23 +116,17 @@ class Application extends BaseApplication implements
             ->add((new SecurityHeadersMiddleware())
                 ->setReferrerPolicy()
                 ->setXFrameOptions('sameorigin')
-                ->noSniff());
+                ->noSniff())
+            ->add(new ContentSecurityPolicyMiddleware());
 
         // Force HTTPS in production only; enabling it locally would redirect
         // the dev server at http://localhost:8765 away. It sits behind
         // HostHeaderMiddleware so only a validated Host can be redirected to,
         // and behind SecurityHeadersMiddleware so the 301 still carries the
-        // hardening headers.
+        // hardening headers. Proxy trust is decided earlier by
+        // TrustedProxyMiddleware — do not pass an empty trustedProxies list.
         if (!Configure::read('debug')) {
             $middlewareQueue->add(new HttpsEnforcerMiddleware([
-                // cPanel terminates TLS at its reverse proxy, so PHP only ever
-                // sees plain HTTP and would redirect forever. An empty list
-                // trusts X-Forwarded-Proto without pinning proxy IPs, which are
-                // not fixed on shared hosting; ServerRequest::clientIp() then
-                // reads the last X-Forwarded-For entry, the one the fronting
-                // proxy appends, so LoginThrottleMiddleware cannot be bypassed
-                // with a forged header.
-                'trustedProxies' => [],
                 // Sibling subdomains on the shared host are not ours to pin,
                 // and preload is effectively irreversible.
                 'hsts' => [
@@ -161,10 +171,12 @@ class Application extends BaseApplication implements
             // correct password cannot be persisted to the session during a
             // brute-force lockout window.
             ->add(new LoginThrottleMiddleware())
+            ->add(new AbuseThrottleMiddleware())
 
             // Authentication middleware, after routing so that URL params
             // are available to the authentication service.
             ->add(new AuthenticationMiddleware($this))
+            ->add(new SessionIntegrityMiddleware())
 
             // Authorization after authentication so the identity can be decorated.
             ->add(new AuthorizationMiddleware($this, [
@@ -189,6 +201,18 @@ class Application extends BaseApplication implements
             'password' => 'password',
         ];
 
+        $activeUserResolver = [
+            'className' => 'Authentication.Orm',
+            'userModel' => 'Users',
+            'finder' => 'activeForAuthentication',
+        ];
+        $primaryKeyIdentifier = [
+            'className' => 'Authentication.Token',
+            'tokenField' => 'id',
+            'dataField' => 'key',
+            'resolver' => $activeUserResolver,
+        ];
+
         $path = $request->getUri()->getPath();
         $customerArea = str_starts_with($path, '/account')
             || str_starts_with($path, '/checkout')
@@ -198,8 +222,17 @@ class Application extends BaseApplication implements
         $authenticationService = new AuthenticationService([
             'unauthenticatedRedirect' => $loginUrl,
             'queryParam' => 'redirect',
+            'redirectValidation' => [
+                'enabled' => true,
+                'maxDepth' => 1,
+                'maxEncodingLevels' => 1,
+                'maxLength' => 1024,
+            ],
             'authenticators' => [
-                'Authentication.Session',
+                'Authentication.PrimaryKeySession' => [
+                    'sessionKey' => 'AuthV2',
+                    'identifier' => $primaryKeyIdentifier,
+                ],
                 'Authentication.Form' => [
                     'fields' => $fields,
                     // DefaultUrlChecker compares a single path. Pin it to the
@@ -209,6 +242,7 @@ class Application extends BaseApplication implements
                     'identifier' => [
                         'className' => 'Authentication.Password',
                         'fields' => $fields,
+                        'resolver' => $activeUserResolver,
                     ],
                 ],
             ],

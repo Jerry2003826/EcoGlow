@@ -4,7 +4,6 @@ declare(strict_types=1);
 namespace App\Test\TestCase\Controller;
 
 use App\Model\Entity\ServiceRequest;
-use Authentication\Identity;
 use Cake\TestSuite\IntegrationTestTrait;
 use Cake\TestSuite\TestCase;
 
@@ -117,8 +116,10 @@ class ServicesControllerTest extends TestCase
      */
     private function loginAs(int $userId): void
     {
+        $user = $this->fetchTable('Users')->get($userId);
         $this->session([
-            'Auth' => new Identity($this->fetchTable('Users')->get($userId)),
+            'AuthV2' => $userId,
+            'AuthVersion' => (int)($user->get('auth_version') ?: 1),
         ]);
     }
 }

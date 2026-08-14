@@ -66,4 +66,37 @@ class UserMailer extends Mailer
 
         $this->viewBuilder()->setTemplate('reset_password');
     }
+
+    /**
+     * @param \App\Model\Entity\User $user Account.
+     * @param string $token Plain confirmation token.
+     * @return void
+     */
+    public function verifyEmail(User $user, string $token): void
+    {
+        $url = Router::url(['controller' => 'Users', 'action' => 'verifyEmail', $token], true);
+        $this
+            ->setTo($user->email)
+            ->setSubject(__('Confirm your Eco Glow Lighting email'))
+            ->setEmailFormat(Message::MESSAGE_TEXT)
+            ->setViewVars(['verifyUrl' => $url]);
+        $this->viewBuilder()->setTemplate('verify_email');
+    }
+
+    /**
+     * @param \App\Model\Entity\User $user Account.
+     * @param string $newEmail Address being confirmed.
+     * @param string $token Plain confirmation token.
+     * @return void
+     */
+    public function confirmEmailChange(User $user, string $newEmail, string $token): void
+    {
+        $url = Router::url(['controller' => 'Account', 'action' => 'confirmEmail', $token], true);
+        $this
+            ->setTo($newEmail)
+            ->setSubject(__('Confirm your new Eco Glow Lighting email'))
+            ->setEmailFormat(Message::MESSAGE_TEXT)
+            ->setViewVars(['verifyUrl' => $url, 'newEmail' => $newEmail]);
+        $this->viewBuilder()->setTemplate('confirm_email_change');
+    }
 }

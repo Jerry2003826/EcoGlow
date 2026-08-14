@@ -1,0 +1,8 @@
+# Payment, RBAC and schema changes need a second reviewer.
+/src/Service/Payments/ @Jerry2003826
+/src/Service/Checkout/ @Jerry2003826
+/src/Service/Orders/ @Jerry2003826
+/src/Authorization/ @Jerry2003826
+/config/Migrations/ @Jerry2003826
+/config/Seeds/ @Jerry2003826
+/.github/ @Jerry2003826

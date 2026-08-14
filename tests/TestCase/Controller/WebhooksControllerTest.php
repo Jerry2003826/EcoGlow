@@ -26,6 +26,8 @@ class WebhooksControllerTest extends TestCase
     protected array $fixtures = [
         'app.Users',
         'app.Customers',
+        'app.Carts',
+        'app.CartItems',
         'app.Products',
         'app.ProductVariants',
         'app.InventoryLocations',
@@ -46,6 +48,7 @@ class WebhooksControllerTest extends TestCase
         'app.OutboundMessages',
         'app.OutboundMessageEvents',
         'app.ContactMessages',
+        'app.PaymentReconciliationAlerts',
     ];
 
     /**
@@ -76,6 +79,7 @@ class WebhooksControllerTest extends TestCase
         ]);
         $this->post('/webhooks/stripe', '{"id":"evt_x"}');
         $this->assertResponseCode(400);
+        $this->assertResponseContains('invalid_webhook');
         $this->assertResponseNotContains('CSRF');
     }
 
@@ -144,17 +148,21 @@ class WebhooksControllerTest extends TestCase
     }
 
     /**
-     * A failed PaymentIntent releases the reservation.
+     * A failed PaymentIntent keeps the unpaid hold so the customer can retry.
      *
      * @return void
      */
-    public function testPaymentFailedReleasesReservation(): void
+    public function testPaymentFailedKeepsReservation(): void
     {
         $before = (int)$this->fetchTable('InventoryBalances')->get([
             'product_variant_id' => 1,
             'inventory_location_id' => 1,
         ])->quantity_on_hand;
         $order = $this->placeOrder('pi_fail_1');
+        $reserved = (int)$this->fetchTable('InventoryBalances')->get([
+            'product_variant_id' => 1,
+            'inventory_location_id' => 1,
+        ])->quantity_reserved;
         $payload = $this->eventPayload(
             'evt_fail_1',
             'payment_intent.payment_failed',
@@ -169,15 +177,107 @@ class WebhooksControllerTest extends TestCase
         $this->assertResponseOk();
 
         $order = $this->fetchTable('SalesOrders')->get($order->id);
-        $this->assertSame('failed', $order->payment_status);
-        $this->assertSame('cancelled', $order->status);
+        $this->assertSame('pending', $order->payment_status);
+        $this->assertSame(SalesOrder::STATUS_DRAFT, $order->status);
 
         $balance = $this->fetchTable('InventoryBalances')->get([
             'product_variant_id' => 1,
             'inventory_location_id' => 1,
         ]);
         $this->assertSame($before, (int)$balance->quantity_on_hand);
-        $this->assertSame(0, (int)$balance->quantity_reserved);
+        $this->assertSame($reserved, (int)$balance->quantity_reserved);
+        $this->assertSame(
+            'failed',
+            (string)$this->fetchTable('Payments')->find()
+                ->where(['provider_payment_id' => 'pi_fail_1'])
+                ->first()
+                ->status,
+        );
+    }
+
+    /**
+     * A later success after payment_failed still confirms the same order.
+     *
+     * @return void
+     */
+    public function testFailedThenSucceededConfirmsOrder(): void
+    {
+        $order = $this->placeOrder('pi_retry_1');
+        $this->postSigned($this->eventPayload(
+            'evt_retry_fail',
+            'payment_intent.payment_failed',
+            'pi_retry_1',
+            (int)$order->grand_total_cents,
+            ['order_id' => (string)$order->id],
+        ));
+        $this->postSigned($this->eventPayload(
+            'evt_retry_ok',
+            'payment_intent.succeeded',
+            'pi_retry_1',
+            (int)$order->grand_total_cents,
+            ['order_id' => (string)$order->id],
+        ));
+        $this->assertResponseOk();
+        $order = $this->fetchTable('SalesOrders')->get($order->id);
+        $this->assertSame('paid', $order->payment_status);
+        $this->assertSame('confirmed', $order->status);
+    }
+
+    /**
+     * Success after cancel is a conflict, not silent fulfilment.
+     *
+     * @return void
+     */
+    public function testCanceledThenSucceededCreatesAlert(): void
+    {
+        $order = $this->placeOrder('pi_cancel_1');
+        $this->postSigned($this->eventPayload(
+            'evt_cancel_1',
+            'payment_intent.canceled',
+            'pi_cancel_1',
+            (int)$order->grand_total_cents,
+            ['order_id' => (string)$order->id],
+        ));
+        $this->assertResponseOk();
+        $order = $this->fetchTable('SalesOrders')->get($order->id);
+        $this->assertSame('cancelled', $order->status);
+
+        $this->postSigned($this->eventPayload(
+            'evt_cancel_ok',
+            'payment_intent.succeeded',
+            'pi_cancel_1',
+            (int)$order->grand_total_cents,
+            ['order_id' => (string)$order->id],
+        ));
+        $this->assertResponseOk();
+        $this->assertResponseContains('conflict');
+        $order = $this->fetchTable('SalesOrders')->get($order->id);
+        $this->assertSame('cancelled', $order->status);
+        $this->assertSame(
+            1,
+            $this->fetchTable('PaymentReconciliationAlerts')->find()->count(),
+        );
+    }
+
+    /**
+     * Amount or currency mismatch must not confirm the order.
+     *
+     * @return void
+     */
+    public function testAmountMismatchDoesNotConfirm(): void
+    {
+        $order = $this->placeOrder('pi_amt_1');
+        $this->postSigned($this->eventPayload(
+            'evt_amt_1',
+            'payment_intent.succeeded',
+            'pi_amt_1',
+            (int)$order->grand_total_cents + 100,
+            ['order_id' => (string)$order->id],
+        ));
+        $this->assertResponseOk();
+        $this->assertResponseContains('conflict');
+        $order = $this->fetchTable('SalesOrders')->get($order->id);
+        $this->assertSame('pending', $order->payment_status);
     }
 
     /**
@@ -203,6 +303,7 @@ class WebhooksControllerTest extends TestCase
             $gateway,
         );
         $customer = $this->fetchTable('Customers')->get(2);
+        $attemptId = '11111111-1111-4111-8111-' . substr(hash('sha256', $intentId), 0, 12);
         $result = $checkout->place($customer, 4, $carts->current(4, $token, false), [
             'recipient_name' => 'Casey Aitken',
             'line1' => '10 Flinders Lane',
@@ -210,7 +311,7 @@ class WebhooksControllerTest extends TestCase
             'state' => 'VIC',
             'postcode' => '3000',
             'phone' => '0400000004',
-        ]);
+        ], false, $attemptId);
 
         return $result['order'];
     }
@@ -261,8 +362,13 @@ class WebhooksControllerTest extends TestCase
                     'id' => $intentId,
                     'object' => 'payment_intent',
                     'amount' => $amountCents,
+                    'amount_received' => $type === 'payment_intent.succeeded' ? $amountCents : 0,
                     'currency' => 'aud',
-                    'status' => $type === 'payment_intent.succeeded' ? 'succeeded' : 'failed',
+                    'status' => match ($type) {
+                        'payment_intent.succeeded' => 'succeeded',
+                        'payment_intent.canceled' => 'canceled',
+                        default => 'requires_payment_method',
+                    },
                     'metadata' => $metadata,
                 ],
             ],

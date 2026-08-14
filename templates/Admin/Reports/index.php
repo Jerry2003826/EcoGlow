@@ -12,8 +12,7 @@
  * @var int $grossSales
  * @var int $taxCents
  * @var int $average
- * @var int $estimatedGrossProfit
- * @var int $cogsCents
+ * @var bool $canFinancial
  * @var array<int, array<string, mixed>> $channels
  * @var array<int, array<string, mixed>> $categories
  * @var array<int, array<string, mixed>> $transactions
@@ -78,15 +77,13 @@ $sortUrl = function (string $column) use ($preset, $from, $to, $sort, $direction
         <span class="admin-stat-value"><?= $this->Money->aud((int)$average) ?></span>
         <span class="eg-eyebrow">Average order (GST inclusive)</span>
     </div>
-    <div class="admin-stat-card">
-        <span class="admin-stat-value"><?= $this->Money->aud((int)$estimatedGrossProfit) ?></span>
-        <span class="eg-eyebrow">estimated gross profit</span>
-    </div>
 </div>
 
 <p class="admin-note mb-4">
     Sales figures are GST inclusive. GST included in the range: <?= $this->Money->aud((int)$taxCents) ?>.
-    Profit is labelled <strong>estimated gross profit</strong> because cost snapshots are estimates, not a full COGS ledger.
+    <?php if (!empty($canFinancial)) : ?>
+        <a href="<?= $this->Url->build(['action' => 'financial', '?' => ['preset' => $preset, 'from' => $from, 'to' => $to]]) ?>">Open financial report</a>
+    <?php endif; ?>
 </p>
 
 <div class="admin-split">
@@ -170,7 +167,6 @@ $sortUrl = function (string $column) use ($preset, $from, $to, $sort, $direction
                     <thead>
                         <tr>
                             <th><?= $this->Html->link('Reference', $sortUrl('reference')) ?></th>
-                            <th><?= $this->Html->link('Customer', $sortUrl('customer')) ?></th>
                             <th><?= $this->Html->link('Amount', $sortUrl('amount')) ?></th>
                             <th><?= $this->Html->link('Status', $sortUrl('status')) ?></th>
                             <th><?= $this->Html->link('Date', $sortUrl('occurred_at')) ?></th>
@@ -180,7 +176,6 @@ $sortUrl = function (string $column) use ($preset, $from, $to, $sort, $direction
                         <?php foreach ($transactions as $row) : ?>
                             <tr>
                                 <td class="cell-ref"><?= h($row['reference_number'] ?: '—') ?></td>
-                                <td><?= h($row['customer_name'] ?: 'Walk-in') ?></td>
                                 <td><?= $this->Money->aud((int)$row['amount_cents']) ?></td>
                                 <td><?= $this->element('admin/status_pill', ['status' => (string)$row['status']]) ?></td>
                                 <td class="text-nowrap">

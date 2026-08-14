@@ -43,17 +43,6 @@ class ReportsController extends AdminController
         $taxCents = (int)($summary['tax_cents'] ?? 0);
         $average = $ordersTotal > 0 ? intdiv($grossSales, $ordersTotal) : 0;
 
-        $profit = $connection->execute(
-            "SELECT COALESCE(SUM(estimated_gross_profit_cents), 0) AS estimated_gross_profit_cents,
-                    COALESCE(SUM(cogs_cents), 0) AS cogs_cents
-               FROM v_order_profitability
-              WHERE placed_at IS NOT NULL
-                AND DATE(COALESCE(CONVERT_TZ(placed_at, 'UTC', 'Australia/Melbourne'), placed_at))
-                    BETWEEN ? AND ?
-                AND status <> 'cancelled'",
-            [$fromSql, $toSql],
-        )->fetch('assoc') ?: [];
-
         $channels = $connection->execute(
             "SELECT source_channel,
                     COUNT(*) AS order_count,
@@ -90,17 +79,13 @@ class ReportsController extends AdminController
             'amount' => 't.amount_cents',
             'status' => 't.status',
             'occurred_at' => 't.occurred_at',
-            'customer' => 'customer_name',
         ];
         $sortSql = $sortMap[$sort] ?? 't.occurred_at';
 
         $transactions = $connection->execute(
             "SELECT t.transaction_type, t.transaction_id, t.reference_number, t.amount_cents,
-                    t.status, t.occurred_at, t.customer_id,
-                    NULLIF(TRIM(CONCAT(COALESCE(c.first_name, ''), ' ', COALESCE(c.last_name, ''))), '')
-                        AS customer_name
+                    t.status, t.occurred_at
                FROM v_recent_transactions t
-               LEFT JOIN customers c ON c.id = t.customer_id
               WHERE DATE(COALESCE(CONVERT_TZ(t.occurred_at, 'UTC', 'Australia/Melbourne'), t.occurred_at))
                     BETWEEN ? AND ?
               ORDER BY {$sortSql} {$direction}, t.transaction_id DESC
@@ -118,10 +103,59 @@ class ReportsController extends AdminController
             'grossSales' => $grossSales,
             'taxCents' => $taxCents,
             'average' => $average,
-            'estimatedGrossProfit' => (int)($profit['estimated_gross_profit_cents'] ?? 0),
-            'cogsCents' => (int)($profit['cogs_cents'] ?? 0),
+            'canFinancial' => $this->permissions->has($this->actorId(), 'reports.financial'),
             'channels' => $channels ?: [],
             'categories' => $categories ?: [],
+            'transactions' => $transactions ?: [],
+        ]);
+    }
+
+    /**
+     * Profit, COGS and named customers. Requires reports.financial.
+     *
+     * @return void
+     */
+    public function financial(): void
+    {
+        $preset = (string)$this->request->getQuery('preset', 'month');
+        $from = (string)$this->request->getQuery('from', '');
+        $to = (string)$this->request->getQuery('to', '');
+        [$fromDate, $toDate, $preset] = $this->range($preset, $from, $to);
+        $fromSql = $fromDate->format('Y-m-d');
+        $toSql = $toDate->format('Y-m-d');
+        $connection = $this->fetchTable('SalesOrders')->getConnection();
+
+        $profit = $connection->execute(
+            "SELECT COALESCE(SUM(estimated_gross_profit_cents), 0) AS estimated_gross_profit_cents,
+                    COALESCE(SUM(cogs_cents), 0) AS cogs_cents
+               FROM v_order_profitability
+              WHERE placed_at IS NOT NULL
+                AND DATE(COALESCE(CONVERT_TZ(placed_at, 'UTC', 'Australia/Melbourne'), placed_at))
+                    BETWEEN ? AND ?
+                AND status <> 'cancelled'",
+            [$fromSql, $toSql],
+        )->fetch('assoc') ?: [];
+
+        $transactions = $connection->execute(
+            "SELECT t.transaction_type, t.transaction_id, t.reference_number, t.amount_cents,
+                    t.status, t.occurred_at, t.customer_id,
+                    NULLIF(TRIM(CONCAT(COALESCE(c.first_name, ''), ' ', COALESCE(c.last_name, ''))), '')
+                        AS customer_name
+               FROM v_recent_transactions t
+               LEFT JOIN customers c ON c.id = t.customer_id
+              WHERE DATE(COALESCE(CONVERT_TZ(t.occurred_at, 'UTC', 'Australia/Melbourne'), t.occurred_at))
+                    BETWEEN ? AND ?
+              ORDER BY t.occurred_at DESC, t.transaction_id DESC
+              LIMIT 200",
+            [$fromSql, $toSql],
+        )->fetchAll('assoc');
+
+        $this->set([
+            'preset' => $preset,
+            'from' => $fromSql,
+            'to' => $toSql,
+            'estimatedGrossProfit' => (int)($profit['estimated_gross_profit_cents'] ?? 0),
+            'cogsCents' => (int)($profit['cogs_cents'] ?? 0),
             'transactions' => $transactions ?: [],
         ]);
     }

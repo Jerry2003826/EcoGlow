@@ -68,25 +68,22 @@ Stop the server with `Ctrl+C`.
 
 ### Demo accounts
 
-| Who | URL | Email | Password |
-| --- | --- | --- | --- |
-| Storefront | http://127.0.0.1:8765/ | — | — |
-| Staff | http://127.0.0.1:8765/login | `admin@ecoglow.local` | `admin123` |
-| Customer | http://127.0.0.1:8765/account/login | `customer@ecoglow.local` | `customer123` |
+The launcher prints a **one-time** staff and customer password to the terminal.
+There is no default password in this repository. Set `ADMIN_SEED_PASSWORD` and
+`CUSTOMER_SEED_PASSWORD` (at least 20 characters, not a placeholder such as
+`admin123`) before running seeders yourself.
 
 reCAPTCHA is **off** in this local demo. Stripe checkout still needs test keys in
 `config/app_local.php` if you want to complete a payment.
-
-Change these passwords before deploying anywhere shared.
 
 ### 中文：给组员的一键启动
 
 1. 一定要克隆 **`jiarui` 分支**，不要用默认的 `main`。
 2. Mac 双击 `start.command`；Windows 双击 `start.bat`。
 3. 第一次可能要装 Homebrew / PHP / MySQL，Mac 可能会要电脑密码。
-4. 浏览器打开后：
-   - 员工后台：`admin@ecoglow.local` / `admin123`
-   - 客户账号：`customer@ecoglow.local` / `customer123`
+4. 浏览器打开后，用终端里打印的一次性密码登录：
+   - 员工后台：`admin@ecoglow.local`
+   - 客户账号：`customer@ecoglow.local`
 5. 本机配置写在 `config/app_local.php`，不会上传到 git。
 6. 结账要自己填 Stripe 测试密钥；不填也能逛店和看后台。
 
@@ -125,8 +122,9 @@ bin/cake server -p 8765
 
 Open http://127.0.0.1:8765/
 
-`UsersSeed` and `DemoCustomerSeed` are idempotent. Override passwords with
-`ADMIN_SEED_PASSWORD` and `CUSTOMER_SEED_PASSWORD` if you need to.
+`UsersSeed` and `DemoCustomerSeed` are idempotent. They refuse to run unless
+`ADMIN_SEED_PASSWORD` / `CUSTOMER_SEED_PASSWORD` are strong (20+ characters,
+not a public placeholder).
 
 The staff login is throttled: after 5 failed attempts from the same IP the form
 is locked for 15 minutes (`login_throttle` cache in `config/app.php`).
@@ -149,10 +147,21 @@ keys are accepted only while `debug` is on; they are refused in production.
 
 - Set `APP_FULL_BASE_URL` to your domain — the app refuses to serve without it in
   production (Host Header Injection protection).
-- Serve over HTTPS: the CSRF cookie is marked `Secure` whenever `debug` is off.
-- Security headers (`X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`)
-  are sent on every response.
-- Do not deploy the demo passwords.
+- Serve over HTTPS: the CSRF and session cookies are marked `Secure` whenever
+  `debug` is off. Set `SESSION_COOKIE_SECURE=1` if TLS terminates at a proxy.
+- List trusted reverse-proxy IPs in `TRUSTED_PROXIES`. The origin must not be
+  reachable from the public internet except through those proxies, and the proxy
+  must overwrite `X-Forwarded-*` rather than append client-supplied values.
+- Document root must be `webroot/`. Keep `config/`, `logs/`, `tmp/` and `.git/`
+  off the public web server.
+- Enable GitHub branch protection on `main` and `jiarui`, require reviews and
+  CI, and turn on Secret Scanning / Push Protection.
+- If `admin@ecoglow.local` exists in a shared database, rotate its password and
+  review roles, last login, and audit rows.
+- Release unpaid checkout holds with `bin/cake orders.release_expired_holds`.
+- Security headers (`X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`,
+  CSP Report-Only) are sent on every response. Set `CSP_ENFORCE=true` after
+  reviewing reports.
 
 ## Tests
 

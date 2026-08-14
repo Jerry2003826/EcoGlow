@@ -468,11 +468,22 @@ return [
      */
     'Session' => [
         'defaults' => 'php',
+        'cookie' => 'ECOGLOWSESSID',
         /*
          * Expire idle admin sessions after 30 minutes of inactivity so an
          * unattended, logged-in browser cannot be reused indefinitely.
          */
         'timeout' => 30,
+        'ini' => [
+            'session.cookie_httponly' => 1,
+            'session.use_only_cookies' => 1,
+            'session.use_strict_mode' => 1,
+            'session.cookie_samesite' => 'Lax',
+            'session.cookie_secure' => (int)filter_var(
+                env('SESSION_COOKIE_SECURE', !filter_var(env('DEBUG', true), FILTER_VALIDATE_BOOLEAN)),
+                FILTER_VALIDATE_BOOLEAN,
+            ),
+        ],
     ],
 
     /**

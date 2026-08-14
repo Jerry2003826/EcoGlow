@@ -17,7 +17,9 @@ declare(strict_types=1);
 namespace App\Test\TestCase;
 
 use App\Application;
+use App\Middleware\ContentSecurityPolicyMiddleware;
 use App\Middleware\HostHeaderMiddleware;
+use App\Middleware\TrustedProxyMiddleware;
 use Cake\Core\Configure;
 use Cake\Error\Middleware\ErrorHandlerMiddleware;
 use Cake\Http\Middleware\HttpsEnforcerMiddleware;
@@ -84,11 +86,13 @@ class ApplicationTest extends TestCase
 
         $this->assertSame([
             ErrorHandlerMiddleware::class,
+            TrustedProxyMiddleware::class,
             HostHeaderMiddleware::class,
             SecurityHeadersMiddleware::class,
+            ContentSecurityPolicyMiddleware::class,
             AssetMiddleware::class,
             RoutingMiddleware::class,
-        ], array_slice($classes, 0, 5));
+        ], array_slice($classes, 0, 7));
         $this->assertNotContains(HttpsEnforcerMiddleware::class, $classes);
     }
 
@@ -108,12 +112,14 @@ class ApplicationTest extends TestCase
 
         $this->assertSame([
             ErrorHandlerMiddleware::class,
+            TrustedProxyMiddleware::class,
             HostHeaderMiddleware::class,
             SecurityHeadersMiddleware::class,
+            ContentSecurityPolicyMiddleware::class,
             HttpsEnforcerMiddleware::class,
             AssetMiddleware::class,
             RoutingMiddleware::class,
-        ], array_slice($classes, 0, 6));
+        ], array_slice($classes, 0, 8));
     }
 
     /**

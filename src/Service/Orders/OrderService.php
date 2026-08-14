@@ -318,8 +318,13 @@ class OrderService
      * @param array<string, mixed> $address Shipping fields.
      * @return \App\Model\Entity\SalesOrder
      */
-    public function createFromCheckout(int $customerId, int $userId, Cart $cart, array $address): SalesOrder
-    {
+    public function createFromCheckout(
+        int $customerId,
+        int $userId,
+        Cart $cart,
+        array $address,
+        string $checkoutAttemptId = '',
+    ): SalesOrder {
         $this->assertCheckoutAddress($address);
         $items = $cart->cart_items ?? [];
         if ($items === []) {
@@ -328,14 +333,37 @@ class OrderService
 
         $this->fetchTable('Customers')->get($customerId);
 
-        return $this->connection()->transactional(function () use ($customerId, $userId, $cart, $address, $items) {
+        return $this->connection()->transactional(function () use (
+            $customerId,
+            $userId,
+            $cart,
+            $address,
+            $items,
+            $checkoutAttemptId,
+        ) {
+            $this->connection()->execute('SELECT id FROM carts WHERE id = ? FOR UPDATE', [$cart->id]);
+            $cart = $this->fetchTable('Carts')->get($cart->id, contain: ['CartItems']);
+            if ($checkoutAttemptId !== '') {
+                $existing = $this->fetchTable('SalesOrders')->find()
+                    ->contain(['Customers', 'SalesOrderItems', 'OrderAddresses'])
+                    ->where(['checkout_attempt_id' => $checkoutAttemptId])
+                    ->first();
+                if ($existing) {
+                    return $existing;
+                }
+            }
+            if ((string)$cart->get('status') === 'converted') {
+                throw new InvalidArgumentException('This basket has already been checked out.');
+            }
+
             $cartService = new CartService();
             $totals = $cartService->totals($cart);
             $orderNumber = $this->ledger->nextDocumentNumber('sales_order', 'ORD');
             $promised = Date::now('Australia/Melbourne')->addDays(10);
+            $holdUntil = DateTime::now('UTC')->addMinutes(15);
 
             $prepared = [];
-            foreach ($items as $index => $item) {
+            foreach ($cart->cart_items ?? $items as $index => $item) {
                 $prepared[] = $this->prepareLine([
                     'product_variant_id' => (int)$item->product_variant_id,
                     'quantity' => (int)$item->quantity,
@@ -361,7 +389,13 @@ class OrderService
             $order->order_type = 'retail';
             $order->promised_delivery_date = $promised;
             $order->version_number = 1;
-            $order->metadata = ['created_via' => 'web_checkout'];
+            $order->set('checkout_attempt_id', $checkoutAttemptId !== '' ? $checkoutAttemptId : null);
+            $order->set('hold_expires_at', $holdUntil);
+            $order->set('cart_id', $cart->id);
+            $order->metadata = [
+                'created_via' => 'web_checkout',
+                'checkout_attempt_id' => $checkoutAttemptId,
+            ];
             $orders->saveOrFail($order);
 
             $this->recordStatus($order, null, SalesOrder::STATUS_DRAFT, $userId, 'Checkout started');
@@ -408,10 +442,12 @@ class OrderService
                 $reservation->status = 'active';
                 $reservation->reservation_movement_id = $this->ledger->lastInsertId();
                 $reservation->created_by_user_id = $userId;
+                $reservation->set('expires_at', $holdUntil);
                 $reservations->saveOrFail($reservation);
             }
 
             $cart->set('status', 'converted');
+            $cart->set('checkout_attempt_id', $checkoutAttemptId !== '' ? $checkoutAttemptId : null);
             $this->fetchTable('Carts')->saveOrFail($cart);
 
             return $orders->get($order->id, contain: [

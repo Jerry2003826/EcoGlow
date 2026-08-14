@@ -35,25 +35,29 @@ class RefundService
      */
     public function refundOrder(SalesOrder $order, int $actorUserId): Payment
     {
-        $payment = $this->capturedStripePayment($order);
-        if ($payment === null) {
-            throw new InvalidArgumentException('This order has no captured Stripe payment to refund.');
-        }
-        $already = $this->fetchTable('PaymentRefunds')->find()
-            ->where(['payment_id' => $payment->id, 'status IN' => ['pending', 'succeeded', 'completed']])
-            ->first();
-        if ($already) {
-            throw new InvalidArgumentException('A refund has already been recorded for this payment.');
-        }
+        return $this->connection()->transactional(function () use ($order, $actorUserId) {
+            $payment = $this->capturedStripePayment($order);
+            if ($payment === null) {
+                throw new InvalidArgumentException('This order has no captured Stripe payment to refund.');
+            }
+            $this->connection()->execute('SELECT id FROM payments WHERE id = ? FOR UPDATE', [$payment->id]);
+            $payment = $this->fetchTable('Payments')->get($payment->id);
+            if ((string)$payment->status !== 'captured') {
+                throw new InvalidArgumentException('This order has no captured Stripe payment to refund.');
+            }
+            $already = $this->fetchTable('PaymentRefunds')->find()
+                ->where(['payment_id' => $payment->id, 'status IN' => ['pending', 'succeeded', 'completed']])
+                ->first();
+            if ($already) {
+                throw new InvalidArgumentException('A refund has already been recorded for this payment.');
+            }
 
-        $key = 'refund-payment-' . $payment->id;
-        $result = $this->gateway->refund(
-            (string)$payment->provider_payment_id,
-            (int)$payment->amount_cents,
-            $key,
-        );
-
-        return $this->connection()->transactional(function () use ($order, $payment, $result, $actorUserId, $key) {
+            $key = 'refund-payment-' . $payment->id;
+            $result = $this->gateway->refund(
+                (string)$payment->provider_payment_id,
+                (int)$payment->amount_cents,
+                $key,
+            );
             $refunds = $this->fetchTable('PaymentRefunds');
             $row = $refunds->newEmptyEntity();
             $row->set('payment_id', $payment->id);

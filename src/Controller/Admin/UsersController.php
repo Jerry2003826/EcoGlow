@@ -158,4 +158,21 @@ class UsersController extends AdminController
 
         return $this->redirect(['action' => 'index']);
     }
+
+    /**
+     * Increment auth_version so every other device must sign in again.
+     *
+     * @param string|null $id User id.
+     * @return \Cake\Http\Response|null
+     */
+    public function revokeSessions(?string $id = null): ?Response
+    {
+        $this->request->allowMethod(['post']);
+        $user = $this->fetchTable('Users')->get($this->recordId($id));
+        $this->fetchTable('Users')->bumpAuthVersion($user);
+        $this->permissions->forget((int)$user->id);
+        $this->Flash->success(__('All sessions for that account have been revoked.'));
+
+        return $this->redirect(['action' => 'index']);
+    }
 }

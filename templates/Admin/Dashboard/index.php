@@ -12,6 +12,10 @@
  * @var array<int, array<string, mixed>> $lowStockItems
  * @var array<int, array<string, mixed>> $recentTransactions
  * @var \Cake\I18n\Date $today
+ * @var bool $canOrders
+ * @var bool $canInventory
+ * @var bool $canMessages
+ * @var bool $canFinance
  */
 
 use App\Model\Entity\SalesOrder;
@@ -28,22 +32,28 @@ $this->assign('breadcrumb', $this->element('admin/breadcrumb', [
 </div>
 
 <div class="admin-stat-grid">
-    <a class="admin-stat-card" href="<?= $this->Url->build(['controller' => 'Orders', 'action' => 'index']) ?>">
-        <span class="admin-stat-value"><?= (int)$ordersToday ?></span>
-        <span class="eg-eyebrow">Orders today</span>
-    </a>
-    <a class="admin-stat-card" href="<?= $this->Url->build(['controller' => 'Orders', 'action' => 'index', '?' => ['status' => SalesOrder::STATUS_CONFIRMED]]) ?>">
-        <span class="admin-stat-value"><?= (int)$awaitingDispatch ?></span>
-        <span class="eg-eyebrow">Awaiting dispatch</span>
-    </a>
-    <a class="admin-stat-card" href="<?= $this->Url->build(['controller' => 'Inventory', 'action' => 'index']) ?>">
-        <span class="admin-stat-value"><?= (int)$lowStock ?></span>
-        <span class="eg-eyebrow">Low stock items</span>
-    </a>
-    <a class="admin-stat-card" href="<?= $this->Url->build(['controller' => 'ContactMessages', 'action' => 'index']) ?>">
-        <span class="admin-stat-value"><?= (int)$unreadMessages ?></span>
-        <span class="eg-eyebrow">Unread messages</span>
-    </a>
+    <?php if ($canOrders) : ?>
+        <a class="admin-stat-card" href="<?= $this->Url->build(['controller' => 'Orders', 'action' => 'index']) ?>">
+            <span class="admin-stat-value"><?= (int)$ordersToday ?></span>
+            <span class="eg-eyebrow">Orders today</span>
+        </a>
+        <a class="admin-stat-card" href="<?= $this->Url->build(['controller' => 'Orders', 'action' => 'index', '?' => ['status' => SalesOrder::STATUS_CONFIRMED]]) ?>">
+            <span class="admin-stat-value"><?= (int)$awaitingDispatch ?></span>
+            <span class="eg-eyebrow">Awaiting dispatch</span>
+        </a>
+    <?php endif; ?>
+    <?php if ($canInventory) : ?>
+        <a class="admin-stat-card" href="<?= $this->Url->build(['controller' => 'Inventory', 'action' => 'index']) ?>">
+            <span class="admin-stat-value"><?= (int)$lowStock ?></span>
+            <span class="eg-eyebrow">Low stock items</span>
+        </a>
+    <?php endif; ?>
+    <?php if ($canMessages) : ?>
+        <a class="admin-stat-card" href="<?= $this->Url->build(['controller' => 'ContactMessages', 'action' => 'index']) ?>">
+            <span class="admin-stat-value"><?= (int)$unreadMessages ?></span>
+            <span class="eg-eyebrow">Unread messages</span>
+        </a>
+    <?php endif; ?>
 </div>
 
 <div class="admin-split">
@@ -52,6 +62,7 @@ $this->assign('breadcrumb', $this->element('admin/breadcrumb', [
             <div class="admin-panel-head">
                 <h2 id="need-heading">Needs attention</h2>
             </div>
+            <?php if ($canOrders) : ?>
             <h3 class="admin-panel-title">New orders</h3>
             <?php if (count($newOrders) === 0) : ?>
                 <?= $this->element('admin/empty', [
@@ -70,7 +81,9 @@ $this->assign('breadcrumb', $this->element('admin/breadcrumb', [
                     <?php endforeach; ?>
                 </ul>
             <?php endif; ?>
+            <?php endif; ?>
 
+            <?php if ($canMessages) : ?>
             <h3 class="admin-panel-title mt-4">Unread messages</h3>
             <?php if (count($unreadInbox) === 0) : ?>
                 <?= $this->element('admin/empty', [
@@ -89,7 +102,9 @@ $this->assign('breadcrumb', $this->element('admin/breadcrumb', [
                     <?php endforeach; ?>
                 </ul>
             <?php endif; ?>
+            <?php endif; ?>
 
+            <?php if ($canInventory) : ?>
             <h3 class="admin-panel-title mt-4">Below reorder point</h3>
             <?php if ($lowStockItems === []) : ?>
                 <?= $this->element('admin/empty', [
@@ -108,9 +123,11 @@ $this->assign('breadcrumb', $this->element('admin/breadcrumb', [
                     <?php endforeach; ?>
                 </ul>
             <?php endif; ?>
+            <?php endif; ?>
         </div>
     </section>
 
+    <?php if ($canFinance) : ?>
     <section class="admin-section" aria-labelledby="recent-heading">
         <div class="admin-panel">
             <div class="admin-panel-head">
@@ -161,4 +178,5 @@ $this->assign('breadcrumb', $this->element('admin/breadcrumb', [
             <?php endif; ?>
         </div>
     </section>
+    <?php endif; ?>
 </div>

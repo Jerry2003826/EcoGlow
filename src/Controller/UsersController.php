@@ -4,9 +4,11 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Middleware\LoginThrottleMiddleware;
+use App\Middleware\SessionIntegrityMiddleware;
 use App\Model\Entity\User;
 use App\Model\Table\UsersTable;
 use App\Service\Cart\CartService;
+use App\Service\Security\TotpService;
 use Cake\Datasource\ConnectionInterface;
 use Cake\Http\Response;
 use Cake\I18n\DateTime;
@@ -71,6 +73,7 @@ class UsersController extends AppController
             'logout',
             'forgotPassword',
             'resetPassword',
+            'verifyEmail',
         ]);
 
         $this->Users = $this->fetchTable('Users');
@@ -92,11 +95,12 @@ class UsersController extends AppController
     public function login(): ?Response
     {
         $ip = $this->request->clientIp() ?: 'unknown';
+        $email = trim((string)$this->request->getData('email'));
 
         // An already-valid session always wins, even from a locked-out IP.
         $result = $this->Authentication->getResult();
         if ($result->isValid()) {
-            LoginThrottleMiddleware::clear($ip);
+            LoginThrottleMiddleware::clear($ip, LoginThrottleMiddleware::SCOPE_LOGIN, $email);
 
             if ($this->request->is('post')) {
                 $identity = $this->Authentication->getIdentity();
@@ -119,16 +123,15 @@ class UsersController extends AppController
                 ? $this->Users->get((int)$identity->getIdentifier())
                 : null;
             $this->mergeCartAfterLogin($user);
-            $fallback = $user !== null ? $this->afterLoginPath($user) : '/admin';
-            $target = $this->Authentication->getLoginRedirect() ?? $fallback;
-            // Only allow relative redirect targets to prevent open redirects.
-            if (str_starts_with($target, 'http') || str_starts_with($target, '//')) {
-                $target = $fallback;
+            if ($user !== null) {
+                $this->persistSessionVersion($user);
             }
-            if ($user !== null && $this->isCustomerUser($user) && str_starts_with($target, '/admin')) {
+            $fallback = $user !== null ? $this->afterLoginPath($user) : '/admin';
+            $target = $this->Authentication->getLoginRedirect($fallback) ?? $fallback;
+            if ($user !== null && $this->isCustomerUser($user) && str_starts_with((string)$target, '/admin')) {
                 $target = '/account';
             }
-            if ($user !== null && $this->isStaffUser($user) && str_starts_with($target, '/account')) {
+            if ($user !== null && $this->isStaffUser($user) && str_starts_with((string)$target, '/account')) {
                 $target = '/admin';
             }
 
@@ -137,7 +140,7 @@ class UsersController extends AppController
 
         // Locked-out POSTs are intercepted by the middleware and redirected
         // here as a GET; surface the reason to the user.
-        if (LoginThrottleMiddleware::isLockedOut($ip)) {
+        if (LoginThrottleMiddleware::isLockedOut($ip, LoginThrottleMiddleware::SCOPE_LOGIN, $email)) {
             $this->Flash->error(
                 __('Too many failed login attempts. Please wait a few minutes and try again.'),
             );
@@ -146,7 +149,7 @@ class UsersController extends AppController
         }
 
         if ($this->request->is('post')) {
-            LoginThrottleMiddleware::registerFailure($ip);
+            LoginThrottleMiddleware::registerFailure($ip, $email);
             $this->Flash->error(__('Invalid email or password'));
         }
 
@@ -250,9 +253,13 @@ class UsersController extends AppController
             return null;
         }
 
+        $this->sendEmailVerification($user);
         $this->Authentication->setIdentity($user);
+        $this->persistSessionVersion($user);
         $this->mergeCartAfterLogin($user);
-        $this->Flash->success(__('Your account is ready. Welcome to Eco Glow Lighting.'));
+        $this->Flash->success(__(
+            'Your account is ready. Please confirm your email before completing a purchase.',
+        ));
 
         return $this->redirect('/account');
     }
@@ -264,6 +271,8 @@ class UsersController extends AppController
      */
     public function logout(): ?Response
     {
+        $this->request->allowMethod(['post']);
+
         $identity = $this->Authentication->getIdentity();
         $wasCustomer = false;
         if ($identity !== null) {
@@ -271,6 +280,12 @@ class UsersController extends AppController
             $wasCustomer = $this->isCustomerUser($user);
         }
         $this->Authentication->logout();
+        $session = $this->request->getSession();
+        $session->delete('Auth');
+        $session->delete('AuthV2');
+        $session->delete(SessionIntegrityMiddleware::SESSION_VERSION);
+        $session->delete(SessionIntegrityMiddleware::SESSION_MFA);
+        $session->renew();
 
         return $this->redirect($wasCustomer ? '/account/login' : ['action' => 'login']);
     }
@@ -308,7 +323,11 @@ class UsersController extends AppController
 
         // Count the attempt before any lookup so the counter cannot be
         // out-run by a script hammering the endpoint.
-        LoginThrottleMiddleware::registerAttempt($ip, $scope);
+        LoginThrottleMiddleware::registerAttempt(
+            $ip,
+            $scope,
+            trim((string)$this->request->getData('email')),
+        );
 
         $email = trim((string)$this->request->getData('email'));
 
@@ -377,6 +396,7 @@ class UsersController extends AppController
                 $user->set('password_reset_expires', null);
 
                 if ($this->Users->save($user)) {
+                    $this->Users->bumpAuthVersion($user);
                     LoginThrottleMiddleware::clear(
                         $this->request->clientIp() ?: 'unknown',
                         LoginThrottleMiddleware::SCOPE_PASSWORD_RESET,
@@ -517,6 +537,105 @@ class UsersController extends AppController
     }
 
     /**
+     * Confirm a registration email from the mailed token.
+     *
+     * @param string|null $token Plain token.
+     * @return \Cake\Http\Response|null
+     */
+    public function verifyEmail(?string $token = null): ?Response
+    {
+        $user = $this->findUserByHashedToken(
+            (string)$token,
+            'email_verification_token',
+            'email_verification_expires',
+        );
+        if ($user === null) {
+            $this->Flash->error(__('That confirmation link is invalid or has expired.'));
+
+            return $this->redirect('/account/login');
+        }
+        $user->set('email_verified_at', DateTime::now('UTC'));
+        $user->set('email_verification_token', null);
+        $user->set('email_verification_expires', null);
+        $this->Users->saveOrFail($user);
+        $this->Flash->success(__('Your email is confirmed. You can complete checkout.'));
+
+        return $this->redirect('/account');
+    }
+
+    /**
+     * Staff TOTP challenge after password login.
+     *
+     * @return \Cake\Http\Response|null
+     */
+    public function mfa(): ?Response
+    {
+        $user = $this->requireStaffForMfa();
+        if ($user instanceof Response) {
+            return $user;
+        }
+        if (!$user->get('mfa_enabled')) {
+            return $this->redirect('/login/mfa-setup');
+        }
+        if ($this->request->is('post')) {
+            try {
+                $secret = TotpService::open((string)$user->get('mfa_secret'));
+            } catch (Throwable) {
+                $this->Flash->error(__('Two-factor authentication is not available. Please set it up again.'));
+
+                return $this->redirect('/login/mfa-setup');
+            }
+            if (TotpService::verify($secret, (string)$this->request->getData('code'))) {
+                $this->request->getSession()->write(SessionIntegrityMiddleware::SESSION_MFA, true);
+
+                return $this->redirect('/admin');
+            }
+            $this->Flash->error(__('That code was not recognised. Try again.'));
+        }
+
+        return null;
+    }
+
+    /**
+     * First-time staff TOTP enrolment.
+     *
+     * @return \Cake\Http\Response|null
+     */
+    public function mfaSetup(): ?Response
+    {
+        $user = $this->requireStaffForMfa();
+        if ($user instanceof Response) {
+            return $user;
+        }
+        $session = $this->request->getSession();
+        $plain = (string)$session->read('MfaSetup.secret');
+        if ($plain === '') {
+            $plain = TotpService::generateSecret();
+            $session->write('MfaSetup.secret', $plain);
+        }
+        if ($this->request->is('post')) {
+            if (TotpService::verify($plain, (string)$this->request->getData('code'))) {
+                $user->set('mfa_secret', TotpService::seal($plain));
+                $user->set('mfa_enabled', true);
+                $user->set('mfa_confirmed_at', DateTime::now('UTC'));
+                $this->Users->saveOrFail($user);
+                $session->delete('MfaSetup.secret');
+                $session->write(SessionIntegrityMiddleware::SESSION_MFA, true);
+                $this->Flash->success(__('Two-factor authentication is now enabled.'));
+
+                return $this->redirect('/admin');
+            }
+            $this->Flash->error(__('That code was not recognised. Try again.'));
+        }
+        $this->set([
+            'secret' => $plain,
+            'otpauth' => TotpService::provisioningUri($plain, (string)$user->email),
+        ]);
+
+        return null;
+    }
+
+    /**
      * Fold the anonymous session basket into the signed-in customer.
      *
      * @param \App\Model\Entity\User|null $user Signed-in user.
@@ -532,6 +651,77 @@ class UsersController extends AppController
             return;
         }
         (new CartService())->mergeOnLogin((int)$user->id, $token);
+    }
+
+    /**
+     * @param \App\Model\Entity\User $user Signed-in user.
+     * @return void
+     */
+    private function persistSessionVersion(User $user): void
+    {
+        $this->request->getSession()->write(
+            SessionIntegrityMiddleware::SESSION_VERSION,
+            (int)($user->get('auth_version') ?: 1),
+        );
+    }
+
+    /**
+     * @param \App\Model\Entity\User $user New or existing customer.
+     * @return void
+     */
+    private function sendEmailVerification(User $user): void
+    {
+        $token = bin2hex(Security::randomBytes(self::RESET_TOKEN_BYTES));
+        $user->set('email_verification_token', hash('sha256', $token));
+        $user->set('email_verification_expires', DateTime::now('UTC')->addHours(24));
+        if (!$this->Users->save($user)) {
+            return;
+        }
+        try {
+            $this->getMailer('User')->send('verifyEmail', [$user, $token]);
+        } catch (Throwable $exception) {
+            Log::error('Could not send the email confirmation: ' . $exception->getMessage());
+        }
+    }
+
+    /**
+     * @param string $token Plain token.
+     * @param string $hashField Stored hash column.
+     * @param string $expiresField Expiry column.
+     * @return \App\Model\Entity\User|null
+     */
+    private function findUserByHashedToken(string $token, string $hashField, string $expiresField): ?User
+    {
+        if ($token === '') {
+            return null;
+        }
+
+        /** @var \App\Model\Entity\User|null $user */
+        $user = $this->Users->find()
+            ->where([
+                $hashField => hash('sha256', $token),
+                $expiresField . ' >=' => DateTime::now('UTC'),
+            ])
+            ->first();
+
+        return $user;
+    }
+
+    /**
+     * @return \App\Model\Entity\User|\Cake\Http\Response
+     */
+    private function requireStaffForMfa(): User|Response
+    {
+        $identity = $this->Authentication->getIdentity();
+        if ($identity === null) {
+            return $this->redirect('/login');
+        }
+        $user = $this->Users->get((int)$identity->getIdentifier());
+        if (!$this->isStaffUser($user)) {
+            return $this->redirect('/account');
+        }
+
+        return $user;
     }
 
     /**

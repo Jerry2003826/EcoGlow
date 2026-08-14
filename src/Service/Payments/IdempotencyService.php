@@ -20,7 +20,7 @@ class IdempotencyService
 
     /**
      * Insert the key. Returns false when another worker already claimed it
-     * and finished. Reclaims stale in-flight rows.
+     * and finished. Reclaims stale in-flight rows with a conditional UPDATE.
      *
      * @param string $scope Scope, e.g. stripe_webhook.
      * @param string $key Provider event id.
@@ -57,15 +57,23 @@ class IdempotencyService
                 return false;
             }
 
-            $lockedUntil = $existing->get('locked_until');
-            if ($lockedUntil instanceof DateTime && $lockedUntil->greaterThan(DateTime::now('UTC'))) {
-                return false;
-            }
+            $lockedUntil = DateTime::now('UTC')->addMinutes(2);
+            $statement = $this->connection()->execute(
+                'UPDATE idempotency_records
+                    SET locked_until = ?
+                  WHERE scope = ?
+                    AND idempotency_key = ?
+                    AND completed_at IS NULL
+                    AND locked_until <= ?',
+                [
+                    $lockedUntil,
+                    $scope,
+                    $key,
+                    DateTime::now('UTC'),
+                ],
+            );
 
-            $existing->set('locked_until', DateTime::now('UTC')->addMinutes(2));
-            $table->saveOrFail($existing);
-
-            return true;
+            return $statement->rowCount() === 1;
         });
     }
 
@@ -89,6 +97,25 @@ class IdempotencyService
         $row->set('response_body', $body);
         $row->set('completed_at', DateTime::now('UTC'));
         $table->saveOrFail($row);
+    }
+
+    /**
+     * Drop an unfinished lock so Stripe can retry a transient failure.
+     *
+     * @param string $scope Scope.
+     * @param string $key Event id.
+     * @return void
+     */
+    public function release(string $scope, string $key): void
+    {
+        $this->connection()->execute(
+            'UPDATE idempotency_records
+                SET locked_until = ?
+              WHERE scope = ?
+                AND idempotency_key = ?
+                AND completed_at IS NULL',
+            [DateTime::now('UTC'), $scope, $key],
+        );
     }
 
     /**

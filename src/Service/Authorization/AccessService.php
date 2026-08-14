@@ -118,9 +118,13 @@ class AccessService
                     ['role_ids' => $currentIds],
                     ['role_ids' => $roleIds],
                 );
+                $this->fetchTable('Users')->bumpAuthVersion(
+                    $this->fetchTable('Users')->get($userId),
+                );
             });
         } finally {
             $this->permissions->forget($actorUserId);
+            $this->permissions->forget($userId);
         }
     }
 
@@ -197,6 +201,8 @@ class AccessService
         $before = $user->status ?? null;
         $user->set('status', $active ? 'active' : 'inactive');
         $this->fetchTable('Users')->saveOrFail($user);
+        $this->fetchTable('Users')->bumpAuthVersion($user);
+        $this->permissions->forget($userId);
         $this->audit->record(
             $actorUserId,
             $active ? 'user.activate' : 'user.deactivate',

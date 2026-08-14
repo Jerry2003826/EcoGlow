@@ -30,17 +30,28 @@ final class FakePaymentGateway implements PaymentGatewayInterface
     public string $nextIntentId = 'pi_test_1';
 
     /**
+     * @var string|null
+     */
+    public ?string $lastIdempotencyKey = null;
+
+    /**
      * @inheritDoc
      */
-    public function createPaymentIntent(int $amountCents, string $currency, array $metadata): PaymentIntentResult
-    {
+    public function createPaymentIntent(
+        int $amountCents,
+        string $currency,
+        array $metadata,
+        ?string $idempotencyKey = null,
+    ): PaymentIntentResult {
         $this->lastAmountCents = $amountCents;
+        $this->lastIdempotencyKey = $idempotencyKey;
         $id = $this->nextIntentId;
         $this->intents[] = [
             'id' => $id,
             'amount_cents' => $amountCents,
             'currency' => $currency,
             'metadata' => $metadata,
+            'idempotency_key' => $idempotencyKey,
         ];
 
         return new PaymentIntentResult($id, $id . '_secret_test');

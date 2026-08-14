@@ -43,6 +43,27 @@ $this->assign('breadcrumb', $this->element('admin/breadcrumb', [
                 'autocomplete' => 'email',
             ]) ?>
         </div>
+        <?php if ($user->get('pending_email')) : ?>
+            <p class="text-muted">Waiting to confirm <?= h((string)$user->get('pending_email')) ?>.</p>
+        <?php endif; ?>
+        <?php if ($user->get('email_verified_at') === null) : ?>
+            <p class="text-muted">Please confirm your email before completing checkout.</p>
+            <?= $this->Form->postLink(
+                __('Resend confirmation email'),
+                '/account/resend-verification',
+                ['class' => 'btn btn-eg-ghost mb-3'],
+            ) ?>
+        <?php endif; ?>
+        <div class="mb-3">
+            <?= $this->Form->control('current_password', [
+                'type' => 'password',
+                'label' => 'Current password (required to change email)',
+                'class' => 'form-control',
+                'required' => false,
+                'autocomplete' => 'current-password',
+                'value' => '',
+            ]) ?>
+        </div>
         <div class="mb-4">
             <?= $this->Form->control('phone', [
                 'type' => 'tel',

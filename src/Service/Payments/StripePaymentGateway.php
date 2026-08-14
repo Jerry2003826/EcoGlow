@@ -23,19 +23,27 @@ class StripePaymentGateway implements PaymentGatewayInterface
     /**
      * @inheritDoc
      */
-    public function createPaymentIntent(int $amountCents, string $currency, array $metadata): PaymentIntentResult
-    {
+    public function createPaymentIntent(
+        int $amountCents,
+        string $currency,
+        array $metadata,
+        ?string $idempotencyKey = null,
+    ): PaymentIntentResult {
         if ($amountCents < 1) {
             throw new InvalidArgumentException('A payment must be at least 1 cent.');
         }
 
         try {
+            $options = [];
+            if ($idempotencyKey !== null && $idempotencyKey !== '') {
+                $options['idempotency_key'] = $idempotencyKey;
+            }
             $intent = $this->client()->paymentIntents->create([
                 'amount' => $amountCents,
                 'currency' => strtolower($currency),
                 'payment_method_types' => ['card'],
                 'metadata' => $metadata,
-            ]);
+            ], $options);
         } catch (ApiErrorException $exception) {
             throw new InvalidArgumentException(
                 'The payment service could not start this charge. Please try again.',

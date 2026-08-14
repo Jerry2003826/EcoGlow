@@ -329,8 +329,6 @@ class OrdersController extends AdminController
             $payload[] = [
                 'id' => $customer->id,
                 'label' => $customer->label,
-                'email' => $customer->email,
-                'phone' => $customer->phone,
             ];
         }
 

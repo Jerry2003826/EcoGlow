@@ -39,6 +39,7 @@ class CheckoutService
      * @param \App\Model\Entity\Cart $cart Current cart.
      * @param array<string, mixed> $address Shipping fields. Prices in this array are ignored.
      * @param bool $saveAddress Persist the address onto the customer record.
+     * @param string $checkoutAttemptId Client/server UUID for this settlement.
      * @return array{order: \App\Model\Entity\SalesOrder, client_secret: string}
      */
     public function place(
@@ -47,38 +48,28 @@ class CheckoutService
         Cart $cart,
         array $address,
         bool $saveAddress = false,
+        string $checkoutAttemptId = '',
     ): array {
         $address = $this->sanitizeAddress($address);
-        $order = $this->orders->createFromCheckout((int)$customer->id, $userId, $cart, $address);
+        $attemptId = $this->normalizeAttemptId($checkoutAttemptId);
+        $existing = $this->orderForAttempt($attemptId);
+        if ($existing !== null) {
+            return $this->resumeOrder($existing);
+        }
+
+        $order = $this->orders->createFromCheckout(
+            (int)$customer->id,
+            $userId,
+            $cart,
+            $address,
+            $attemptId,
+        );
 
         if ($saveAddress) {
             $this->storeCustomerAddress((int)$customer->id, $address);
         }
 
-        try {
-            $intent = $this->gateway->createPaymentIntent(
-                (int)$order->grand_total_cents,
-                'aud',
-                [
-                    'order_id' => (string)$order->id,
-                    'order_number' => (string)$order->order_number,
-                ],
-            );
-        } catch (Throwable $exception) {
-            $this->orders->failUnpaid($order, $userId, 'PaymentIntent could not be created');
-            throw $exception;
-        }
-
-        $this->recordPendingPayment($order, $intent->id, (int)$order->grand_total_cents);
-        $meta = is_array($order->metadata) ? $order->metadata : [];
-        $meta['stripe_payment_intent_id'] = $intent->id;
-        $order->metadata = $meta;
-        $this->fetchTable('SalesOrders')->saveOrFail($order);
-
-        return [
-            'order' => $order,
-            'client_secret' => $intent->clientSecret,
-        ];
+        return $this->createOrReuseIntent($order, $attemptId);
     }
 
     /**
@@ -96,6 +87,10 @@ class CheckoutService
                 'source_channel' => SalesOrder::CHANNEL_WEB,
                 'payment_status' => 'pending',
                 'status' => SalesOrder::STATUS_DRAFT,
+                'OR' => [
+                    'hold_expires_at IS' => null,
+                    'hold_expires_at >' => \Cake\I18n\DateTime::now('UTC'),
+                ],
             ])
             ->orderBy(['id' => 'DESC'])
             ->first();
@@ -103,25 +98,11 @@ class CheckoutService
             return null;
         }
 
-        $meta = is_array($order->metadata) ? $order->metadata : [];
-        $intentId = (string)($meta['stripe_payment_intent_id'] ?? '');
-        if ($intentId === '') {
-            return null;
-        }
-
         try {
-            $secret = $this->gateway->retrieveClientSecret($intentId);
+            return $this->resumeOrder($order);
         } catch (Throwable) {
             return null;
         }
-        if ($secret === null || $secret === '') {
-            return null;
-        }
-
-        return [
-            'order' => $order,
-            'client_secret' => $secret,
-        ];
     }
 
     /**
@@ -156,6 +137,91 @@ class CheckoutService
         }
 
         return $clean;
+    }
+
+    /**
+     * @param \App\Model\Entity\SalesOrder $order Order.
+     * @param string $attemptId Checkout attempt UUID.
+     * @return array{order: \App\Model\Entity\SalesOrder, client_secret: string}
+     */
+    private function createOrReuseIntent(SalesOrder $order, string $attemptId): array
+    {
+        $meta = is_array($order->metadata) ? $order->metadata : [];
+        $intentId = (string)($meta['stripe_payment_intent_id'] ?? '');
+        if ($intentId !== '') {
+            $secret = $this->gateway->retrieveClientSecret($intentId);
+            if ($secret !== null && $secret !== '') {
+                return ['order' => $order, 'client_secret' => $secret];
+            }
+        }
+
+        try {
+            $intent = $this->gateway->createPaymentIntent(
+                (int)$order->grand_total_cents,
+                'aud',
+                [
+                    'order_id' => (string)$order->id,
+                    'order_number' => (string)$order->order_number,
+                    'checkout_attempt_id' => $attemptId,
+                ],
+                $attemptId,
+            );
+        } catch (Throwable $exception) {
+            $this->orders->failUnpaid($order, (int)$order->created_by_user_id, 'PaymentIntent could not be created');
+            throw $exception;
+        }
+
+        $this->recordPendingPayment($order, $intent->id, (int)$order->grand_total_cents);
+        $meta['stripe_payment_intent_id'] = $intent->id;
+        $order->metadata = $meta;
+        $this->fetchTable('SalesOrders')->saveOrFail($order);
+
+        return [
+            'order' => $order,
+            'client_secret' => $intent->clientSecret,
+        ];
+    }
+
+    /**
+     * @param \App\Model\Entity\SalesOrder $order Held unpaid checkout.
+     * @return array{order: \App\Model\Entity\SalesOrder, client_secret: string}
+     */
+    private function resumeOrder(SalesOrder $order): array
+    {
+        $meta = is_array($order->metadata) ? $order->metadata : [];
+        $attemptId = (string)($order->get('checkout_attempt_id') ?: $meta['checkout_attempt_id'] ?? '');
+
+        return $this->createOrReuseIntent($order, $attemptId !== '' ? $attemptId : (string)$order->id);
+    }
+
+    /**
+     * @param string $attemptId UUID.
+     * @return \App\Model\Entity\SalesOrder|null
+     */
+    private function orderForAttempt(string $attemptId): ?SalesOrder
+    {
+        if ($attemptId === '') {
+            return null;
+        }
+
+        return $this->fetchTable('SalesOrders')->find()
+            ->contain(['SalesOrderItems'])
+            ->where(['checkout_attempt_id' => $attemptId])
+            ->first();
+    }
+
+    /**
+     * @param string $attemptId Posted or session UUID.
+     * @return string
+     */
+    private function normalizeAttemptId(string $attemptId): string
+    {
+        $attemptId = strtolower(trim($attemptId));
+        if (!preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/', $attemptId)) {
+            throw new InvalidArgumentException('This checkout session is invalid. Refresh the page and try again.');
+        }
+
+        return $attemptId;
     }
 
     /**

@@ -1,6 +1,7 @@
 <?php
 declare(strict_types=1);
 
+use App\Service\Security\SeedPassword;
 use Authentication\PasswordHasher\DefaultPasswordHasher;
 use Migrations\BaseSeed;
 
@@ -10,30 +11,25 @@ use Migrations\BaseSeed;
 class UsersSeed extends BaseSeed
 {
     /**
-     * Run Method.
-     *
      * Seeds the default administrator account for the admin area.
-     * Override the password via the ADMIN_SEED_PASSWORD environment variable.
+     * ADMIN_SEED_PASSWORD must be a non-placeholder value of at least 20 characters.
      *
      * @return void
      */
     public function run(): void
     {
         $email = 'admin@ecoglow.local';
-
-        // `users.email` is unique, so bail out if the admin already exists to
-        // keep this seed safe to re-run.
-        $existing = $this->fetchRow(
-            sprintf("SELECT id FROM users WHERE email = '%s'", $email),
-        );
+        $quoted = $this->getAdapter()->getConnection()->quote($email);
+        $existing = $this->fetchRow('SELECT id FROM users WHERE email = ' . $quoted);
         if ($existing) {
             return;
         }
 
         $hasher = new DefaultPasswordHasher();
-        $password = env('ADMIN_SEED_PASSWORD') ?: 'admin123';
+        $password = SeedPassword::require('ADMIN_SEED_PASSWORD');
+        $now = date('Y-m-d H:i:s');
 
-        $data = [
+        $this->table('users')->insert([
             [
                 'email' => $email,
                 'password' => $hasher->hash($password),
@@ -41,12 +37,11 @@ class UsersSeed extends BaseSeed
                 'last_name' => 'User',
                 'role' => 'admin',
                 'status' => 'active',
-                'created' => date('Y-m-d H:i:s'),
-                'modified' => date('Y-m-d H:i:s'),
+                'auth_version' => 1,
+                'email_verified_at' => $now,
+                'created' => $now,
+                'modified' => $now,
             ],
-        ];
-
-        $table = $this->table('users');
-        $table->insert($data)->save();
+        ])->save();
     }
 }

@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Middleware\AbuseThrottleMiddleware;
 use App\Model\Entity\Cart;
 use App\Model\Entity\Customer;
 use App\Model\Entity\SalesOrder;
@@ -13,6 +14,7 @@ use App\Service\FeatureFlagService;
 use App\Service\Inventory\InventoryLedger;
 use App\Service\Orders\OrderService;
 use App\Service\Payments\PaymentGatewayFactory;
+use App\Service\Security\RateLimitService;
 use Cake\Core\Configure;
 use Cake\Http\Exception\NotFoundException;
 use Cake\Http\Response;
@@ -39,6 +41,14 @@ class CheckoutController extends AppController
     public function index(): ?Response
     {
         $customer = $this->requireCustomer();
+        $user = $this->fetchTable('Users')->get((int)$customer->user_id);
+        if ($user->get('email_verified_at') === null) {
+            $this->Flash->warning(__('Please confirm your email before completing checkout.'));
+            if ($this->request->is('post')) {
+                return $this->redirect('/account');
+            }
+        }
+        $attemptId = $this->checkoutAttemptId();
         $carts = new CartService();
         $token = $carts->token($this->request);
         $cart = $carts->current((int)$customer->user_id, $token, false);
@@ -74,6 +84,26 @@ class CheckoutController extends AppController
                 ));
             } else {
                 try {
+                    if ($user->get('email_verified_at') === null) {
+                        throw new InvalidArgumentException(
+                            'Please confirm your email before completing checkout.',
+                        );
+                    }
+                    RateLimitService::hit(
+                        AbuseThrottleMiddleware::SCOPE_CHECKOUT,
+                        'user:' . (int)$customer->user_id,
+                    );
+                    if (
+                        RateLimitService::locked(
+                            AbuseThrottleMiddleware::SCOPE_CHECKOUT,
+                            'user:' . (int)$customer->user_id,
+                            AbuseThrottleMiddleware::MAX_CHECKOUT_USER,
+                        )
+                    ) {
+                        throw new InvalidArgumentException(
+                            'Too many checkout attempts. Please wait a few minutes and try again.',
+                        );
+                    }
                     $posted = $this->postedAddress($addresses);
                     $result = $checkout->place(
                         $customer,
@@ -81,6 +111,7 @@ class CheckoutController extends AppController
                         $cart,
                         $posted,
                         (bool)$this->request->getData('save_address'),
+                        $attemptId,
                     );
                     $order = $result['order'];
                     $clientSecret = $result['client_secret'];
@@ -112,6 +143,7 @@ class CheckoutController extends AppController
             'clientSecret',
             'order',
             'errors',
+            'attemptId',
         ));
 
         return null;
@@ -244,6 +276,43 @@ class CheckoutController extends AppController
             new OrderService(new InventoryLedger()),
             $carts,
             PaymentGatewayFactory::create(),
+        );
+    }
+
+    /**
+     * @return string
+     */
+    private function checkoutAttemptId(): string
+    {
+        $posted = strtolower(trim((string)$this->request->getData('checkout_attempt_id')));
+        $session = $this->request->getSession();
+        $stored = strtolower(trim((string)$session->read('Checkout.attempt_id')));
+        $candidate = $posted !== '' ? $posted : $stored;
+        if (!preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/', $candidate)) {
+            $candidate = $this->newUuid();
+        }
+        $session->write('Checkout.attempt_id', $candidate);
+
+        return $candidate;
+    }
+
+    /**
+     * @return string
+     */
+    private function newUuid(): string
+    {
+        $bytes = random_bytes(16);
+        $bytes[6] = chr((ord($bytes[6]) & 0x0f) | 0x40);
+        $bytes[8] = chr((ord($bytes[8]) & 0x3f) | 0x80);
+        $hex = bin2hex($bytes);
+
+        return sprintf(
+            '%s-%s-%s-%s-%s',
+            substr($hex, 0, 8),
+            substr($hex, 8, 4),
+            substr($hex, 12, 4),
+            substr($hex, 16, 4),
+            substr($hex, 20, 12),
         );
     }
 

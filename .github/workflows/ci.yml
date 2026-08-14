@@ -2,13 +2,9 @@ name: CI
 
 on:
   push:
-    branches:
-      - '5.x'
-      - '5.next'
-      - '6.x'
+    branches: [main, jiarui]
   pull_request:
-    branches:
-      - '*'
+    branches: [main, jiarui]
   workflow_dispatch:
 
 permissions:
@@ -25,14 +21,12 @@ jobs:
             dependencies: 'lowest'
           - php-version: '8.5'
             dependencies: 'highest'
-          - php-version: '8.5'
-            dependencies: 'highest'
 
     steps:
-    - uses: actions/checkout@v7
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
     - name: Setup PHP
-      uses: shivammathur/setup-php@v2
+      uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # v2
       with:
         php-version: ${{ matrix.php-version }}
         extensions: mbstring, intl, pdo_sqlite
@@ -40,7 +34,7 @@ jobs:
         coverage: none
 
     - name: Composer install
-      uses: ramsey/composer-install@v4
+      uses: ramsey/composer-install@26d8a556604053a9612623447203a691f406fbe6 # v4
       with:
         dependency-versions: ${{ matrix.dependencies }}
         composer-options: ${{ matrix.composer-options }}
@@ -58,10 +52,10 @@ jobs:
     runs-on: ubuntu-24.04
 
     steps:
-    - uses: actions/checkout@v7
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
     - name: Setup PHP
-      uses: shivammathur/setup-php@v2
+      uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # v2
       with:
         php-version: '8.2'
         extensions: mbstring, intl
@@ -69,7 +63,13 @@ jobs:
         tools: cs2pr, phpstan:2.1
 
     - name: Composer install
-      uses: ramsey/composer-install@v4
+      uses: ramsey/composer-install@26d8a556604053a9612623447203a691f406fbe6 # v4
+
+    - name: Composer validate
+      run: composer validate --strict
+
+    - name: Composer audit
+      run: composer audit --locked --abandoned=fail
 
     - name: Run PHP CodeSniffer
       run: vendor/bin/phpcs --report=checkstyle | cs2pr

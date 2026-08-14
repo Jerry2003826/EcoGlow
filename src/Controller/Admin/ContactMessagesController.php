@@ -57,7 +57,7 @@ class ContactMessagesController extends AdminController
     }
 
     /**
-     * Opening a message marks it read (trigger may move new → in_progress).
+     * Read-only detail. Marking read is a separate POST.
      *
      * @param string|null $id Message id.
      * @return void
@@ -68,21 +68,28 @@ class ContactMessagesController extends AdminController
             'AssignedUsers',
             'ContactMessageEvents' => ['Users'],
         ]);
-
-        if (!$contactMessage->is_read) {
-            $contactMessage->set('is_read', true);
-            $this->ContactMessages->save($contactMessage);
-            $contactMessage = $this->ContactMessages->get($contactMessage->id, contain: [
-                'AssignedUsers',
-                'ContactMessageEvents' => ['Users'],
-            ]);
-        }
-
         $staff = $this->staffOptions();
         $nextStatuses = ContactMessage::nextStatuses(
             (string)($contactMessage->status ?: ContactMessage::STATUS_NEW),
         );
         $this->set(compact('contactMessage', 'staff', 'nextStatuses'));
+    }
+
+    /**
+     * @param string|null $id Message id.
+     * @return \Cake\Http\Response|null
+     */
+    public function markRead(?string $id = null): ?Response
+    {
+        $this->request->allowMethod(['post']);
+        $contactMessage = $this->ContactMessages->get($this->recordId($id));
+        if (!$contactMessage->is_read) {
+            $contactMessage->set('is_read', true);
+            $this->ContactMessages->save($contactMessage);
+        }
+        $this->Flash->success(__('Message marked as read.'));
+
+        return $this->redirect(['action' => 'view', $contactMessage->id]);
     }
 
     /**

@@ -36,7 +36,7 @@ class PagesControllerTest extends TestCase
     public function testDisplay()
     {
         Configure::write('debug', true);
-        $this->get('/pages/home');
+        $this->get('/');
         $this->assertResponseOk();
         $this->assertResponseContains('Eco Glow Lighting');
         $this->assertResponseContains('<html lang="en">');
@@ -109,8 +109,7 @@ class PagesControllerTest extends TestCase
         $this->configRequest(['environment' => ['HTTPS' => 'on']]);
         $this->get('/pages/not_existing');
 
-        $this->assertResponseError();
-        $this->assertResponseContains('Error');
+        $this->assertResponseCode(404);
     }
 
     /**
@@ -123,10 +122,7 @@ class PagesControllerTest extends TestCase
         Configure::write('debug', true);
         $this->get('/pages/not_existing');
 
-        $this->assertResponseFailure();
-        $this->assertResponseContains('Missing Template');
-        $this->assertResponseContains('stack-frames');
-        $this->assertResponseContains('not_existing.php');
+        $this->assertResponseCode(404);
     }
 
     /**
@@ -137,8 +133,7 @@ class PagesControllerTest extends TestCase
     public function testDirectoryTraversalProtection()
     {
         $this->get('/pages/../Layout/ajax');
-        $this->assertResponseCode(403);
-        $this->assertResponseContains('Forbidden');
+        $this->assertResponseCode(404);
     }
 
     /**
@@ -148,7 +143,7 @@ class PagesControllerTest extends TestCase
      */
     public function testCsrfAppliedError()
     {
-        $this->post('/pages/home', ['hello' => 'world']);
+        $this->post('/', ['hello' => 'world']);
 
         $this->assertResponseCode(403);
         $this->assertResponseContains('CSRF');
@@ -162,7 +157,7 @@ class PagesControllerTest extends TestCase
     public function testCsrfAppliedOk()
     {
         $this->enableCsrfToken();
-        $this->post('/pages/home', ['hello' => 'world']);
+        $this->post('/', ['hello' => 'world']);
 
         $this->assertThat(403, $this->logicalNot(new StatusCode($this->_response)));
         $this->assertResponseNotContains('CSRF');

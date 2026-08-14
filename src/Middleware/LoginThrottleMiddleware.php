@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace App\Middleware;
 
-use Cake\Cache\Cache;
+use App\Service\Security\RateLimitService;
 use Cake\Http\Response;
 use Cake\Http\ServerRequest;
 use Psr\Http\Message\ResponseInterface;
@@ -72,7 +72,11 @@ class LoginThrottleMiddleware implements MiddlewareInterface
      */
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
-        if ($this->isLoginPost($request) && self::isLockedOut($this->clientIp($request))) {
+        $email = '';
+        if ($request instanceof ServerRequest) {
+            $email = (string)$request->getData('email');
+        }
+        if ($this->isLoginPost($request) && self::isLockedOut($this->clientIp($request), self::SCOPE_LOGIN, $email)) {
             // Bounce back to the login form (GET), where the controller shows
             // the lockout message. Authentication is never invoked.
             $path = rtrim($request->getUri()->getPath(), '/');
@@ -125,7 +129,7 @@ class LoginThrottleMiddleware implements MiddlewareInterface
      */
     public static function throttleKey(string $ip, string $scope = self::SCOPE_LOGIN): string
     {
-        return $scope . '_' . hash('sha256', $ip !== '' ? $ip : 'unknown');
+        return RateLimitService::key($scope, $ip);
     }
 
     /**
@@ -137,19 +141,34 @@ class LoginThrottleMiddleware implements MiddlewareInterface
      */
     public static function attempts(string $ip, string $scope = self::SCOPE_LOGIN): int
     {
-        return (int)Cache::read(self::throttleKey($ip, $scope), self::CACHE_CONFIG);
+        return RateLimitService::hits($scope, $ip);
     }
 
     /**
-     * Whether the given client IP is currently locked out.
+     * Whether the given client IP (and optional email) is currently locked out.
      *
      * @param string $ip The client IP.
      * @param string $scope Counter scope, one of the SCOPE_* constants.
+     * @param string $email Optional normalized email.
      * @return bool
      */
-    public static function isLockedOut(string $ip, string $scope = self::SCOPE_LOGIN): bool
-    {
-        return self::attempts($ip, $scope) >= self::MAX_ATTEMPTS;
+    public static function isLockedOut(
+        string $ip,
+        string $scope = self::SCOPE_LOGIN,
+        string $email = '',
+    ): bool {
+        if (RateLimitService::locked($scope, $ip, self::MAX_ATTEMPTS)) {
+            return true;
+        }
+        if ($email !== '') {
+            return RateLimitService::locked(
+                $scope,
+                'email:' . RateLimitService::normalizeEmail($email),
+                self::MAX_ATTEMPTS,
+            );
+        }
+
+        return false;
     }
 
     /**
@@ -157,22 +176,30 @@ class LoginThrottleMiddleware implements MiddlewareInterface
      *
      * @param string $ip The client IP.
      * @param string $scope Counter scope, one of the SCOPE_* constants.
+     * @param string $email Optional email for a second counter.
      * @return void
      */
-    public static function registerAttempt(string $ip, string $scope = self::SCOPE_LOGIN): void
-    {
-        Cache::write(self::throttleKey($ip, $scope), self::attempts($ip, $scope) + 1, self::CACHE_CONFIG);
+    public static function registerAttempt(
+        string $ip,
+        string $scope = self::SCOPE_LOGIN,
+        string $email = '',
+    ): void {
+        RateLimitService::hit($scope, $ip);
+        if ($email !== '') {
+            RateLimitService::hit($scope, 'email:' . RateLimitService::normalizeEmail($email));
+        }
     }
 
     /**
      * Record one more failed sign-in attempt for a client IP.
      *
      * @param string $ip The client IP.
+     * @param string $email Submitted email.
      * @return void
      */
-    public static function registerFailure(string $ip): void
+    public static function registerFailure(string $ip, string $email = ''): void
     {
-        self::registerAttempt($ip, self::SCOPE_LOGIN);
+        self::registerAttempt($ip, self::SCOPE_LOGIN, $email);
     }
 
     /**
@@ -180,10 +207,14 @@ class LoginThrottleMiddleware implements MiddlewareInterface
      *
      * @param string $ip The client IP.
      * @param string $scope Counter scope, one of the SCOPE_* constants.
+     * @param string $email Optional email counter to clear.
      * @return void
      */
-    public static function clear(string $ip, string $scope = self::SCOPE_LOGIN): void
+    public static function clear(string $ip, string $scope = self::SCOPE_LOGIN, string $email = ''): void
     {
-        Cache::delete(self::throttleKey($ip, $scope), self::CACHE_CONFIG);
+        RateLimitService::clear($scope, $ip);
+        if ($email !== '') {
+            RateLimitService::clear($scope, 'email:' . RateLimitService::normalizeEmail($email));
+        }
     }
 }

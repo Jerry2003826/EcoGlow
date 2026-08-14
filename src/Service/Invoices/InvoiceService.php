@@ -176,15 +176,17 @@ class InvoiceService
         if ($amountCents < 1) {
             throw new InvalidArgumentException('Enter a payment of at least 1 cent.');
         }
-        if ($invoice->status === Invoice::STATUS_VOID) {
-            throw new InvalidArgumentException('A void invoice cannot take a payment.');
-        }
-        $balance = (int)$invoice->balance_due_cents;
-        if ($amountCents > $balance) {
-            throw new InvalidArgumentException('That payment is larger than the balance due.');
-        }
 
         return $this->connection()->transactional(function () use ($invoice, $amountCents, $actorUserId) {
+            $this->connection()->execute('SELECT id FROM invoices WHERE id = ? FOR UPDATE', [$invoice->id]);
+            $invoice = $this->fetchTable('Invoices')->get($invoice->id);
+            if ($invoice->status === Invoice::STATUS_VOID) {
+                throw new InvalidArgumentException('A void invoice cannot take a payment.');
+            }
+            $balance = (int)$invoice->balance_due_cents;
+            if ($amountCents > $balance) {
+                throw new InvalidArgumentException('That payment is larger than the balance due.');
+            }
             $invoice->amount_paid_cents = (int)$invoice->amount_paid_cents + $amountCents;
             $paid = (int)$invoice->amount_paid_cents + (int)$invoice->credit_applied_cents;
             if ($paid >= (int)$invoice->grand_total_cents) {
