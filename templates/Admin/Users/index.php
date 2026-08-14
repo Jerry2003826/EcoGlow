@@ -34,11 +34,22 @@ $this->assign('breadcrumb', $this->element('admin/breadcrumb', [
     Per-user overrides: <strong>deny always wins over allow</strong>, and allow wins over a role grant.
 </p>
 
-<section class="admin-section" aria-labelledby="users-heading">
+<section class="admin-section" aria-labelledby="users-heading" data-admin-fold>
     <div class="admin-panel">
-        <div class="admin-panel-head">
-            <h2 id="users-heading">Staff accounts</h2>
+        <div class="admin-panel-head is-fold">
+            <h2 id="users-heading">
+                <button type="button" class="admin-fold-toggle" data-admin-fold-toggle
+                        aria-expanded="true" aria-controls="users-fold">
+                    Staff accounts
+                </button>
+            </h2>
+            <div class="admin-fold-search">
+                <label class="visually-hidden" for="users-search">Search staff accounts</label>
+                <input type="search" id="users-search" class="form-control" data-admin-fold-search
+                       placeholder="Search email or name" autocomplete="off">
+            </div>
         </div>
+        <div id="users-fold" data-admin-fold-body>
         <div class="table-responsive">
             <table class="table table-eg align-middle" aria-label="Staff accounts">
                 <thead>
@@ -67,8 +78,10 @@ $this->assign('breadcrumb', $this->element('admin/breadcrumb', [
                         $name = trim((string)$user->get('first_name') . ' ' . (string)$user->get('last_name'));
                         $status = (string)($user->get('status') ?: 'active');
                         $lastLogin = $user->get('last_login_at');
+                        $roleNames = array_map(static fn($role): string => (string)$role->name, $activeRoles);
+                        $rowSearch = strtolower($user->email . ' ' . $name . ' ' . $status . ' ' . implode(' ', $roleNames));
                         ?>
-                        <tr>
+                        <tr data-admin-fold-row data-search="<?= h($rowSearch) ?>">
                             <td><?= h($user->email) ?></td>
                             <td><?= h($name !== '' ? $name : '—') ?></td>
                             <td>
@@ -121,14 +134,27 @@ $this->assign('breadcrumb', $this->element('admin/breadcrumb', [
                 </tbody>
             </table>
         </div>
+        <p class="admin-empty mt-3" data-admin-fold-empty hidden>No matching staff accounts.</p>
+        </div>
     </div>
 </section>
 
-<section class="admin-section" aria-labelledby="matrix-heading">
+<section class="admin-section" aria-labelledby="matrix-heading" data-admin-fold>
     <div class="admin-panel">
-        <div class="admin-panel-head">
-            <h2 id="matrix-heading">Permission matrix</h2>
+        <div class="admin-panel-head is-fold">
+            <h2 id="matrix-heading">
+                <button type="button" class="admin-fold-toggle" data-admin-fold-toggle
+                        aria-expanded="true" aria-controls="matrix-fold">
+                    Permission matrix
+                </button>
+            </h2>
+            <div class="admin-fold-search">
+                <label class="visually-hidden" for="matrix-search">Search permissions</label>
+                <input type="search" id="matrix-search" class="form-control" data-admin-fold-search
+                       placeholder="Search permission" autocomplete="off">
+            </div>
         </div>
+        <div id="matrix-fold" data-admin-fold-body>
         <p class="admin-note mb-3">
             Ticking a cell writes <code class="permission-key">role_permissions</code>. Unticking removes the grant.
             Master access and Elevated staff are protected presets — they cannot be deleted from this screen.
@@ -151,7 +177,12 @@ $this->assign('breadcrumb', $this->element('admin/breadcrumb', [
                 </thead>
                 <tbody>
                     <?php foreach ($permissions as $permission) : ?>
-                        <tr>
+                        <?php
+                        $permSearch = strtolower(
+                            (string)$permission->permission_key . ' ' . (string)$permission->name,
+                        );
+                        ?>
+                        <tr data-admin-fold-row data-search="<?= h($permSearch) ?>">
                             <td>
                                 <code class="permission-key"><?= h($permission->permission_key) ?></code>
                                 <div class="small text-muted"><?= h($permission->name) ?></div>
@@ -175,16 +206,29 @@ $this->assign('breadcrumb', $this->element('admin/breadcrumb', [
                 </tbody>
             </table>
         </div>
+        <p class="admin-empty mt-3" data-admin-fold-empty hidden>No matching permissions.</p>
         <?= $this->Form->button('Save matrix', ['class' => 'btn btn-eg-primary mt-3']) ?>
         <?= $this->Form->end() ?>
+        </div>
     </div>
 </section>
 
-<section class="admin-section" aria-labelledby="override-heading">
+<section class="admin-section" aria-labelledby="override-heading" data-admin-fold>
     <div class="admin-panel">
-        <div class="admin-panel-head">
-            <h2 id="override-heading">Per-user overrides</h2>
+        <div class="admin-panel-head is-fold">
+            <h2 id="override-heading">
+                <button type="button" class="admin-fold-toggle" data-admin-fold-toggle
+                        aria-expanded="true" aria-controls="override-fold">
+                    Per-user overrides
+                </button>
+            </h2>
+            <div class="admin-fold-search">
+                <label class="visually-hidden" for="override-search">Search overrides</label>
+                <input type="search" id="override-search" class="form-control" data-admin-fold-search
+                       placeholder="Search user or permission" autocomplete="off">
+            </div>
         </div>
+        <div id="override-fold" data-admin-fold-body>
         <p class="admin-note mb-3">
             Use these for a one-off extra allow or a hard deny. <strong>Deny takes priority over allow</strong>,
             and both take priority over the role matrix. Choose Inherit to clear an open override.
@@ -238,7 +282,14 @@ $this->assign('breadcrumb', $this->element('admin/breadcrumb', [
                     </thead>
                     <tbody>
                         <?php foreach ($overrides as $override) : ?>
-                            <tr>
+                            <?php
+                            $overrideSearch = strtolower(
+                                (string)($override->user->email ?? '') . ' ' .
+                                (string)($override->permission->permission_key ?? '') . ' ' .
+                                (string)$override->effect,
+                            );
+                            ?>
+                            <tr data-admin-fold-row data-search="<?= h($overrideSearch) ?>">
                                 <td><?= h($override->user->email ?? '#' . $override->user_id) ?></td>
                                 <td class="cell-id"><?= h($override->permission->permission_key ?? '') ?></td>
                                 <td><?= h($override->effect) ?></td>
@@ -247,6 +298,8 @@ $this->assign('breadcrumb', $this->element('admin/breadcrumb', [
                     </tbody>
                 </table>
             </div>
+            <p class="admin-empty mt-3" data-admin-fold-empty hidden>No matching overrides.</p>
         <?php endif; ?>
+        </div>
     </div>
 </section>

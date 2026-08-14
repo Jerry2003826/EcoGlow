@@ -68,6 +68,10 @@ class UsersControllerTest extends TestCase
         $this->assertResponseContains('deny always wins over allow');
         $this->assertResponseContains('access.manage');
         $this->assertResponseContains('Permission matrix');
+        $this->assertResponseContains('data-admin-fold');
+        $this->assertResponseContains('Search staff accounts');
+        $this->assertResponseContains('Search permissions');
+        $this->assertResponseContains('Search overrides');
     }
 
     /**

@@ -19,6 +19,7 @@ $adminNav = $adminNav ?? [];
 $adminCurrent = $adminCurrent ?? ['controller' => '', 'action' => '', 'pass' => []];
 $unreadCount = $unreadCount ?? 0;
 $roleLabel = $adminRoleNames !== [] ? implode(', ', $adminRoleNames) : 'Staff';
+$adminUserInitial = $adminUserEmail !== '' ? mb_strtoupper(mb_substr($adminUserEmail, 0, 1)) : 'S';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -31,7 +32,8 @@ $roleLabel = $adminRoleNames !== [] ? implode(', ', $adminRoleNames) : 'Staff';
         <?= $this->fetch('title') ?>
     </title>
     <?= $this->Html->meta('icon') ?>
-    <?= $this->Html->css(['bootstrap.min', 'fonts', 'site', 'admin']) ?>
+    <?= $this->Html->css(['bootstrap.min', 'fonts', 'site']) ?>
+    <?= $this->Html->css('/css/admin.css?v=' . filemtime(WWW_ROOT . 'css' . DS . 'admin.css')) ?>
     <?= $this->fetch('meta') ?>
     <?= $this->fetch('css') ?>
     <?= $this->fetch('script') ?>
@@ -52,8 +54,11 @@ $roleLabel = $adminRoleNames !== [] ? implode(', ', $adminRoleNames) : 'Staff';
                     <?= $this->fetch('breadcrumb') ?>
                 </div>
                 <div class="admin-topbar-user">
-                    <span class="admin-user-email"><?= h($adminUserEmail) ?></span>
-                    <span class="admin-user-role"><?= h($roleLabel) ?></span>
+                    <span class="admin-user-avatar" aria-hidden="true"><?= h($adminUserInitial) ?></span>
+                    <span class="admin-user-meta">
+                        <span class="admin-user-email"><?= h($adminUserEmail) ?></span>
+                        <span class="admin-user-role"><?= h($roleLabel) ?></span>
+                    </span>
                     <a class="admin-logout" href="<?= $this->Url->build('/logout') ?>">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 17v2a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7a2 2 0 0 1 2 2v2"/><path d="M19 12H9"/><path d="m16 9 3 3-3 3"/></svg>
                         Log out
@@ -74,7 +79,8 @@ $roleLabel = $adminRoleNames !== [] ? implode(', ', $adminRoleNames) : 'Staff';
 
     <div class="admin-nav-backdrop" data-admin-nav-backdrop hidden></div>
 
-    <?= $this->Html->script(['bootstrap.bundle.min', 'admin']) ?>
+    <?= $this->Html->script('bootstrap.bundle.min') ?>
+    <?= $this->Html->script('/js/admin.js?v=' . filemtime(WWW_ROOT . 'js' . DS . 'admin.js')) ?>
     <?= $this->fetch('scriptBottom') ?>
 </body>
 </html>
