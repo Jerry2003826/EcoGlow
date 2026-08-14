@@ -261,6 +261,78 @@ class SecondRoundSecurityTest extends TestCase
     }
 
     /**
+     * A Dashboard refund without a local pending row still reverses the invoice.
+     *
+     * @return void
+     */
+    public function testExternalRefundCreatesLocalRowAndReversesInvoice(): void
+    {
+        $order = $this->placeOrder('pi_dash_refund');
+        $invoice = $this->issueInvoice($order);
+        $this->postSigned($this->eventPayload(
+            'evt_dash_pay',
+            'payment_intent.succeeded',
+            'pi_dash_refund',
+            (int)$order->grand_total_cents,
+            ['order_id' => (string)$order->id],
+        ));
+        $this->assertResponseOk();
+        $invoice = $this->fetchTable('Invoices')->get($invoice->id);
+        $this->assertSame((int)$order->grand_total_cents, (int)$invoice->amount_paid_cents);
+        $this->assertSame(Invoice::STATUS_PAID, (string)$invoice->status);
+
+        $this->postSigned($this->refundEventPayload(
+            'evt_dash_refund',
+            'refund.updated',
+            're_dash_1',
+            'pi_dash_refund',
+            'succeeded',
+        ));
+        $this->assertResponseOk();
+        $refund = $this->fetchTable('PaymentRefunds')->find()
+            ->where(['provider_refund_id' => 're_dash_1'])
+            ->first();
+        $this->assertNotNull($refund);
+        $this->assertSame('succeeded', (string)$refund->get('status'));
+        $invoice = $this->fetchTable('Invoices')->get($invoice->id);
+        $this->assertSame(0, (int)$invoice->amount_paid_cents);
+        $this->assertSame(Invoice::STATUS_ISSUED, (string)$invoice->status);
+        $this->assertSame(
+            1,
+            $this->fetchTable('PaymentAllocations')->find()
+                ->where(['invoice_id' => $invoice->id, 'allocation_type' => 'refund'])
+                ->count(),
+        );
+        $order = $this->fetchTable('SalesOrders')->get($order->id);
+        $this->assertSame('refunded', $order->payment_status);
+    }
+
+    /**
+     * An unmatched Stripe refund must not be marked complete.
+     *
+     * @return void
+     */
+    public function testUnknownRefundIsNotMarkedComplete(): void
+    {
+        $this->postSigned($this->refundEventPayload(
+            'evt_unknown_refund',
+            'refund.updated',
+            're_unknown',
+            'pi_does_not_exist',
+            'succeeded',
+        ));
+        $this->assertResponseCode(500);
+        $record = $this->fetchTable('IdempotencyRecords')->find()
+            ->where([
+                'scope' => 'stripe_webhook',
+                'idempotency_key' => 'evt_unknown_refund',
+            ])
+            ->first();
+        $this->assertNotNull($record);
+        $this->assertNull($record->get('completed_at'));
+    }
+
+    /**
      * Another customer cannot resume a checkout attempt they do not own.
      *
      * @return void

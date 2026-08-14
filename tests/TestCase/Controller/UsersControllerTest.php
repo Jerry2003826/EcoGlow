@@ -742,6 +742,64 @@ class UsersControllerTest extends TestCase
     }
 
     /**
+     * An enrolled staff member cannot open setup with a password-only session.
+     *
+     * @return void
+     */
+    public function testEnabledMfaCannotOpenSetup(): void
+    {
+        $this->enableStaffMfa($this->totpSecret());
+        $this->session(['AuthV2' => 1, 'AuthVersion' => 1]);
+        $this->get('/login/mfa-setup');
+        $this->assertResponseCode(302);
+        $this->assertSame('/login/mfa', $this->redirectPath());
+    }
+
+    /**
+     * A password-only session must not replace an enrolled TOTP secret.
+     *
+     * @return void
+     */
+    public function testEnabledMfaSetupPostDoesNotReplaceSecret(): void
+    {
+        $secret = $this->totpSecret();
+        $this->enableStaffMfa($secret);
+        $before = (string)$this->fetchTable('Users')->get(1)->get('mfa_secret');
+        $this->session(['AuthV2' => 1, 'AuthVersion' => 1]);
+        $this->post('/login/mfa-setup', ['code' => $this->totpCode($secret)]);
+        $this->assertResponseCode(302);
+        $this->assertSame('/login/mfa', $this->redirectPath());
+        $this->assertSame($before, (string)$this->fetchTable('Users')->get(1)->get('mfa_secret'));
+        $this->assertTrue((bool)$this->fetchTable('Users')->get(1)->get('mfa_enabled'));
+    }
+
+    /**
+     * After timestep N is accepted, N-1 and a replay of N must both fail.
+     *
+     * @return void
+     */
+    public function testMfaRejectsEarlierTimestepAndReplay(): void
+    {
+        $secret = $this->totpSecret();
+        $this->enableStaffMfa($secret);
+        $now = (int)floor(time() / 30);
+        $this->session(['AuthV2' => 1, 'AuthVersion' => 1]);
+        $this->post('/login/mfa', ['code' => $this->totpCodeAt($secret, $now)]);
+        $this->assertResponseCode(302);
+        $this->assertRedirectContains('/admin');
+
+        $this->session(['AuthV2' => 1, 'AuthVersion' => 1, 'MfaVerified' => false]);
+        $this->post('/login/mfa', ['code' => $this->totpCodeAt($secret, $now - 1)]);
+        $this->assertResponseOk();
+        $this->assertResponseContains('That code was not recognised');
+
+        $this->session(['AuthV2' => 1, 'AuthVersion' => 1, 'MfaVerified' => false]);
+        $this->post('/login/mfa', ['code' => $this->totpCodeAt($secret, $now)]);
+        $this->assertResponseOk();
+        $this->assertResponseContains('That code was not recognised');
+    }
+
+    /**
      * Write a reset token straight onto the seeded account.
      *
      * Bypasses the entity so the test sets up state the same way the database
@@ -809,9 +867,19 @@ class UsersControllerTest extends TestCase
      */
     private function totpCode(string $secret): string
     {
+        return $this->totpCodeAt($secret, (int)floor(time() / 30));
+    }
+
+    /**
+     * @param string $secret Base32 secret.
+     * @param int $step Timestep.
+     * @return string
+     */
+    private function totpCodeAt(string $secret, int $step): string
+    {
         $at = new ReflectionMethod(TotpService::class, 'at');
 
-        return (string)$at->invoke(null, $secret, (int)floor(time() / 30));
+        return (string)$at->invoke(null, $secret, $step);
     }
 
     /**

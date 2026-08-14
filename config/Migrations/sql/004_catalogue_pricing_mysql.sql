@@ -86,7 +86,7 @@ CREATE TABLE IF NOT EXISTS `tax_rates` (
     `rate` DECIMAL(7,6) NOT NULL,
     `tax_name` VARCHAR(80) NOT NULL DEFAULT 'GST',
     `price_includes_tax` TINYINT(1) NOT NULL DEFAULT 1,
-    `valid_from` DATE NOT NULL DEFAULT CURRENT_DATE,
+    `valid_from` DATE NOT NULL DEFAULT (CURRENT_DATE),
     `valid_to` DATE,
     `metadata` JSON NOT NULL DEFAULT (JSON_OBJECT()),
     `created` DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),

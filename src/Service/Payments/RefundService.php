@@ -3,13 +3,17 @@ declare(strict_types=1);
 
 namespace App\Service\Payments;
 
+use App\Model\Entity\Invoice;
 use App\Model\Entity\Payment;
+use App\Model\Entity\PaymentRefund;
 use App\Model\Entity\SalesOrder;
 use App\Service\Orders\OrderService;
 use Cake\Datasource\ConnectionInterface;
 use Cake\I18n\DateTime;
 use Cake\ORM\Locator\LocatorAwareTrait;
 use InvalidArgumentException;
+use RuntimeException;
+use Throwable;
 
 /**
  * Staff-initiated Stripe refunds. Full captured amount only.
@@ -173,14 +177,18 @@ class RefundService
                 $payment = $this->fetchTable('Payments')->find()
                     ->where(['provider' => 'stripe', 'provider_payment_id' => $paymentIntentId])
                     ->first();
-                if ($payment !== null) {
-                    $row = $refunds->find()
-                        ->where(['payment_id' => $payment->id, 'status' => 'pending'])
-                        ->first();
+                if ($payment === null) {
+                    throw new RuntimeException('Stripe refund does not match a local payment yet.');
+                }
+                $row = $refunds->find()
+                    ->where(['payment_id' => $payment->id, 'status' => 'pending'])
+                    ->first();
+                if ($row === null) {
+                    $row = $this->recordExternalRefund($payment, $providerRefundId);
                 }
             }
             if ($row === null) {
-                return;
+                throw new RuntimeException('Stripe refund does not match a local payment yet.');
             }
             $this->applyProviderResult((int)$row->id, $providerRefundId, $status, 0);
         });
@@ -219,6 +227,10 @@ class RefundService
         int $actorUserId,
     ): void {
         $refunds = $this->fetchTable('PaymentRefunds');
+        $row = $refunds->get($refundId);
+        $payment = $this->fetchTable('Payments')->get((int)$row->get('payment_id'));
+        $this->orders->lockOrder((int)$payment->sales_order_id);
+        $this->connection()->execute('SELECT id FROM payments WHERE id = ? FOR UPDATE', [$payment->id]);
         $this->connection()->execute('SELECT id FROM payment_refunds WHERE id = ? FOR UPDATE', [$refundId]);
         $row = $refunds->get($refundId);
         if (in_array((string)$row->get('status'), ['succeeded', 'completed'], true)) {
@@ -247,19 +259,107 @@ class RefundService
         $row->set('completed_at', DateTime::now('UTC'));
         $refunds->saveOrFail($row);
 
-        $payment = $this->fetchTable('Payments')->get((int)$row->get('payment_id'));
-        $this->connection()->execute('SELECT id FROM payments WHERE id = ? FOR UPDATE', [$payment->id]);
         $payment = $this->fetchTable('Payments')->get($payment->id);
         $payment->status = 'refunded';
         $this->fetchTable('Payments')->saveOrFail($payment);
 
         $order = $this->fetchTable('SalesOrders')->get((int)$payment->sales_order_id);
-        $this->orders->lockOrder((int)$order->id);
-        $order = $this->fetchTable('SalesOrders')->get($order->id);
         $order->payment_status = 'refunded';
         $this->fetchTable('SalesOrders')->saveOrFail($order);
+        $this->reverseInvoiceCredit($payment, (int)$row->get('amount_cents'));
         $actor = $actorUserId > 0 ? $actorUserId : (int)($order->created_by_user_id ?: 0);
         $this->orders->restockIfUnshipped($order, $actor);
+    }
+
+    /**
+     * Record a Dashboard / external Stripe refund that has no local pending row.
+     *
+     * @param \App\Model\Entity\Payment $payment Captured payment.
+     * @param string $providerRefundId Stripe refund id.
+     * @return \App\Model\Entity\PaymentRefund
+     */
+    private function recordExternalRefund(Payment $payment, string $providerRefundId): PaymentRefund
+    {
+        $refunds = $this->fetchTable('PaymentRefunds');
+        $row = $refunds->newEmptyEntity();
+        $row->set('payment_id', $payment->id);
+        $row->set('provider_refund_id', $providerRefundId);
+        $row->set('idempotency_key', 'webhook-refund-' . $providerRefundId);
+        $row->set('status', 'pending');
+        $row->set('amount_cents', (int)$payment->amount_cents);
+        $row->set('reason', 'External Stripe refund');
+        try {
+            $refunds->saveOrFail($row);
+        } catch (Throwable $exception) {
+            $existing = $refunds->find()
+                ->where(['provider_refund_id' => $providerRefundId])
+                ->first();
+            if ($existing === null) {
+                throw $exception;
+            }
+
+            return $existing;
+        }
+
+        return $row;
+    }
+
+    /**
+     * Reverse a capture allocation after a succeeded refund.
+     *
+     * @param \App\Model\Entity\Payment $payment Refunded payment.
+     * @param int $amountCents Refunded amount.
+     * @return void
+     */
+    private function reverseInvoiceCredit(Payment $payment, int $amountCents): void
+    {
+        $invoice = $this->fetchTable('Invoices')->find()
+            ->where(['sales_order_id' => $payment->sales_order_id, 'status !=' => Invoice::STATUS_VOID])
+            ->first();
+        if ($invoice === null || $amountCents <= 0) {
+            return;
+        }
+        $this->connection()->execute('SELECT id FROM invoices WHERE id = ? FOR UPDATE', [$invoice->id]);
+        $invoice = $this->fetchTable('Invoices')->get($invoice->id);
+        $allocations = $this->fetchTable('PaymentAllocations');
+        $existing = $allocations->find()
+            ->where([
+                'payment_id' => $payment->id,
+                'invoice_id' => $invoice->id,
+                'allocation_type' => 'refund',
+            ])
+            ->first();
+        if ($existing !== null) {
+            return;
+        }
+        $row = $allocations->newEmptyEntity();
+        $row->set('payment_id', $payment->id);
+        $row->set('invoice_id', $invoice->id);
+        $row->set('allocation_type', 'refund');
+        $row->set('amount_cents', $amountCents);
+        $row->set('allocated_at', DateTime::now('UTC'));
+        $row->set('created', DateTime::now('UTC'));
+        try {
+            $allocations->saveOrFail($row);
+        } catch (Throwable $exception) {
+            if (
+                str_contains($exception->getMessage(), 'UNIQUE')
+                || str_contains($exception->getMessage(), 'Duplicate')
+                || str_contains($exception->getMessage(), '1062')
+            ) {
+                return;
+            }
+            throw $exception;
+        }
+        $invoice->amount_paid_cents = max(0, (int)$invoice->amount_paid_cents - $amountCents);
+        if (
+            (int)$invoice->amount_paid_cents < (int)$invoice->grand_total_cents
+            && in_array((string)$invoice->status, [Invoice::STATUS_PAID, Invoice::STATUS_OVERDUE], true)
+        ) {
+            $invoice->status = Invoice::STATUS_ISSUED;
+            $invoice->paid_at = null;
+        }
+        $this->fetchTable('Invoices')->saveOrFail($invoice);
     }
 
     /**

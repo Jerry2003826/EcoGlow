@@ -22,11 +22,15 @@ final class AbuseThrottleMiddleware implements MiddlewareInterface
 
     public const SCOPE_CHECKOUT = 'checkout';
 
+    public const SCOPE_CSP = 'csp_report';
+
     public const MAX_REGISTER = 5;
 
     public const MAX_CONTACT = 5;
 
     public const MAX_CHECKOUT_IP = 20;
+
+    public const MAX_CSP = 30;
 
     public const MAX_CHECKOUT_USER = 8;
 
@@ -61,6 +65,14 @@ final class AbuseThrottleMiddleware implements MiddlewareInterface
                 return $this->reject('/checkout', 429);
             }
             RateLimitService::hit(self::SCOPE_CHECKOUT, $ip);
+        }
+        if ($path === '/csp-report') {
+            if (RateLimitService::locked(self::SCOPE_CSP, $ip, self::MAX_CSP)) {
+                return (new Response())
+                    ->withStatus(429)
+                    ->withHeader('Retry-After', '900');
+            }
+            RateLimitService::hit(self::SCOPE_CSP, $ip);
         }
 
         return $handler->handle($request);

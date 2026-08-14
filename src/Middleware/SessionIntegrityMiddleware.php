@@ -65,7 +65,7 @@ final class SessionIntegrityMiddleware implements MiddlewareInterface
             return $this->forget($request, $handler);
         }
 
-        if ($this->requiresStaffMfa($user) && !$this->mfaPathAllowed($request)) {
+        if ($this->requiresStaffMfa($user) && !$this->mfaPathAllowed($request, $user)) {
             $enabled = (bool)$user->get('mfa_enabled');
             $verified = (bool)$session->read(self::SESSION_MFA);
             if ($enabled && !$verified) {
@@ -85,10 +85,12 @@ final class SessionIntegrityMiddleware implements MiddlewareInterface
      */
     private function requiresStaffMfa(User $user): bool
     {
-        $required = filter_var(
-            env('SECURITY_REQUIRE_STAFF_MFA', !Configure::read('debug')),
-            FILTER_VALIDATE_BOOLEAN,
-        );
+        $raw = env('SECURITY_REQUIRE_STAFF_MFA');
+        if ($raw === null || $raw === false || $raw === '') {
+            $required = !Configure::read('debug');
+        } else {
+            $required = filter_var($raw, FILTER_VALIDATE_BOOLEAN);
+        }
         if (!$required) {
             return false;
         }
@@ -102,13 +104,20 @@ final class SessionIntegrityMiddleware implements MiddlewareInterface
 
     /**
      * @param \Cake\Http\ServerRequest $request Request.
+     * @param \App\Model\Entity\User $user Identity.
      * @return bool
      */
-    private function mfaPathAllowed(ServerRequest $request): bool
+    private function mfaPathAllowed(ServerRequest $request, User $user): bool
     {
         $path = rtrim($request->getUri()->getPath(), '/') ?: '/';
+        if (in_array($path, ['/logout', '/login'], true)) {
+            return true;
+        }
+        if ($path === '/login/mfa') {
+            return true;
+        }
 
-        return in_array($path, ['/login/mfa', '/login/mfa-setup', '/logout', '/login'], true);
+        return $path === '/login/mfa-setup' && !(bool)$user->get('mfa_enabled');
     }
 
     /**

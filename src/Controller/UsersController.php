@@ -637,6 +637,14 @@ class UsersController extends AppController
         if ($user instanceof Response) {
             return $user;
         }
+        if ((bool)$user->get('mfa_enabled')) {
+            $verified = (bool)$this->request->getSession()->read(SessionIntegrityMiddleware::SESSION_MFA);
+            if (!$verified) {
+                return $this->redirect('/login/mfa');
+            }
+
+            return $this->redirect('/admin');
+        }
         $session = $this->request->getSession();
         $setup = $this->mfaSetupState((int)$user->id);
         $plain = (string)($setup['secret'] ?? '');
@@ -782,11 +790,7 @@ class UsersController extends AppController
      */
     private function acceptMfaCode(User $user, string $code): bool
     {
-        $remaining = TotpService::consumeRecoveryCode((string)$user->get('mfa_recovery_hashes'), $code);
-        if ($remaining !== null) {
-            $user->set('mfa_recovery_hashes', $remaining);
-            $this->Users->saveOrFail($user);
-
+        if ($this->Users->consumeRecoveryCode((int)$user->id, $code)) {
             return true;
         }
         try {
@@ -798,14 +802,8 @@ class UsersController extends AppController
         if ($step === null) {
             return false;
         }
-        $last = $user->get('mfa_last_timestep');
-        if ($last !== null && (int)$last === $step) {
-            return false;
-        }
-        $user->set('mfa_last_timestep', $step);
-        $this->Users->saveOrFail($user);
 
-        return true;
+        return $this->Users->claimMfaTimestep((int)$user->id, $step);
     }
 
     /**

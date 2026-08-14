@@ -5,6 +5,7 @@ namespace App\Model\Table;
 
 use App\Model\Entity\User;
 use App\Service\Security\PasswordPolicy;
+use App\Service\Security\TotpService;
 use Cake\ORM\Query\SelectQuery;
 use Cake\ORM\Table;
 use Cake\Validation\Validator;
@@ -80,6 +81,56 @@ class UsersTable extends Table
         $user->set('auth_version', (int)($user->get('auth_version') ?: 1) + 1);
 
         return $this->saveOrFail($user);
+    }
+
+    /**
+     * Accept a TOTP timestep only when it is strictly newer than the last one.
+     *
+     * @param int $userId User id.
+     * @param int $step Accepted timestep.
+     * @return bool
+     */
+    public function claimMfaTimestep(int $userId, int $step): bool
+    {
+        $statement = $this->getConnection()->execute(
+            'UPDATE users SET mfa_last_timestep = ?
+             WHERE id = ?
+               AND (mfa_last_timestep IS NULL OR mfa_last_timestep < ?)',
+            [$step, $userId, $step],
+        );
+
+        return $statement->rowCount() === 1;
+    }
+
+    /**
+     * Consume one recovery code under a row lock so two requests cannot share it.
+     *
+     * @param int $userId User id.
+     * @param string $code Submitted recovery code.
+     * @return bool
+     */
+    public function consumeRecoveryCode(int $userId, string $code): bool
+    {
+        $consumed = false;
+        $this->getConnection()->transactional(function () use ($userId, $code, &$consumed): void {
+            $this->getConnection()->execute(
+                'SELECT id FROM users WHERE id = ? FOR UPDATE',
+                [$userId],
+            );
+            $user = $this->get($userId);
+            $remaining = TotpService::consumeRecoveryCode(
+                (string)($user->get('mfa_recovery_hashes') ?? ''),
+                $code,
+            );
+            if ($remaining === null) {
+                return;
+            }
+            $user->set('mfa_recovery_hashes', $remaining);
+            $this->saveOrFail($user);
+            $consumed = true;
+        });
+
+        return $consumed;
     }
 
     /**

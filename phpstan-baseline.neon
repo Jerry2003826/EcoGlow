@@ -1,0 +1,2947 @@
+parameters:
+	ignoreErrors:
+		-
+			message: '#^PHPDoc tag @extends contains generic type Cake\\Http\\BaseApplication\<App\\Application\> but class Cake\\Http\\BaseApplication is not generic\.$#'
+			identifier: generics.notGeneric
+			count: 1
+			path: src/Application.php
+
+		-
+			message: '#^Access to an undefined property App\\Controller\\AccountController\:\:\$Authentication\.$#'
+			identifier: property.notFound
+			count: 2
+			path: src/Controller/AccountController.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$email\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Controller/AccountController.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 3
+			path: src/Controller/AccountController.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$password\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Controller/AccountController.php
+
+		-
+			message: '#^Cannot call method allowMethod\(\) on Cake\\Http\\ServerRequest\|null\.$#'
+			identifier: method.nonObject
+			count: 3
+			path: src/Controller/AccountController.php
+
+		-
+			message: '#^Cannot call method getAttribute\(\) on Cake\\Http\\ServerRequest\|null\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: src/Controller/AccountController.php
+
+		-
+			message: '#^Cannot call method getData\(\) on Cake\\Http\\ServerRequest\|null\.$#'
+			identifier: method.nonObject
+			count: 6
+			path: src/Controller/AccountController.php
+
+		-
+			message: '#^Cannot call method getParam\(\) on Cake\\Http\\ServerRequest\|null\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: src/Controller/AccountController.php
+
+		-
+			message: '#^Cannot call method is\(\) on Cake\\Http\\ServerRequest\|null\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: src/Controller/AccountController.php
+
+		-
+			message: '#^Method App\\Controller\\AccountController\:\:beforeRender\(\) has parameter \$event with generic interface Cake\\Event\\EventInterface but does not specify its types\: TSubject$#'
+			identifier: missingType.generics
+			count: 1
+			path: src/Controller/AccountController.php
+
+		-
+			message: '#^Method App\\Controller\\AccountController\:\:requireCustomer\(\) should return App\\Model\\Entity\\Customer but returns Cake\\Datasource\\EntityInterface\.$#'
+			identifier: return.type
+			count: 1
+			path: src/Controller/AccountController.php
+
+		-
+			message: '#^Parameter \#1 \$user of method App\\Controller\\AccountController\:\:queueEmailChange\(\) expects App\\Model\\Entity\\User, Cake\\Datasource\\EntityInterface given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/AccountController.php
+
+		-
+			message: '#^Cannot call method getAttribute\(\) on Cake\\Http\\ServerRequest\|null\.$#'
+			identifier: method.nonObject
+			count: 2
+			path: src/Controller/Admin/AdminController.php
+
+		-
+			message: '#^Cannot call method getParam\(\) on Cake\\Http\\ServerRequest\|null\.$#'
+			identifier: method.nonObject
+			count: 3
+			path: src/Controller/Admin/AdminController.php
+
+		-
+			message: '#^Method App\\Controller\\Admin\\AdminController\:\:beforeRender\(\) has parameter \$event with generic interface Cake\\Event\\EventInterface but does not specify its types\: TSubject$#'
+			identifier: missingType.generics
+			count: 1
+			path: src/Controller/Admin/AdminController.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 4
+			path: src/Controller/Admin/AppointmentsController.php
+
+		-
+			message: '#^Cannot call method allowMethod\(\) on Cake\\Http\\ServerRequest\|null\.$#'
+			identifier: method.nonObject
+			count: 4
+			path: src/Controller/Admin/AppointmentsController.php
+
+		-
+			message: '#^Cannot call method getData\(\) on Cake\\Http\\ServerRequest\|null\.$#'
+			identifier: method.nonObject
+			count: 10
+			path: src/Controller/Admin/AppointmentsController.php
+
+		-
+			message: '#^Cannot call method getQuery\(\) on Cake\\Http\\ServerRequest\|null\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: src/Controller/Admin/AppointmentsController.php
+
+		-
+			message: '#^Parameter \#1 \$request of method App\\Service\\Services\\AppointmentService\:\:addPart\(\) expects App\\Model\\Entity\\ServiceRequest, Cake\\Datasource\\EntityInterface given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/Admin/AppointmentsController.php
+
+		-
+			message: '#^Parameter \#1 \$request of method App\\Service\\Services\\AppointmentService\:\:addWorkLog\(\) expects App\\Model\\Entity\\ServiceRequest, Cake\\Datasource\\EntityInterface given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/Admin/AppointmentsController.php
+
+		-
+			message: '#^Parameter \#1 \$request of method App\\Service\\Services\\AppointmentService\:\:schedule\(\) expects App\\Model\\Entity\\ServiceRequest, Cake\\Datasource\\EntityInterface given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/Admin/AppointmentsController.php
+
+		-
+			message: '#^Parameter \#1 \$request of method App\\Service\\Services\\AppointmentService\:\:updateRequestStatus\(\) expects App\\Model\\Entity\\ServiceRequest, Cake\\Datasource\\EntityInterface given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/Admin/AppointmentsController.php
+
+		-
+			message: '#^Access to an undefined property App\\Model\\Entity\\ContactMessage\:\:\$status\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Controller/Admin/ContactMessagesController.php
+
+		-
+			message: '#^Cannot call method allowMethod\(\) on Cake\\Http\\ServerRequest\|null\.$#'
+			identifier: method.nonObject
+			count: 5
+			path: src/Controller/Admin/ContactMessagesController.php
+
+		-
+			message: '#^Cannot call method getData\(\) on Cake\\Http\\ServerRequest\|null\.$#'
+			identifier: method.nonObject
+			count: 3
+			path: src/Controller/Admin/ContactMessagesController.php
+
+		-
+			message: '#^Cannot call method getQuery\(\) on Cake\\Http\\ServerRequest\|null\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: src/Controller/Admin/ContactMessagesController.php
+
+		-
+			message: '#^Method App\\Controller\\Admin\\ContactMessagesController\:\:staffOptions\(\) should return iterable\<App\\Model\\Entity\\User\> but returns Cake\\Datasource\\ResultSetInterface\<\(int\|string\), Cake\\Datasource\\EntityInterface\>\.$#'
+			identifier: return.type
+			count: 1
+			path: src/Controller/Admin/ContactMessagesController.php
+
+		-
+			message: '#^Property App\\Controller\\Admin\\ContactMessagesController\:\:\$ContactMessages \(App\\Model\\Table\\ContactMessagesTable\) does not accept Cake\\ORM\\Table\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: src/Controller/Admin/ContactMessagesController.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$email\.$#'
+			identifier: property.notFound
+			count: 2
+			path: src/Controller/Admin/CustomersController.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$phone\.$#'
+			identifier: property.notFound
+			count: 2
+			path: src/Controller/Admin/CustomersController.php
+
+		-
+			message: '#^Cannot call method getQuery\(\) on Cake\\Http\\ServerRequest\|null\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: src/Controller/Admin/CustomersController.php
+
+		-
+			message: '#^Cannot access property \$id on Cake\\Datasource\\EntityInterface\|null\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: src/Controller/Admin/InventoryController.php
+
+		-
+			message: '#^Cannot call method allowMethod\(\) on Cake\\Http\\ServerRequest\|null\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: src/Controller/Admin/InventoryController.php
+
+		-
+			message: '#^Cannot call method getData\(\) on Cake\\Http\\ServerRequest\|null\.$#'
+			identifier: method.nonObject
+			count: 5
+			path: src/Controller/Admin/InventoryController.php
+
+		-
+			message: '#^Cannot call method getQuery\(\) on Cake\\Http\\ServerRequest\|null\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: src/Controller/Admin/InventoryController.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 5
+			path: src/Controller/Admin/InvoicesController.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$provider\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Controller/Admin/InvoicesController.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$sales_order_id\.$#'
+			identifier: property.notFound
+			count: 2
+			path: src/Controller/Admin/InvoicesController.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$status\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Controller/Admin/InvoicesController.php
+
+		-
+			message: '#^Cannot call method allowMethod\(\) on Cake\\Http\\ServerRequest\|null\.$#'
+			identifier: method.nonObject
+			count: 4
+			path: src/Controller/Admin/InvoicesController.php
+
+		-
+			message: '#^Cannot call method getData\(\) on Cake\\Http\\ServerRequest\|null\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: src/Controller/Admin/InvoicesController.php
+
+		-
+			message: '#^Cannot call method getQuery\(\) on Cake\\Http\\ServerRequest\|null\.$#'
+			identifier: method.nonObject
+			count: 2
+			path: src/Controller/Admin/InvoicesController.php
+
+		-
+			message: '#^Parameter \#1 \$invoice of method App\\Service\\Invoices\\InvoiceService\:\:recordPayment\(\) expects App\\Model\\Entity\\Invoice, Cake\\Datasource\\EntityInterface given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/Admin/InvoicesController.php
+
+		-
+			message: '#^Parameter \#1 \$invoice of method App\\Service\\Invoices\\InvoiceService\:\:send\(\) expects App\\Model\\Entity\\Invoice, Cake\\Datasource\\EntityInterface given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/Admin/InvoicesController.php
+
+		-
+			message: '#^Parameter \#1 \$order of method App\\Service\\Invoices\\InvoiceService\:\:createFromOrder\(\) expects App\\Model\\Entity\\SalesOrder, Cake\\Datasource\\EntityInterface given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/Admin/InvoicesController.php
+
+		-
+			message: '#^Parameter \#1 \$order of method App\\Service\\Payments\\RefundService\:\:refundOrder\(\) expects App\\Model\\Entity\\SalesOrder, Cake\\Datasource\\EntityInterface given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/Admin/InvoicesController.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 10
+			path: src/Controller/Admin/OrdersController.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$label\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Controller/Admin/OrdersController.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 2
+			path: src/Controller/Admin/OrdersController.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$price_cents\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Controller/Admin/OrdersController.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$product_variant_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Controller/Admin/OrdersController.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$sku\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Controller/Admin/OrdersController.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$status\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Controller/Admin/OrdersController.php
+
+		-
+			message: '#^Cannot call method allowMethod\(\) on Cake\\Http\\ServerRequest\|null\.$#'
+			identifier: method.nonObject
+			count: 6
+			path: src/Controller/Admin/OrdersController.php
+
+		-
+			message: '#^Cannot call method getData\(\) on Cake\\Http\\ServerRequest\|null\.$#'
+			identifier: method.nonObject
+			count: 4
+			path: src/Controller/Admin/OrdersController.php
+
+		-
+			message: '#^Cannot call method getQuery\(\) on Cake\\Http\\ServerRequest\|null\.$#'
+			identifier: method.nonObject
+			count: 7
+			path: src/Controller/Admin/OrdersController.php
+
+		-
+			message: '#^Cannot call method is\(\) on Cake\\Http\\ServerRequest\|null\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: src/Controller/Admin/OrdersController.php
+
+		-
+			message: '#^Cannot call method withType\(\) on Cake\\Http\\Response\|null\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: src/Controller/Admin/OrdersController.php
+
+		-
+			message: '#^Parameter \#1 \$order of method App\\Service\\Orders\\OrderService\:\:addNote\(\) expects App\\Model\\Entity\\SalesOrder, Cake\\Datasource\\EntityInterface given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/Admin/OrdersController.php
+
+		-
+			message: '#^Parameter \#1 \$order of method App\\Service\\Orders\\OrderService\:\:changeStatus\(\) expects App\\Model\\Entity\\SalesOrder, Cake\\Datasource\\EntityInterface given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/Admin/OrdersController.php
+
+		-
+			message: '#^Parameter \#1 \$order of method App\\Service\\Orders\\OrderService\:\:updatePromisedDate\(\) expects App\\Model\\Entity\\SalesOrder, Cake\\Datasource\\EntityInterface given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/Admin/OrdersController.php
+
+		-
+			message: '#^Parameter \#1 \$order of method App\\Service\\Payments\\RefundService\:\:refundOrder\(\) expects App\\Model\\Entity\\SalesOrder, Cake\\Datasource\\EntityInterface given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/Admin/OrdersController.php
+
+		-
+			message: '#^Cannot call method getQuery\(\) on Cake\\Http\\ServerRequest\|null\.$#'
+			identifier: method.nonObject
+			count: 8
+			path: src/Controller/Admin/ReportsController.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 7
+			path: src/Controller/Admin/UsersController.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$permission_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Controller/Admin/UsersController.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$role_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Controller/Admin/UsersController.php
+
+		-
+			message: '#^Call to an undefined method Cake\\ORM\\Table\:\:bumpAuthVersion\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: src/Controller/Admin/UsersController.php
+
+		-
+			message: '#^Cannot call method allowMethod\(\) on Cake\\Http\\ServerRequest\|null\.$#'
+			identifier: method.nonObject
+			count: 7
+			path: src/Controller/Admin/UsersController.php
+
+		-
+			message: '#^Cannot call method getData\(\) on Cake\\Http\\ServerRequest\|null\.$#'
+			identifier: method.nonObject
+			count: 6
+			path: src/Controller/Admin/UsersController.php
+
+		-
+			message: '#^Cannot call method getAttribute\(\) on Cake\\Http\\ServerRequest\|null\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: src/Controller/AppController.php
+
+		-
+			message: '#^Cannot call method getParam\(\) on Cake\\Http\\ServerRequest\|null\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: src/Controller/AppController.php
+
+		-
+			message: '#^Method App\\Controller\\AppController\:\:beforeRender\(\) has parameter \$event with generic interface Cake\\Event\\EventInterface but does not specify its types\: TSubject$#'
+			identifier: missingType.generics
+			count: 1
+			path: src/Controller/AppController.php
+
+		-
+			message: '#^Parameter \#1 \$user of method App\\Controller\\AppController\:\:isCustomerUser\(\) expects App\\Model\\Entity\\User, Cake\\Datasource\\EntityInterface given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/AppController.php
+
+		-
+			message: '#^Parameter \#1 \$user of method App\\Controller\\AppController\:\:isStaffUser\(\) expects App\\Model\\Entity\\User, Cake\\Datasource\\EntityInterface given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/AppController.php
+
+		-
+			message: '#^Access to an undefined property App\\Controller\\CartsController\:\:\$Authentication\.$#'
+			identifier: property.notFound
+			count: 2
+			path: src/Controller/CartsController.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Controller/CartsController.php
+
+		-
+			message: '#^Binary operation "/" between int\|string and 100 results in an error\.$#'
+			identifier: binaryOp.invalid
+			count: 7
+			path: src/Controller/CartsController.php
+
+		-
+			message: '#^Cannot call method allowMethod\(\) on Cake\\Http\\ServerRequest\|null\.$#'
+			identifier: method.nonObject
+			count: 5
+			path: src/Controller/CartsController.php
+
+		-
+			message: '#^Cannot call method getData\(\) on Cake\\Http\\ServerRequest\|null\.$#'
+			identifier: method.nonObject
+			count: 7
+			path: src/Controller/CartsController.php
+
+		-
+			message: '#^Parameter \#1 \$request of method App\\Service\\Cart\\CartService\:\:token\(\) expects Cake\\Http\\ServerRequest, Cake\\Http\\ServerRequest\|null given\.$#'
+			identifier: argument.type
+			count: 4
+			path: src/Controller/CartsController.php
+
+		-
+			message: '#^Access to an undefined property App\\Controller\\CheckoutController\:\:\$Authentication\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Controller/CheckoutController.php
+
+		-
+			message: '#^Access to an undefined property App\\Model\\Entity\\Address\:\:\$recipient_name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Controller/CheckoutController.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 2
+			path: src/Controller/CheckoutController.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$price_cents\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Controller/CheckoutController.php
+
+		-
+			message: '#^Cannot call method getData\(\) on Cake\\Http\\ServerRequest\|null\.$#'
+			identifier: method.nonObject
+			count: 11
+			path: src/Controller/CheckoutController.php
+
+		-
+			message: '#^Cannot call method getSession\(\) on Cake\\Http\\ServerRequest\|null\.$#'
+			identifier: method.nonObject
+			count: 3
+			path: src/Controller/CheckoutController.php
+
+		-
+			message: '#^Cannot call method is\(\) on Cake\\Http\\ServerRequest\|null\.$#'
+			identifier: method.nonObject
+			count: 2
+			path: src/Controller/CheckoutController.php
+
+		-
+			message: '#^Method App\\Controller\\CheckoutController\:\:requireCustomer\(\) should return App\\Model\\Entity\\Customer but returns Cake\\Datasource\\EntityInterface\.$#'
+			identifier: return.type
+			count: 1
+			path: src/Controller/CheckoutController.php
+
+		-
+			message: '#^Parameter \#1 \$addresses of method App\\Controller\\CheckoutController\:\:postedAddress\(\) expects iterable\<App\\Model\\Entity\\Address\>, Cake\\Datasource\\ResultSetInterface\<\(int\|string\), Cake\\Datasource\\EntityInterface\> given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/CheckoutController.php
+
+		-
+			message: '#^Parameter \#1 \$request of method App\\Service\\Cart\\CartService\:\:token\(\) expects Cake\\Http\\ServerRequest, Cake\\Http\\ServerRequest\|null given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/CheckoutController.php
+
+		-
+			message: '#^Cannot call method clientIp\(\) on Cake\\Http\\ServerRequest\|null\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: src/Controller/ContactController.php
+
+		-
+			message: '#^Cannot call method getData\(\) on Cake\\Http\\ServerRequest\|null\.$#'
+			identifier: method.nonObject
+			count: 3
+			path: src/Controller/ContactController.php
+
+		-
+			message: '#^Cannot call method is\(\) on Cake\\Http\\ServerRequest\|null\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: src/Controller/ContactController.php
+
+		-
+			message: '#^Property App\\Controller\\ContactController\:\:\$ContactMessages \(App\\Model\\Table\\ContactMessagesTable\) does not accept Cake\\ORM\\Table\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: src/Controller/ContactController.php
+
+		-
+			message: '#^Access to an undefined property App\\Controller\\CspReportsController\:\:\$Authentication\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Controller/CspReportsController.php
+
+		-
+			message: '#^Cannot call method allowMethod\(\) on Cake\\Http\\ServerRequest\|null\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: src/Controller/CspReportsController.php
+
+		-
+			message: '#^Cannot call method getBody\(\) on Cake\\Http\\ServerRequest\|null\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: src/Controller/CspReportsController.php
+
+		-
+			message: '#^Cannot call method getHeaderLine\(\) on Cake\\Http\\ServerRequest\|null\.$#'
+			identifier: method.nonObject
+			count: 2
+			path: src/Controller/CspReportsController.php
+
+		-
+			message: '#^Cannot call method withStatus\(\) on Cake\\Http\\Response\|null\.$#'
+			identifier: method.nonObject
+			count: 4
+			path: src/Controller/CspReportsController.php
+
+		-
+			message: '#^Access to an undefined property App\\Controller\\PagesController\:\:\$Authentication\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Controller/PagesController.php
+
+		-
+			message: '#^Access to an undefined property App\\Controller\\ServicesController\:\:\$Authentication\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Controller/ServicesController.php
+
+		-
+			message: '#^Cannot call method getData\(\) on Cake\\Http\\ServerRequest\|null\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: src/Controller/ServicesController.php
+
+		-
+			message: '#^Cannot call method is\(\) on Cake\\Http\\ServerRequest\|null\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: src/Controller/ServicesController.php
+
+		-
+			message: '#^Method App\\Controller\\ServicesController\:\:requireCustomer\(\) should return App\\Model\\Entity\\Customer but returns Cake\\Datasource\\EntityInterface\.$#'
+			identifier: return.type
+			count: 1
+			path: src/Controller/ServicesController.php
+
+		-
+			message: '#^Access to an undefined property App\\Controller\\ShopController\:\:\$Authentication\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Controller/ShopController.php
+
+		-
+			message: '#^Call to an undefined method Cake\\Datasource\\ConnectionInterface\:\:transactional\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: src/Controller/UsersController.php
+
+		-
+			message: '#^Cannot call method clientIp\(\) on Cake\\Http\\ServerRequest\|null\.$#'
+			identifier: method.nonObject
+			count: 6
+			path: src/Controller/UsersController.php
+
+		-
+			message: '#^Cannot call method getData\(\) on Cake\\Http\\ServerRequest\|null\.$#'
+			identifier: method.nonObject
+			count: 12
+			path: src/Controller/UsersController.php
+
+		-
+			message: '#^Cannot call method getQuery\(\) on Cake\\Http\\ServerRequest\|null\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: src/Controller/UsersController.php
+
+		-
+			message: '#^Cannot call method getSession\(\) on Cake\\Http\\ServerRequest\|null\.$#'
+			identifier: method.nonObject
+			count: 15
+			path: src/Controller/UsersController.php
+
+		-
+			message: '#^Cannot call method is\(\) on Cake\\Http\\ServerRequest\|null\.$#'
+			identifier: method.nonObject
+			count: 9
+			path: src/Controller/UsersController.php
+
+		-
+			message: '#^Cannot call method isValid\(\) on Authentication\\Authenticator\\ResultInterface\|null\.$#'
+			identifier: method.nonObject
+			count: 3
+			path: src/Controller/UsersController.php
+
+		-
+			message: '#^Method App\\Controller\\UsersController\:\:requireStaffForMfa\(\) should return App\\Model\\Entity\\User\|Cake\\Http\\Response but returns Cake\\Http\\Response\|null\.$#'
+			identifier: return.type
+			count: 2
+			path: src/Controller/UsersController.php
+
+		-
+			message: '#^Parameter \#1 \$user of method App\\Controller\\UsersController\:\:sendResetLink\(\) expects App\\Model\\Entity\\User, Cake\\Datasource\\EntityInterface given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Controller/UsersController.php
+
+		-
+			message: '#^Property App\\Controller\\UsersController\:\:\$Users \(App\\Model\\Table\\UsersTable\) does not accept Cake\\ORM\\Table\.$#'
+			identifier: assign.propertyType
+			count: 1
+			path: src/Controller/UsersController.php
+
+		-
+			message: '#^Access to an undefined property App\\Controller\\WebhooksController\:\:\$Authentication\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Controller/WebhooksController.php
+
+		-
+			message: '#^Cannot call method allowMethod\(\) on Cake\\Http\\ServerRequest\|null\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: src/Controller/WebhooksController.php
+
+		-
+			message: '#^Cannot call method getBody\(\) on Cake\\Http\\ServerRequest\|null\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: src/Controller/WebhooksController.php
+
+		-
+			message: '#^Cannot call method getHeaderLine\(\) on Cake\\Http\\ServerRequest\|null\.$#'
+			identifier: method.nonObject
+			count: 1
+			path: src/Controller/WebhooksController.php
+
+		-
+			message: '#^Cannot call method withStatus\(\) on Cake\\Http\\Response\|null\.$#'
+			identifier: method.nonObject
+			count: 2
+			path: src/Controller/WebhooksController.php
+
+		-
+			message: '#^Parameter \#1 \$user of method App\\Middleware\\SessionIntegrityMiddleware\:\:requiresStaffMfa\(\) expects App\\Model\\Entity\\User, Cake\\Datasource\\EntityInterface given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Middleware/SessionIntegrityMiddleware.php
+
+		-
+			message: '#^Parameter \#2 \$user of method App\\Middleware\\SessionIntegrityMiddleware\:\:mfaPathAllowed\(\) expects App\\Model\\Entity\\User, Cake\\Datasource\\EntityInterface given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Middleware/SessionIntegrityMiddleware.php
+
+		-
+			message: '#^Class App\\Model\\Entity\\Invoice has PHPDoc tag @property for property \$business_snapshot with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Model/Entity/Invoice.php
+
+		-
+			message: '#^Class App\\Model\\Entity\\Invoice has PHPDoc tag @property for property \$customer_snapshot with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Model/Entity/Invoice.php
+
+		-
+			message: '#^Access to an undefined property App\\Model\\Entity\\Customer\:\:\$label\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Model/Entity/SalesOrder.php
+
+		-
+			message: '#^Class App\\Model\\Entity\\SalesOrderItem has PHPDoc tag @property for property \$metadata with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Model/Entity/SalesOrderItem.php
+
+		-
+			message: '#^Class App\\Model\\Table\\AuditLogsTable has PHPDoc tag @method for method saveOrFail\(\) parameter \#2 \$options with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Model/Table/AuditLogsTable.php
+
+		-
+			message: '#^Class App\\Model\\Table\\CartItemsTable has PHPDoc tag @method for method saveOrFail\(\) parameter \#2 \$options with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Model/Table/CartItemsTable.php
+
+		-
+			message: '#^Class App\\Model\\Table\\CartsTable has PHPDoc tag @method for method get\(\) parameter \#2 \$finder with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Model/Table/CartsTable.php
+
+		-
+			message: '#^Class App\\Model\\Table\\CartsTable has PHPDoc tag @method for method saveOrFail\(\) parameter \#2 \$options with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Model/Table/CartsTable.php
+
+		-
+			message: '#^Class App\\Model\\Table\\ContactMessageEventsTable has PHPDoc tag @method for method saveOrFail\(\) parameter \#2 \$options with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Model/Table/ContactMessageEventsTable.php
+
+		-
+			message: '#^Class App\\Model\\Table\\ContactMessagesTable has PHPDoc tag @method for method deleteMany\(\) parameter \#1 \$entities with no value type specified in iterable type iterable\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Model/Table/ContactMessagesTable.php
+
+		-
+			message: '#^Class App\\Model\\Table\\ContactMessagesTable has PHPDoc tag @method for method deleteMany\(\) parameter \#2 \$options with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Model/Table/ContactMessagesTable.php
+
+		-
+			message: '#^Class App\\Model\\Table\\ContactMessagesTable has PHPDoc tag @method for method deleteManyOrFail\(\) parameter \#1 \$entities with no value type specified in iterable type iterable\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Model/Table/ContactMessagesTable.php
+
+		-
+			message: '#^Class App\\Model\\Table\\ContactMessagesTable has PHPDoc tag @method for method deleteManyOrFail\(\) parameter \#2 \$options with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Model/Table/ContactMessagesTable.php
+
+		-
+			message: '#^Class App\\Model\\Table\\ContactMessagesTable has PHPDoc tag @method for method findOrCreate\(\) parameter \#3 \$options with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Model/Table/ContactMessagesTable.php
+
+		-
+			message: '#^Class App\\Model\\Table\\ContactMessagesTable has PHPDoc tag @method for method get\(\) parameter \#2 \$finder with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Model/Table/ContactMessagesTable.php
+
+		-
+			message: '#^Class App\\Model\\Table\\ContactMessagesTable has PHPDoc tag @method for method newEntities\(\) parameter \#1 \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Model/Table/ContactMessagesTable.php
+
+		-
+			message: '#^Class App\\Model\\Table\\ContactMessagesTable has PHPDoc tag @method for method newEntities\(\) parameter \#2 \$options with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Model/Table/ContactMessagesTable.php
+
+		-
+			message: '#^Class App\\Model\\Table\\ContactMessagesTable has PHPDoc tag @method for method newEntity\(\) parameter \#1 \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Model/Table/ContactMessagesTable.php
+
+		-
+			message: '#^Class App\\Model\\Table\\ContactMessagesTable has PHPDoc tag @method for method newEntity\(\) parameter \#2 \$options with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Model/Table/ContactMessagesTable.php
+
+		-
+			message: '#^Class App\\Model\\Table\\ContactMessagesTable has PHPDoc tag @method for method patchEntities\(\) parameter \#1 \$entities with no value type specified in iterable type iterable\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Model/Table/ContactMessagesTable.php
+
+		-
+			message: '#^Class App\\Model\\Table\\ContactMessagesTable has PHPDoc tag @method for method patchEntities\(\) parameter \#2 \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Model/Table/ContactMessagesTable.php
+
+		-
+			message: '#^Class App\\Model\\Table\\ContactMessagesTable has PHPDoc tag @method for method patchEntities\(\) parameter \#3 \$options with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Model/Table/ContactMessagesTable.php
+
+		-
+			message: '#^Class App\\Model\\Table\\ContactMessagesTable has PHPDoc tag @method for method patchEntity\(\) parameter \#2 \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Model/Table/ContactMessagesTable.php
+
+		-
+			message: '#^Class App\\Model\\Table\\ContactMessagesTable has PHPDoc tag @method for method patchEntity\(\) parameter \#3 \$options with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Model/Table/ContactMessagesTable.php
+
+		-
+			message: '#^Class App\\Model\\Table\\ContactMessagesTable has PHPDoc tag @method for method save\(\) parameter \#2 \$options with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Model/Table/ContactMessagesTable.php
+
+		-
+			message: '#^Class App\\Model\\Table\\ContactMessagesTable has PHPDoc tag @method for method saveMany\(\) parameter \#1 \$entities with no value type specified in iterable type iterable\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Model/Table/ContactMessagesTable.php
+
+		-
+			message: '#^Class App\\Model\\Table\\ContactMessagesTable has PHPDoc tag @method for method saveMany\(\) parameter \#2 \$options with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Model/Table/ContactMessagesTable.php
+
+		-
+			message: '#^Class App\\Model\\Table\\ContactMessagesTable has PHPDoc tag @method for method saveManyOrFail\(\) parameter \#1 \$entities with no value type specified in iterable type iterable\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Model/Table/ContactMessagesTable.php
+
+		-
+			message: '#^Class App\\Model\\Table\\ContactMessagesTable has PHPDoc tag @method for method saveManyOrFail\(\) parameter \#2 \$options with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Model/Table/ContactMessagesTable.php
+
+		-
+			message: '#^Class App\\Model\\Table\\ContactMessagesTable has PHPDoc tag @method for method saveOrFail\(\) parameter \#2 \$options with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Model/Table/ContactMessagesTable.php
+
+		-
+			message: '#^Class App\\Model\\Table\\CustomersTable has PHPDoc tag @method for method get\(\) parameter \#2 \$finder with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Model/Table/CustomersTable.php
+
+		-
+			message: '#^Class App\\Model\\Table\\IdempotencyRecordsTable has PHPDoc tag @method for method saveOrFail\(\) parameter \#2 \$options with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Model/Table/IdempotencyRecordsTable.php
+
+		-
+			message: '#^Class App\\Model\\Table\\InventoryLocationsTable has PHPDoc tag @method for method get\(\) parameter \#2 \$finder with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Model/Table/InventoryLocationsTable.php
+
+		-
+			message: '#^Class App\\Model\\Table\\InventoryLocationsTable has PHPDoc tag @method for method saveOrFail\(\) parameter \#2 \$options with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Model/Table/InventoryLocationsTable.php
+
+		-
+			message: '#^Class App\\Model\\Table\\InvoiceItemsTable has PHPDoc tag @method for method saveOrFail\(\) parameter \#2 \$options with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Model/Table/InvoiceItemsTable.php
+
+		-
+			message: '#^Class App\\Model\\Table\\InvoiceStatusHistoryTable has PHPDoc tag @method for method saveOrFail\(\) parameter \#2 \$options with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Model/Table/InvoiceStatusHistoryTable.php
+
+		-
+			message: '#^Class App\\Model\\Table\\InvoicesTable has PHPDoc tag @method for method get\(\) parameter \#2 \$finder with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Model/Table/InvoicesTable.php
+
+		-
+			message: '#^Class App\\Model\\Table\\InvoicesTable has PHPDoc tag @method for method saveOrFail\(\) parameter \#2 \$options with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Model/Table/InvoicesTable.php
+
+		-
+			message: '#^Method App\\Model\\Table\\InvoicesTable\:\:findDetail\(\) has parameter \$query with generic class Cake\\ORM\\Query\\SelectQuery but does not specify its types\: TSubject$#'
+			identifier: missingType.generics
+			count: 1
+			path: src/Model/Table/InvoicesTable.php
+
+		-
+			message: '#^Method App\\Model\\Table\\InvoicesTable\:\:findDetail\(\) return type with generic class Cake\\ORM\\Query\\SelectQuery does not specify its types\: TSubject$#'
+			identifier: missingType.generics
+			count: 1
+			path: src/Model/Table/InvoicesTable.php
+
+		-
+			message: '#^Class App\\Model\\Table\\OrderAddressesTable has PHPDoc tag @method for method saveOrFail\(\) parameter \#2 \$options with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Model/Table/OrderAddressesTable.php
+
+		-
+			message: '#^Class App\\Model\\Table\\OrderNotesTable has PHPDoc tag @method for method patchEntity\(\) parameter \#2 \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Model/Table/OrderNotesTable.php
+
+		-
+			message: '#^Class App\\Model\\Table\\OrderNotesTable has PHPDoc tag @method for method patchEntity\(\) parameter \#3 \$options with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Model/Table/OrderNotesTable.php
+
+		-
+			message: '#^Class App\\Model\\Table\\OrderNotesTable has PHPDoc tag @method for method saveOrFail\(\) parameter \#2 \$options with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Model/Table/OrderNotesTable.php
+
+		-
+			message: '#^Class App\\Model\\Table\\OrderStatusHistoryTable has PHPDoc tag @method for method saveOrFail\(\) parameter \#2 \$options with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Model/Table/OrderStatusHistoryTable.php
+
+		-
+			message: '#^Class App\\Model\\Table\\OutboundMessageEventsTable has PHPDoc tag @method for method saveOrFail\(\) parameter \#2 \$options with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Model/Table/OutboundMessageEventsTable.php
+
+		-
+			message: '#^Class App\\Model\\Table\\OutboundMessagesTable has PHPDoc tag @method for method saveOrFail\(\) parameter \#2 \$options with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Model/Table/OutboundMessagesTable.php
+
+		-
+			message: '#^Class App\\Model\\Table\\PaymentRefundsTable has PHPDoc tag @method for method saveOrFail\(\) parameter \#2 \$options with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Model/Table/PaymentRefundsTable.php
+
+		-
+			message: '#^Class App\\Model\\Table\\PaymentsTable has PHPDoc tag @method for method saveOrFail\(\) parameter \#2 \$options with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Model/Table/PaymentsTable.php
+
+		-
+			message: '#^Class App\\Model\\Table\\RolesTable has PHPDoc tag @method for method get\(\) parameter \#2 \$finder with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Model/Table/RolesTable.php
+
+		-
+			message: '#^Class App\\Model\\Table\\SalesOrderItemsTable has PHPDoc tag @method for method saveOrFail\(\) parameter \#2 \$options with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Model/Table/SalesOrderItemsTable.php
+
+		-
+			message: '#^Class App\\Model\\Table\\SalesOrdersTable has PHPDoc tag @method for method get\(\) parameter \#2 \$finder with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Model/Table/SalesOrdersTable.php
+
+		-
+			message: '#^Class App\\Model\\Table\\SalesOrdersTable has PHPDoc tag @method for method saveOrFail\(\) parameter \#2 \$options with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Model/Table/SalesOrdersTable.php
+
+		-
+			message: '#^Method App\\Model\\Table\\SalesOrdersTable\:\:findDetail\(\) has parameter \$query with generic class Cake\\ORM\\Query\\SelectQuery but does not specify its types\: TSubject$#'
+			identifier: missingType.generics
+			count: 1
+			path: src/Model/Table/SalesOrdersTable.php
+
+		-
+			message: '#^Method App\\Model\\Table\\SalesOrdersTable\:\:findDetail\(\) return type with generic class Cake\\ORM\\Query\\SelectQuery does not specify its types\: TSubject$#'
+			identifier: missingType.generics
+			count: 1
+			path: src/Model/Table/SalesOrdersTable.php
+
+		-
+			message: '#^Class App\\Model\\Table\\SavedCartItemsTable has PHPDoc tag @method for method saveOrFail\(\) parameter \#2 \$options with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Model/Table/SavedCartItemsTable.php
+
+		-
+			message: '#^Class App\\Model\\Table\\ServiceAppointmentsTable has PHPDoc tag @method for method saveOrFail\(\) parameter \#2 \$options with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Model/Table/ServiceAppointmentsTable.php
+
+		-
+			message: '#^Class App\\Model\\Table\\ServicePartsUsedTable has PHPDoc tag @method for method saveOrFail\(\) parameter \#2 \$options with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Model/Table/ServicePartsUsedTable.php
+
+		-
+			message: '#^Class App\\Model\\Table\\ServiceRequestsTable has PHPDoc tag @method for method get\(\) parameter \#2 \$finder with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Model/Table/ServiceRequestsTable.php
+
+		-
+			message: '#^Class App\\Model\\Table\\ServiceRequestsTable has PHPDoc tag @method for method saveOrFail\(\) parameter \#2 \$options with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Model/Table/ServiceRequestsTable.php
+
+		-
+			message: '#^Class App\\Model\\Table\\ServiceWorkLogsTable has PHPDoc tag @method for method saveOrFail\(\) parameter \#2 \$options with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Model/Table/ServiceWorkLogsTable.php
+
+		-
+			message: '#^Class App\\Model\\Table\\SiteSettingsTable has PHPDoc tag @method for method get\(\) parameter \#2 \$finder with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Model/Table/SiteSettingsTable.php
+
+		-
+			message: '#^Class App\\Model\\Table\\StockReservationsTable has PHPDoc tag @method for method saveOrFail\(\) parameter \#2 \$options with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Model/Table/StockReservationsTable.php
+
+		-
+			message: '#^Class App\\Model\\Table\\UsersTable has PHPDoc tag @method for method deleteMany\(\) parameter \#1 \$entities with no value type specified in iterable type iterable\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Model/Table/UsersTable.php
+
+		-
+			message: '#^Class App\\Model\\Table\\UsersTable has PHPDoc tag @method for method deleteMany\(\) parameter \#2 \$options with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Model/Table/UsersTable.php
+
+		-
+			message: '#^Class App\\Model\\Table\\UsersTable has PHPDoc tag @method for method deleteManyOrFail\(\) parameter \#1 \$entities with no value type specified in iterable type iterable\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Model/Table/UsersTable.php
+
+		-
+			message: '#^Class App\\Model\\Table\\UsersTable has PHPDoc tag @method for method deleteManyOrFail\(\) parameter \#2 \$options with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Model/Table/UsersTable.php
+
+		-
+			message: '#^Class App\\Model\\Table\\UsersTable has PHPDoc tag @method for method findOrCreate\(\) parameter \#3 \$options with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Model/Table/UsersTable.php
+
+		-
+			message: '#^Class App\\Model\\Table\\UsersTable has PHPDoc tag @method for method get\(\) parameter \#2 \$finder with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Model/Table/UsersTable.php
+
+		-
+			message: '#^Class App\\Model\\Table\\UsersTable has PHPDoc tag @method for method newEntities\(\) parameter \#1 \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Model/Table/UsersTable.php
+
+		-
+			message: '#^Class App\\Model\\Table\\UsersTable has PHPDoc tag @method for method newEntities\(\) parameter \#2 \$options with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Model/Table/UsersTable.php
+
+		-
+			message: '#^Class App\\Model\\Table\\UsersTable has PHPDoc tag @method for method newEntity\(\) parameter \#1 \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Model/Table/UsersTable.php
+
+		-
+			message: '#^Class App\\Model\\Table\\UsersTable has PHPDoc tag @method for method newEntity\(\) parameter \#2 \$options with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Model/Table/UsersTable.php
+
+		-
+			message: '#^Class App\\Model\\Table\\UsersTable has PHPDoc tag @method for method patchEntities\(\) parameter \#1 \$entities with no value type specified in iterable type iterable\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Model/Table/UsersTable.php
+
+		-
+			message: '#^Class App\\Model\\Table\\UsersTable has PHPDoc tag @method for method patchEntities\(\) parameter \#2 \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Model/Table/UsersTable.php
+
+		-
+			message: '#^Class App\\Model\\Table\\UsersTable has PHPDoc tag @method for method patchEntities\(\) parameter \#3 \$options with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Model/Table/UsersTable.php
+
+		-
+			message: '#^Class App\\Model\\Table\\UsersTable has PHPDoc tag @method for method patchEntity\(\) parameter \#2 \$data with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Model/Table/UsersTable.php
+
+		-
+			message: '#^Class App\\Model\\Table\\UsersTable has PHPDoc tag @method for method patchEntity\(\) parameter \#3 \$options with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Model/Table/UsersTable.php
+
+		-
+			message: '#^Class App\\Model\\Table\\UsersTable has PHPDoc tag @method for method save\(\) parameter \#2 \$options with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Model/Table/UsersTable.php
+
+		-
+			message: '#^Class App\\Model\\Table\\UsersTable has PHPDoc tag @method for method saveMany\(\) parameter \#1 \$entities with no value type specified in iterable type iterable\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Model/Table/UsersTable.php
+
+		-
+			message: '#^Class App\\Model\\Table\\UsersTable has PHPDoc tag @method for method saveMany\(\) parameter \#2 \$options with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Model/Table/UsersTable.php
+
+		-
+			message: '#^Class App\\Model\\Table\\UsersTable has PHPDoc tag @method for method saveManyOrFail\(\) parameter \#1 \$entities with no value type specified in iterable type iterable\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Model/Table/UsersTable.php
+
+		-
+			message: '#^Class App\\Model\\Table\\UsersTable has PHPDoc tag @method for method saveManyOrFail\(\) parameter \#2 \$options with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Model/Table/UsersTable.php
+
+		-
+			message: '#^Class App\\Model\\Table\\UsersTable has PHPDoc tag @method for method saveOrFail\(\) parameter \#2 \$options with no value type specified in iterable type array\.$#'
+			identifier: missingType.iterableValue
+			count: 1
+			path: src/Model/Table/UsersTable.php
+
+		-
+			message: '#^Method App\\Model\\Table\\UsersTable\:\:findActiveForAuthentication\(\) has parameter \$query with generic class Cake\\ORM\\Query\\SelectQuery but does not specify its types\: TSubject$#'
+			identifier: missingType.generics
+			count: 1
+			path: src/Model/Table/UsersTable.php
+
+		-
+			message: '#^Method App\\Model\\Table\\UsersTable\:\:findActiveForAuthentication\(\) return type with generic class Cake\\ORM\\Query\\SelectQuery does not specify its types\: TSubject$#'
+			identifier: missingType.generics
+			count: 1
+			path: src/Model/Table/UsersTable.php
+
+		-
+			message: '#^Call to an undefined method Authorization\\IdentityInterface\:\:getIdentifier\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: src/Policy/RequestPolicy.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$action\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/AuditLogger.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$actor_user_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/AuditLogger.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$after_data\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/AuditLogger.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$before_data\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/AuditLogger.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$created\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/AuditLogger.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$entity_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/AuditLogger.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$entity_type\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/AuditLogger.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$ip_hash\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/AuditLogger.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$created\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/Authorization/AccessService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$effect\.$#'
+			identifier: property.notFound
+			count: 2
+			path: src/Service/Authorization/AccessService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$ends_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/Authorization/AccessService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$granted_by_user_id\.$#'
+			identifier: property.notFound
+			count: 3
+			path: src/Service/Authorization/AccessService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 3
+			path: src/Service/Authorization/AccessService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$permission_id\.$#'
+			identifier: property.notFound
+			count: 4
+			path: src/Service/Authorization/AccessService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$revoked_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/Authorization/AccessService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$role_id\.$#'
+			identifier: property.notFound
+			count: 4
+			path: src/Service/Authorization/AccessService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$starts_at\.$#'
+			identifier: property.notFound
+			count: 2
+			path: src/Service/Authorization/AccessService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$status\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/Authorization/AccessService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$user_id\.$#'
+			identifier: property.notFound
+			count: 2
+			path: src/Service/Authorization/AccessService.php
+
+		-
+			message: '#^Call to an undefined method Cake\\Datasource\\ConnectionInterface\:\:transactional\(\)\.$#'
+			identifier: method.notFound
+			count: 4
+			path: src/Service/Authorization/AccessService.php
+
+		-
+			message: '#^Call to an undefined method Cake\\ORM\\Table\:\:bumpAuthVersion\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: src/Service/Authorization/AccessService.php
+
+		-
+			message: '#^Call to an undefined method Cake\\Datasource\\ConnectionInterface\:\:execute\(\)\.$#'
+			identifier: method.notFound
+			count: 3
+			path: src/Service/Authorization/PermissionService.php
+
+		-
+			message: '#^Access to an undefined property App\\Model\\Entity\\SavedCartItem\:\:\$product_variant\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/Cart/CartService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 3
+			path: src/Service/Cart/CartService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$quantity\.$#'
+			identifier: property.notFound
+			count: 3
+			path: src/Service/Cart/CartService.php
+
+		-
+			message: '#^Call to an undefined method Cake\\Datasource\\ConnectionInterface\:\:execute\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: src/Service/Cart/CartService.php
+
+		-
+			message: '#^Call to an undefined method Cake\\Datasource\\ConnectionInterface\:\:transactional\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: src/Service/Cart/CartService.php
+
+		-
+			message: '#^Method App\\Service\\Cart\\CartService\:\:current\(\) should return App\\Model\\Entity\\Cart\|null but returns Cake\\Datasource\\EntityInterface\.$#'
+			identifier: return.type
+			count: 2
+			path: src/Service/Cart/CartService.php
+
+		-
+			message: '#^Method App\\Service\\Cart\\CartService\:\:current\(\) should return App\\Model\\Entity\\Cart\|null but returns Cake\\Datasource\\EntityInterface\|null\.$#'
+			identifier: return.type
+			count: 1
+			path: src/Service/Cart/CartService.php
+
+		-
+			message: '#^Method App\\Service\\Cart\\CartService\:\:ownedItem\(\) should return App\\Model\\Entity\\CartItem but returns Cake\\Datasource\\EntityInterface\.$#'
+			identifier: return.type
+			count: 1
+			path: src/Service/Cart/CartService.php
+
+		-
+			message: '#^Method App\\Service\\Cart\\CartService\:\:ownedSaved\(\) should return App\\Model\\Entity\\SavedCartItem but returns Cake\\Datasource\\EntityInterface\.$#'
+			identifier: return.type
+			count: 1
+			path: src/Service/Cart/CartService.php
+
+		-
+			message: '#^Method App\\Service\\Cart\\CartService\:\:reload\(\) should return App\\Model\\Entity\\Cart but returns Cake\\Datasource\\EntityInterface\.$#'
+			identifier: return.type
+			count: 1
+			path: src/Service/Cart/CartService.php
+
+		-
+			message: '#^Parameter \#1 \$cart of method App\\Service\\Cart\\CartService\:\:reload\(\) expects App\\Model\\Entity\\Cart, Cake\\Datasource\\EntityInterface given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Service/Cart/CartService.php
+
+		-
+			message: '#^Parameter \#1 \$row of method App\\Service\\Cart\\CartService\:\:lineFromSaved\(\) expects App\\Model\\Entity\\SavedCartItem, Cake\\Datasource\\EntityInterface given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Service/Cart/CartService.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>name" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 3
+			path: src/Service/Cart/CartService.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>slug" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: src/Service/Cart/CartService.php
+
+		-
+			message: '#^Parameter \#1 \$row of method App\\Service\\Catalog\\CatalogService\:\:mapListing\(\) expects App\\Model\\Entity\\Product, Cake\\Datasource\\EntityInterface given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Service/Catalog/CatalogService.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>name" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: src/Service/Catalog/CatalogService.php
+
+		-
+			message: '#^Access to an undefined property App\\Model\\Entity\\SalesOrder\:\:\$created_by_user_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/Checkout/CheckoutService.php
+
+		-
+			message: '#^Access to an undefined property App\\Model\\Entity\\SalesOrder\:\:\$metadata\.$#'
+			identifier: property.notFound
+			count: 3
+			path: src/Service/Checkout/CheckoutService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$amount_cents\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/Checkout/CheckoutService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$created_by_user_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/Checkout/CheckoutService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$currency\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/Checkout/CheckoutService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$customer_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/Checkout/CheckoutService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$method\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/Checkout/CheckoutService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$payment_status\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/Checkout/CheckoutService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$provider\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/Checkout/CheckoutService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$provider_metadata\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/Checkout/CheckoutService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$provider_payment_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/Checkout/CheckoutService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$sales_order_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/Checkout/CheckoutService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$status\.$#'
+			identifier: property.notFound
+			count: 2
+			path: src/Service/Checkout/CheckoutService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$transaction_reference\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/Checkout/CheckoutService.php
+
+		-
+			message: '#^Method App\\Service\\Checkout\\CheckoutService\:\:orderForAttempt\(\) should return App\\Model\\Entity\\SalesOrder\|null but returns Cake\\Datasource\\EntityInterface\.$#'
+			identifier: return.type
+			count: 1
+			path: src/Service/Checkout/CheckoutService.php
+
+		-
+			message: '#^Parameter \#1 \$order of method App\\Service\\Checkout\\CheckoutService\:\:resumeOrder\(\) expects App\\Model\\Entity\\SalesOrder, Cake\\Datasource\\EntityInterface given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Service/Checkout/CheckoutService.php
+
+		-
+			message: '#^Parameter \#1 \$order of method App\\Service\\Orders\\OrderService\:\:attemptMatchesOpenCheckout\(\) expects App\\Model\\Entity\\SalesOrder, Cake\\Datasource\\EntityInterface given\.$#'
+			identifier: argument.type
+			count: 2
+			path: src/Service/Checkout/CheckoutService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$address\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/Inventory/InventoryLedger.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$code\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/Inventory/InventoryLedger.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$is_active\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/Inventory/InventoryLedger.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/Inventory/InventoryLedger.php
+
+		-
+			message: '#^Call to an undefined method Cake\\Database\\StatementInterface\:\:nextRowset\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: src/Service/Inventory/InventoryLedger.php
+
+		-
+			message: '#^Call to an undefined method Cake\\Datasource\\ConnectionInterface\:\:execute\(\)\.$#'
+			identifier: method.notFound
+			count: 8
+			path: src/Service/Inventory/InventoryLedger.php
+
+		-
+			message: '#^Call to an undefined method Cake\\Datasource\\ConnectionInterface\:\:inTransaction\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: src/Service/Inventory/InventoryLedger.php
+
+		-
+			message: '#^Call to an undefined method Cake\\Datasource\\ConnectionInterface\:\:transactional\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: src/Service/Inventory/InventoryLedger.php
+
+		-
+			message: '#^Method App\\Service\\Inventory\\InventoryLedger\:\:ensureDefaultLocation\(\) should return App\\Model\\Entity\\InventoryLocation but returns Cake\\Datasource\\EntityInterface\.$#'
+			identifier: return.type
+			count: 2
+			path: src/Service/Inventory/InventoryLedger.php
+
+		-
+			message: '#^Access to an undefined property App\\Model\\Entity\\Invoice\:\:\$metadata\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/Invoices/InvoiceService.php
+
+		-
+			message: '#^Access to an undefined property App\\Model\\Entity\\SalesOrder\:\:\$customer_label\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/Invoices/InvoiceService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$amount_cents\.$#'
+			identifier: property.notFound
+			count: 2
+			path: src/Service/Invoices/InvoiceService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$amount_paid_cents\.$#'
+			identifier: property.notFound
+			count: 3
+			path: src/Service/Invoices/InvoiceService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$balance_due_cents\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/Invoices/InvoiceService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$billing_address_snapshot\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/Invoices/InvoiceService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$business_snapshot\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/Invoices/InvoiceService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$captured_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/Invoices/InvoiceService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$changed_by_user_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/Invoices/InvoiceService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$credit_applied_cents\.$#'
+			identifier: property.notFound
+			count: 2
+			path: src/Service/Invoices/InvoiceService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$currency\.$#'
+			identifier: property.notFound
+			count: 2
+			path: src/Service/Invoices/InvoiceService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$customer_id\.$#'
+			identifier: property.notFound
+			count: 2
+			path: src/Service/Invoices/InvoiceService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$customer_snapshot\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/Invoices/InvoiceService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$description_snapshot\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/Invoices/InvoiceService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$discount_cents\.$#'
+			identifier: property.notFound
+			count: 3
+			path: src/Service/Invoices/InvoiceService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$due_date\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/Invoices/InvoiceService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$from_status\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/Invoices/InvoiceService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$grand_total_cents\.$#'
+			identifier: property.notFound
+			count: 4
+			path: src/Service/Invoices/InvoiceService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 9
+			path: src/Service/Invoices/InvoiceService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$invoice_id\.$#'
+			identifier: property.notFound
+			count: 2
+			path: src/Service/Invoices/InvoiceService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$invoice_number\.$#'
+			identifier: property.notFound
+			count: 3
+			path: src/Service/Invoices/InvoiceService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$invoice_type\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/Invoices/InvoiceService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$issue_date\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/Invoices/InvoiceService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$issued_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/Invoices/InvoiceService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$issued_by_user_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/Invoices/InvoiceService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$item_name_snapshot\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/Invoices/InvoiceService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$item_type\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/Invoices/InvoiceService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$line_number\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/Invoices/InvoiceService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$line_total_cents\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/Invoices/InvoiceService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$metadata\.$#'
+			identifier: property.notFound
+			count: 2
+			path: src/Service/Invoices/InvoiceService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$method\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/Invoices/InvoiceService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$note\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/Invoices/InvoiceService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$order_number\.$#'
+			identifier: property.notFound
+			count: 3
+			path: src/Service/Invoices/InvoiceService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$paid_at\.$#'
+			identifier: property.notFound
+			count: 2
+			path: src/Service/Invoices/InvoiceService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$provider\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/Invoices/InvoiceService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$provider_metadata\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/Invoices/InvoiceService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$provider_payment_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/Invoices/InvoiceService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$quantity\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/Invoices/InvoiceService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$sales_order_id\.$#'
+			identifier: property.notFound
+			count: 3
+			path: src/Service/Invoices/InvoiceService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$sales_order_item_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/Invoices/InvoiceService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$sales_order_items\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/Invoices/InvoiceService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$shipping_cents\.$#'
+			identifier: property.notFound
+			count: 2
+			path: src/Service/Invoices/InvoiceService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$sku_snapshot\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/Invoices/InvoiceService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$status\.$#'
+			identifier: property.notFound
+			count: 4
+			path: src/Service/Invoices/InvoiceService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$subtotal_cents\.$#'
+			identifier: property.notFound
+			count: 2
+			path: src/Service/Invoices/InvoiceService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$tax_cents\.$#'
+			identifier: property.notFound
+			count: 3
+			path: src/Service/Invoices/InvoiceService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$tax_rate_snapshot\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/Invoices/InvoiceService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$to_status\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/Invoices/InvoiceService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$transaction_reference\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/Invoices/InvoiceService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$unit_price_cents\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/Invoices/InvoiceService.php
+
+		-
+			message: '#^Anonymous function has an unused use \$actorUserId\.$#'
+			identifier: closure.unusedUse
+			count: 1
+			path: src/Service/Invoices/InvoiceService.php
+
+		-
+			message: '#^Call to an undefined method Cake\\Datasource\\ConnectionInterface\:\:execute\(\)\.$#'
+			identifier: method.notFound
+			count: 3
+			path: src/Service/Invoices/InvoiceService.php
+
+		-
+			message: '#^Call to an undefined method Cake\\Datasource\\ConnectionInterface\:\:transactional\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: src/Service/Invoices/InvoiceService.php
+
+		-
+			message: '#^Parameter \#1 \$invoice of method App\\Service\\Invoices\\InvoiceService\:\:recordStatus\(\) expects App\\Model\\Entity\\Invoice, Cake\\Datasource\\EntityInterface given\.$#'
+			identifier: argument.type
+			count: 2
+			path: src/Service/Invoices/InvoiceService.php
+
+		-
+			message: '#^Parameter \#1 \$order of method App\\Service\\Invoices\\InvoiceService\:\:customerSnapshot\(\) expects App\\Model\\Entity\\SalesOrder, Cake\\Datasource\\EntityInterface given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Service/Invoices/InvoiceService.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>email" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: src/Service/Invoices/InvoiceService.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>phone" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: src/Service/Invoices/InvoiceService.php
+
+		-
+			message: '#^Access to an undefined property App\\Model\\Entity\\ContactMessage\:\:\$customer_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/Messages/MessageService.php
+
+		-
+			message: '#^Access to an undefined property App\\Model\\Entity\\ContactMessage\:\:\$status\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/Messages/MessageService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$actor_user_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/Messages/MessageService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$body\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/Messages/MessageService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$channel\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/Messages/MessageService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$contact_message_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/Messages/MessageService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$direction\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/Messages/MessageService.php
+
+		-
+			message: '#^Call to an undefined method Cake\\Datasource\\ConnectionInterface\:\:transactional\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: src/Service/Messages/MessageService.php
+
+		-
+			message: '#^Access to an undefined property App\\Model\\Entity\\SalesOrder\:\:\$cancelled_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/Orders/OrderService.php
+
+		-
+			message: '#^Access to an undefined property App\\Model\\Entity\\SalesOrder\:\:\$completed_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/Orders/OrderService.php
+
+		-
+			message: '#^Access to an undefined property App\\Model\\Entity\\SalesOrder\:\:\$created_by_user_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/Orders/OrderService.php
+
+		-
+			message: '#^Access to an undefined property App\\Model\\Entity\\SalesOrder\:\:\$payment_status\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/Orders/OrderService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$author_user_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/Orders/OrderService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$body\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/Orders/OrderService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$changed_by_user_id\.$#'
+			identifier: property.notFound
+			count: 2
+			path: src/Service/Orders/OrderService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$consumed_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/Orders/OrderService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$cost_cents\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/Orders/OrderService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$created_by_user_id\.$#'
+			identifier: property.notFound
+			count: 5
+			path: src/Service/Orders/OrderService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$currency\.$#'
+			identifier: property.notFound
+			count: 2
+			path: src/Service/Orders/OrderService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$customer_id\.$#'
+			identifier: property.notFound
+			count: 2
+			path: src/Service/Orders/OrderService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$customer_notes\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/Orders/OrderService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$customer_type\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/Orders/OrderService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$discount_cents\.$#'
+			identifier: property.notFound
+			count: 2
+			path: src/Service/Orders/OrderService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$display_name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/Orders/OrderService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$email\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/Orders/OrderService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$external_source_reference\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/Orders/OrderService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$first_name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/Orders/OrderService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$from_status\.$#'
+			identifier: property.notFound
+			count: 2
+			path: src/Service/Orders/OrderService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$fulfilment_method\.$#'
+			identifier: property.notFound
+			count: 2
+			path: src/Service/Orders/OrderService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$grand_total_cents\.$#'
+			identifier: property.notFound
+			count: 2
+			path: src/Service/Orders/OrderService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$guest_email\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/Orders/OrderService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$guest_name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/Orders/OrderService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$guest_phone\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/Orders/OrderService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 21
+			path: src/Service/Orders/OrderService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$internal_notes\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/Orders/OrderService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$inventory_location_id\.$#'
+			identifier: property.notFound
+			count: 5
+			path: src/Service/Orders/OrderService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$last_name\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/Orders/OrderService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$metadata\.$#'
+			identifier: property.notFound
+			count: 6
+			path: src/Service/Orders/OrderService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 2
+			path: src/Service/Orders/OrderService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$note\.$#'
+			identifier: property.notFound
+			count: 2
+			path: src/Service/Orders/OrderService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$note_type\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/Orders/OrderService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$order_number\.$#'
+			identifier: property.notFound
+			count: 5
+			path: src/Service/Orders/OrderService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$order_type\.$#'
+			identifier: property.notFound
+			count: 2
+			path: src/Service/Orders/OrderService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$payment_status\.$#'
+			identifier: property.notFound
+			count: 6
+			path: src/Service/Orders/OrderService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$phone\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/Orders/OrderService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$placed_at\.$#'
+			identifier: property.notFound
+			count: 2
+			path: src/Service/Orders/OrderService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$price_cents\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/Orders/OrderService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$product_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/Orders/OrderService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$product_variant_id\.$#'
+			identifier: property.notFound
+			count: 5
+			path: src/Service/Orders/OrderService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$promised_delivery_date\.$#'
+			identifier: property.notFound
+			count: 2
+			path: src/Service/Orders/OrderService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$quantity\.$#'
+			identifier: property.notFound
+			count: 5
+			path: src/Service/Orders/OrderService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$release_or_sale_movement_id\.$#'
+			identifier: property.notFound
+			count: 2
+			path: src/Service/Orders/OrderService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$released_at\.$#'
+			identifier: property.notFound
+			count: 2
+			path: src/Service/Orders/OrderService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$reservation_movement_id\.$#'
+			identifier: property.notFound
+			count: 2
+			path: src/Service/Orders/OrderService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$sales_order_id\.$#'
+			identifier: property.notFound
+			count: 6
+			path: src/Service/Orders/OrderService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$sales_order_item_id\.$#'
+			identifier: property.notFound
+			count: 2
+			path: src/Service/Orders/OrderService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$shipping_cents\.$#'
+			identifier: property.notFound
+			count: 2
+			path: src/Service/Orders/OrderService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$sku\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/Orders/OrderService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$source\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/Orders/OrderService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$source_channel\.$#'
+			identifier: property.notFound
+			count: 2
+			path: src/Service/Orders/OrderService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$status\.$#'
+			identifier: property.notFound
+			count: 11
+			path: src/Service/Orders/OrderService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$subtotal_cents\.$#'
+			identifier: property.notFound
+			count: 2
+			path: src/Service/Orders/OrderService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$tags\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/Orders/OrderService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$tax_cents\.$#'
+			identifier: property.notFound
+			count: 2
+			path: src/Service/Orders/OrderService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$tax_rate\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/Orders/OrderService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$to_status\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/Orders/OrderService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$version_number\.$#'
+			identifier: property.notFound
+			count: 2
+			path: src/Service/Orders/OrderService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$visible_to_customer\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/Orders/OrderService.php
+
+		-
+			message: '#^Call to an undefined method Cake\\Datasource\\ConnectionInterface\:\:execute\(\)\.$#'
+			identifier: method.notFound
+			count: 7
+			path: src/Service/Orders/OrderService.php
+
+		-
+			message: '#^Call to an undefined method Cake\\Datasource\\ConnectionInterface\:\:transactional\(\)\.$#'
+			identifier: method.notFound
+			count: 8
+			path: src/Service/Orders/OrderService.php
+
+		-
+			message: '#^Method App\\Service\\Orders\\OrderService\:\:addNote\(\) should return App\\Model\\Entity\\OrderNote but returns Cake\\Datasource\\EntityInterface\.$#'
+			identifier: return.type
+			count: 1
+			path: src/Service/Orders/OrderService.php
+
+		-
+			message: '#^Offset ''available'' might not exist on array\{id\: int, available\: int\}\|null\.$#'
+			identifier: offsetAccess.notFound
+			count: 2
+			path: src/Service/Orders/OrderService.php
+
+		-
+			message: '#^Offset ''id'' might not exist on array\{id\: int, available\: int\}\|null\.$#'
+			identifier: offsetAccess.notFound
+			count: 4
+			path: src/Service/Orders/OrderService.php
+
+		-
+			message: '#^Parameter \#1 \$cart of method App\\Service\\Cart\\CartService\:\:totals\(\) expects App\\Model\\Entity\\Cart\|null, Cake\\Datasource\\EntityInterface given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Service/Orders/OrderService.php
+
+		-
+			message: '#^Parameter \#1 \$order of method App\\Service\\Orders\\OrderService\:\:annotateLatestHistory\(\) expects App\\Model\\Entity\\SalesOrder, Cake\\Datasource\\EntityInterface given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Service/Orders/OrderService.php
+
+		-
+			message: '#^Parameter \#1 \$order of method App\\Service\\Orders\\OrderService\:\:attemptMatchesOpenCheckout\(\) expects App\\Model\\Entity\\SalesOrder, Cake\\Datasource\\EntityInterface given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Service/Orders/OrderService.php
+
+		-
+			message: '#^Parameter \#1 \$order of method App\\Service\\Orders\\OrderService\:\:changeStatus\(\) expects App\\Model\\Entity\\SalesOrder, Cake\\Datasource\\EntityInterface given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Service/Orders/OrderService.php
+
+		-
+			message: '#^Parameter \#1 \$order of method App\\Service\\Orders\\OrderService\:\:failUnpaid\(\) expects App\\Model\\Entity\\SalesOrder, Cake\\Datasource\\EntityInterface given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Service/Orders/OrderService.php
+
+		-
+			message: '#^Parameter \#1 \$order of method App\\Service\\Orders\\OrderService\:\:recordStatus\(\) expects App\\Model\\Entity\\SalesOrder, Cake\\Datasource\\EntityInterface given\.$#'
+			identifier: argument.type
+			count: 2
+			path: src/Service/Orders/OrderService.php
+
+		-
+			message: '#^Parameter \#1 \$order of method App\\Service\\Orders\\OrderService\:\:snapshotAddress\(\) expects App\\Model\\Entity\\SalesOrder, Cake\\Datasource\\EntityInterface given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Service/Orders/OrderService.php
+
+		-
+			message: '#^Parameter \#4 \$cart of method App\\Service\\Orders\\OrderService\:\:attemptMatchesOpenCheckout\(\) expects App\\Model\\Entity\\Cart, Cake\\Datasource\\EntityInterface given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Service/Orders/OrderService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/Outbound/OutboundMessageSender.php
+
+		-
+			message: '#^Call to an undefined method Cake\\Datasource\\ConnectionInterface\:\:transactional\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: src/Service/Outbound/OutboundMessageSender.php
+
+		-
+			message: '#^Method App\\Service\\Outbound\\OutboundMessageSender\:\:process\(\) should return array\{sent\: int, failed\: int, retried\: int, skipped\: int\} but returns non\-empty\-array\<string, int\<0, max\>\>\.$#'
+			identifier: return.type
+			count: 1
+			path: src/Service/Outbound/OutboundMessageSender.php
+
+		-
+			message: '#^Parameter \#1 \$message of method App\\Service\\Outbound\\OutboundMessageSender\:\:markFailure\(\) expects App\\Model\\Entity\\OutboundMessage, Cake\\Datasource\\EntityInterface given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Service/Outbound/OutboundMessageSender.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$body_html\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/OutboundQueue.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$body_text\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/OutboundQueue.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$channel\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/OutboundQueue.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$created_by_user_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/OutboundQueue.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$customer_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/OutboundQueue.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$metadata\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/OutboundQueue.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$recipient\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/OutboundQueue.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$reference_number\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/OutboundQueue.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$related_entity_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/OutboundQueue.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$related_entity_type\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/OutboundQueue.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$scheduled_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/OutboundQueue.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$status\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/OutboundQueue.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$subject\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/OutboundQueue.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$template_key\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/OutboundQueue.php
+
+		-
+			message: '#^Method App\\Service\\OutboundQueue\:\:enqueue\(\) should return App\\Model\\Entity\\OutboundMessage but returns Cake\\Datasource\\EntityInterface\.$#'
+			identifier: return.type
+			count: 1
+			path: src/Service/OutboundQueue.php
+
+		-
+			message: '#^Call to an undefined method Cake\\Datasource\\ConnectionInterface\:\:execute\(\)\.$#'
+			identifier: method.notFound
+			count: 3
+			path: src/Service/Payments/IdempotencyService.php
+
+		-
+			message: '#^Call to an undefined method Cake\\Datasource\\ConnectionInterface\:\:transactional\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: src/Service/Payments/IdempotencyService.php
+
+		-
+			message: '#^Access to an undefined property App\\Model\\Entity\\Payment\:\:\$provider_payment_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/Payments/RefundService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$amount_cents\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/Payments/RefundService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$amount_paid_cents\.$#'
+			identifier: property.notFound
+			count: 2
+			path: src/Service/Payments/RefundService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$created_by_user_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/Payments/RefundService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$grand_total_cents\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/Payments/RefundService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 13
+			path: src/Service/Payments/RefundService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$paid_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/Payments/RefundService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$payment_status\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/Payments/RefundService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$sales_order_id\.$#'
+			identifier: property.notFound
+			count: 2
+			path: src/Service/Payments/RefundService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$status\.$#'
+			identifier: property.notFound
+			count: 4
+			path: src/Service/Payments/RefundService.php
+
+		-
+			message: '#^Call to an undefined method Cake\\Datasource\\ConnectionInterface\:\:execute\(\)\.$#'
+			identifier: method.notFound
+			count: 4
+			path: src/Service/Payments/RefundService.php
+
+		-
+			message: '#^Call to an undefined method Cake\\Datasource\\ConnectionInterface\:\:transactional\(\)\.$#'
+			identifier: method.notFound
+			count: 5
+			path: src/Service/Payments/RefundService.php
+
+		-
+			message: '#^Method App\\Service\\Payments\\RefundService\:\:recordExternalRefund\(\) should return App\\Model\\Entity\\PaymentRefund but returns Cake\\Datasource\\EntityInterface\.$#'
+			identifier: return.type
+			count: 2
+			path: src/Service/Payments/RefundService.php
+
+		-
+			message: '#^Method App\\Service\\Payments\\RefundService\:\:refundOrder\(\) should return App\\Model\\Entity\\Payment but returns Cake\\Datasource\\EntityInterface\.$#'
+			identifier: return.type
+			count: 2
+			path: src/Service/Payments/RefundService.php
+
+		-
+			message: '#^Parameter \#1 \$order of method App\\Service\\Orders\\OrderService\:\:restockIfUnshipped\(\) expects App\\Model\\Entity\\SalesOrder, Cake\\Datasource\\EntityInterface given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Service/Payments/RefundService.php
+
+		-
+			message: '#^Parameter \#1 \$payment of method App\\Service\\Payments\\RefundService\:\:recordExternalRefund\(\) expects App\\Model\\Entity\\Payment, Cake\\Datasource\\EntityInterface given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Service/Payments/RefundService.php
+
+		-
+			message: '#^Parameter \#1 \$payment of method App\\Service\\Payments\\RefundService\:\:reverseInvoiceCredit\(\) expects App\\Model\\Entity\\Payment, Cake\\Datasource\\EntityInterface given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Service/Payments/RefundService.php
+
+		-
+			message: '#^Access to an undefined property App\\Model\\Entity\\Payment\:\:\$authorised_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/Payments/StripeWebhookService.php
+
+		-
+			message: '#^Access to an undefined property App\\Model\\Entity\\Payment\:\:\$captured_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/Payments/StripeWebhookService.php
+
+		-
+			message: '#^Access to an undefined property App\\Model\\Entity\\Payment\:\:\$currency\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/Payments/StripeWebhookService.php
+
+		-
+			message: '#^Access to an undefined property App\\Model\\Entity\\Payment\:\:\$provider_metadata\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/Payments/StripeWebhookService.php
+
+		-
+			message: '#^Access to an undefined property App\\Model\\Entity\\SalesOrder\:\:\$currency\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/Payments/StripeWebhookService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$amount_paid_cents\.$#'
+			identifier: property.notFound
+			count: 2
+			path: src/Service/Payments/StripeWebhookService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$created_by_user_id\.$#'
+			identifier: property.notFound
+			count: 3
+			path: src/Service/Payments/StripeWebhookService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$customer_id\.$#'
+			identifier: property.notFound
+			count: 3
+			path: src/Service/Payments/StripeWebhookService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$failed_at\.$#'
+			identifier: property.notFound
+			count: 2
+			path: src/Service/Payments/StripeWebhookService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$failure_reason\.$#'
+			identifier: property.notFound
+			count: 2
+			path: src/Service/Payments/StripeWebhookService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$grand_total_cents\.$#'
+			identifier: property.notFound
+			count: 2
+			path: src/Service/Payments/StripeWebhookService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 9
+			path: src/Service/Payments/StripeWebhookService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$order_number\.$#'
+			identifier: property.notFound
+			count: 3
+			path: src/Service/Payments/StripeWebhookService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$paid_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/Payments/StripeWebhookService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$promised_delivery_date\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/Payments/StripeWebhookService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$sales_order_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/Payments/StripeWebhookService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$status\.$#'
+			identifier: property.notFound
+			count: 6
+			path: src/Service/Payments/StripeWebhookService.php
+
+		-
+			message: '#^Access to an undefined property object\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 2
+			path: src/Service/Payments/StripeWebhookService.php
+
+		-
+			message: '#^Call to an undefined method Cake\\Datasource\\ConnectionInterface\:\:execute\(\)\.$#'
+			identifier: method.notFound
+			count: 2
+			path: src/Service/Payments/StripeWebhookService.php
+
+		-
+			message: '#^Call to an undefined method Cake\\Datasource\\ConnectionInterface\:\:transactional\(\)\.$#'
+			identifier: method.notFound
+			count: 3
+			path: src/Service/Payments/StripeWebhookService.php
+
+		-
+			message: '#^Cannot access offset ''order_id'' on array\<mixed, mixed\>\|object\.$#'
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/Service/Payments/StripeWebhookService.php
+
+		-
+			message: '#^Method App\\Service\\Payments\\StripeWebhookService\:\:boundPendingPayment\(\) should return App\\Model\\Entity\\Payment but returns Cake\\Datasource\\EntityInterface\.$#'
+			identifier: return.type
+			count: 2
+			path: src/Service/Payments/StripeWebhookService.php
+
+		-
+			message: '#^Parameter \#1 \$order of method App\\Service\\Orders\\OrderService\:\:confirmPaid\(\) expects App\\Model\\Entity\\SalesOrder, Cake\\Datasource\\EntityInterface given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Service/Payments/StripeWebhookService.php
+
+		-
+			message: '#^Parameter \#1 \$order of method App\\Service\\Orders\\OrderService\:\:failUnpaid\(\) expects App\\Model\\Entity\\SalesOrder, Cake\\Datasource\\EntityInterface given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Service/Payments/StripeWebhookService.php
+
+		-
+			message: '#^Parameter \#1 \$order of method App\\Service\\Payments\\StripeWebhookService\:\:creditInvoiceIfPresent\(\) expects App\\Model\\Entity\\SalesOrder, Cake\\Datasource\\EntityInterface given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Service/Payments/StripeWebhookService.php
+
+		-
+			message: '#^Parameter \#1 \$order of method App\\Service\\Payments\\StripeWebhookService\:\:queueConfirmation\(\) expects App\\Model\\Entity\\SalesOrder, Cake\\Datasource\\EntityInterface given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Service/Payments/StripeWebhookService.php
+
+		-
+			message: '#^Parameter \#1 \$order of method App\\Service\\Payments\\StripeWebhookService\:\:shippingSummary\(\) expects App\\Model\\Entity\\SalesOrder, Cake\\Datasource\\EntityInterface given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Service/Payments/StripeWebhookService.php
+
+		-
+			message: '#^Parameter \#1 \$payment of method App\\Service\\Payments\\StripeWebhookService\:\:markCaptured\(\) expects App\\Model\\Entity\\Payment, Cake\\Datasource\\EntityInterface given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Service/Payments/StripeWebhookService.php
+
+		-
+			message: '#^Parameter \#3 \$order of method App\\Service\\Payments\\StripeWebhookService\:\:assertAmountAndCurrency\(\) expects App\\Model\\Entity\\SalesOrder, Cake\\Datasource\\EntityInterface given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Service/Payments/StripeWebhookService.php
+
+		-
+			message: '#^Parameter \#3 \$payment of method App\\Service\\Payments\\StripeWebhookService\:\:creditInvoiceIfPresent\(\) expects App\\Model\\Entity\\Payment, Cake\\Datasource\\EntityInterface given\.$#'
+			identifier: argument.type
+			count: 1
+			path: src/Service/Payments/StripeWebhookService.php
+
+		-
+			message: '#^Method App\\Service\\Security\\TotpService\:\:open\(\) should return string but returns string\|null\.$#'
+			identifier: return.type
+			count: 1
+			path: src/Service/Security/TotpService.php
+
+		-
+			message: '#^Strict comparison using \=\=\= between string and false will always evaluate to false\.$#'
+			identifier: identical.alwaysFalse
+			count: 1
+			path: src/Service/Security/TotpService.php
+
+		-
+			message: '#^Strict comparison using \=\=\= between string\|null and false will always evaluate to false\.$#'
+			identifier: identical.alwaysFalse
+			count: 1
+			path: src/Service/Security/TotpService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$cost_cents\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/Services/AppointmentService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$price_cents\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/Services/AppointmentService.php
+
+		-
+			message: '#^Call to an undefined method Cake\\Datasource\\ConnectionInterface\:\:execute\(\)\.$#'
+			identifier: method.notFound
+			count: 3
+			path: src/Service/Services/AppointmentService.php
+
+		-
+			message: '#^Call to an undefined method Cake\\Datasource\\ConnectionInterface\:\:transactional\(\)\.$#'
+			identifier: method.notFound
+			count: 1
+			path: src/Service/Services/AppointmentService.php
+
+		-
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/Services/ServiceBookingService.php
+
+		-
+			message: '#^Method App\\Service\\Services\\ServiceBookingService\:\:create\(\) should return App\\Model\\Entity\\ServiceRequest but returns Cake\\Datasource\\EntityInterface\.$#'
+			identifier: return.type
+			count: 1
+			path: src/Service/Services/ServiceBookingService.php
+
+		-
+			message: '#^Class App\\View\\Helper\\MoneyHelper extends generic class Cake\\View\\Helper but does not specify its types\: TView$#'
+			identifier: missingType.generics
+			count: 1
+			path: src/View/Helper/MoneyHelper.php

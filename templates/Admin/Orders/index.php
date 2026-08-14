@@ -20,6 +20,14 @@ use App\Model\Entity\SalesOrder;
 $statusCounts = $statusCounts ?? [];
 $orderTotal = array_sum($statusCounts);
 $onHoldCount = $statusCounts[SalesOrder::STATUS_ON_HOLD] ?? 0;
+$statClass = static function (string $current, string $value): string {
+    $class = 'admin-stat-card';
+    if ($current === $value) {
+        $class .= ' is-active';
+    }
+
+    return $class;
+};
 
 $this->assign('title', 'Orders');
 $this->assign('breadcrumb', $this->element('admin/breadcrumb', [
@@ -39,7 +47,7 @@ $this->assign('breadcrumb', $this->element('admin/breadcrumb', [
         <span class="admin-stat-value"><?= $orderTotal ?></span>
         <span class="eg-eyebrow">All orders</span>
     </div>
-    <a class="admin-stat-card<?= $status === SalesOrder::STATUS_CONFIRMED ? ' is-active' : '' ?>"
+    <a class="<?= h($statClass($status, SalesOrder::STATUS_CONFIRMED)) ?>"
        href="<?= $this->Url->build(['action' => 'index', '?' => array_filter([
            'status' => SalesOrder::STATUS_CONFIRMED,
            'channel' => $channel !== '' ? $channel : null,
@@ -54,7 +62,7 @@ $this->assign('breadcrumb', $this->element('admin/breadcrumb', [
         <span class="admin-stat-value"><?= (int)$overdueCount ?></span>
         <span class="eg-eyebrow">Overdue</span>
     </div>
-    <a class="admin-stat-card<?= $status === SalesOrder::STATUS_ON_HOLD ? ' is-active' : '' ?>"
+    <a class="<?= h($statClass($status, SalesOrder::STATUS_ON_HOLD)) ?>"
        href="<?= $this->Url->build(['action' => 'index', '?' => array_filter([
            'status' => SalesOrder::STATUS_ON_HOLD,
            'channel' => $channel !== '' ? $channel : null,

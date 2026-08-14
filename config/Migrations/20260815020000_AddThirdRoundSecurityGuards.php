@@ -129,12 +129,18 @@ final class AddThirdRoundSecurityGuards extends BaseMigration
     private function assertNoDuplicates(string $table, array $columns): void
     {
         $safeTable = $this->safeIdent($table);
-        $group = implode(', ', array_map(
+        $idents = array_map(
             fn(string $column): string => '`' . $this->safeIdent($column) . '`',
             $columns,
+        );
+        $group = implode(', ', $idents);
+        $notNull = implode(' AND ', array_map(
+            static fn(string $ident): string => $ident . ' IS NOT NULL',
+            $idents,
         ));
         $sql = "SELECT COUNT(*) AS c FROM (
                     SELECT 1 FROM `{$safeTable}`
+                    WHERE {$notNull}
                     GROUP BY {$group}
                     HAVING COUNT(*) > 1
                 ) duplicates";

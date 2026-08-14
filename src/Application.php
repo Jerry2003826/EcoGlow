@@ -23,6 +23,7 @@ use App\Middleware\LoginThrottleMiddleware;
 use App\Middleware\SessionIntegrityMiddleware;
 use App\Middleware\TrustedProxyMiddleware;
 use App\Policy\RequestPolicy;
+use App\Service\Security\ProductionGuards;
 use Authentication\AuthenticationService;
 use Authentication\AuthenticationServiceInterface;
 use Authentication\AuthenticationServiceProviderInterface;
@@ -33,7 +34,6 @@ use Authorization\AuthorizationServiceProviderInterface;
 use Authorization\Middleware\AuthorizationMiddleware;
 use Authorization\Middleware\RequestAuthorizationMiddleware;
 use Authorization\Policy\MapResolver;
-use Cake\Cache\Engine\RedisEngine;
 use Cake\Core\Configure;
 use Cake\Core\ContainerInterface;
 use Cake\Datasource\FactoryLocator;
@@ -46,13 +46,11 @@ use Cake\Http\Middleware\HttpsEnforcerMiddleware;
 use Cake\Http\Middleware\SecurityHeadersMiddleware;
 use Cake\Http\MiddlewareQueue;
 use Cake\Http\ServerRequest;
-use Cake\Mailer\Transport\DebugTransport;
 use Cake\ORM\Locator\TableContainer;
 use Cake\ORM\Locator\TableLocator;
 use Cake\Routing\Middleware\AssetMiddleware;
 use Cake\Routing\Middleware\RoutingMiddleware;
 use Psr\Http\Message\ServerRequestInterface;
-use RuntimeException;
 
 /**
  * Application setup class.
@@ -81,41 +79,7 @@ class Application extends BaseApplication implements
             'Table',
             (new TableLocator())->allowFallbackClass(false),
         );
-        $this->assertProductionEmailTransport();
-        $this->assertProductionRateLimitStore();
-    }
-
-    /**
-     * Debug transport writes reset tokens to disk. Production must use SMTP.
-     *
-     * @return void
-     */
-    private function assertProductionEmailTransport(): void
-    {
-        if (Configure::read('debug') || defined('PHPUNIT_COMPOSER_INSTALL')) {
-            return;
-        }
-        $class = (string)Configure::read('EmailTransport.default.className');
-        if (in_array($class, [DebugTransport::class, 'Debug'], true)) {
-            throw new RuntimeException('Production must not use the Debug email transport.');
-        }
-    }
-
-    /**
-     * Login, MFA and checkout counters must be shared across web nodes.
-     *
-     * @return void
-     */
-    private function assertProductionRateLimitStore(): void
-    {
-        if (Configure::read('debug') || defined('PHPUNIT_COMPOSER_INSTALL')) {
-            return;
-        }
-        $class = (string)Configure::read('Cache.login_throttle.className');
-        $allowed = [RedisEngine::class, 'Redis', 'Cake\\Cache\\Engine\\RedisEngine'];
-        if (!in_array($class, $allowed, true)) {
-            throw new RuntimeException('Production login/MFA/checkout throttling must use Redis.');
-        }
+        ProductionGuards::assert();
     }
 
     /**

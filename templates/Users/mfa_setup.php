@@ -21,21 +21,21 @@ $recoveryCodes = $recoveryCodes ?? [];
         </ul>
         <p><a class="btn btn-eg-primary" href="/admin">Continue to the staff area</a></p>
     <?php else : ?>
-    <p>Add this account to your authenticator app, then enter a code to confirm.</p>
-    <p class="mb-2"><strong>Secret</strong></p>
-    <p class="font-monospace"><?= h($secret) ?></p>
-    <p class="small text-muted text-break"><?= h($otpauth) ?></p>
-    <?= $this->Form->create(null) ?>
-    <?= $this->Form->control('code', [
-        'label' => 'Authentication code',
-        'class' => 'form-control',
-        'autocomplete' => 'one-time-code',
-        'inputmode' => 'numeric',
-        'required' => true,
-    ]) ?>
-    <div class="d-grid mt-3">
-        <?= $this->Form->button(__('Enable two-factor authentication'), ['class' => 'btn btn-eg-primary']) ?>
-    </div>
-    <?= $this->Form->end() ?>
+        <p>Add this account to your authenticator app, then enter a code to confirm.</p>
+        <p class="mb-2"><strong>Secret</strong></p>
+        <p class="font-monospace"><?= h($secret) ?></p>
+        <p class="small text-muted text-break"><?= h($otpauth) ?></p>
+        <?= $this->Form->create(null) ?>
+        <?= $this->Form->control('code', [
+            'label' => 'Authentication code',
+            'class' => 'form-control',
+            'autocomplete' => 'one-time-code',
+            'inputmode' => 'numeric',
+            'required' => true,
+        ]) ?>
+        <div class="d-grid mt-3">
+            <?= $this->Form->button(__('Enable two-factor authentication'), ['class' => 'btn btn-eg-primary']) ?>
+        </div>
+        <?= $this->Form->end() ?>
     <?php endif; ?>
 </div>

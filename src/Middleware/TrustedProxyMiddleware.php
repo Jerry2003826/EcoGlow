@@ -47,7 +47,7 @@ final class TrustedProxyMiddleware implements MiddlewareInterface
             return $handler->handle($request);
         }
 
-        foreach ([
+        $headers = [
             'Forwarded',
             'X-Forwarded-For',
             'X-Forwarded-Host',
@@ -55,7 +55,8 @@ final class TrustedProxyMiddleware implements MiddlewareInterface
             'X-Forwarded-Proto',
             'X-Real-IP',
             'Client-IP',
-        ] as $header) {
+        ];
+        foreach ($headers as $header) {
             $request = $request->withoutHeader($header);
         }
 

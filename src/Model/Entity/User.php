@@ -46,6 +46,7 @@ class User extends Entity
         'email_verification_token',
         'pending_email_token',
         'mfa_secret',
+        'mfa_recovery_hashes',
     ];
 
     /**

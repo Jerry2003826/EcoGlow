@@ -13,6 +13,14 @@ use App\Model\Entity\ServiceRequest;
 $labels = ServiceRequest::statusLabels();
 $statusCounts = $statusCounts ?? [];
 $requestTotal = array_sum($statusCounts);
+$statClass = static function (string $current, string $value): string {
+    $class = 'admin-stat-card';
+    if ($current === $value) {
+        $class .= ' is-active';
+    }
+
+    return $class;
+};
 
 $this->assign('title', 'Appointments');
 $this->assign('breadcrumb', $this->element('admin/breadcrumb', [
@@ -29,17 +37,17 @@ $this->assign('breadcrumb', $this->element('admin/breadcrumb', [
         <span class="admin-stat-value"><?= $requestTotal ?></span>
         <span class="eg-eyebrow">All requests</span>
     </div>
-    <a class="admin-stat-card<?= $status === ServiceRequest::STATUS_NEW ? ' is-active' : '' ?>"
+    <a class="<?= h($statClass($status, ServiceRequest::STATUS_NEW)) ?>"
        href="<?= $this->Url->build(['action' => 'index', '?' => ['status' => ServiceRequest::STATUS_NEW]]) ?>">
         <span class="admin-stat-value"><?= (int)($statusCounts[ServiceRequest::STATUS_NEW] ?? 0) ?></span>
         <span class="eg-eyebrow">Awaiting confirmation</span>
     </a>
-    <a class="admin-stat-card<?= $status === ServiceRequest::STATUS_SCHEDULED ? ' is-active' : '' ?>"
+    <a class="<?= h($statClass($status, ServiceRequest::STATUS_SCHEDULED)) ?>"
        href="<?= $this->Url->build(['action' => 'index', '?' => ['status' => ServiceRequest::STATUS_SCHEDULED]]) ?>">
         <span class="admin-stat-value"><?= (int)($statusCounts[ServiceRequest::STATUS_SCHEDULED] ?? 0) ?></span>
         <span class="eg-eyebrow">Scheduled</span>
     </a>
-    <a class="admin-stat-card<?= $status === ServiceRequest::STATUS_IN_PROGRESS ? ' is-active' : '' ?>"
+    <a class="<?= h($statClass($status, ServiceRequest::STATUS_IN_PROGRESS)) ?>"
        href="<?= $this->Url->build(['action' => 'index', '?' => ['status' => ServiceRequest::STATUS_IN_PROGRESS]]) ?>">
         <span class="admin-stat-value"><?= (int)($statusCounts[ServiceRequest::STATUS_IN_PROGRESS] ?? 0) ?></span>
         <span class="eg-eyebrow">In progress</span>

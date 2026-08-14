@@ -1,3 +1,8 @@
+# Baseline records the existing CakePHP ORM/request noise so CI can run
+# PHPStan and fail only on newly introduced errors.
+includes:
+	- phpstan-baseline.neon
+
 parameters:
 	level: 8
 	treatPhpDocTypesAsCertain: false

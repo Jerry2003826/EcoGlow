@@ -13,6 +13,14 @@ use App\Model\Entity\ContactMessage;
 
 $statusCounts = $statusCounts ?? [];
 $messageTotal = array_sum($statusCounts);
+$statClass = static function (string $current, string $value): string {
+    $class = 'admin-stat-card';
+    if ($current === $value) {
+        $class .= ' is-active';
+    }
+
+    return $class;
+};
 
 $this->assign('title', 'Contact Messages');
 $this->assign('breadcrumb', $this->element('admin/breadcrumb', [
@@ -40,17 +48,17 @@ $statusUrl = function (?string $value): array {
         <span class="admin-stat-value"><?= (int)$unreadCount ?></span>
         <span class="eg-eyebrow">Unread</span>
     </div>
-    <a class="admin-stat-card<?= $status === ContactMessage::STATUS_NEW ? ' is-active' : '' ?>"
+    <a class="<?= h($statClass($status, ContactMessage::STATUS_NEW)) ?>"
        href="<?= $this->Url->build($statusUrl(ContactMessage::STATUS_NEW)) ?>">
         <span class="admin-stat-value"><?= (int)($statusCounts[ContactMessage::STATUS_NEW] ?? 0) ?></span>
         <span class="eg-eyebrow">New</span>
     </a>
-    <a class="admin-stat-card<?= $status === ContactMessage::STATUS_IN_PROGRESS ? ' is-active' : '' ?>"
+    <a class="<?= h($statClass($status, ContactMessage::STATUS_IN_PROGRESS)) ?>"
        href="<?= $this->Url->build($statusUrl(ContactMessage::STATUS_IN_PROGRESS)) ?>">
         <span class="admin-stat-value"><?= (int)($statusCounts[ContactMessage::STATUS_IN_PROGRESS] ?? 0) ?></span>
         <span class="eg-eyebrow">In progress</span>
     </a>
-    <a class="admin-stat-card<?= $status === ContactMessage::STATUS_RESOLVED ? ' is-active' : '' ?>"
+    <a class="<?= h($statClass($status, ContactMessage::STATUS_RESOLVED)) ?>"
        href="<?= $this->Url->build($statusUrl(ContactMessage::STATUS_RESOLVED)) ?>">
         <span class="admin-stat-value"><?= (int)($statusCounts[ContactMessage::STATUS_RESOLVED] ?? 0) ?></span>
         <span class="eg-eyebrow">Resolved</span>

@@ -17,6 +17,22 @@ $statusCounts = $statusCounts ?? [];
 $invoiceTotal = array_sum($statusCounts);
 $issuedCount = $statusCounts[Invoice::STATUS_ISSUED] ?? 0;
 $paidCount = $statusCounts[Invoice::STATUS_PAID] ?? 0;
+$statClass = static function (string $current, string $value): string {
+    $class = 'admin-stat-card';
+    if ($current === $value) {
+        $class .= ' is-active';
+    }
+
+    return $class;
+};
+$chipClass = static function (string $current, string $value): string {
+    $class = 'eg-chip';
+    if ($current === $value) {
+        $class .= ' is-active';
+    }
+
+    return $class;
+};
 
 $this->assign('title', 'Invoices');
 $this->assign('breadcrumb', $this->element('admin/breadcrumb', [
@@ -33,7 +49,7 @@ $this->assign('breadcrumb', $this->element('admin/breadcrumb', [
         <span class="admin-stat-value"><?= $invoiceTotal ?></span>
         <span class="eg-eyebrow">All invoices</span>
     </div>
-    <a class="admin-stat-card<?= $status === Invoice::STATUS_OVERDUE ? ' is-active' : '' ?>"
+    <a class="<?= h($statClass($status, Invoice::STATUS_OVERDUE)) ?>"
        href="<?= $this->Url->build(['action' => 'index', '?' => array_filter([
            'status' => Invoice::STATUS_OVERDUE,
            'q' => $q !== '' ? $q : null,
@@ -41,7 +57,7 @@ $this->assign('breadcrumb', $this->element('admin/breadcrumb', [
         <span class="admin-stat-value"><?= (int)$overdueCount ?></span>
         <span class="eg-eyebrow">Overdue</span>
     </a>
-    <a class="admin-stat-card<?= $status === Invoice::STATUS_ISSUED ? ' is-active' : '' ?>"
+    <a class="<?= h($statClass($status, Invoice::STATUS_ISSUED)) ?>"
        href="<?= $this->Url->build(['action' => 'index', '?' => array_filter([
            'status' => Invoice::STATUS_ISSUED,
            'q' => $q !== '' ? $q : null,
@@ -49,7 +65,7 @@ $this->assign('breadcrumb', $this->element('admin/breadcrumb', [
         <span class="admin-stat-value"><?= $issuedCount ?></span>
         <span class="eg-eyebrow">Issued</span>
     </a>
-    <a class="admin-stat-card<?= $status === Invoice::STATUS_PAID ? ' is-active' : '' ?>"
+    <a class="<?= h($statClass($status, Invoice::STATUS_PAID)) ?>"
        href="<?= $this->Url->build(['action' => 'index', '?' => array_filter([
            'status' => Invoice::STATUS_PAID,
            'q' => $q !== '' ? $q : null,
@@ -73,9 +89,14 @@ $this->assign('breadcrumb', $this->element('admin/breadcrumb', [
             All <span class="admin-chip-count"><?= $invoiceTotal ?></span>
         </a>
         <?php foreach (Invoice::statusLabels() as $key => $label) : ?>
-            <a class="eg-chip<?= $status === $key ? ' is-active' : '' ?>" href="<?= $this->Url->build($statusUrl($key)) ?>">
+            <?php
+            $chipCount = $key === Invoice::STATUS_OVERDUE
+                ? (int)$overdueCount
+                : (int)($statusCounts[$key] ?? 0);
+            ?>
+            <a class="<?= h($chipClass($status, $key)) ?>" href="<?= $this->Url->build($statusUrl($key)) ?>">
                 <?= h($label) ?>
-                <span class="admin-chip-count"><?= $key === Invoice::STATUS_OVERDUE ? (int)$overdueCount : (int)($statusCounts[$key] ?? 0) ?></span>
+                <span class="admin-chip-count"><?= $chipCount ?></span>
             </a>
         <?php endforeach; ?>
     </div>
