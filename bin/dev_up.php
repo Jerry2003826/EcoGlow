@@ -73,6 +73,21 @@ passthru(escapeshellarg($php) . ' ' . escapeshellarg($root . '/bin/cake.php') . 
 exit(0);
 
 /**
+ * @param string $name Candidate database name.
+ * @return string
+ */
+function allowlistedDatabaseName(string $name): string
+{
+    $name = trim($name);
+    if (!in_array($name, ['ecoglow', 'test_ecoglow'], true)) {
+        fwrite(STDERR, "ECOGLOW_DB_NAME must be ecoglow or test_ecoglow.\n");
+        exit(1);
+    }
+
+    return $name;
+}
+
+/**
  * @return array{host: string, port: int, user: string, password: string, database: string}
  */
 function ensureDatabase(): array
@@ -82,7 +97,7 @@ function ensureDatabase(): array
         'port' => (int)(getenv('ECOGLOW_DB_PORT') ?: 3306),
         'user' => 'ecoglow',
         'password' => 'ecoglow',
-        'database' => getenv('ECOGLOW_DB_NAME') ?: 'ecoglow',
+        'database' => allowlistedDatabaseName((string)(getenv('ECOGLOW_DB_NAME') ?: 'ecoglow')),
     ];
 
     $existing = probeMysql(

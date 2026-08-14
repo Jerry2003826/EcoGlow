@@ -71,6 +71,7 @@ class StripeWebhookService
             if (
                 $type === 'refund.updated'
                 || $type === 'refund.failed'
+                || $type === 'refund.canceled'
                 || $type === 'refund.created'
                 || $type === 'charge.refunded'
             ) {
@@ -223,7 +224,12 @@ class StripeWebhookService
     {
         $object = $event->data->object;
         $refundId = (string)($object->id ?? '');
-        $status = (string)($event->type === 'refund.failed' ? 'failed' : ($object->status ?? ''));
+        $status = (string)($object->status ?? '');
+        if ($event->type === 'refund.failed') {
+            $status = 'failed';
+        } elseif ($event->type === 'refund.canceled') {
+            $status = 'canceled';
+        }
         $intentId = (string)($object->payment_intent ?? '');
         if ($event->type === 'charge.refunded' && isset($object->refunds->data[0])) {
             $first = $object->refunds->data[0];
@@ -336,12 +342,46 @@ class StripeWebhookService
         if ((string)$payment->status === 'captured') {
             return false;
         }
+        if (!$this->recordCaptureEffect((string)$intent->id)) {
+            return false;
+        }
         $payment->status = 'captured';
         $payment->amount_cents = $amountCents;
         $payment->captured_at = DateTime::now('UTC');
         $payment->authorised_at = DateTime::now('UTC');
         $payment->provider_metadata = ['payment_intent' => (string)$intent->id];
         $this->fetchTable('Payments')->saveOrFail($payment);
+
+        return true;
+    }
+
+    /**
+     * @param string $providerPaymentId Stripe PaymentIntent id.
+     * @return bool False when this capture effect already exists.
+     */
+    private function recordCaptureEffect(string $providerPaymentId): bool
+    {
+        if ($providerPaymentId === '') {
+            return false;
+        }
+        $effects = $this->fetchTable('PaymentEffects');
+        $row = $effects->newEmptyEntity();
+        $row->set('provider', 'stripe');
+        $row->set('provider_payment_id', $providerPaymentId);
+        $row->set('effect_type', 'capture');
+        $row->set('created', DateTime::now('UTC'));
+        try {
+            $effects->saveOrFail($row);
+        } catch (Throwable $exception) {
+            if (
+                str_contains($exception->getMessage(), 'UNIQUE')
+                || str_contains($exception->getMessage(), 'Duplicate')
+                || str_contains($exception->getMessage(), '1062')
+            ) {
+                return false;
+            }
+            throw $exception;
+        }
 
         return true;
     }

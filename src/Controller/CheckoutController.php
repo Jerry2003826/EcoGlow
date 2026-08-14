@@ -50,11 +50,11 @@ class CheckoutController extends AppController
                 return $this->redirect('/account');
             }
         }
-        $attemptId = $this->checkoutAttemptId();
         $carts = new CartService();
         $token = $carts->token($this->request);
         $cart = $carts->current((int)$customer->user_id, $token, false);
         $checkout = $this->checkoutService($carts);
+        $attemptId = $this->checkoutAttemptId($checkout, $customer, $cart);
         $totals = $checkout->totals($cart);
         $lines = $this->reviewLines($cart);
         $flags = new FeatureFlagService();
@@ -176,6 +176,7 @@ class CheckoutController extends AppController
         if ($order === null) {
             throw new NotFoundException();
         }
+        $this->request->getSession()->delete(SensitiveSession::CHECKOUT_ATTEMPT);
         $this->set(compact('customer', 'order'));
     }
 
@@ -290,9 +291,12 @@ class CheckoutController extends AppController
     }
 
     /**
+     * @param \App\Service\Checkout\CheckoutService $checkout Checkout service.
+     * @param \App\Model\Entity\Customer $customer Signed-in customer.
+     * @param \App\Model\Entity\Cart|null $cart Current cart.
      * @return string
      */
-    private function checkoutAttemptId(): string
+    private function checkoutAttemptId(CheckoutService $checkout, Customer $customer, ?Cart $cart): string
     {
         $session = $this->request->getSession();
         $stored = strtolower(trim((string)$session->read(SensitiveSession::CHECKOUT_ATTEMPT)));
@@ -302,6 +306,9 @@ class CheckoutController extends AppController
         } elseif ($this->validAttemptId($posted)) {
             $candidate = $posted;
         } else {
+            $candidate = $this->newUuid();
+        }
+        if (!$checkout->canReuseAttempt($candidate, (int)$customer->id, (int)$customer->user_id, $cart)) {
             $candidate = $this->newUuid();
         }
         $session->write(SensitiveSession::CHECKOUT_ATTEMPT, $candidate);

@@ -15,6 +15,7 @@ use Cake\I18n\Date;
 use Cake\I18n\DateTime;
 use Cake\ORM\Locator\LocatorAwareTrait;
 use InvalidArgumentException;
+use Throwable;
 
 /**
  * Staff order recording: header, line snapshots, status history and stock
@@ -349,12 +350,7 @@ class OrderService
                     ->where(['checkout_attempt_id' => $checkoutAttemptId])
                     ->first();
                 if ($existing) {
-                    if (
-                        (int)$existing->customer_id === $customerId
-                        && (int)$existing->created_by_user_id === $userId
-                        && $existing->status === SalesOrder::STATUS_DRAFT
-                        && in_array((string)$existing->payment_status, ['pending', 'failed'], true)
-                    ) {
+                    if ($this->attemptMatchesOpenCheckout($existing, $customerId, $userId, $cart)) {
                         return $existing;
                     }
                     throw new InvalidArgumentException(
@@ -491,19 +487,26 @@ class OrderService
             if ($order->payment_status === 'paid') {
                 return $order;
             }
-            if (
-                $order->status !== SalesOrder::STATUS_DRAFT
-                || !in_array((string)$order->payment_status, ['pending', 'failed'], true)
-            ) {
+            $cas = $this->connection()->execute(
+                "UPDATE sales_orders
+                    SET payment_status = 'paid', status = ?
+                  WHERE id = ?
+                    AND status = ?
+                    AND payment_status IN ('pending', 'failed')",
+                [SalesOrder::STATUS_CONFIRMED, $order->id, SalesOrder::STATUS_DRAFT],
+            );
+            if ($cas->rowCount() !== 1) {
+                $order = $this->fetchTable('SalesOrders')->get($order->id);
+                if ($order->payment_status === 'paid') {
+                    return $order;
+                }
                 throw new InvalidArgumentException(
                     'Payment succeeded for an order that is not awaiting capture.',
                 );
             }
+            $order = $this->fetchTable('SalesOrders')->get($order->id);
 
-            $from = $order->status;
-            $order->payment_status = 'paid';
-            $order->status = SalesOrder::STATUS_CONFIRMED;
-            $this->fetchTable('SalesOrders')->saveOrFail($order);
+            $from = SalesOrder::STATUS_DRAFT;
             $this->annotateLatestHistory(
                 $order,
                 $from,
@@ -570,6 +573,156 @@ class OrderService
             'sales_order_id' => $orderId,
             'status' => 'captured',
         ]);
+    }
+
+    /**
+     * Claim expired unpaid holds one row at a time, skipping rows locked by capture.
+     *
+     * @return int Number of orders cancelled.
+     */
+    public function releaseExpiredHolds(): int
+    {
+        $released = 0;
+        for ($guard = 0; $guard < 500; $guard++) {
+            $result = $this->connection()->transactional(function () {
+                $id = $this->claimOneExpiredHoldId();
+                if ($id === null) {
+                    return null;
+                }
+                $order = $this->fetchTable('SalesOrders')->get($id);
+                $updated = $this->failUnpaid(
+                    $order,
+                    (int)($order->created_by_user_id ?: 0),
+                    'Checkout hold expired',
+                );
+
+                return $updated->status === SalesOrder::STATUS_CANCELLED ? 1 : 0;
+            });
+            if ($result === null) {
+                break;
+            }
+            $released += $result;
+        }
+
+        return $released;
+    }
+
+    /**
+     * Keep an uncertain PaymentIntent setup from sitting on a full 15-minute hold.
+     *
+     * @param \App\Model\Entity\SalesOrder $order Held checkout.
+     * @param int $minutes Remaining hold minutes.
+     * @return \App\Model\Entity\SalesOrder
+     */
+    public function shortenUncertainHold(SalesOrder $order, int $minutes = 5): SalesOrder
+    {
+        return $this->connection()->transactional(function () use ($order, $minutes) {
+            $this->lockOrder((int)$order->id);
+            $order = $this->fetchTable('SalesOrders')->get($order->id);
+            if (
+                $order->status !== SalesOrder::STATUS_DRAFT
+                || !in_array((string)$order->payment_status, ['pending', 'failed'], true)
+            ) {
+                return $order;
+            }
+            $limit = DateTime::now('UTC')->addMinutes(max(1, $minutes));
+            $current = $order->get('hold_expires_at');
+            if ($current instanceof DateTime && $current->lessThanOrEquals($limit)) {
+                return $order;
+            }
+            $order->set('hold_expires_at', $limit);
+            $this->fetchTable('SalesOrders')->saveOrFail($order);
+            $this->fetchTable('StockReservations')->updateAll(
+                ['expires_at' => $limit],
+                ['sales_order_id' => $order->id, 'status' => 'active'],
+            );
+
+            return $order;
+        });
+    }
+
+    /**
+     * @param \App\Model\Entity\SalesOrder $order Candidate order.
+     * @param int $customerId Current customer.
+     * @param int $userId Current user.
+     * @param \App\Model\Entity\Cart $cart Current cart.
+     * @return bool
+     */
+    public function attemptMatchesOpenCheckout(
+        SalesOrder $order,
+        int $customerId,
+        int $userId,
+        Cart $cart,
+    ): bool {
+        if (
+            (int)$order->customer_id !== $customerId
+            || (int)$order->created_by_user_id !== $userId
+            || $order->status !== SalesOrder::STATUS_DRAFT
+            || !in_array((string)$order->payment_status, ['pending', 'failed'], true)
+        ) {
+            return false;
+        }
+        if (
+            (int)$order->get('cart_id') !== (int)$cart->id
+            && $this->cartHasItems($cart)
+        ) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * @return int|null
+     */
+    private function claimOneExpiredHoldId(): ?int
+    {
+        $params = [
+            SalesOrder::CHANNEL_WEB,
+            SalesOrder::STATUS_DRAFT,
+            DateTime::now('UTC')->format('Y-m-d H:i:s'),
+        ];
+        $sql = "SELECT id FROM sales_orders
+                 WHERE source_channel = ?
+                   AND status = ?
+                   AND payment_status IN ('pending', 'failed')
+                   AND hold_expires_at IS NOT NULL
+                   AND hold_expires_at <= ?
+                 LIMIT 1
+                 FOR UPDATE SKIP LOCKED";
+        try {
+            $rows = $this->connection()->execute($sql, $params)->fetchAll('assoc');
+            $row = $rows[0] ?? null;
+        } catch (Throwable) {
+            $rows = $this->connection()->execute(
+                "SELECT id FROM sales_orders
+                  WHERE source_channel = ?
+                    AND status = ?
+                    AND payment_status IN ('pending', 'failed')
+                    AND hold_expires_at IS NOT NULL
+                    AND hold_expires_at <= ?
+                  LIMIT 1",
+                $params,
+            )->fetchAll('assoc');
+            $row = $rows[0] ?? null;
+        }
+
+        return is_array($row) ? (int)$row['id'] : null;
+    }
+
+    /**
+     * @param \App\Model\Entity\Cart $cart Cart.
+     * @return bool
+     */
+    private function cartHasItems(Cart $cart): bool
+    {
+        foreach ($cart->cart_items ?? [] as $item) {
+            if ((int)$item->quantity > 0) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

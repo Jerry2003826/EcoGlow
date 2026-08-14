@@ -143,8 +143,16 @@ final class AddSecondRoundSecurityGuards extends BaseMigration
         if (method_exists($adapter, 'hasIndexByName')) {
             return (bool)$adapter->hasIndexByName($table, $name);
         }
+        if (!preg_match('/^[A-Za-z0-9_]+$/', $table) || !preg_match('/^[A-Za-z0-9_]+$/', $name)) {
+            return false;
+        }
+        $statement = $adapter->query(
+            "SHOW INDEX FROM `{$table}` WHERE Key_name = '{$name}' AND Non_unique = 0",
+        );
 
-        return false;
+        return is_object($statement)
+            && method_exists($statement, 'fetch')
+            && $statement->fetch() !== false;
     }
 
     /**

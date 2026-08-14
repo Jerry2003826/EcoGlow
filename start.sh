@@ -36,13 +36,14 @@ find_php() {
 
 install_macos_stack() {
   if ! have brew; then
-    say "Installing Homebrew (this may ask for your Mac password)"
-    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-    if [[ -x /opt/homebrew/bin/brew ]]; then
-      eval "$(/opt/homebrew/bin/brew shellenv)"
-    elif [[ -x /usr/local/bin/brew ]]; then
-      eval "$(/usr/local/bin/brew shellenv)"
-    fi
+    say "Homebrew is required. Install it from https://brew.sh then re-run start.sh."
+    say "This launcher will not download or execute a remote installer."
+    exit 1
+  fi
+  if [[ -x /opt/homebrew/bin/brew ]]; then
+    eval "$(/opt/homebrew/bin/brew shellenv)"
+  elif [[ -x /usr/local/bin/brew ]]; then
+    eval "$(/usr/local/bin/brew shellenv)"
   fi
   say "Installing PHP, Composer and MySQL with Homebrew"
   brew list php >/dev/null 2>&1 || brew install php

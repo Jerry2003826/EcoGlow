@@ -7,6 +7,7 @@ use App\Middleware\LoginThrottleMiddleware;
 use App\Middleware\SessionIntegrityMiddleware;
 use App\Model\Entity\User;
 use App\Model\Table\UsersTable;
+use App\Service\AuditLogger;
 use App\Service\Cart\CartService;
 use App\Service\Security\SensitiveSession;
 use App\Service\Security\TotpService;
@@ -100,6 +101,20 @@ class UsersController extends AppController
 
         // An already-valid session always wins, even from a locked-out IP.
         $result = $this->Authentication->getResult();
+        if ($result->isValid() && $this->request->is('post') && $email !== '') {
+            $identity = $this->Authentication->getIdentity();
+            if ($identity !== null) {
+                $current = $this->Users->get((int)$identity->getIdentifier());
+                if (strcasecmp((string)$current->email, $email) !== 0) {
+                    $this->Authentication->logout();
+                    SensitiveSession::clear($this->request->getSession());
+                    $this->request->getSession()->renew();
+                    $this->Flash->info(__('You were signed out of the previous account. Please sign in again.'));
+
+                    return null;
+                }
+            }
+        }
         if ($result->isValid()) {
             LoginThrottleMiddleware::clear($ip, LoginThrottleMiddleware::SCOPE_LOGIN, $email);
 
@@ -599,12 +614,12 @@ class UsersController extends AppController
             if ($accepted) {
                 $this->clearMfaThrottle($user);
                 $this->request->getSession()->write(SessionIntegrityMiddleware::SESSION_MFA, true);
-                Log::info('Staff MFA succeeded', ['user_id' => (int)$user->id]);
+                $this->auditMfa('mfa.succeeded', (int)$user->id);
 
                 return $this->redirect('/admin');
             }
             $this->registerMfaFailure($user);
-            Log::info('Staff MFA failed', ['user_id' => (int)$user->id]);
+            $this->auditMfa('mfa.failed', (int)$user->id);
             $this->Flash->error(__('That code was not recognised. Try again.'));
         }
 
@@ -648,7 +663,7 @@ class UsersController extends AppController
                 $session->delete(SensitiveSession::MFA_SETUP);
                 $session->write(SessionIntegrityMiddleware::SESSION_MFA, true);
                 $this->clearMfaThrottle($user);
-                Log::info('Staff MFA enrolled', ['user_id' => (int)$user->id]);
+                $this->auditMfa('mfa.enrolled', (int)$user->id);
                 $this->Flash->success(__('Two-factor authentication is now enabled. Store the recovery codes below.'));
                 $this->set([
                     'secret' => $plain,
@@ -659,7 +674,7 @@ class UsersController extends AppController
                 return null;
             }
             $this->registerMfaFailure($user);
-            Log::info('Staff MFA setup failed', ['user_id' => (int)$user->id]);
+            $this->auditMfa('mfa.setup_failed', (int)$user->id);
             $this->Flash->error(__('That code was not recognised. Try again.'));
         }
         $this->set([
@@ -861,6 +876,29 @@ class UsersController extends AppController
         LoginThrottleMiddleware::clear($ip, LoginThrottleMiddleware::SCOPE_MFA);
         LoginThrottleMiddleware::clear('user:' . $user->id, LoginThrottleMiddleware::SCOPE_MFA);
         LoginThrottleMiddleware::clear('session:' . $sessionId, LoginThrottleMiddleware::SCOPE_MFA);
+    }
+
+    /**
+     * @param string $action Audit verb.
+     * @param int $userId Target user.
+     * @param int|null $actorUserId Acting user, defaults to the target.
+     * @return void
+     */
+    private function auditMfa(string $action, int $userId, ?int $actorUserId = null): void
+    {
+        Log::info('Staff MFA event', ['action' => $action, 'user_id' => $userId]);
+        try {
+            (new AuditLogger())->record(
+                $actorUserId ?? $userId,
+                $action,
+                'users',
+                $userId,
+                null,
+                ['user_id' => $userId],
+            );
+        } catch (Throwable) {
+            // Authentication must still complete if the audit table is unavailable.
+        }
     }
 
     /**

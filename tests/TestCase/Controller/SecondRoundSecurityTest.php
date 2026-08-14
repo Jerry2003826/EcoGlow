@@ -15,10 +15,12 @@ use App\Service\Payments\RefundService;
 use App\Service\Payments\StripePaymentGateway;
 use App\Test\TestCase\Support\FakePaymentGateway;
 use Cake\Core\Configure;
+use Cake\Datasource\ConnectionManager;
 use Cake\I18n\DateTime;
 use Cake\TestSuite\IntegrationTestTrait;
 use Cake\TestSuite\TestCase;
 use InvalidArgumentException;
+use PDO;
 
 /**
  * Second-round audit guards: hold CAS, intent idempotency, attempt binding.
@@ -162,6 +164,16 @@ class SecondRoundSecurityTest extends TestCase
                 ->where(['provider_payment_id' => 'pi_double_evt', 'status' => 'captured'])
                 ->count(),
         );
+        $this->assertSame(
+            1,
+            $this->fetchTable('PaymentEffects')->find()
+                ->where([
+                    'provider' => 'stripe',
+                    'provider_payment_id' => 'pi_double_evt',
+                    'effect_type' => 'capture',
+                ])
+                ->count(),
+        );
     }
 
     /**
@@ -303,6 +315,274 @@ class SecondRoundSecurityTest extends TestCase
         $this->assertNotNull($order);
         $this->assertSame($mine, (string)$order->get('checkout_attempt_id'));
         $this->assertSame($mine, $this->getSession()->read('Checkout.attempt_id'));
+    }
+
+    /**
+     * A completed attempt must not be reused for a second cart.
+     *
+     * @return void
+     */
+    public function testSecondPurchaseRequiresNewAttempt(): void
+    {
+        $attempt = $this->attemptId('second-buy');
+        $order = $this->placeOrder('pi_second_buy', $attempt);
+        $this->postSigned($this->eventPayload(
+            'evt_second_buy',
+            'payment_intent.succeeded',
+            'pi_second_buy',
+            (int)$order->grand_total_cents,
+            ['order_id' => (string)$order->id],
+        ));
+        $this->assertResponseOk();
+        $this->fillCart(4, 'second-cart');
+        $checkout = new CheckoutService(
+            new OrderService(new InventoryLedger()),
+            new CartService(),
+            new FakePaymentGateway(),
+        );
+        $customer = $this->fetchTable('Customers')->get(2);
+        $this->expectException(InvalidArgumentException::class);
+        $checkout->place(
+            $customer,
+            4,
+            $this->cart(4, 'second-cart'),
+            $this->address(),
+            false,
+            $attempt,
+        );
+    }
+
+    /**
+     * The confirmation page drops the checkout attempt so the next buy is new.
+     *
+     * @return void
+     */
+    public function testConfirmationClearsCheckoutAttempt(): void
+    {
+        $attempt = $this->attemptId('confirm-clear');
+        $order = $this->placeOrder('pi_confirm_clear', $attempt);
+        $this->session([
+            'AuthV2' => 4,
+            'AuthVersion' => 1,
+            'Checkout.attempt_id' => $attempt,
+        ]);
+        $this->get('/checkout/confirmation/' . $order->id);
+        $this->assertResponseOk();
+        $this->assertNull($this->getSession()->read('Checkout.attempt_id'));
+    }
+
+    /**
+     * After A logs out, B cannot resume A's checkout UUID.
+     *
+     * @return void
+     */
+    public function testSharedBrowserLogoutDropsAttempt(): void
+    {
+        Configure::write('Stripe.gateway', new FakePaymentGateway());
+        Configure::write('Stripe.secretKey', 'sk_test_fake');
+        $this->fillCart(4, 'a-shared');
+        $attempt = $this->attemptId('shared-browser');
+        $this->session([
+            'AuthV2' => 4,
+            'AuthVersion' => 1,
+            'Checkout.attempt_id' => $attempt,
+            CartService::SESSION_KEY => 'a-shared',
+        ]);
+        $this->post('/checkout', $this->address());
+        $this->assertResponseOk();
+        $order = $this->fetchTable('SalesOrders')->find()
+            ->where(['checkout_attempt_id' => $attempt])
+            ->first();
+        $this->assertNotNull($order);
+        $this->assertSame(2, (int)$order->customer_id);
+
+        $this->post('/logout');
+        $this->assertNull($this->getSession()->read('Checkout.attempt_id'));
+
+        $this->session([
+            'AuthV2' => 5,
+            'AuthVersion' => 1,
+            CartService::SESSION_KEY => 'b-shared',
+        ]);
+        $this->fillCart(5, 'b-shared');
+        $this->enableCsrfToken();
+        $this->post('/checkout', $this->address() + [
+            'checkout_attempt_id' => $attempt,
+        ]);
+        $stolen = $this->fetchTable('SalesOrders')->find()
+            ->where(['checkout_attempt_id' => $attempt])
+            ->first();
+        $this->assertNotNull($stolen);
+        $this->assertSame(2, (int)$stolen->customer_id);
+        $this->assertNotSame($attempt, $this->getSession()->read('Checkout.attempt_id'));
+    }
+
+    /**
+     * Create-intent timeout keeps a short hold and the same Idempotency-Key resumes it.
+     *
+     * @return void
+     */
+    public function testUncertainTimeoutRetryReusesIntent(): void
+    {
+        $gateway = new FakePaymentGateway();
+        $gateway->nextIntentId = 'pi_timeout_reuse';
+        $gateway->createThenTimeout = true;
+        $attempt = $this->attemptId('timeout-reuse');
+        $checkout = $this->checkout($gateway, 'timeout-token', 'pi_timeout_reuse');
+        $customer = $this->fetchTable('Customers')->get(2);
+        try {
+            $checkout->place($customer, 4, $this->cart(4, 'timeout-token'), $this->address(), false, $attempt);
+            $this->fail('First create should time out after Stripe accepted the intent.');
+        } catch (PaymentUncertainException) {
+            // expected
+        }
+        $order = $this->fetchTable('SalesOrders')->find()
+            ->where(['checkout_attempt_id' => $attempt])
+            ->first();
+        $this->assertNotNull($order);
+        $this->assertSame(SalesOrder::STATUS_DRAFT, $order->status);
+        $expires = $order->get('hold_expires_at');
+        $this->assertInstanceOf(DateTime::class, $expires);
+        $this->assertTrue($expires->lessThanOrEquals(DateTime::now('UTC')->addMinutes(5)));
+
+        $resumeCart = (new CartService())->current(4, 'timeout-token', true);
+        $this->assertNotNull($resumeCart);
+        $result = $checkout->place($customer, 4, $resumeCart, $this->address(), false, $attempt);
+        $this->assertSame('pi_timeout_reuse_secret_test', $result['client_secret']);
+        $this->assertSame($attempt, $gateway->lastIdempotencyKey);
+    }
+
+    /**
+     * A failed refund must not restock or mark the order refunded.
+     *
+     * @return void
+     */
+    public function testPendingRefundFailedKeepsStock(): void
+    {
+        $order = $this->placeOrder('pi_refund_fail');
+        $this->postSigned($this->eventPayload(
+            'evt_refund_fail_pay',
+            'payment_intent.succeeded',
+            'pi_refund_fail',
+            (int)$order->grand_total_cents,
+            ['order_id' => (string)$order->id],
+        ));
+        $this->assertResponseOk();
+        $consumed = $this->onHand();
+        $gateway = new FakePaymentGateway();
+        $gateway->refundStatus = 'pending';
+        $gateway->nextRefundId = 're_fail_1';
+        (new RefundService(new OrderService(new InventoryLedger()), $gateway))
+            ->refundOrder($this->fetchTable('SalesOrders')->get($order->id), 1);
+
+        $this->postSigned($this->refundEventPayload(
+            'evt_refund_fail',
+            'refund.failed',
+            're_fail_1',
+            'pi_refund_fail',
+            'failed',
+        ));
+        $this->assertResponseOk();
+        $order = $this->fetchTable('SalesOrders')->get($order->id);
+        $this->assertSame('paid', $order->payment_status);
+        $this->assertSame($consumed, $this->onHand());
+        $this->assertSame(
+            'failed',
+            (string)$this->fetchTable('PaymentRefunds')->find()
+                ->where(['provider_refund_id' => 're_fail_1'])
+                ->first()
+                ?->get('status'),
+        );
+    }
+
+    /**
+     * A refund that never reached Stripe can be retried from the pending row.
+     *
+     * @return void
+     */
+    public function testRefundRetriesAfterGatewayFailure(): void
+    {
+        $order = $this->placeOrder('pi_refund_retry');
+        $this->postSigned($this->eventPayload(
+            'evt_refund_retry_pay',
+            'payment_intent.succeeded',
+            'pi_refund_retry',
+            (int)$order->grand_total_cents,
+            ['order_id' => (string)$order->id],
+        ));
+        $this->assertResponseOk();
+        $gateway = new FakePaymentGateway();
+        $gateway->throwOnRefund = true;
+        try {
+            (new RefundService(new OrderService(new InventoryLedger()), $gateway))
+                ->refundOrder($this->fetchTable('SalesOrders')->get($order->id), 1);
+            $this->fail('The first refund call should fail before Stripe accepts it.');
+        } catch (InvalidArgumentException) {
+            // expected
+        }
+        $this->assertSame(
+            1,
+            $this->fetchTable('PaymentRefunds')->find()
+                ->where(['payment_id' => $this->fetchTable('Payments')->find()
+                    ->where(['provider_payment_id' => 'pi_refund_retry'])
+                    ->first()
+                    ?->id])
+                ->count(),
+        );
+        $gateway->throwOnRefund = false;
+        $gateway->refundStatus = 'pending';
+        $gateway->nextRefundId = 're_retry_1';
+        $payment = (new RefundService(new OrderService(new InventoryLedger()), $gateway))
+            ->refundOrder($this->fetchTable('SalesOrders')->get($order->id), 1);
+        $this->assertSame('captured', (string)$payment->status);
+        $this->assertSame(
+            'pending',
+            (string)$this->fetchTable('PaymentRefunds')->find()
+                ->where(['provider_refund_id' => 're_retry_1'])
+                ->first()
+                ?->get('status'),
+        );
+    }
+
+    /**
+     * Hold cleanup must skip a row another connection already locked.
+     *
+     * @return void
+     */
+    public function testHoldCleanupSkipsLockedMysqlRow(): void
+    {
+        $config = ConnectionManager::get('test')->config();
+        $driver = (string)($config['driver'] ?? '');
+        if (!str_contains($driver, 'Mysql')) {
+            $this->markTestSkipped('Requires MySQL SKIP LOCKED.');
+        }
+        $order = $this->placeOrder('pi_skip_locked');
+        $order->set('hold_expires_at', DateTime::now('UTC')->subMinutes(1));
+        $this->fetchTable('SalesOrders')->saveOrFail($order);
+
+        $pdo = $this->secondMysqlConnection($config);
+        $pdo->beginTransaction();
+        $locked = $pdo->query('SELECT id FROM sales_orders WHERE id = ' . (int)$order->id . ' FOR UPDATE');
+        $this->assertNotFalse($locked);
+        $this->assertNotSame([], $locked->fetchAll(PDO::FETCH_ASSOC));
+        try {
+            $started = microtime(true);
+            $released = (new OrderService(new InventoryLedger()))->releaseExpiredHolds();
+            $this->assertLessThan(2.0, microtime(true) - $started);
+            $this->assertSame(0, $released);
+            $this->assertSame(
+                SalesOrder::STATUS_DRAFT,
+                $this->fetchTable('SalesOrders')->get($order->id)->status,
+            );
+        } finally {
+            $pdo->rollBack();
+        }
+
+        $this->assertSame(1, (new OrderService(new InventoryLedger()))->releaseExpiredHolds());
+        $this->assertSame(
+            SalesOrder::STATUS_CANCELLED,
+            $this->fetchTable('SalesOrders')->get($order->id)->status,
+        );
     }
 
     /**
@@ -523,5 +803,72 @@ class SecondRoundSecurityTest extends TestCase
         ];
 
         return json_encode($event, JSON_THROW_ON_ERROR);
+    }
+
+    /**
+     * @param string $eventId Event id.
+     * @param string $type Type.
+     * @param string $refundId Refund id.
+     * @param string $intentId PaymentIntent id.
+     * @param string $status Stripe refund status.
+     * @return string
+     */
+    private function refundEventPayload(
+        string $eventId,
+        string $type,
+        string $refundId,
+        string $intentId,
+        string $status,
+    ): string {
+        $event = [
+            'id' => $eventId,
+            'object' => 'event',
+            'api_version' => '2024-06-20',
+            'created' => time(),
+            'livemode' => false,
+            'pending_webhooks' => 1,
+            'request' => ['id' => null, 'idempotency_key' => null],
+            'type' => $type,
+            'data' => [
+                'object' => [
+                    'id' => $refundId,
+                    'object' => 'refund',
+                    'amount' => 100,
+                    'currency' => 'aud',
+                    'status' => $status,
+                    'payment_intent' => $intentId,
+                ],
+            ],
+        ];
+
+        return json_encode($event, JSON_THROW_ON_ERROR);
+    }
+
+    /**
+     * @param array<string, mixed> $config Cake test datasource config.
+     * @return \PDO
+     */
+    private function secondMysqlConnection(array $config): PDO
+    {
+        $host = (string)($config['host'] ?? '');
+        $port = (string)($config['port'] ?? '3306');
+        $database = (string)($config['database'] ?? '');
+        $username = (string)($config['username'] ?? '');
+        $password = (string)($config['password'] ?? '');
+        if ($host === '' && !empty($config['url'])) {
+            $parts = parse_url((string)$config['url']);
+            $host = (string)($parts['host'] ?? '127.0.0.1');
+            $port = (string)($parts['port'] ?? '3306');
+            $database = ltrim((string)($parts['path'] ?? ''), '/');
+            $username = (string)($parts['user'] ?? '');
+            $password = (string)($parts['pass'] ?? '');
+        }
+
+        return new PDO(
+            sprintf('mysql:host=%s;port=%s;dbname=%s;charset=utf8mb4', $host, $port, $database),
+            $username,
+            $password,
+            [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION],
+        );
     }
 }

@@ -54,7 +54,7 @@ class CheckoutService
     ): array {
         $address = $this->sanitizeAddress($address);
         $attemptId = $this->normalizeAttemptId($checkoutAttemptId);
-        $existing = $this->orderForAttempt($attemptId, (int)$customer->id, $userId);
+        $existing = $this->orderForAttempt($attemptId, (int)$customer->id, $userId, $cart);
         if ($existing !== null) {
             return $this->resumeOrder($existing);
         }
@@ -175,6 +175,7 @@ class CheckoutService
             $meta['payment_setup_unknown'] = true;
             $order->metadata = $meta;
             $this->fetchTable('SalesOrders')->saveOrFail($order);
+            $this->orders->shortenUncertainHold($order, 5);
             if (!$exception instanceof PaymentUncertainException) {
                 throw new PaymentUncertainException(
                     'The payment service timed out. Your basket is still held. Please try again.',
@@ -209,12 +210,44 @@ class CheckoutService
     }
 
     /**
+     * True when this UUID can stay on the current session for this cart.
+     *
      * @param string $attemptId UUID.
      * @param int $customerId Current customer.
      * @param int $userId Current user.
+     * @param \App\Model\Entity\Cart|null $cart Current cart.
+     * @return bool
+     */
+    public function canReuseAttempt(string $attemptId, int $customerId, int $userId, ?Cart $cart): bool
+    {
+        if ($attemptId === '') {
+            return false;
+        }
+        $order = $this->fetchTable('SalesOrders')->find()
+            ->contain(['SalesOrderItems'])
+            ->where(['checkout_attempt_id' => $attemptId])
+            ->first();
+        if ($order === null) {
+            return true;
+        }
+        if ($cart === null) {
+            return (int)$order->customer_id === $customerId
+                && (int)$order->created_by_user_id === $userId
+                && $order->status === SalesOrder::STATUS_DRAFT
+                && in_array((string)$order->payment_status, ['pending', 'failed'], true);
+        }
+
+        return $this->orders->attemptMatchesOpenCheckout($order, $customerId, $userId, $cart);
+    }
+
+    /**
+     * @param string $attemptId UUID.
+     * @param int $customerId Current customer.
+     * @param int $userId Current user.
+     * @param \App\Model\Entity\Cart $cart Current cart.
      * @return \App\Model\Entity\SalesOrder|null
      */
-    private function orderForAttempt(string $attemptId, int $customerId, int $userId): ?SalesOrder
+    private function orderForAttempt(string $attemptId, int $customerId, int $userId, Cart $cart): ?SalesOrder
     {
         if ($attemptId === '') {
             return null;
@@ -227,12 +260,7 @@ class CheckoutService
         if ($order === null) {
             return null;
         }
-        if (
-            (int)$order->customer_id !== $customerId
-            || (int)$order->created_by_user_id !== $userId
-            || $order->status !== SalesOrder::STATUS_DRAFT
-            || !in_array((string)$order->payment_status, ['pending', 'failed'], true)
-        ) {
+        if (!$this->orders->attemptMatchesOpenCheckout($order, $customerId, $userId, $cart)) {
             throw new InvalidArgumentException(
                 'This checkout session is no longer valid. Refresh the page and try again.',
             );

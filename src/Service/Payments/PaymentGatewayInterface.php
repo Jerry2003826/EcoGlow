@@ -36,4 +36,12 @@ interface PaymentGatewayInterface
      * @return string|null
      */
     public function retrieveClientSecret(string $paymentIntentId): ?string;
+
+    /**
+     * Current Stripe refund status, or null when the refund cannot be loaded.
+     *
+     * @param string $refundId Stripe refund id.
+     * @return \App\Service\Payments\RefundResult|null
+     */
+    public function retrieveRefund(string $refundId): ?RefundResult;
 }

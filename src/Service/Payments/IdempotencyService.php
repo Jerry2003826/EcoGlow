@@ -86,11 +86,11 @@ class IdempotencyService
                     AND completed_at IS NULL
                     AND locked_until <= ?',
                 [
-                    DateTime::now('UTC')->addMinutes(2),
+                    DateTime::now('UTC')->addMinutes(2)->format('Y-m-d H:i:s'),
                     $owner,
                     $scope,
                     $key,
-                    DateTime::now('UTC'),
+                    DateTime::now('UTC')->format('Y-m-d H:i:s'),
                 ],
             );
 
@@ -112,22 +112,23 @@ class IdempotencyService
      */
     public function complete(string $scope, string $key, int $status, array $body, string $owner = ''): void
     {
-        $this->connection()->transactional(function () use ($scope, $key, $status, $body, $owner): void {
-            $table = $this->fetchTable('IdempotencyRecords');
-            $row = $table->find()
-                ->where(['scope' => $scope, 'idempotency_key' => $key])
-                ->first();
-            if ($row === null) {
-                return;
-            }
-            if ($owner !== '' && (string)$row->get('lease_owner') !== $owner) {
-                return;
-            }
-            $row->set('response_status', $status);
-            $row->set('response_body', $body);
-            $row->set('completed_at', DateTime::now('UTC'));
-            $table->saveOrFail($row);
-        });
+        $sql = 'UPDATE idempotency_records
+                   SET response_status = ?, response_body = ?, completed_at = ?
+                 WHERE scope = ?
+                   AND idempotency_key = ?
+                   AND completed_at IS NULL';
+        $params = [
+            $status,
+            json_encode($body, JSON_THROW_ON_ERROR),
+            DateTime::now('UTC')->format('Y-m-d H:i:s'),
+            $scope,
+            $key,
+        ];
+        if ($owner !== '') {
+            $sql .= ' AND lease_owner = ?';
+            $params[] = $owner;
+        }
+        $this->connection()->execute($sql, $params);
     }
 
     /**
@@ -145,7 +146,7 @@ class IdempotencyService
               WHERE scope = ?
                 AND idempotency_key = ?
                 AND completed_at IS NULL';
-        $params = [DateTime::now('UTC'), $scope, $key];
+        $params = [DateTime::now('UTC')->format('Y-m-d H:i:s'), $scope, $key];
         if ($owner !== '') {
             $sql .= ' AND lease_owner = ?';
             $params[] = $owner;

@@ -53,7 +53,7 @@ jobs:
         coverage: none
 
     - name: Composer install
-      run: composer install --no-interaction --prefer-dist --no-progress --locked
+      run: composer install --no-interaction --prefer-dist --no-progress
 
     - name: Composer post install
       run: composer run-script post-install-cmd --no-interaction
@@ -83,13 +83,20 @@ jobs:
         tools: cs2pr, phpstan:2.1
 
     - name: Composer install
-      run: composer install --no-interaction --prefer-dist --no-progress --locked
+      run: composer install --no-interaction --prefer-dist --no-progress
 
     - name: Composer validate
       run: composer validate --strict
 
     - name: Composer audit
-      run: composer audit --locked --abandoned=fail
+      run: composer audit --locked --abandoned=fail | tee composer-audit.txt
+
+    - name: Upload composer audit
+      if: always()
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      with:
+        name: composer-audit
+        path: composer-audit.txt
 
     - name: Run PHP CodeSniffer
       run: vendor/bin/phpcs --report=checkstyle | cs2pr

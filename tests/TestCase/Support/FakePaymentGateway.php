@@ -47,6 +47,28 @@ final class FakePaymentGateway implements PaymentGatewayInterface
     public bool $uncertainOnCreate = false;
 
     /**
+     * Create the intent locally, then throw as if the HTTP response timed out.
+     *
+     * @var bool
+     */
+    public bool $createThenTimeout = false;
+
+    /**
+     * @var bool
+     */
+    public bool $throwOnRefund = false;
+
+    /**
+     * @var array<string, \App\Service\Payments\PaymentIntentResult>
+     */
+    public array $intentsByKey = [];
+
+    /**
+     * @var array<string, string>
+     */
+    public array $refundsById = [];
+
+    /**
      * @var string
      */
     public string $refundStatus = 'succeeded';
@@ -67,6 +89,9 @@ final class FakePaymentGateway implements PaymentGatewayInterface
     ): PaymentIntentResult {
         $this->lastAmountCents = $amountCents;
         $this->lastIdempotencyKey = $idempotencyKey;
+        if ($idempotencyKey !== null && $idempotencyKey !== '' && isset($this->intentsByKey[$idempotencyKey])) {
+            return $this->intentsByKey[$idempotencyKey];
+        }
         if ($this->uncertainOnCreate) {
             throw new PaymentUncertainException('The payment service timed out.');
         }
@@ -74,6 +99,7 @@ final class FakePaymentGateway implements PaymentGatewayInterface
             throw new InvalidArgumentException('The card was declined.');
         }
         $id = $this->nextIntentId;
+        $result = new PaymentIntentResult($id, $id . '_secret_test');
         $this->intents[] = [
             'id' => $id,
             'amount_cents' => $amountCents,
@@ -81,8 +107,15 @@ final class FakePaymentGateway implements PaymentGatewayInterface
             'metadata' => $metadata,
             'idempotency_key' => $idempotencyKey,
         ];
+        if ($idempotencyKey !== null && $idempotencyKey !== '') {
+            $this->intentsByKey[$idempotencyKey] = $result;
+        }
+        if ($this->createThenTimeout) {
+            $this->createThenTimeout = false;
+            throw new PaymentUncertainException('The payment service timed out.');
+        }
 
-        return new PaymentIntentResult($id, $id . '_secret_test');
+        return $result;
     }
 
     /**
@@ -90,6 +123,11 @@ final class FakePaymentGateway implements PaymentGatewayInterface
      */
     public function refund(string $paymentIntentId, int $amountCents, string $idempotencyKey): RefundResult
     {
+        if ($this->throwOnRefund) {
+            throw new InvalidArgumentException('The refund request did not reach Stripe.');
+        }
+        $this->refundsById[$this->nextRefundId] = $this->refundStatus;
+
         return new RefundResult($this->nextRefundId, $this->refundStatus);
     }
 
@@ -103,5 +141,17 @@ final class FakePaymentGateway implements PaymentGatewayInterface
         }
 
         return $paymentIntentId . '_secret_test';
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function retrieveRefund(string $refundId): ?RefundResult
+    {
+        if ($refundId === '' || !isset($this->refundsById[$refundId])) {
+            return null;
+        }
+
+        return new RefundResult($refundId, $this->refundsById[$refundId]);
     }
 }

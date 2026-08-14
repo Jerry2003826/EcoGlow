@@ -200,6 +200,14 @@ class UsersController extends AdminController
             'target_user_id' => (int)$user->id,
             'actor_user_id' => $this->actorId(),
         ]);
+        (new AuditLogger())->record(
+            $this->actorId(),
+            'mfa.reset',
+            'users',
+            (int)$user->id,
+            ['mfa_enabled' => true],
+            ['mfa_enabled' => false],
+        );
         $this->Flash->success(__('Two-factor authentication was reset. The user must enrol again.'));
 
         return $this->redirect(['action' => 'index']);

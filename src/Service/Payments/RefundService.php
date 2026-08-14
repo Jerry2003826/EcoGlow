@@ -49,11 +49,27 @@ class RefundService
             $already = $this->fetchTable('PaymentRefunds')->find()
                 ->where(['payment_id' => $payment->id, 'status IN' => ['pending', 'succeeded', 'completed']])
                 ->first();
-            if ($already) {
-                throw new InvalidArgumentException('A refund has already been recorded for this payment.');
-            }
-
             $key = 'refund-payment-' . $payment->id;
+            if ($already) {
+                if (in_array((string)$already->get('status'), ['succeeded', 'completed'], true)) {
+                    throw new InvalidArgumentException('A refund has already been recorded for this payment.');
+                }
+                if ((string)($already->get('provider_refund_id') ?? '') !== '') {
+                    return [
+                        'payment' => $payment,
+                        'refund' => $already,
+                        'key' => $key,
+                        'retry' => false,
+                    ];
+                }
+
+                return [
+                    'payment' => $payment,
+                    'refund' => $already,
+                    'key' => (string)($already->get('idempotency_key') ?: $key),
+                    'retry' => true,
+                ];
+            }
             $refunds = $this->fetchTable('PaymentRefunds');
             $row = $refunds->newEmptyEntity();
             $row->set('payment_id', $payment->id);
@@ -68,6 +84,7 @@ class RefundService
                 'payment' => $payment,
                 'refund' => $row,
                 'key' => $key,
+                'retry' => true,
             ];
         });
 
@@ -75,6 +92,18 @@ class RefundService
         $payment = $prepared['payment'];
         /** @var \App\Model\Entity\PaymentRefund $refund */
         $refund = $prepared['refund'];
+
+        if (!(bool)$prepared['retry']) {
+            $providerId = (string)($refund->get('provider_refund_id') ?? '');
+            $retrieved = $this->gateway->retrieveRefund($providerId);
+            if ($retrieved !== null) {
+                $this->connection()->transactional(function () use ($refund, $retrieved, $actorUserId): void {
+                    $this->applyProviderResult((int)$refund->id, $retrieved->id, $retrieved->status, $actorUserId);
+                });
+            }
+
+            return $this->fetchTable('Payments')->get($payment->id);
+        }
 
         $result = $this->gateway->refund(
             (string)$payment->provider_payment_id,
@@ -87,6 +116,39 @@ class RefundService
         });
 
         return $this->fetchTable('Payments')->get($payment->id);
+    }
+
+    /**
+     * Pull the latest Stripe status for pending refunds that already have a provider id.
+     *
+     * @return int Number of rows updated.
+     */
+    public function reconcilePending(): int
+    {
+        $pending = $this->fetchTable('PaymentRefunds')->find()
+            ->where([
+                'status' => 'pending',
+                'provider_refund_id IS NOT' => null,
+                'provider_refund_id !=' => '',
+            ])
+            ->all();
+        $updated = 0;
+        foreach ($pending as $row) {
+            $result = $this->gateway->retrieveRefund((string)$row->get('provider_refund_id'));
+            if ($result === null) {
+                continue;
+            }
+            $before = (string)$row->get('status');
+            $this->connection()->transactional(function () use ($row, $result): void {
+                $this->applyProviderResult((int)$row->id, $result->id, $result->status, 0);
+            });
+            $after = (string)$this->fetchTable('PaymentRefunds')->get($row->id)->get('status');
+            if ($after !== $before) {
+                $updated++;
+            }
+        }
+
+        return $updated;
     }
 
     /**

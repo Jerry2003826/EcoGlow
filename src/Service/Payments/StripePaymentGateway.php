@@ -98,6 +98,24 @@ class StripePaymentGateway implements PaymentGatewayInterface
     }
 
     /**
+     * @inheritDoc
+     */
+    public function retrieveRefund(string $refundId): ?RefundResult
+    {
+        if ($refundId === '') {
+            return null;
+        }
+
+        try {
+            $refund = $this->client()->refunds->retrieve($refundId);
+        } catch (ApiErrorException $exception) {
+            $this->rethrowStripe($exception, 'The payment service could not load this refund. Please try again.');
+        }
+
+        return new RefundResult((string)$refund->id, (string)$refund->status);
+    }
+
+    /**
      * @return \Stripe\StripeClient
      */
     private function client(): StripeClient
