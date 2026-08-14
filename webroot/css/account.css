@@ -1,30 +1,105 @@
 /*
- * Customer account, register and customer login extras.
- * Tokens come from site.css. Do not introduce colours outside the palette.
+ * Customer account, auth and service-booking surfaces (modern redesign).
+ *
+ * Scoped to .account-page / .auth-wrap — the storefront chrome and site.css
+ * components stay untouched. All colours derive from the existing palette
+ * tokens; measured WCAG ratios quoted on the tokens in site.css still hold.
  */
+
+/* ---------- Account section navigation — segmented pill tabs ---------- */
 
 .account-nav {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.5rem 1.25rem;
-    margin: 0 0 1.75rem;
+    gap: 0.3rem;
+    width: fit-content;
+    max-width: 100%;
+    margin: 0 0 2rem;
+    padding: 0.35rem;
+    background: var(--eg-bg-alt);
+    border: 1px solid var(--eg-border);
+    border-radius: 999px;
 }
 
 .account-nav a {
     display: inline-flex;
     align-items: center;
     min-height: 44px;
-    color: var(--eg-brand);
+    padding: 0.35rem 1.15rem;
+    border-radius: 999px;
+    color: var(--eg-text-muted); /* 7.06:1 on warm white */
     font-weight: 600;
     letter-spacing: 0.04em;
     text-transform: uppercase;
-    font-size: 0.8rem;
+    font-size: 0.78rem;
+    text-decoration: none;
+    transition: background 0.16s var(--eg-ease), color 0.16s var(--eg-ease);
 }
 
+.account-nav a:hover {
+    color: var(--eg-brand);
+    text-decoration: none;
+}
+
+/* Active tab: filled pill + weight change, so state is not colour-only. */
 .account-nav a[aria-current="page"] {
+    background: var(--eg-brand);
+    color: var(--eg-on-dark); /* 9.58:1 on brand green */
+    font-weight: 700;
+    text-decoration: none;
+    box-shadow: 0 2px 6px -2px rgba(18, 76, 36, 0.55);
+}
+
+/* ---------- Cards on account / checkout / booking pages ---------- */
+
+.account-page .eg-card,
+.auth-card {
+    background: #FFFFFF;
+    border: 1px solid rgba(201, 188, 169, 0.55);
+    border-radius: 0.85rem;
+    box-shadow: 0 1px 2px rgba(47, 46, 44, 0.05), 0 10px 28px -14px rgba(47, 46, 44, 0.16);
+}
+
+/* List rows (orders, bookings, addresses) lift on hover. */
+.account-page ul .eg-card,
+.account-page .account-address {
+    transition: transform 0.18s var(--eg-ease), box-shadow 0.18s var(--eg-ease), border-color 0.18s var(--eg-ease);
+}
+
+.account-page ul .eg-card:hover,
+.account-page .account-address:hover {
+    transform: translateY(-2px);
+    border-color: var(--eg-brand);
+    box-shadow: 0 2px 4px rgba(47, 46, 44, 0.06), 0 16px 36px -14px rgba(18, 76, 36, 0.22);
+}
+
+/* ---------- Forms ---------- */
+
+.account-page .form-label,
+.account-page form label:not(.form-check-label):not(.checkout-check),
+.auth-card form label:not(.form-check-label) {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--eg-text-muted);
+    margin-bottom: 0.35rem;
+}
+
+.account-page .form-control,
+.account-page .form-select,
+.auth-card .form-control {
+    min-height: 44px;
+    border-color: var(--eg-border);
+    border-radius: var(--eg-radius-sm);
+    background-color: #FFFFFF;
     color: var(--eg-text);
-    text-decoration: underline;
-    text-underline-offset: 0.3em;
+    transition: border-color 0.15s var(--eg-ease), box-shadow 0.15s var(--eg-ease);
+}
+
+.account-page .form-control:focus,
+.account-page .form-select:focus,
+.auth-card .form-control:focus {
+    border-color: var(--eg-brand);
+    box-shadow: 0 0 0 3px rgba(18, 76, 36, 0.16);
 }
 
 .account-page .form-check {
@@ -47,15 +122,24 @@
     flex: none;
     border: 1.5px solid var(--eg-border);
     border-radius: var(--eg-radius-sm);
-    background-color: var(--eg-bg);
+    background-color: #FFFFFF;
     background-image: none;
     accent-color: var(--eg-brand);
     cursor: pointer;
+    transition: border-color 0.15s var(--eg-ease), background-color 0.15s var(--eg-ease), box-shadow 0.15s var(--eg-ease);
 }
 
 .account-page input[type="radio"],
 .account-page .form-check-input[type="radio"] {
     border-radius: 50%;
+}
+
+.account-page input[type="checkbox"]:hover,
+.account-page input[type="radio"]:hover,
+.account-page .form-check-input:hover,
+.auth-card input[type="checkbox"]:hover,
+.auth-card input[type="radio"]:hover {
+    border-color: var(--eg-brand);
 }
 
 .account-page input[type="checkbox"]:checked,
@@ -71,7 +155,7 @@
 
 .account-page input[type="radio"]:checked,
 .account-page .form-check-input[type="radio"]:checked {
-    background-color: var(--eg-bg);
+    background-color: #FFFFFF;
     background-image: none;
     border-color: var(--eg-brand);
     box-shadow: inset 0 0 0 0.28rem var(--eg-brand);
@@ -84,11 +168,62 @@
     outline-offset: 2px;
 }
 
+/* ---------- Order / booking list meta ---------- */
+
 .account-address {
     margin-bottom: 1rem;
 }
 
 .account-order-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
     color: var(--eg-text-muted);
-    font-size: 0.85rem;
+    font-size: 0.82rem;
+    font-weight: 500;
+}
+
+/* ---------- Auth pages (login, register, password reset) ---------- */
+
+.auth-wrap {
+    position: relative;
+}
+
+.auth-card {
+    border-radius: 1rem;
+    box-shadow: 0 1px 2px rgba(47, 46, 44, 0.05), 0 24px 48px -20px rgba(18, 76, 36, 0.28);
+}
+
+/* Brand-gradient mark instead of the flat terracotta wash. */
+.auth-mark {
+    background: linear-gradient(150deg, var(--eg-brand) 0%, var(--eg-brand-hover) 100%);
+    color: var(--eg-on-dark); /* 9.58:1 on brand green */
+    box-shadow: inset 0 0 0 1px rgba(251, 249, 245, 0.22), 0 6px 14px -5px rgba(18, 76, 36, 0.5);
+}
+
+.auth-card h1 {
+    font-family: var(--eg-font-title);
+    font-weight: 400;
+}
+
+.auth-card .input-icon .form-control {
+    background-color: var(--eg-bg);
+}
+
+.auth-card .input-icon .form-control:focus {
+    background-color: #FFFFFF;
+}
+
+/* ---------- Small screens ---------- */
+
+@media (max-width: 575.98px) {
+    .account-nav {
+        width: 100%;
+        border-radius: 0.9rem;
+    }
+
+    .account-nav a {
+        flex: 1 1 auto;
+        justify-content: center;
+    }
 }
