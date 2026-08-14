@@ -1,0 +1,2861 @@
+/*
+ * ==========================================================================
+ * Eco Glow Lighting — "Warm Earth" design system
+ *
+ * Light, low-chroma boutique storefront drawn from the client's vision board:
+ * warm white and greige grounds, deep forest green as the only saturated
+ * action colour, terracotta as a surface/accent that never carries text, and
+ * an editorial serif over a neutral sans. Built on top of Bootstrap 5.
+ *
+ * Every colour below states its measured WCAG 2.x contrast ratio. Ratios are
+ * computed, not estimated; anything carrying text clears AA 4.5:1 unless it is
+ * explicitly marked as an inactive control (exempt under 1.4.3) or as a
+ * decorative line/fill that never sits behind glyphs.
+ * ==========================================================================
+ */
+
+/* ---------- Design tokens ---------- */
+:root {
+    /* Grounds. Nothing here carries text on its own; the ratios quoted on the
+       ink tokens below are measured against these three. */
+    --eg-bg: #FBF9F5;        /* warm white — page base */
+    --eg-bg-alt: #E2DED2;    /* greige — alternating bands, image wells */
+
+    /* Lines and fills only. 1.78:1 on warm white: far below AA, so this must
+       never be used as a text colour. It flips to a *text* colour on the
+       charcoal band, where it reads 7.27:1 (see --eg-on-dark-muted). */
+    --eg-border: #C9BCA9;
+
+    /* Ink. Charcoal 12.90:1 on warm white, 10.09:1 on greige.
+       Olive-brown 7.06:1 on warm white, 5.52:1 on greige — safe for body copy
+       on both grounds. It drops to 3.97:1 on a solid --eg-border fill, so no
+       muted text may sit on one. */
+    --eg-text: #2F2E2C;
+    --eg-text-muted: #5B5545;
+
+    /* Brand deep green — the only saturated colour that carries text.
+       9.58:1 on warm white, 7.49:1 on greige. Reversed, warm white on green
+       is the same 9.58:1, which is what the primary button uses. */
+    --eg-brand: #124C24;
+    /* Hover fill. Warm white on it measures 12.67:1. */
+    --eg-brand-hover: #0C3719;
+    /* Soft green wash. Charcoal 11.49:1, brand green 8.53:1. */
+    --eg-brand-tint: #E7EEE8;
+
+    /* Terracotta. 2.35:1 on warm white — it is the loudest colour on the board
+       and the easiest to misuse, so the rule here is absolute: it is never a
+       text colour anywhere in this stylesheet. It appears only as a fill, a
+       rule, a hover state or an icon shape. Where it is a fill, the text on it
+       is charcoal: #2F2E2C on #E2925E is 5.50:1. */
+    --eg-accent: #E2925E;
+    /* Hover fill, chosen so charcoal stays readable on it: 5.02:1. */
+    --eg-accent-hover: #D78C55;
+    /* Soft terracotta wash. Charcoal 11.90:1, brand green 8.83:1. */
+    --eg-accent-tint: #FAEEE4;
+
+    /* Ink for the charcoal band. Warm white 12.90:1, greige rule 7.27:1. */
+    --eg-on-dark: #FBF9F5;
+    --eg-on-dark-muted: #C9BCA9;
+
+    /* --- Status colours ---------------------------------------------------
+       Picked as a set, not one at a time, so that the four flash states stay
+       apart once hue is removed. Pure-luminance ratios between them:
+       success/error 1.87:1, warning/error 1.48:1, info/error 1.34:1,
+       success/warning 1.27:1. Success against error — the pair that actually
+       matters — is close to 2:1 in greyscale, and every state also carries its
+       own glyph, so neither cue is doing the job alone (WCAG 1.4.1). */
+
+    /* 5.03:1 on warm white, 4.64:1 on its own tint. */
+    --eg-success: #2D7A40;
+    --eg-success-tint: #EAF2EC;
+
+    /* 9.43:1 on warm white, 8.44:1 on its own tint, 7.37:1 on greige. Deep
+       rust rather than a bright red: it belongs to the earthy palette and is
+       still the darkest of the four states, which is what separates it from
+       success in greyscale. */
+    --eg-error: #7A2617;
+    --eg-error-tint: #F7EAE6;
+
+    /* 6.37:1 on warm white, 5.91:1 on its own tint. */
+    --eg-warning: #7E5313;
+    --eg-warning-tint: #F7F0E2;
+
+    /* Informational reuses the olive-brown body ink rather than introducing a
+       fifth hue — the client asked for few colours, and "info" is the state
+       that least needs to shout. 6.39:1 on its own tint. */
+    --eg-info-tint: #F0EEE7;
+
+    /* Inactive controls only. 2.92:1 on warm white, which WCAG 1.4.3 exempts
+       for disabled controls; it reads 2.41:1 against the enabled olive-brown,
+       which is the distinction being bought. Never use for live text. */
+    --eg-disabled: #9C927F;
+
+    /* --- Type ---
+       Frasa Display and TT Interphases are the licensed faces the vision board
+       specifies; we do not hold either licence yet. They are named first so
+       that dropping the woff2 files into webroot/font and adding @font-face
+       blocks to fonts.css is the whole switch-over. Playfair Display and Inter
+       are the self-hosted stand-ins that ship today.
+
+       (The previous stylesheet named 'Sora' and 'DM Sans' with no @font-face
+       and no font files, so every page silently rendered in the system sans.) */
+    --eg-font-title: 'Frasa Display', 'Playfair Display', Georgia, serif;
+    --eg-font-body: 'TT Interphases', 'Inter', system-ui, -apple-system, sans-serif;
+
+    /* Shape & motion. Small radii read more boutique than pills; 999px is
+       reserved for chips, badges and status pills. */
+    --eg-radius: 0.5rem;
+    --eg-radius-sm: 0.3rem;
+    --eg-ease: cubic-bezier(0.22, 1, 0.36, 1);
+
+    /* Bootstrap overrides */
+    --bs-body-bg: var(--eg-bg);
+    --bs-body-color: var(--eg-text);
+    --bs-body-font-family: var(--eg-font-body);
+    --bs-emphasis-color: var(--eg-text);
+    --bs-secondary-color: var(--eg-text-muted);
+    --bs-border-color: var(--eg-border);
+    --bs-link-color: var(--eg-brand);
+    --bs-link-hover-color: var(--eg-brand-hover);
+}
+
+/* ---------- Base ---------- */
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    background: var(--eg-bg);
+    color: var(--eg-text);
+    font-family: var(--eg-font-body);
+    line-height: 1.65;
+    overflow-x: hidden;
+}
+
+h1, h2, h3, h4, h5, h6,
+.display-1, .display-2, .display-3, .display-4, .display-5 {
+    font-family: var(--eg-font-title);
+    color: var(--eg-text);
+    font-weight: 400;
+    letter-spacing: -0.01em;
+}
+
+/* The sans is the "working" face: anything the user acts on or scans in a
+   hurry stays in it, so the serif reads as voice rather than as chrome. */
+.btn,
+.navbar-eg .nav-link,
+.eg-eyebrow,
+.table-eg thead th,
+.eg-chip,
+.eg-filter-toggle,
+.eg-tag,
+.pill {
+    font-family: var(--eg-font-body);
+}
+
+a {
+    color: var(--eg-brand);
+    text-decoration: none;
+    transition: color 0.2s var(--eg-ease);
+}
+
+a:hover {
+    color: var(--eg-brand-hover);
+    text-decoration: underline;
+}
+
+::selection {
+    background: var(--eg-accent-tint);
+    color: var(--eg-text);
+}
+
+.text-muted {
+    color: var(--eg-text-muted) !important;
+}
+
+/* A single visible focus treatment for everything, in the brand green:
+   9.58:1 on warm white and 7.49:1 on greige, well past the 3:1 that WCAG
+   1.4.11 asks of a focus indicator. */
+:focus-visible {
+    outline: 2px solid var(--eg-brand);
+    outline-offset: 2px;
+}
+
+/* ---------- Skip to main content (WCAG 2.4.1) ---------- */
+/* Parked off-screen rather than hidden: display:none or visibility:hidden
+   would make the link unreachable by keyboard, which defeats the purpose. */
+.skip-link {
+    position: fixed;
+    top: -6rem;
+    left: 1rem;
+    z-index: 2100;
+    padding: 0.75rem 1.25rem;
+    border-radius: 0 0 var(--eg-radius-sm) var(--eg-radius-sm);
+    background: var(--eg-brand);
+    color: var(--eg-on-dark); /* 9.58:1 */
+    font-weight: 600;
+    transition: top 0.2s var(--eg-ease);
+}
+
+.skip-link:focus {
+    top: 0;
+    color: var(--eg-on-dark);
+    text-decoration: none;
+    outline: 2px solid var(--eg-text);
+    outline-offset: 2px;
+}
+
+/* The landmark only takes focus so the skip link can hand off to it — an
+   outline around the whole page would be more confusing than helpful. */
+#main-content:focus {
+    outline: none;
+}
+
+/* ---------- Soft organic wash ----------
+   The vision board's cover carries a low-saturation, grainy gradient bloom in
+   one corner. It is kept because it is the board's own atmosphere and it costs
+   nothing in contrast — it only ever sits behind large areas of ground, never
+   behind text. This is not the old hard "glow": no light source, no bloom, no
+   coloured shadow, opacity in the single-percent range. */
+.eg-wash {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+}
+
+.eg-wash::before {
+    content: '';
+    position: absolute;
+    inset: -20%;
+    background:
+        radial-gradient(38% 42% at 78% 72%, rgba(226, 146, 94, 0.28), transparent 70%),
+        radial-gradient(34% 38% at 92% 44%, rgba(183, 196, 180, 0.32), transparent 72%),
+        radial-gradient(30% 34% at 62% 96%, rgba(201, 188, 169, 0.35), transparent 70%);
+}
+
+/* Fractal noise laid over the gradient, which is what stops it reading as a
+   flat CSS blur. Inlined so it costs no extra request. */
+.eg-wash::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    opacity: 0.4;
+    mix-blend-mode: multiply;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)' opacity='0.28'/%3E%3C/svg%3E");
+}
+
+/* ---------- Scroll reveal ---------- */
+.reveal {
+    opacity: 0;
+    transform: translateY(1.25rem);
+    transition: opacity 0.7s var(--eg-ease), transform 0.7s var(--eg-ease);
+    transition-delay: var(--reveal-delay, 0s);
+}
+
+.reveal.is-visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* With scripting off nothing ever adds .is-visible, so every revealed band
+   would stay at opacity 0 and the page would render blank. This is also what
+   makes the /shop filter panel's no-JavaScript path worth having: a <details>
+   that opens onto an invisible panel is no better than a scripted one. */
+@media (scripting: none) {
+    .reveal {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+/* ---------- Announcement bar ---------- */
+.eg-announce {
+    background: var(--eg-text);
+    color: var(--eg-on-dark); /* 12.90:1 */
+    font-size: 0.8rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 0.55rem 0;
+}
+
+/* aria-hidden separator. Terracotta would measure 5.50:1 here and would pass,
+   but the rule for this palette is that terracotta is never an ink anywhere,
+   so the greige on-dark tone carries it instead: 7.27:1. */
+.eg-announce .eg-announce-sep {
+    color: var(--eg-on-dark-muted);
+}
+
+/* ---------- Navbar ---------- */
+/* Sticky rather than fixed, so the announcement bar above it scrolls away and
+   no page needs a magic padding-top to clear a floating header. */
+.eg-header {
+    z-index: 1030;
+}
+
+.navbar-eg {
+    background: var(--eg-bg);
+    border-bottom: 1px solid var(--eg-border);
+    padding-top: 0.65rem;
+    padding-bottom: 0.65rem;
+}
+
+.navbar-eg.is-scrolled {
+    box-shadow: 0 0.25rem 1rem rgba(47, 46, 44, 0.07);
+}
+
+.navbar-eg .navbar-brand {
+    font-family: var(--eg-font-title);
+    font-size: 1.6rem;
+    font-weight: 600;
+    line-height: 1.1;
+    letter-spacing: 0.02em;
+    color: var(--eg-text); /* 12.90:1 */
+    text-align: center;
+    text-decoration: none;
+}
+
+.navbar-eg .navbar-brand:hover {
+    color: var(--eg-brand);
+    text-decoration: none;
+}
+
+.navbar-eg .navbar-brand .brand-sub {
+    display: block;
+    font-family: var(--eg-font-body);
+    font-size: 0.55rem;
+    font-weight: 500;
+    letter-spacing: 0.32em;
+    text-transform: uppercase;
+    color: var(--eg-text-muted); /* 7.06:1 */
+}
+
+/* Three-part header: links left, wordmark centred, utilities right — the
+   arrangement from the Nook Collections reference. Below lg the collapse drops
+   to its own row underneath (Bootstrap already gives it flex-basis:100%). */
+.navbar-eg .nav-primary {
+    order: 4;
+}
+
+.navbar-eg .navbar-brand {
+    order: 2;
+}
+
+.navbar-eg .nav-utils {
+    order: 3;
+}
+
+.navbar-eg .navbar-toggler {
+    order: 1;
+}
+
+@media (min-width: 992px) {
+    .navbar-eg .nav-primary {
+        order: 1;
+        flex: 1 1 0;
+    }
+
+    .navbar-eg .nav-utils {
+        flex: 1 1 0;
+        justify-content: flex-end;
+    }
+}
+
+/* Centring the wordmark means the links and the utilities take equal halves of
+   the row, so the row needs twice the width of the links: 431px each side plus
+   113px of wordmark is 975px, and Bootstrap's container is 960px at this
+   breakpoint. Fifteen pixels short, so the labels wrapped onto two lines, which
+   put 11px on the header and took it straight out of the hero below. Tightening
+   the tracking and the wordmark buys back more than the shortfall; both are back
+   to full size from 1200px, where the container is 1140px and there is room. */
+@media (min-width: 992px) and (max-width: 1199.98px) {
+    .navbar-eg .navbar-nav {
+        --bs-navbar-nav-link-padding-x: 0.35rem;
+    }
+
+    .navbar-eg .nav-link {
+        letter-spacing: 0.07em;
+        white-space: nowrap;
+    }
+
+    /* Follows the narrower padding in, so the rule still stops short of the label
+       by about what it does at full size. */
+    .navbar-eg .nav-link::after {
+        left: 0.55rem;
+        right: 0.55rem;
+    }
+
+    .navbar-eg .navbar-brand {
+        font-size: 1.45rem;
+    }
+}
+
+.navbar-eg .nav-link {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    min-height: 44px;
+    color: var(--eg-text); /* 12.90:1 */
+    font-size: 0.82rem;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 0.5rem 0.9rem;
+    transition: color 0.2s var(--eg-ease);
+}
+
+.navbar-eg .nav-link::after {
+    content: '';
+    position: absolute;
+    left: 0.9rem;
+    right: 0.9rem;
+    bottom: 0.35rem;
+    height: 1px;
+    background: var(--eg-brand);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.25s var(--eg-ease);
+}
+
+/* The sliding rule below is this link's underline, so the global a:hover
+   underline has to be switched off or both show at once. */
+.navbar-eg .nav-link:hover {
+    color: var(--eg-brand);
+    text-decoration: none;
+}
+
+.navbar-eg .nav-link:hover::after {
+    transform: scaleX(1);
+}
+
+.nav-utils {
+    display: flex;
+    align-items: center;
+    gap: 0.15rem;
+}
+
+/* 44px square so the icon cluster meets the same touch-target floor as the
+   toggler (WCAG 2.5.8). */
+.eg-icon-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    min-width: 44px;
+    min-height: 44px;
+    padding: 0 0.55rem;
+    border: none;
+    border-radius: var(--eg-radius-sm);
+    background: transparent;
+    color: var(--eg-text); /* 12.90:1 */
+    transition: color 0.2s var(--eg-ease), background-color 0.2s var(--eg-ease);
+}
+
+.eg-icon-btn:hover {
+    background: var(--eg-accent-tint);
+    color: var(--eg-brand);
+    text-decoration: none;
+}
+
+.eg-icon-btn svg {
+    width: 1.15rem;
+    height: 1.15rem;
+}
+
+/* The basket icon is a live link to /cart now that the storefront routes exist.
+   Search is not: there is no index to search, and a box that swallows a query
+   and does nothing is worse than one that plainly says it is off. Disabled also
+   takes it out of the tab order. WCAG 1.4.3 exempts inactive controls. */
+.eg-icon-btn:disabled {
+    color: var(--eg-disabled);
+    background: transparent;
+    cursor: default;
+}
+
+.badge-count {
+    display: inline-block;
+    min-width: 1.35rem;
+    padding: 0.1em 0.4em;
+    border-radius: 999px;
+    background: var(--eg-accent);
+    color: var(--eg-text); /* 5.50:1 */
+    font-size: 0.7rem;
+    font-weight: 700;
+    line-height: 1.45;
+    text-align: center;
+}
+
+/* Left unscoped on purpose: Bootstrap's `.navbar-expand-lg .navbar-toggler`
+   must stay more specific so the toggler still hides on desktop. Adding a
+   `.navbar-eg` prefix here would tie the two selectors on specificity and win
+   on source order, putting a second hamburger on every desktop page. Its
+   default padding computes to a 40px box, under the 44px minimum. */
+.navbar-toggler {
+    --bs-navbar-toggler-padding-y: 0.375rem;
+    min-height: 44px;
+    min-width: 44px;
+    border-color: var(--eg-border);
+}
+
+.navbar-toggler:focus {
+    box-shadow: none;
+}
+
+/* Bootstrap's default icon is a white-on-transparent data URI; on a warm white
+   header it is invisible. Redrawn in charcoal. */
+.navbar-eg .navbar-toggler-icon {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3E%3Cpath stroke='%232F2E2C' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3E%3C/svg%3E");
+}
+
+/* ---------- Buttons ---------- */
+.btn-eg-primary,
+.btn-eg-secondary,
+.btn-eg-ghost {
+    --bs-btn-padding-x: 1.6rem;
+    --bs-btn-padding-y: 0.7rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.55rem;
+    min-height: 44px;
+    border-radius: var(--eg-radius-sm);
+    font-size: 0.85rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    transition: background-color 0.2s var(--eg-ease), border-color 0.2s var(--eg-ease), color 0.2s var(--eg-ease);
+}
+
+/* Warm white on deep green: 9.58:1. */
+.btn-eg-primary {
+    background: var(--eg-brand);
+    border: 1px solid var(--eg-brand);
+    color: var(--eg-on-dark);
+}
+
+/* Warm white on the hover fill: 12.67:1. */
+.btn-eg-primary:hover,
+.btn-eg-primary:focus,
+.btn-eg-primary:active {
+    background: var(--eg-brand-hover);
+    border-color: var(--eg-brand-hover);
+    color: var(--eg-on-dark);
+    text-decoration: none;
+}
+
+/* Warm white on olive-brown: 7.06:1. */
+.btn-eg-secondary {
+    background: var(--eg-text-muted);
+    border: 1px solid var(--eg-text-muted);
+    color: var(--eg-on-dark);
+}
+
+.btn-eg-secondary:hover,
+.btn-eg-secondary:focus,
+.btn-eg-secondary:active {
+    background: var(--eg-text);
+    border-color: var(--eg-text);
+    color: var(--eg-on-dark); /* 12.90:1 */
+    text-decoration: none;
+}
+
+/* Outline on the page ground: the label is charcoal at 12.90:1 and the rule is
+   decorative, so the greige border being 1.78:1 costs nothing. */
+.btn-eg-ghost {
+    background: transparent;
+    border: 1px solid var(--eg-border);
+    color: var(--eg-text);
+}
+
+.btn-eg-ghost:hover,
+.btn-eg-ghost:focus,
+.btn-eg-ghost:active {
+    background: var(--eg-brand-tint);
+    border-color: var(--eg-brand);
+    color: var(--eg-brand); /* 8.53:1 on the tint */
+    text-decoration: none;
+}
+
+/* The arrow that the LUMO reference puts inside every call to action. */
+.btn-arrow {
+    width: 0.9rem;
+    height: 0.9rem;
+    flex: none;
+}
+
+.btn-sm.btn-eg-primary,
+.btn-sm.btn-eg-secondary,
+.btn-sm.btn-eg-ghost {
+    --bs-btn-padding-x: 0.9rem;
+    --bs-btn-padding-y: 0.4rem;
+    font-size: 0.75rem;
+}
+
+/* Destructive actions stay in the rust used for every other failure state:
+   9.43:1 as a label on warm white, warm white on it as a fill. */
+.btn-eg-danger {
+    --bs-btn-padding-x: 0.9rem;
+    --bs-btn-padding-y: 0.4rem;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    border-radius: var(--eg-radius-sm);
+    background: transparent;
+    border: 1px solid var(--eg-error);
+    color: var(--eg-error);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.btn-eg-danger:hover,
+.btn-eg-danger:focus {
+    background: var(--eg-error);
+    color: var(--eg-bg); /* 9.43:1 */
+    text-decoration: none;
+}
+
+/* A control that cannot yet do what its label says is disabled rather than
+   wired to something inert — "Add to basket" and "Proceed to checkout" until
+   the orders backend lands, "Create account" until there is a customers table.
+   Bootstrap's default is the enabled fill at 65% opacity, which on the primary
+   green still reads as a live button. This replaces it with the greige surface
+   so the control is plainly off: --eg-disabled on it is 2.29:1, which WCAG
+   1.4.3 exempts for inactive controls and which is the point — the enabled
+   button is warm white on deep green, 9.58:1, so the two cannot be confused. */
+.btn-eg-primary:disabled,
+.btn-eg-secondary:disabled,
+.btn-eg-ghost:disabled {
+    background: var(--eg-bg-alt);
+    border-color: var(--eg-border);
+    color: var(--eg-disabled);
+    opacity: 1;
+    cursor: default;
+}
+
+/* ---------- Surfaces ---------- */
+.eg-card {
+    background: var(--eg-bg);
+    border: 1px solid var(--eg-border);
+    border-radius: var(--eg-radius);
+}
+
+.eg-band-alt {
+    background: var(--eg-bg-alt);
+}
+
+/* The dark counterpart to the light product areas in the LUMO reference.
+   Everything inside flips to the on-dark ink pair. */
+.eg-band-dark {
+    position: relative;
+    background: var(--eg-text);
+    color: var(--eg-on-dark); /* 12.90:1 */
+    overflow: hidden;
+}
+
+.eg-band-dark h1,
+.eg-band-dark h2,
+.eg-band-dark h3,
+.eg-band-dark h4 {
+    color: var(--eg-on-dark);
+}
+
+.eg-band-dark .text-muted,
+.eg-band-dark p {
+    color: var(--eg-on-dark-muted) !important; /* 7.27:1 */
+}
+
+.eg-band-dark .eg-eyebrow {
+    color: var(--eg-on-dark-muted);
+}
+
+/* ---------- Section shell ---------- */
+.section-eg {
+    position: relative;
+    padding: 5.5rem 0;
+}
+
+.eg-eyebrow {
+    display: block;
+    color: var(--eg-text-muted); /* 7.06:1 */
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    margin-bottom: 0.75rem;
+}
+
+.section-title {
+    font-family: var(--eg-font-title);
+    font-size: clamp(1.9rem, 3.6vw, 2.9rem);
+    font-weight: 400;
+    line-height: 1.15;
+}
+
+.section-lead {
+    color: var(--eg-text-muted); /* 7.06:1 on warm white, 5.52:1 on greige */
+    max-width: 38rem;
+}
+
+/* ---------- Hero ---------- */
+/* No top padding: the photograph starts against the header. The bottom padding is
+   what used to be the container's, kept on the section so the caption and the
+   figures underneath still breathe. `overflow: hidden` clips the copy panel's
+   left bleed, so that bleed never becomes scrollable width. */
+.hero-eg {
+    position: relative;
+    padding-bottom: clamp(2.25rem, 5vw, 3.5rem);
+    background: var(--eg-bg);
+    overflow: hidden;
+}
+
+.hero-title {
+    font-family: var(--eg-font-title);
+    font-size: clamp(2.4rem, 6vw, 4.4rem);
+    font-weight: 400;
+    line-height: 1.06;
+    letter-spacing: -0.015em;
+}
+
+.hero-lead {
+    color: var(--eg-text-muted); /* 7.06:1 */
+    font-size: 1.05rem;
+    max-width: 32rem;
+}
+
+/* One photograph of a real room, run to the edges of the viewport. There is no
+   container, no gutter and no radius on it: a photograph inset in a rounded box
+   with a margin around it reads as an illustration of a room, and the client's
+   note on the first pass was exactly that — "no edges".
+
+   This is the only full-bleed element on the site. `.hero-collage` is a plain
+   block inside `.hero-eg`, which is itself outside any container, so it is
+   already the width of the body — no 100vw, which would have added the scrollbar
+   width and produced the horizontal overflow this file works to avoid. */
+.hero-collage {
+    position: relative;
+}
+
+.hero-shot {
+    position: relative;
+    margin: 0;
+    aspect-ratio: 16 / 10;
+    background: var(--eg-bg-alt);
+    overflow: hidden;
+}
+
+.hero-shot img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.hero-copy {
+    padding-top: 1.75rem;
+}
+
+.hero-caption {
+    margin: 1rem 0 0;
+    color: var(--eg-text-muted); /* 7.06:1 */
+    font-size: 0.82rem;
+}
+
+/* Still the stacked layout here, so the photograph and the copy are each
+   spending the same screen. 16/9 of a 1024px tablet is 576px of photograph
+   before the heading even starts, which puts the buttons off a landscape iPad
+   entirely. The cap only bites on a short viewport: at 768×1366 the ratio is
+   already inside it and nothing changes. */
+@media (min-width: 768px) {
+    .hero-shot {
+        aspect-ratio: 16 / 9;
+        max-height: 40vh;
+        max-height: 40svh;
+    }
+}
+
+/* Wide and short at the same time — a split-screen tablet, a small laptop window
+   — is the case that runs out of room fastest in the stacked layout, because the
+   photograph and the copy are both spending the same short screen. */
+@media (min-width: 768px) and (max-height: 640px) {
+    .hero-shot {
+        max-height: 32vh;
+        max-height: 32svh;
+    }
+
+    .hero-title {
+        font-size: clamp(1.9rem, 5vw, 2.6rem);
+    }
+
+    .hero-lead {
+        font-size: 0.95rem;
+    }
+}
+
+/* From 992px the copy sits over the left of the photograph, the way both the
+   LUMINOTTI and Illume references open. A photograph is a gradient, so the
+   contrast under a heading cannot be quoted from one sampled pixel — the answer
+   here is to make it not depend on the photograph at all. The panel behind the
+   copy is a flat 0.94 alpha of the warm white ground, so the worst case is that
+   alpha over a pure black pixel, #ECEAE6, on which the charcoal heading reads
+   11.46:1 and the olive-brown lead 6.18:1. Neither can drop below that however
+   the crop shifts with the viewport.
+
+   The panel runs the full height of the photograph and the text is centred
+   inside it, rather than the panel being sized to the text. A panel that stops
+   short has a top and a bottom edge, and a warm rectangle with four visible
+   edges laid on a photograph is exactly the pasted-on look the full bleed was
+   supposed to get rid of. Run to full height it has no horizontal edges at all:
+   the left side is the viewport edge and the right side is a fade.
+
+   Two pseudo-elements carry it past the text box without letting a glyph near a
+   transparent part of it: ::before continues the same flat alpha off the left
+   edge of the viewport (clipped by the overflow on .hero-eg, so it costs no
+   scroll width), and ::after fades it out to the right, entirely outside the text
+   box. The copy stays inside a .container so it lines up with the header nav. */
+@media (min-width: 992px) {
+    /* The height cannot come off the width here. 16/9 of 1440px is 810px, taller
+       than the viewport of any laptop, and it grows as the window widens — the
+       wider the screen the further off it pushes the buttons, which is the wrong
+       way round. It comes off the viewport instead, capped at 40rem so a large
+       monitor does not get a hero the height of a page, and it leaves 14rem for
+       the header, the caption and enough of the next band to show there is more.
+
+       The figure and the copy are laid into one grid cell rather than the copy
+       being absolutely positioned over the figure, so both of them size it: the
+       viewport sets the floor through the figure, the text sets it through the
+       copy, and the cell takes whichever is taller. That is what makes a short
+       window crop the photograph instead of the heading. */
+    .hero-collage {
+        display: grid;
+    }
+
+    .hero-shot,
+    .hero-overlay {
+        grid-area: 1 / 1;
+    }
+
+    .hero-shot {
+        aspect-ratio: auto;
+        max-height: none;
+        min-height: min(40rem, calc(100vh - 14rem));
+        min-height: min(40rem, calc(100svh - 14rem));
+    }
+
+    /* Out of the flow, or the intrinsic 3:2 of the file would size the figure the
+       moment the aspect-ratio above stops doing it — taller again than the 16/9
+       this is replacing. */
+    .hero-shot img {
+        position: absolute;
+        inset: 0;
+    }
+
+    .hero-overlay {
+        display: grid;
+    }
+
+    .hero-overlay > .container {
+        display: flex;
+        align-items: stretch;
+    }
+
+    .hero-copy {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        width: min(30rem, 100%);
+        padding: 3rem 2rem 3rem 0;
+        background: rgba(251, 249, 245, 0.94);
+    }
+
+    .hero-copy::before,
+    .hero-copy::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        pointer-events: none;
+    }
+
+    .hero-copy::before {
+        right: 100%;
+        width: 50vw;
+        background: rgba(251, 249, 245, 0.94);
+    }
+
+    .hero-copy::after {
+        left: 100%;
+        width: 9rem;
+        background: linear-gradient(90deg, rgba(251, 249, 245, 0.94), rgba(251, 249, 245, 0));
+    }
+}
+
+/* A wide window is usually a short one: 1440×720 and 1024×500 are both ordinary
+   laptop viewports once a dock and three browser toolbars have taken their cut.
+   Sizing the display type off the width alone puts a 70px heading in a 500px
+   window, and since the copy now sets the height of the hero, that heading is
+   what pushes the buttons off the screen. Under 640px of height the type and the
+   panel padding come down together. */
+@media (min-width: 992px) and (max-height: 640px) {
+    .hero-title {
+        font-size: clamp(1.9rem, 3.6vw, 2.6rem);
+    }
+
+    .hero-lead {
+        font-size: 0.95rem;
+    }
+
+    .hero-copy {
+        padding-top: 1.75rem;
+        padding-bottom: 1.75rem;
+    }
+}
+
+/* ==========================================================================
+ * Storefront components
+ *
+ * The pieces the catalogue, product detail, basket and registration pages are
+ * assembled from. They were styled and measured a task ahead of those pages so
+ * that the visual language was settled before any of them was written; all four
+ * are now built out of exactly these parts.
+ * ========================================================================== */
+
+/* ---------- Product card ----------
+   Used by: category tiles, the Best Sellers grid, the /shop listing and the
+   "goes well with" row on a product page. Borderless over the page ground, the
+   way the Nook reference handles them — the image well is the only box. */
+.product-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    text-decoration: none;
+    color: inherit;
+}
+
+.product-card:hover {
+    color: inherit;
+    text-decoration: none;
+}
+
+/* `display: block` is load-bearing: this is a <span>, and on the product page it
+   is not a flex or grid item, so left inline it would ignore aspect-ratio and
+   collapse to the height of a line box. */
+.product-media {
+    position: relative;
+    display: block;
+    aspect-ratio: 1 / 1;
+    border-radius: var(--eg-radius);
+    background: var(--eg-bg-alt);
+    overflow: hidden;
+}
+
+/* The well is still greige underneath, which is what shows while the photograph
+   decodes and what stays if it ever 404s. On the alternating band that colour
+   would be invisible, so there the placeholder takes the page ground instead. */
+.eg-band-alt .product-media {
+    background: var(--eg-bg);
+}
+
+.product-media img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.6s var(--eg-ease);
+}
+
+.product-card:hover .product-media img {
+    transform: scale(1.03);
+}
+
+/* There are deliberately no ratio modifiers here. Every product well is 1:1,
+   which is the ratio the photographs were shot at, so nothing is cropped and any
+   two cards can be compared side by side without one of them being taller for a
+   reason the visitor cannot see. */
+
+/* Corner flag on a product image — terracotta fill, charcoal label: 5.50:1. */
+.product-flag {
+    position: absolute;
+    top: 0.75rem;
+    left: 0.75rem;
+    padding: 0.2em 0.65em;
+    border-radius: 999px;
+    background: var(--eg-accent);
+    color: var(--eg-text);
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.product-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    padding-top: 1rem;
+}
+
+.product-name {
+    font-family: var(--eg-font-title);
+    font-size: 1.1rem;
+    line-height: 1.3;
+    color: var(--eg-text); /* 12.90:1 */
+    margin: 0;
+}
+
+.product-meta {
+    font-size: 0.85rem;
+    color: var(--eg-text-muted); /* 7.06:1 */
+    margin: 0;
+}
+
+.product-price {
+    font-weight: 600;
+    color: var(--eg-text); /* 12.90:1 */
+}
+
+/* Colourway dots. Decorative duplicates of the swatch names, which is why a
+   1.78:1 ring is acceptable here — no information lives in the dot alone. */
+.product-swatches {
+    display: flex;
+    gap: 0.35rem;
+    padding-top: 0.35rem;
+}
+
+.product-swatches .swatch {
+    width: 0.85rem;
+    height: 0.85rem;
+    border-radius: 50%;
+    border: 1px solid var(--eg-border);
+}
+
+/* ---------- Filter chips ----------
+   Used by: the /shop category and style filters, the home page's collection
+   shortcuts, and the globe picker on a product page. Styles a `<button>`, an
+   `<a>` and a `<label>` alike, since the three pages need different semantics
+   from the same shape. */
+.eg-chip-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.eg-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    min-height: 44px;
+    padding: 0.45rem 1.1rem;
+    border: 1px solid var(--eg-border);
+    border-radius: 999px;
+    background: transparent;
+    color: var(--eg-text); /* 12.90:1 */
+    cursor: pointer;
+    font-size: 0.8rem;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    transition: background-color 0.2s var(--eg-ease), border-color 0.2s var(--eg-ease), color 0.2s var(--eg-ease);
+}
+
+.eg-chip:hover {
+    border-color: var(--eg-brand);
+    background: var(--eg-brand-tint);
+    color: var(--eg-brand); /* 8.53:1 on the tint */
+    text-decoration: none;
+}
+
+/* Selected state carries a filled dot as well as the fill, so the choice is
+   not signalled by colour alone. */
+.eg-chip.is-active {
+    background: var(--eg-brand);
+    border-color: var(--eg-brand);
+    color: var(--eg-on-dark); /* 9.58:1 */
+}
+
+.eg-chip.is-active::before {
+    content: '\2022';
+    font-weight: 700;
+}
+
+/* ---------- Sort control ---------- */
+.eg-sort {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+    color: var(--eg-text-muted); /* 7.06:1 */
+}
+
+/* Bootstrap draws .form-select's arrow as a background image in a grey of its
+   own (#343A40) and turns the native appearance off to do it. The rule here
+   used to override the border, the size and the height but not that image,
+   which left the arrow as the one mark in this toolbar that came from Bootstrap
+   rather than from the vision board. It is now the same chevron the filter
+   trigger carries, in charcoal, at the same type size and weight, so trigger
+   and select read as a pair either side of the bar. */
+.eg-sort .form-select {
+    width: auto;
+    min-height: 44px;
+    padding: 0.45rem 2.4rem 0.45rem 1rem;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%232F2E2C' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-position: right 0.9rem center;
+    background-size: 0.8rem;
+    color: var(--eg-text); /* 12.90:1 */
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    appearance: none;
+}
+
+.eg-sort .form-select:hover {
+    border-color: var(--eg-brand);
+}
+
+/* ---------- Breadcrumb ---------- */
+.eg-breadcrumb {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    font-size: 0.8rem;
+    color: var(--eg-text-muted); /* 7.06:1 */
+}
+
+.eg-breadcrumb a {
+    color: var(--eg-text-muted);
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
+}
+
+.eg-breadcrumb a:hover {
+    color: var(--eg-brand);
+}
+
+.eg-breadcrumb li + li::before {
+    content: '/';
+    margin-right: 0.5rem;
+    color: var(--eg-border); /* a separator, never read */
+}
+
+.eg-breadcrumb [aria-current='page'] {
+    color: var(--eg-text); /* 12.90:1 */
+}
+
+/* ---------- Quantity stepper ---------- */
+.eg-qty {
+    display: inline-flex;
+    align-items: stretch;
+    border: 1px solid var(--eg-border);
+    border-radius: var(--eg-radius-sm);
+    overflow: hidden;
+}
+
+.eg-qty button {
+    min-width: 44px;
+    min-height: 44px;
+    border: none;
+    background: transparent;
+    color: var(--eg-text); /* 12.90:1 */
+    font-size: 1rem;
+    line-height: 1;
+}
+
+.eg-qty button:hover {
+    background: var(--eg-bg-alt);
+}
+
+.eg-qty button:disabled {
+    color: var(--eg-disabled); /* inactive control, 1.4.3 exempt */
+}
+
+.eg-qty input {
+    width: 3rem;
+    border: none;
+    border-left: 1px solid var(--eg-border);
+    border-right: 1px solid var(--eg-border);
+    background: transparent;
+    color: var(--eg-text);
+    text-align: center;
+    font-weight: 600;
+}
+
+.eg-qty input:focus {
+    outline: 2px solid var(--eg-brand);
+    outline-offset: -2px;
+}
+
+/* ---------- Category tile ---------- */
+/* A photograph with its label under it, replacing the padded box with a line
+   drawing in the corner. Every reference on the client's board is photographic;
+   a monochrome lamp outline is placeholder art, and six of them in a row was the
+   single biggest reason the collections band read as unfinished. */
+.category-tile {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    color: var(--eg-text);
+    text-decoration: none;
+}
+
+.category-tile:hover {
+    color: var(--eg-text);
+    text-decoration: none;
+}
+
+.category-tile .tile-media {
+    position: relative;
+    display: block;
+    aspect-ratio: 4 / 3;
+    border-radius: var(--eg-radius);
+    background: var(--eg-bg);
+    overflow: hidden;
+}
+
+.category-tile img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.6s var(--eg-ease);
+}
+
+.category-tile:hover img {
+    transform: scale(1.04);
+}
+
+.category-tile .tile-body {
+    display: block;
+    padding-top: 1rem;
+}
+
+.category-tile .tile-name {
+    display: block;
+    font-family: var(--eg-font-title);
+    font-size: 1.15rem;
+    line-height: 1.25;
+    color: var(--eg-text); /* 12.90:1 on warm white, 10.09:1 on the greige band */
+}
+
+.category-tile .tile-text {
+    display: block;
+    margin: 0.3rem 0 0;
+    font-size: 0.85rem;
+    color: var(--eg-text-muted); /* 7.06:1 on warm white, 5.52:1 on the greige band */
+}
+
+/* ---------- Collections grid ----------
+   Six tiles, one size, three to a row. An earlier pass had the first two of these
+   overlapping — a warm-white card pressed onto the corner of a big photograph,
+   after LUMINOTTI — and the client's reading of it was "strange overlaps". The
+   objection is right and it generalises: collections are like items a visitor
+   scans against one another, and on the two real storefronts on the board (Nook
+   Collections, Lighting Collective) like items are always laid out regularly. The
+   unequal, cut-off, overlapping arrangements on LUMINOTTI are its editorial
+   displays, not its product or category lists.
+
+   So the variation on this page is between the bands, not inside them. Nothing
+   here spans, offsets or overlaps; `minmax(0, 1fr)` keeps a long collection name
+   from pushing a column past its track, which is what would otherwise put a
+   scrollbar on the page. */
+.eg-tile-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 2rem 1.5rem;
+}
+
+@media (min-width: 576px) {
+    .eg-tile-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (min-width: 992px) {
+    .eg-tile-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 2.75rem 1.75rem;
+    }
+}
+
+/* ---------- Brand statement ----------
+   The centred sentence with a short rule above and below it, from the middle of
+   the LUMINOTTI page. The rules are decoration, which is why --eg-border at
+   1.78:1 is allowed to draw them.
+
+   This is also where the grainy wash from the board's cover ends up. It used to
+   sit behind the hero panel and the product gallery; over a real photograph the
+   same wash only made the photograph look like a bad print, and on a plain
+   ground it is doing what the cover actually does. The container is positioned
+   so it paints above the wash — an absolutely positioned sibling would otherwise
+   sit in a later paint layer than in-flow text. */
+.eg-manifesto {
+    background: var(--eg-bg);
+    overflow: hidden;
+}
+
+.eg-manifesto > .container {
+    position: relative;
+}
+
+.eg-manifesto-line {
+    max-width: 44rem;
+    margin: 0 auto 1.75rem;
+    font-family: var(--eg-font-title);
+    font-size: clamp(1.15rem, 2.2vw, 1.6rem);
+    line-height: 1.55;
+    text-align: center;
+    color: var(--eg-text); /* 12.90:1 on warm white, 10.41:1 at the wash's densest */
+}
+
+.eg-manifesto-line::before,
+.eg-manifesto-line::after {
+    content: '';
+    display: block;
+    width: 2.5rem;
+    height: 1px;
+    margin: 0 auto;
+    background: var(--eg-border);
+}
+
+.eg-manifesto-line::before {
+    margin-bottom: 1.75rem;
+}
+
+.eg-manifesto-line::after {
+    margin-top: 1.75rem;
+}
+
+/* ---------- Product lineup ----------
+   Best sellers: the heading, its lead and the collection shortcuts in a column of
+   their own on the left, the four products in a regular two-by-two grid on the
+   right. An earlier pass staggered the cards — three widths, two of them dropped
+   down the page — and the client's reading was that it was worse than the plain
+   grid it replaced. It was: four cards a visitor is comparing on price, fitting
+   and shade size have to be the same size on the same baselines, or the layout
+   is asking them to work out why one is bigger before they can compare anything.
+
+   The asymmetry that survives is between the text column and the grid, which is a
+   difference between two unlike things rather than among four like ones.
+
+   Cards are auto-placed rather than addressed by :nth-child: the intro is pinned
+   to the left four columns across both rows, each card spans four, and the
+   remaining tracks fill in order. Adding a fifth product needs no new rule. */
+.eg-lineup {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 2.5rem 1.5rem;
+}
+
+.eg-lineup > * {
+    min-width: 0;
+}
+
+@media (min-width: 576px) {
+    .eg-lineup {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        align-items: start;
+    }
+
+    .eg-lineup-intro {
+        grid-column: 1 / -1;
+    }
+}
+
+@media (min-width: 992px) {
+    .eg-lineup {
+        grid-template-columns: repeat(12, minmax(0, 1fr));
+        gap: 3rem 1.75rem;
+    }
+
+    .eg-lineup-intro {
+        grid-column: 1 / 5;
+        grid-row: 1 / 3;
+        align-self: start;
+        padding-right: 1rem;
+    }
+
+    .eg-lineup-cell {
+        grid-column: span 4;
+    }
+}
+
+/* ---------- Interior page header ---------- */
+/* The home page opens on the hero; every other storefront page opens on this:
+   eyebrow, title, one line of lead. Centred like the Nook reference, with a
+   left-aligned variant for pages that are a working surface rather than a
+   landing (the basket). */
+.eg-page-head {
+    max-width: 46rem;
+    margin: 0 auto 2.5rem;
+    text-align: center;
+}
+
+.eg-page-head-start {
+    margin-left: 0;
+    text-align: left;
+}
+
+/* ---------- Listing toolbar ----------
+   Grid rather than flex, because the filter disclosure has to be in two places
+   at once: its summary belongs in the top row beside the count and the sort
+   control, while the panel it opens has to run the full width of the bar. So
+   the <details> is laid across every column of row 1 — grid items are allowed
+   to share a cell — and the count and the sort keep their own columns within
+   it. Nothing ends up covered: the details comes first in source order, so the
+   count and the sort paint over it, and only the summary inside it takes a
+   click. */
+.eg-shop-bar {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    align-items: center;
+    gap: 0.75rem 1.5rem;
+    padding: 1rem 0;
+    border-top: 1px solid var(--eg-border);
+    border-bottom: 1px solid var(--eg-border);
+}
+
+/* Padded to the 44px of the summary beside it, so the two sit level instead of
+   the count riding high in the row. Padding rather than a flex box with
+   `align-items: center`: the counts are `<span>`s inside a sentence, and
+   flex would turn each one into an item and drop the spaces between them. */
+.eg-shop-count {
+    min-height: 44px;
+    margin: 0;
+    padding: 0.6rem 0;
+    font-size: 0.85rem;
+    color: var(--eg-text-muted); /* 7.06:1 */
+}
+
+.eg-sort label {
+    margin: 0;
+    white-space: nowrap;
+}
+
+@media (min-width: 768px) {
+    .eg-shop-bar {
+        grid-template-columns: minmax(0, 1fr) auto;
+    }
+
+    .eg-filters {
+        grid-column: 1 / -1;
+        grid-row: 1;
+    }
+
+    /* Pushed to the right of its column so it sits with the sort control rather
+       than colliding with the summary at the left of the same row. */
+    .eg-shop-count {
+        grid-column: 1;
+        grid-row: 1;
+        justify-self: end;
+    }
+
+    .eg-sort {
+        grid-column: 2;
+        grid-row: 1;
+    }
+
+    .eg-active {
+        grid-column: 1 / -1;
+        grid-row: 2;
+    }
+
+    /* Row 1 grows to hold the open panel, so pin this pair to the top of it or
+       they drift down the side of the panel as it opens. */
+    .eg-shop-count,
+    .eg-sort {
+        align-self: start;
+    }
+}
+
+/* ---------- Filter disclosure ----------
+   Collapsed by default, after the client's Nook reference, where the toolbar
+   carries one Filters button and the options live behind it. Laying all eleven
+   chips out flat instead read as a tag cloud.
+
+   A native <details> rather than a scripted panel: the trigger arrives with
+   keyboard operation, a disclosure role and a correct expanded state already
+   in place, and the panel still opens with scripting off. */
+.eg-filters {
+    min-width: 0;
+}
+
+/* The trigger. Both the list marker and the WebKit pseudo-element have to go
+   before the default triangle does; the chevron in the template stands in for
+   it, so the direction cue survives. */
+.eg-filter-toggle {
+    display: flex;
+    align-items: center;
+    width: fit-content;
+    min-height: 44px;
+    padding: 0.45rem 1rem;
+    border: 1px solid var(--eg-border);
+    border-radius: var(--eg-radius-sm);
+    background: var(--eg-bg);
+    color: var(--eg-text); /* 12.90:1 */
+    cursor: pointer;
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    list-style: none;
+    transition: background-color 0.2s var(--eg-ease), border-color 0.2s var(--eg-ease), color 0.2s var(--eg-ease);
+}
+
+.eg-filter-toggle::-webkit-details-marker {
+    display: none;
+}
+
+.eg-filter-toggle:hover {
+    border-color: var(--eg-brand);
+    background: var(--eg-brand-tint);
+    color: var(--eg-brand); /* 8.53:1 on the tint */
+}
+
+/* Margins rather than a `gap` on the trigger: the tally below wants a single
+   word space in front of it, and a gap would apply the same wider figure to
+   all four of the trigger's parts. */
+.eg-filter-icon {
+    width: 1rem;
+    height: 1rem;
+    margin-right: 0.5rem;
+    flex: none;
+}
+
+.eg-filter-caret {
+    width: 0.8rem;
+    height: 0.8rem;
+    margin-left: 0.5rem;
+    flex: none;
+    transition: transform 0.2s var(--eg-ease);
+}
+
+.eg-filters[open] .eg-filter-caret {
+    transform: rotate(180deg);
+}
+
+/* How many facets are applied, written into the trigger's own text rather than
+   an aria-label, so "Filters (2)" is both what is on screen and what a screen
+   reader announces, with nothing to keep in sync between the two. The word
+   space in front of it is a margin and not a character: the name computation
+   already puts a separator between the two, and an &nbsp; on top of that came
+   out as "Filters  (2)" in the accessibility tree. Charcoal like the label
+   beside it, because a count is information and cannot be left to a hue. */
+.eg-filter-tally {
+    margin-left: 0.25rem;
+    font-variant-numeric: tabular-nums;
+}
+
+/* What the disclosure reveals. One column per group from 768px up, so a long
+   chip row wraps inside its own group instead of running the width of the bar
+   and leaving the ragged gap the flat version had. */
+.eg-filter-panel {
+    display: grid;
+    gap: 1.25rem;
+    margin-top: 1rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--eg-border);
+}
+
+@media (min-width: 768px) {
+    .eg-filter-panel {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 1.5rem 3rem;
+    }
+}
+
+/* min-width:0 so a long chip row wraps inside the group instead of forcing the
+   grid column wider than the container — the usual source of a horizontal
+   scrollbar on a filter row at 390px. */
+.eg-filter-group {
+    min-width: 0;
+}
+
+/* ---------- Applied filter tags ----------
+   The panel can be shut with filters still applied, so each applied facet also
+   sits out here in the bar, where collapsing cannot hide it. The tag is a
+   second, wordier statement of what the chip's fill says inside the panel, and
+   it is the one that survives the panel being shut. */
+.eg-active {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.4rem 0.75rem;
+}
+
+.eg-tag-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.eg-tag {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding-left: 0.9rem;
+    border: 1px solid var(--eg-brand);
+    border-radius: 999px;
+    background: var(--eg-brand-tint);
+    color: var(--eg-text); /* 11.49:1 on the tint */
+    font-size: 0.8rem;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+}
+
+/* A 44px square inside the 44px pill, so the target is the button and not the
+   glyph drawn in it. Terracotta on hover is a fill under charcoal (5.50:1),
+   which is the only job that colour is allowed to take. */
+.eg-tag-remove {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 44px;
+    min-height: 44px;
+    padding: 0;
+    border: none;
+    border-radius: 999px;
+    background: transparent;
+    color: var(--eg-text); /* 11.49:1 on the tag ground */
+    cursor: pointer;
+    font-size: 1.1rem;
+    line-height: 1;
+    transition: background-color 0.2s var(--eg-ease);
+}
+
+.eg-tag-remove:hover {
+    background: var(--eg-accent);
+    color: var(--eg-text); /* 5.50:1 on the terracotta fill */
+}
+
+/* Reads as a link rather than a fourth pill: it undoes the tags beside it and
+   should not compete with them for attention. */
+.eg-active-clear {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 0 0.25rem;
+    border: none;
+    background: transparent;
+    color: var(--eg-brand); /* 9.58:1 */
+    cursor: pointer;
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
+}
+
+.eg-active-clear:hover {
+    color: var(--eg-brand-hover); /* 12.67:1 */
+}
+
+.eg-shop-empty {
+    padding: 3.5rem 0;
+    text-align: center;
+    color: var(--eg-text-muted); /* 7.06:1 */
+}
+
+/* ---------- Chip and swatch pickers ----------
+   Product options are real radio groups: one input per choice, visually hidden
+   but still focusable, with the chip or swatch as its label. That buys native
+   single-select semantics and arrow-key navigation for free, and it is the only
+   version of this control that still works with JavaScript off. */
+.eg-choice-input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* Same treatment as `.eg-chip.is-active`, including the leading dot, so the
+   selected option is not signalled by fill colour alone. */
+.eg-choice-input:checked + .eg-chip {
+    background: var(--eg-brand);
+    border-color: var(--eg-brand);
+    color: var(--eg-on-dark); /* 9.58:1 */
+}
+
+.eg-choice-input:checked + .eg-chip::before {
+    content: '\2022';
+    font-weight: 700;
+}
+
+/* The input carries focus but is off-screen, so the ring has to be drawn on
+   whichever label follows it. */
+.eg-choice-input:focus-visible + .eg-chip,
+.eg-choice-input:focus-visible + .eg-swatch-label {
+    outline: 2px solid var(--eg-brand);
+    outline-offset: 2px;
+}
+
+.eg-option {
+    min-width: 0;
+    margin: 1.75rem 0 0;
+    padding: 0;
+    border: none;
+}
+
+/* Reboot floats legends and blows their font size up with a vw unit; both have
+   to go before a legend can sit in the type scale as an eyebrow. */
+.eg-option legend {
+    float: none;
+    width: auto;
+    padding: 0;
+    font-size: 0.72rem;
+    line-height: inherit;
+}
+
+.eg-swatch-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+}
+
+/* 44 x 44 of hit area around a 24px dot (WCAG 2.5.8). The dot alone would be a
+   24px target, which is the usual failure on a colourway picker. */
+.eg-swatch-label {
+    display: inline-grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+.eg-swatch-dot {
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: 50%;
+    border: 1px solid var(--eg-border);
+    transition: box-shadow 0.2s var(--eg-ease);
+}
+
+.eg-swatch-label:hover .eg-swatch-dot {
+    box-shadow: 0 0 0 2px var(--eg-bg), 0 0 0 3px var(--eg-border);
+}
+
+/* Selection is a ring — a change of shape, not of hue — because the dot's own
+   colour is the thing being chosen and cannot also carry the state. The colour
+   name sits beside it in a `.visually-hidden` span, and the input underneath is
+   a real radio, so assistive tech is told outright which one is checked. */
+.eg-choice-input:checked + .eg-swatch-label .eg-swatch-dot {
+    box-shadow: 0 0 0 2px var(--eg-bg), 0 0 0 4px var(--eg-brand);
+}
+
+/* ---------- Product gallery ---------- */
+/* The detail well used to be tinted towards the selected finish with
+   color-mix(), which earned its keep while the well held a line drawing on flat
+   greige: it was the only thing the swatch picker had to show for itself. With
+   the product photograph in there the same wash reads as a colour cast over a
+   print, not as a finish, and it would have fought the photograph's own warm
+   greys — so it is gone, along with the grainy overlay that sat on top of it.
+   The picker now names the chosen finish in words beside its legend, which is
+   legible, survives greyscale, and stays true whatever is in the frame.
+
+   No ratio override is left here: .product-media is square by default now, which
+   is what this well wanted anyway.
+
+   Everything from .product-price-lg down is unchanged. */
+.product-price-lg {
+    font-family: var(--eg-font-title);
+    font-size: 1.75rem;
+    line-height: 1.2;
+}
+
+/* ---------- Key/value rows ----------
+   One component for the product specification list and the basket summary:
+   both are a label on the left, a value on the right, ruled between. */
+.eg-kv-list {
+    margin: 0;
+}
+
+.eg-kv-row {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 0.25rem 1.5rem;
+    padding: 0.65rem 0;
+    border-bottom: 1px solid rgba(201, 188, 169, 0.5);
+}
+
+.eg-kv-row:last-child {
+    border-bottom: none;
+}
+
+.eg-kv-row dt {
+    color: var(--eg-text-muted); /* 7.06:1 */
+    font-size: 0.85rem;
+    font-weight: 400;
+}
+
+.eg-kv-row dd {
+    margin: 0;
+    color: var(--eg-text); /* 12.90:1 */
+    font-size: 0.9rem;
+    font-weight: 500;
+    text-align: right;
+}
+
+.eg-kv-row.is-total {
+    margin-top: 0.35rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--eg-border);
+    border-bottom: none;
+}
+
+.eg-kv-row.is-total dt,
+.eg-kv-row.is-total dd {
+    color: var(--eg-text); /* 12.90:1 */
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+/* ---------- Pending-backend note ----------
+   Sits under any control that is deliberately disabled and says why. Terracotta
+   is the rule down the side only; the copy itself is olive-brown at 7.06:1,
+   because terracotta on this ground is 2.35:1 and is never an ink. */
+.eg-note {
+    margin: 0.85rem 0 0;
+    padding-left: 0.8rem;
+    border-left: 2px solid var(--eg-accent);
+    color: var(--eg-text-muted);
+    font-size: 0.82rem;
+    line-height: 1.55;
+}
+
+/* ---------- Basket ---------- */
+.eg-cart-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+/* Stacked beside a fixed-width thumbnail on a phone, one row of five on a
+   tablet up. minmax(0, 1fr) on the name column rather than 1fr: a bare 1fr has
+   an auto minimum and a long product name would push the row wider than the
+   grid instead of wrapping. */
+.eg-cart-line {
+    display: grid;
+    grid-template-columns: 4.5rem minmax(0, 1fr);
+    grid-template-areas:
+        "thumb name"
+        "thumb unit"
+        "thumb qty"
+        "thumb total";
+    gap: 0.4rem 1rem;
+    padding: 1.35rem 0;
+    border-bottom: 1px solid var(--eg-border);
+}
+
+.eg-cart-list > .eg-cart-line:first-child {
+    border-top: 1px solid var(--eg-border);
+}
+
+@media (min-width: 768px) {
+    .eg-cart-line {
+        grid-template-columns: 5.5rem minmax(0, 1fr) 6rem auto 6.5rem;
+        grid-template-areas: "thumb name unit qty total";
+        align-items: center;
+        gap: 1.25rem;
+    }
+
+    .eg-cart-total {
+        text-align: right;
+    }
+}
+
+.eg-cart-thumb {
+    grid-area: thumb;
+    align-self: start;
+    aspect-ratio: 1 / 1;
+    border-radius: var(--eg-radius-sm);
+    background: var(--eg-bg-alt);
+    overflow: hidden;
+}
+
+.eg-cart-thumb img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.eg-cart-name {
+    grid-area: name;
+    min-width: 0;
+}
+
+/* inline-flex with a 44px floor rather than a bare inline link: this is the
+   line's main tap target and at its natural 22px it was half the height WCAG
+   2.5.8 asks for. */
+.eg-cart-title {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    color: var(--eg-text); /* 12.90:1 */
+    font-family: var(--eg-font-title);
+    font-size: 1.05rem;
+    line-height: 1.3;
+}
+
+.eg-cart-title:hover {
+    color: var(--eg-brand);
+}
+
+.eg-cart-unit {
+    grid-area: unit;
+    margin: 0;
+}
+
+.eg-cart-qty {
+    grid-area: qty;
+}
+
+.eg-cart-total {
+    grid-area: total;
+    margin: 0;
+    font-weight: 600;
+}
+
+.eg-cart-label {
+    display: block;
+    color: var(--eg-text-muted); /* 7.06:1 */
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+/* Rust rather than the muted ink: removing a line is destructive and reads as
+   the same class of action as every other failure state on the site. 9.43:1. */
+.eg-cart-remove {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: var(--eg-error);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    text-decoration: underline;
+    text-underline-offset: 0.25em;
+}
+
+.eg-cart-remove:hover {
+    color: var(--eg-text); /* 12.90:1 */
+}
+
+.eg-cart-continue {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-height: 44px;
+    margin-top: 1.25rem;
+    color: var(--eg-brand); /* 9.58:1 */
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.eg-cart-continue svg {
+    width: 1rem;
+    height: 1rem;
+}
+
+.eg-summary {
+    padding: 1.75rem;
+}
+
+@media (min-width: 992px) {
+    .eg-summary {
+        position: sticky;
+        top: 6.5rem;
+    }
+}
+
+.eg-summary-note {
+    margin: 0.75rem 0 0;
+    color: var(--eg-text-muted); /* 7.06:1 */
+    font-size: 0.82rem;
+}
+
+/* The one place the green wash carries body copy: brand green on it is 8.53:1. */
+.eg-summary-hint {
+    margin: 0.85rem 0 0;
+    padding: 0.6rem 0.85rem;
+    border-radius: var(--eg-radius-sm);
+    background: var(--eg-brand-tint);
+    color: var(--eg-brand);
+    font-size: 0.82rem;
+    font-weight: 500;
+}
+
+.eg-summary-account {
+    margin-top: 1.25rem;
+    color: var(--eg-text-muted); /* 7.06:1 */
+    font-size: 0.82rem;
+}
+
+/* ---------- Accordion ----------
+   Bootstrap's own accordion is a white panel with a blue open state and a blue
+   chevron data-URI; all three have to be replaced, the chevrons included, or
+   the open panel is the only blue thing on the site. */
+.eg-accordion {
+    --bs-accordion-bg: transparent;
+    --bs-accordion-color: var(--eg-text);
+    --bs-accordion-border-color: var(--eg-border);
+    --bs-accordion-border-radius: var(--eg-radius);
+    --bs-accordion-inner-border-radius: var(--eg-radius);
+    --bs-accordion-btn-bg: transparent;
+    --bs-accordion-btn-color: var(--eg-text); /* 12.90:1 */
+    --bs-accordion-active-bg: var(--eg-brand-tint);
+    --bs-accordion-active-color: var(--eg-brand); /* 8.53:1 on the tint */
+    --bs-accordion-btn-focus-box-shadow: none;
+    --bs-accordion-btn-icon: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%232F2E2C'%3e%3cpath fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3e%3c/svg%3e");
+    --bs-accordion-btn-active-icon: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23124C24'%3e%3cpath fill-rule='evenodd' d='M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z'/%3e%3c/svg%3e");
+}
+
+.eg-accordion .accordion-button {
+    font-family: var(--eg-font-body);
+    font-size: 0.95rem;
+    font-weight: 600;
+}
+
+/* Inset, because the header sits flush inside the item's rounded border and an
+   outward ring would be clipped by it. */
+.eg-accordion .accordion-button:focus-visible {
+    outline: 2px solid var(--eg-brand);
+    outline-offset: -2px;
+}
+
+.eg-accordion .accordion-body {
+    color: var(--eg-text-muted); /* 7.06:1 */
+}
+
+/* ---------- Services ---------- */
+.service-step {
+    display: flex;
+    gap: 1.1rem;
+    padding: 1.1rem 0;
+    border-bottom: 1px solid rgba(201, 188, 169, 0.35);
+}
+
+.service-step:last-child {
+    border-bottom: none;
+}
+
+/* The step number is content, not decoration, so it takes an ink that clears
+   AA on the page ground: 7.06:1. Terracotta would have been 2.35:1 here — this
+   is exactly the misuse the palette rule exists to prevent. */
+.service-step .step-no {
+    font-family: var(--eg-font-title);
+    font-size: 1.05rem;
+    min-width: 2.4rem;
+    color: var(--eg-text-muted);
+}
+
+/* On the charcoal band the same ink would drop to 1.36:1, so it flips to the
+   on-dark tone: 7.27:1. */
+.eg-band-dark .service-step .step-no {
+    color: var(--eg-on-dark-muted);
+}
+
+.eg-band-dark .service-step {
+    border-bottom-color: rgba(201, 188, 169, 0.22);
+}
+
+.service-step h3 {
+    font-size: 1.05rem;
+    margin-bottom: 0.2rem;
+}
+
+.service-step p {
+    margin-bottom: 0;
+    font-size: 0.92rem;
+}
+
+/* ---------- Before / after compare ----------
+   The one interactive demo that suits a lighting business, and the divider's
+   keyboard handling and ARIA are existing work that is kept as it stands.
+
+   What is underneath it changed. It used to be a pair of CSS gradients with a
+   charcoal wash clipped over half of them: an abstraction, under a caption
+   naming a specific job. Now it is the two photographs of that job.
+
+   The two frames were shot to match — same room, same camera, same furniture —
+   so nothing in the scene jumps as the divider crosses it. Keeping them
+   registered on screen is this file's half of the deal: both are laid
+   absolutely into the same box at the same size, the same object-fit and the
+   same object-position, so the only difference between the two rendered images
+   is the light in them. Anything that sized one of them independently — a
+   height on one, a different fit, a margin — would show up as the furniture
+   sliding under the handle.
+
+   The band carries the photographs' own 1024 x 683 ratio rather than a height:
+   the space is reserved before either image decodes, so the band cannot shift
+   the section as it loads, and at no width is either photograph cropped. */
+.compare-band {
+    position: relative;
+    aspect-ratio: 1024 / 683;
+    border-radius: var(--eg-radius);
+    overflow: hidden;
+    border: 1px solid var(--eg-border);
+    background: var(--eg-bg-alt);
+    user-select: none;
+    touch-action: none;
+}
+
+/* The band owns the pointer: it is the element with the drag handler and the
+   pointer capture on it. Left interactive, the images would also start the
+   browser's own image-drag on mousedown and fight that capture. */
+.compare-shot {
+    position: absolute;
+    inset: 0;
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    pointer-events: none;
+}
+
+/* The "after" is the ground and the "before" is clipped over it, so 0% is the
+   finished room and 100% the original — the direction the divider's
+   aria-valuenow already described when the wash was doing this job. */
+.compare-shot-before {
+    clip-path: polygon(0 0, var(--split, 50%) 0, var(--split, 50%) 100%, 0 100%);
+}
+
+.compare-divider {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: var(--split, 50%);
+    width: 2px;
+    background: var(--eg-bg);
+    cursor: ew-resize;
+}
+
+/* 2.75rem, not 2.6rem: the knob is the grab handle for a 2px-wide divider, so it
+   is the target, and at 2.6rem it measured 41.6px — under the 44px floor. */
+.compare-divider::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 2.75rem;
+    height: 2.75rem;
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    border: 2px solid var(--eg-bg);
+    background: rgba(47, 46, 44, 0.55);
+}
+
+/* The divider itself is only 2px wide, so the focus ring goes on the knob. */
+.compare-divider:focus-visible {
+    outline: none;
+}
+
+.compare-divider:focus-visible::after {
+    border-color: var(--eg-brand);
+    box-shadow: 0 0 0 3px var(--eg-bg);
+}
+
+/* Both pills are opaque, which is the whole reason the labels on them are safe
+   over a photograph: the label never touches the picture, so its ratio is fixed
+   by the fill and cannot drift as the divider moves. Sampled off the rendered
+   page rather than quoted — every full-coverage glyph pixel in each pill,
+   against the fill pixel underneath it, at 0%, 50% and 100% — the two measure
+   11.19:1 and 11.14:1. Those sit under the 12.90:1 the colour pair computes to
+   because grey anti-aliasing lightens even the densest pixel of type this
+   small; the computed figure is the ceiling and the measured one is what is on
+   screen. Both clear AA by a wide margin either way. */
+.compare-tag {
+    position: absolute;
+    top: 1rem;
+    padding: 0.28rem 0.85rem;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
+/* A readable label is not the same thing as a readable badge, and an opaque
+   fill does nothing for the second one: where the photograph happens to match
+   the fill, the pill has no edge at all. Measured on these two frames, that is
+   not hypothetical — the charcoal pill lands on the before photo's shadowed
+   corner at 1.10:1 and on the after photo's warm dark corner at 1.45:1, and the
+   warm white pill lands in the after photo's brightest pool at 1.51:1. Three
+   invisible edges out of six positions.
+
+   The hairline below is why they are all visible now, and it needs no new
+   colour: it is drawn in the pill's own label tone, so it is 12.90:1 against
+   the fill it encloses. When the photograph matches the fill the ring is what
+   separates them, and when the photograph is the opposite tone the fill is
+   already doing the work — there is no combination left where the badge has no
+   boundary. It is a shadow rather than a border so the pill does not resize.
+
+   Re-measured the same way afterwards, crossing every point on each pill's
+   outline along its own normal at all three divider positions: the weakest
+   crossing anywhere is now 3.39:1 and the means are 5.7:1 to 11.4:1. */
+
+/* Charcoal fill, warm white label and ring. */
+.compare-tag-dark {
+    left: 1rem;
+    background: var(--eg-text);
+    color: var(--eg-on-dark);
+    box-shadow: 0 0 0 1px var(--eg-on-dark);
+}
+
+/* Warm white fill, charcoal label and ring. */
+.compare-tag-light {
+    right: 1rem;
+    background: var(--eg-bg);
+    color: var(--eg-text);
+    box-shadow: 0 0 0 1px var(--eg-text);
+}
+
+/* ---------- Material palette ----------
+   The right-hand column of the about band. It held a `.timeline` until now, and
+   what that timeline listed was the four consultation-to-aftercare steps the
+   services band above already numbers 01 to 04 — the same four titles, near
+   enough the same four sentences, twice on one page. The steps are the services
+   band's to state, so they stay there, and this column carries the five
+   materials everything on the site is made from instead. The timeline rules are
+   deleted rather than left behind: nothing else in the project used them.
+
+   Ruled rows and no ornament. The obvious flourish here is a colour dot beside
+   each name, and it is the wrong move twice over: it would put five hexes into
+   a palette the top of this file keeps deliberately small, and the complaint
+   this column is answering was decoration standing in for content. */
+.eg-materials {
+    max-width: 42rem;
+    margin: 0;
+}
+
+/* The swatch is hung in the gutter rather than sat in the row, so the term and
+   its definition stay in one column and the macro spans both of them. Its width
+   plus the gap is the row's own left padding, which is what keeps the text edge
+   straight down the list whatever each definition wraps to. */
+.eg-material {
+    position: relative;
+    padding: 1.05rem 0 1.05rem 5.5rem;
+    border-bottom: 1px solid rgba(201, 188, 169, 0.5);
+}
+
+.eg-material:first-child {
+    padding-top: 0;
+}
+
+.eg-material:last-child {
+    padding-bottom: 0;
+    border-bottom: none;
+}
+
+.eg-material-swatch {
+    position: absolute;
+    top: 1.05rem;
+    left: 0;
+    width: 4.5rem;
+    height: 4.5rem;
+    border-radius: var(--eg-radius-sm);
+    object-fit: cover;
+}
+
+.eg-material:first-child .eg-material-swatch {
+    top: 0;
+}
+
+/* Reboot bolds every <dt>; the serif carries the name here, at the same size
+   the service steps use for theirs. */
+.eg-material dt {
+    margin-bottom: 0.2rem;
+    font-family: var(--eg-font-title);
+    font-size: 1.05rem;
+    font-weight: 400;
+    line-height: 1.3;
+    color: var(--eg-text); /* 12.90:1 */
+}
+
+.eg-material dd {
+    margin: 0;
+    font-size: 0.92rem;
+    color: var(--eg-text-muted); /* 7.06:1 */
+}
+
+/* ---------- Footer ---------- */
+.footer-eg {
+    margin-top: auto;
+    padding: 3.5rem 0 2rem;
+    background: var(--eg-text);
+    color: var(--eg-on-dark-muted); /* 7.27:1 */
+}
+
+.footer-eg h2 {
+    font-family: var(--eg-font-body);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--eg-on-dark); /* 12.90:1 */
+    margin-bottom: 1rem;
+}
+
+.footer-eg .footer-brand {
+    font-family: var(--eg-font-title);
+    font-size: 1.5rem;
+    color: var(--eg-on-dark);
+}
+
+.footer-eg ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.footer-eg a {
+    display: inline-block;
+    padding: 0.35rem 0;
+    color: var(--eg-on-dark-muted); /* 7.27:1 */
+    font-size: 0.9rem;
+}
+
+.footer-eg a:hover {
+    color: var(--eg-on-dark);
+}
+
+.footer-eg .footer-base {
+    margin-top: 2.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid rgba(201, 188, 169, 0.25);
+    font-size: 0.82rem;
+}
+
+/* ---------- Forms ---------- */
+.form-control,
+.form-select {
+    background-color: var(--eg-bg);
+    border: 1px solid var(--eg-border);
+    border-radius: var(--eg-radius-sm);
+    color: var(--eg-text); /* 12.90:1 */
+    min-height: 44px;
+    padding: 0.65rem 0.9rem;
+    transition: border-color 0.2s var(--eg-ease), box-shadow 0.2s var(--eg-ease);
+}
+
+/* --eg-text-muted, not --eg-disabled: placeholder text is live content and has
+   to clear 4.5:1. It measures 7.06:1 on the field. */
+.form-control::placeholder {
+    color: var(--eg-text-muted);
+    opacity: 1;
+}
+
+.form-control:focus,
+.form-select:focus {
+    background-color: var(--eg-bg);
+    border-color: var(--eg-brand);
+    color: var(--eg-text);
+    box-shadow: 0 0 0 0.2rem rgba(18, 76, 36, 0.14);
+}
+
+/* `.input > label` is not a Bootstrap class: it is CakePHP's own FormHelper
+   wrapper. FormHelper emits a bare `<label for="…">` with no class of its own,
+   so a rule written only against `.form-label` never reaches a single label on
+   this site — every one of them would fall back to plain body copy. */
+.form-label,
+.col-form-label,
+.input > label {
+    display: inline-block;
+    color: var(--eg-text); /* 12.90:1 */
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 0.35rem;
+}
+
+.form-text {
+    color: var(--eg-text-muted); /* 7.06:1 */
+}
+
+/* ---------- Form validation errors ---------- */
+/* CakePHP's default FormHelper templates flag a failed control three ways: the
+   wrapper gains `.error`, the widget gains `.form-error`, and the message is
+   emitted as `<div class="error-message" id="{field}-error">`. The stock
+   skeleton stylesheet used to colour that class, but no layout here has loaded
+   it for some time and it has since been deleted, so without the rules below an
+   error renders in plain body copy and reads as an ordinary caption rather than
+   a problem.
+
+   Colour is not the only cue (WCAG 1.4.1): the message is smaller and bolder
+   than body copy and led by a warning glyph, and the field itself gains a
+   second ring. All three survive greyscale.
+
+   The rust replaces the previous #ff8a8a, which was picked for a near-black
+   ground and only manages 2.30:1 on warm white. #7A2617 measures 9.43:1 on the
+   page ground and 8.44:1 on the tinted field. */
+.error-message {
+    display: flex;
+    align-items: baseline;
+    gap: 0.4rem;
+    margin-top: 0.4rem;
+    color: var(--eg-error);
+    font-size: 0.88rem;
+    font-weight: 600;
+    line-height: 1.5;
+}
+
+/* Variation selector-15 keeps this as a glyph in the page's own colour; without
+   it Apple platforms substitute the colour emoji, which ignores `color`. */
+.error-message::before {
+    content: '\26A0\FE0E';
+    flex: none;
+    font-weight: 700;
+}
+
+.form-control.form-error,
+.form-select.form-error {
+    border-color: var(--eg-error);
+    background-color: var(--eg-error-tint);
+    /* An inset ring rather than border-width: 2px — it doubles the outline
+       without shrinking the content box, so the field does not reflow when it
+       flips into error. */
+    box-shadow: inset 0 0 0 1px var(--eg-error);
+}
+
+/* The rule above ties with `.form-control:focus` on specificity and beats it on
+   source order, so without this a focused invalid field would lose its focus
+   ring entirely. Restated here in the error colour. */
+.form-control.form-error:focus,
+.form-select.form-error:focus {
+    border-color: var(--eg-error);
+    box-shadow: 0 0 0 0.2rem rgba(122, 38, 23, 0.18), inset 0 0 0 1px var(--eg-error);
+}
+
+/* ---------- Bootstrap alerts ---------- */
+.alert {
+    border-radius: var(--eg-radius-sm);
+    border: 1px solid var(--eg-border);
+}
+
+.alert-success {
+    background: var(--eg-success-tint);
+    border-color: var(--eg-success);
+    color: var(--eg-success); /* 4.64:1 */
+}
+
+.alert-danger,
+.alert-error {
+    background: var(--eg-error-tint);
+    border-color: var(--eg-error);
+    color: var(--eg-error); /* 8.44:1 */
+}
+
+.alert-warning {
+    background: var(--eg-warning-tint);
+    border-color: var(--eg-warning);
+    color: var(--eg-warning); /* 5.91:1 */
+}
+
+.alert-info {
+    background: var(--eg-info-tint);
+    border-color: var(--eg-text-muted);
+    color: var(--eg-text-muted); /* 6.39:1 */
+}
+
+/* ---------- Page-level flash messages ---------- */
+/* `templates/element/flash/*.php` emit `<div class="message">` plus `success`,
+   `warning` or `error`. `info.php` and `default.php` emit the bare `.message`,
+   so the base rule here *is* the informational state and the three modifiers
+   below override it. The stock skeleton stylesheet styled all of this, but no
+   layout here has loaded it for some time and it has since been deleted — so
+   without these a flash renders as plain body copy with no box at all.
+
+   Colour is not the only cue (WCAG 1.4.1): every state carries its own leading
+   glyph. The four inks were also chosen as a set so they stay apart with hue
+   removed — success against error, the pair that matters, is 1.87:1 in pure
+   luminance — but the glyph is what carries the distinction outright. */
+.message {
+    display: flex;
+    align-items: baseline;
+    gap: 0.6rem;
+    margin: 0 0 1rem;
+    padding: 0.85rem 1.15rem;
+    border: 1px solid var(--eg-border);
+    border-left: 3px solid var(--eg-text-muted);
+    border-radius: var(--eg-radius-sm);
+    background: var(--eg-info-tint);
+    color: var(--eg-text-muted); /* 6.39:1 */
+    font-weight: 500;
+    /* The flash templates dismiss on click, so advertise that it is clickable. */
+    cursor: pointer;
+}
+
+/* What that click does — the templates only add the class. */
+.message.hidden {
+    display: none;
+}
+
+/* Variation selector-15 keeps these as glyphs in the banner's own colour;
+   without it Apple platforms substitute the colour emoji, which ignores
+   `color` and would put the one cue that survives greyscale back into hue. */
+.message::before {
+    content: '\2139\FE0E';
+    flex: none;
+    font-weight: 700;
+}
+
+.message.success {
+    border-left-color: var(--eg-success);
+    background: var(--eg-success-tint);
+    color: var(--eg-success); /* 4.64:1 */
+}
+
+.message.success::before {
+    content: '\2714\FE0E';
+}
+
+.message.warning {
+    border-left-color: var(--eg-warning);
+    background: var(--eg-warning-tint);
+    color: var(--eg-warning); /* 5.91:1 */
+}
+
+.message.warning::before {
+    content: '\26A0\FE0E';
+}
+
+.message.error {
+    border-left-color: var(--eg-error);
+    background: var(--eg-error-tint);
+    color: var(--eg-error); /* 8.44:1 */
+}
+
+.message.error::before {
+    content: '\2716\FE0E';
+}
+
+/* Flash renders first inside <main>, which is full-bleed, so without a wrapper
+   the banner sat flush against the top-left of the viewport. The layout wraps
+   it in `.container` to line it up with the page content. */
+.flash-stack {
+    padding-top: 1.5rem;
+}
+
+/* ---------- Badges / pills ---------- */
+.pill {
+    display: inline-block;
+    padding: 0.28em 0.85em;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+/* Terracotta fill with charcoal text: 5.50:1. Paired with a bold subject line
+   and a left rule on the row, so "unread" never rests on the fill alone. */
+.pill-new {
+    background: var(--eg-accent);
+    color: var(--eg-text);
+}
+
+.pill-read {
+    background: transparent;
+    border: 1px solid var(--eg-border);
+    color: var(--eg-text-muted); /* 7.06:1 on the page ground */
+}
+
+/* ---------- Admin table ---------- */
+.admin-panel {
+    background: var(--eg-bg);
+    border: 1px solid var(--eg-border);
+    border-radius: var(--eg-radius);
+    padding: 0.5rem 1.25rem;
+}
+
+.table-eg {
+    --bs-table-bg: transparent;
+    --bs-table-color: var(--eg-text);
+    --bs-table-border-color: rgba(201, 188, 169, 0.5);
+    --bs-table-hover-bg: var(--eg-accent-tint);
+    --bs-table-hover-color: var(--eg-text);
+    margin-bottom: 0;
+}
+
+.table-eg thead th {
+    color: var(--eg-text-muted); /* 7.06:1 */
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--eg-border);
+    padding: 0.9rem 0.75rem;
+}
+
+.table-eg thead th a {
+    color: var(--eg-text-muted);
+}
+
+.table-eg thead th a:hover {
+    color: var(--eg-brand);
+}
+
+.table-eg tbody td {
+    padding: 0.9rem 0.75rem;
+    vertical-align: middle;
+}
+
+.table-eg .cell-message {
+    max-width: 22rem;
+    min-width: 12rem;
+    color: var(--eg-text-muted); /* 7.06:1 */
+}
+
+/* Unread rows carry three cues at once — the rule, the tint and the bold
+   subject in the template — so none of them is load-bearing on its own. */
+.table-eg tbody tr.row-unread td:first-child {
+    box-shadow: inset 3px 0 0 var(--eg-accent);
+}
+
+.table-eg tbody tr.row-unread td {
+    background: var(--eg-accent-tint);
+}
+
+/* ---------- Pagination ---------- */
+.pagination {
+    gap: 0.35rem;
+}
+
+/* min-width as well as min-height: a single-digit page number is about 37px
+   wide with this padding, so height alone leaves the target short of the 44px
+   WCAG 2.5.8 floor on the axis nobody checks. */
+.page-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 44px;
+    min-height: 44px;
+    background: transparent;
+    border: 1px solid var(--eg-border) !important;
+    border-radius: var(--eg-radius-sm) !important;
+    color: var(--eg-text); /* 12.90:1 */
+    padding: 0.45rem 0.9rem;
+    transition: background-color 0.2s var(--eg-ease), color 0.2s var(--eg-ease);
+}
+
+.page-link:hover {
+    background: var(--eg-brand-tint);
+    border-color: var(--eg-brand) !important;
+    color: var(--eg-brand); /* 8.53:1 on the tint */
+}
+
+.page-item.active .page-link {
+    background: var(--eg-brand);
+    border-color: var(--eg-brand) !important;
+    color: var(--eg-on-dark); /* 9.58:1 */
+    font-weight: 600;
+}
+
+/* Deliberately --eg-disabled at 2.92:1. WCAG 1.4.3 exempts inactive controls,
+   and the enabled .page-link above is charcoal: promoting this to charcoal too
+   would make the two states share one colour, leaving nothing to say that
+   "Prev" is dead on page 1. The two read 4.42:1 apart, which is the
+   distinction worth keeping. */
+.page-item.disabled .page-link {
+    background: transparent;
+    color: var(--eg-disabled);
+}
+
+/* ---------- Detail key-values ---------- */
+.kv {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    padding: 0.8rem 0;
+    border-bottom: 1px solid rgba(201, 188, 169, 0.45);
+}
+
+.kv:last-child {
+    border-bottom: none;
+}
+
+.kv .kv-icon {
+    width: 2.2rem;
+    height: 2.2rem;
+    flex: none;
+    display: grid;
+    place-items: center;
+    border-radius: 0.5rem;
+    background: var(--eg-accent-tint);
+    color: var(--eg-text); /* icon line art, 11.90:1 on the tint */
+}
+
+.kv .kv-icon svg {
+    width: 1.05rem;
+    height: 1.05rem;
+}
+
+.kv .kv-label {
+    color: var(--eg-text-muted); /* 7.06:1 */
+    font-size: 0.72rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
+.kv .kv-value {
+    color: var(--eg-text); /* 12.90:1 */
+    font-weight: 500;
+}
+
+.message-bubble {
+    background: var(--eg-bg-alt);
+    border-radius: var(--eg-radius) var(--eg-radius) var(--eg-radius) 0.2rem;
+    padding: 1.3rem 1.5rem;
+    color: var(--eg-text); /* 10.09:1 on greige */
+}
+
+/* ---------- Auth ---------- */
+.auth-wrap {
+    min-height: 68vh;
+    display: grid;
+    place-items: center;
+    padding: 3rem 0;
+}
+
+.auth-card {
+    width: 100%;
+    max-width: 25rem;
+    padding: 2.4rem 2rem;
+}
+
+.auth-mark {
+    width: 3rem;
+    height: 3rem;
+    margin: 0 auto 1.1rem;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: var(--eg-accent-tint);
+    color: var(--eg-text); /* line art, 11.90:1 on the tint */
+}
+
+.auth-mark svg {
+    width: 1.5rem;
+    height: 1.5rem;
+}
+
+.auth-link {
+    display: inline-block;
+    min-height: 44px;
+    padding: 0.7rem 0.75rem;
+}
+
+.input-icon {
+    position: relative;
+}
+
+/* These icons are aria-hidden and duplicate their field's label, so 1.4.11 does
+   not apply; they are drawn in the muted ink anyway, at 7.06:1. */
+/* Pinned to the middle of the field rather than the middle of .input-icon:
+   FormHelper appends the validation message *inside* this wrapper, so centring
+   on the wrapper drops the icon halfway into the message whenever the field is
+   in error. The offset is half a field — top border, top padding, half a line
+   box — which is where 50% lands anyway while no message is present. */
+.input-icon svg {
+    position: absolute;
+    left: 0.9rem;
+    top: calc(1px + 0.65rem + 0.75em);
+    transform: translateY(-50%);
+    width: 1.05rem;
+    height: 1.05rem;
+    color: var(--eg-text-muted);
+    pointer-events: none;
+}
+
+.input-icon .form-control {
+    padding-left: 2.6rem;
+}
+
+/* ---------- Contact sidebar ---------- */
+.contact-aside {
+    height: 100%;
+    padding: 2.2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.3rem;
+    background: var(--eg-bg-alt);
+    border-radius: var(--eg-radius);
+}
+
+/* ---------- reCAPTCHA framing ---------- */
+.recaptcha-frame {
+    display: inline-block;
+    padding: 0.5rem;
+    border-radius: var(--eg-radius-sm);
+    background: var(--eg-bg-alt);
+    border: 1px solid var(--eg-border);
+}
+
+/* ---------- Error pages ---------- */
+.error-shell {
+    display: grid;
+    place-items: center;
+    min-height: 70vh;
+    padding: 3rem 0;
+    text-align: center;
+}
+
+/* aria-hidden in the template: the status is already in the heading beside it,
+   so this is an ornament and its 1.78:1 against the page ground is fine. */
+.error-code {
+    display: block;
+    margin-bottom: 0.75rem;
+    font-family: var(--eg-font-title);
+    font-size: clamp(3.5rem, 12vw, 7rem);
+    line-height: 1;
+    color: var(--eg-border);
+}
+
+/* CakePHP's error templates emit <p class="error"> for the detail line. */
+.error-shell p.error {
+    color: var(--eg-error); /* 9.43:1 */
+    font-weight: 500;
+}
+
+/* ---------- Reduced motion ---------- */
+@media (prefers-reduced-motion: reduce) {
+    html {
+        scroll-behavior: auto;
+    }
+
+    .reveal {
+        opacity: 1;
+        transform: none;
+        transition: none;
+    }
+
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+    }
+}
