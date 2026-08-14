@@ -55,6 +55,7 @@
         ],
         "cs-check": "phpcs --colors -p",
         "cs-fix": "phpcbf --colors -p",
-        "test": "phpunit --colors=always"
+        "test": "phpunit --colors=always",
+        "dev-up": "php bin/dev_up.php"
     }
 }

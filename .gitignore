@@ -5,6 +5,7 @@
 /logs/*
 /tmp/*
 /vendor/*
+/bin/composer.phar
 
 # OS generated files #
 ######################

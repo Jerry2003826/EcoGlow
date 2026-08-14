@@ -10,6 +10,16 @@ use Migrations\BaseSeed;
 final class EcoGlowAuthorizationSeed extends BaseSeed
 {
     /**
+     * @return list<string>
+     */
+    public function getDependencies(): array
+    {
+        return [
+            'UsersSeed',
+        ];
+    }
+
+    /**
      * Run the authorization seed.
      *
      * @return void

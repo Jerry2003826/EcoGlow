@@ -37,6 +37,10 @@ class UsersSeed extends BaseSeed
             [
                 'email' => $email,
                 'password' => $hasher->hash($password),
+                'first_name' => 'Admin',
+                'last_name' => 'User',
+                'role' => 'admin',
+                'status' => 'active',
                 'created' => date('Y-m-d H:i:s'),
                 'modified' => date('Y-m-d H:i:s'),
             ],
