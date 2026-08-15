@@ -43,6 +43,13 @@ class WebhooksControllerTest extends TestCase
         'app.FeatureFlags',
         'app.Payments',
         'app.PaymentRefunds',
+        'app.PaymentEffects',
+        'app.CreditNoteItems',
+        'app.CreditNotes',
+        'app.PaymentAllocations',
+        'app.InvoiceItems',
+        'app.InvoiceStatusHistory',
+        'app.Invoices',
         'app.IdempotencyRecords',
         'app.OrderAddresses',
         'app.OutboundMessages',
@@ -65,6 +72,23 @@ class WebhooksControllerTest extends TestCase
         Configure::write('Stripe.webhookSecret', self::WEBHOOK_SECRET);
         Configure::write('Stripe.secretKey', '');
         Configure::write('Stripe.publishableKey', '');
+        Configure::write('Stripe.gateway', new FakePaymentGateway());
+        $connection = $this->fetchTable('SalesOrders')->getConnection();
+        $connection->execute('SET FOREIGN_KEY_CHECKS=0');
+        foreach (
+            [
+                'credit_note_items',
+                'credit_notes',
+                'payment_allocations',
+                'invoice_items',
+                'invoice_status_history',
+                'invoices',
+                'payment_effects',
+            ] as $table
+        ) {
+            $connection->execute('DELETE FROM `' . $table . '`');
+        }
+        $connection->execute('SET FOREIGN_KEY_CHECKS=1');
     }
 
     /**
@@ -224,7 +248,7 @@ class WebhooksControllerTest extends TestCase
     }
 
     /**
-     * Success after cancel is a conflict, not silent fulfilment.
+     * Success after cancel must auto-refund instead of confirming the order.
      *
      * @return void
      */
@@ -250,9 +274,16 @@ class WebhooksControllerTest extends TestCase
             ['order_id' => (string)$order->id],
         ));
         $this->assertResponseOk();
-        $this->assertResponseContains('conflict');
+        $this->assertResponseContains('refunded');
         $order = $this->fetchTable('SalesOrders')->get($order->id);
         $this->assertSame('cancelled', $order->status);
+        $this->assertSame(
+            'refunded',
+            (string)$this->fetchTable('Payments')->find()
+                ->where(['provider_payment_id' => 'pi_cancel_1'])
+                ->first()
+                ?->status,
+        );
         $this->assertSame(
             1,
             $this->fetchTable('PaymentReconciliationAlerts')->find()->count(),

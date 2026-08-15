@@ -89,6 +89,21 @@ final class FakePaymentGateway implements PaymentGatewayInterface
     public array $lastRefundMetadata = [];
 
     /**
+     * @var list<string>
+     */
+    public array $canceledIntentIds = [];
+
+    /**
+     * @var array<string, string>
+     */
+    public array $intentStatusById = [];
+
+    /**
+     * @var string
+     */
+    public string $lastRefundPaymentIntentId = '';
+
+    /**
      * @inheritDoc
      */
     public function createPaymentIntent(
@@ -142,6 +157,7 @@ final class FakePaymentGateway implements PaymentGatewayInterface
         }
         $this->lastRefundIdempotencyKey = $idempotencyKey;
         $this->lastRefundMetadata = $metadata;
+        $this->lastRefundPaymentIntentId = $paymentIntentId;
         $this->refundsById[$this->nextRefundId] = $this->refundStatus;
 
         return new RefundResult($this->nextRefundId, $this->refundStatus, $amountCents, 'aud');
@@ -152,7 +168,12 @@ final class FakePaymentGateway implements PaymentGatewayInterface
      */
     public function retrieveClientSecret(string $paymentIntentId): ?string
     {
-        if ($paymentIntentId === '' || str_starts_with($paymentIntentId, 'pi_done_')) {
+        if (
+            $paymentIntentId === ''
+            || str_starts_with($paymentIntentId, 'pi_done_')
+            || in_array($paymentIntentId, $this->canceledIntentIds, true)
+            || in_array($this->intentStatusById[$paymentIntentId] ?? '', ['canceled', 'succeeded'], true)
+        ) {
             return null;
         }
 
@@ -169,5 +190,26 @@ final class FakePaymentGateway implements PaymentGatewayInterface
         }
 
         return new RefundResult($refundId, $this->refundsById[$refundId], 0, 'aud');
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function cancelPaymentIntent(string $paymentIntentId): string
+    {
+        if ($paymentIntentId === '') {
+            return 'already_canceled';
+        }
+        $status = $this->intentStatusById[$paymentIntentId] ?? 'requires_payment_method';
+        if ($status === 'canceled' || in_array($paymentIntentId, $this->canceledIntentIds, true)) {
+            return 'already_canceled';
+        }
+        if (in_array($status, ['succeeded', 'processing'], true)) {
+            return 'already_succeeded';
+        }
+        $this->canceledIntentIds[] = $paymentIntentId;
+        $this->intentStatusById[$paymentIntentId] = 'canceled';
+
+        return 'canceled';
     }
 }

@@ -59,4 +59,28 @@ class OrderServiceTest extends TestCase
         $this->expectExceptionMessage('Cannot move an order from cancelled to dispatched.');
         $service->changeStatus($stale, SalesOrder::STATUS_DISPATCHED, 1, 'stale writer');
     }
+
+    /**
+     * A refunded order must be refused at the service layer, not only in the UI.
+     *
+     * @return void
+     */
+    public function testRefundedOrderCannotBeDispatched(): void
+    {
+        $connection = ConnectionManager::get('test');
+        $connection->execute(
+            "INSERT INTO sales_orders
+                (order_number, status, payment_status, fulfilment_method, currency,
+                 source_channel, order_type, version_number, metadata)
+             VALUES ('SO-REFUND-1', 'confirmed', 'refunded', 'shipping', 'AUD',
+                     'phone', 'retail', 1, '{}')",
+        );
+        $id = (int)$connection->getDriver()->lastInsertId();
+        $service = new OrderService(new InventoryLedger());
+        $order = $this->fetchTable('SalesOrders')->get($id);
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('A refunded order cannot be fulfilled.');
+        $service->changeStatus($order, SalesOrder::STATUS_PROCESSING, 1);
+    }
 }

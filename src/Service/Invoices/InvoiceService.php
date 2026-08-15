@@ -44,11 +44,16 @@ class InvoiceService
         if (in_array((string)$order->payment_status, ['refunded', 'partially_refunded'], true)) {
             throw new InvalidArgumentException('A refunded order cannot be invoiced.');
         }
+        if ($order->isOpenWebCheckout()) {
+            throw new InvalidArgumentException(
+                'A website checkout that is still waiting for Stripe cannot be invoiced.',
+            );
+        }
         $order = $this->fetchTable('SalesOrders')->get($order->id, finder: 'detail');
 
         return $this->connection()->transactional(function () use ($order, $actorUserId) {
             $locked = $this->connection()->execute(
-                'SELECT status, payment_status FROM sales_orders WHERE id = ? FOR UPDATE',
+                'SELECT status, payment_status, source_channel FROM sales_orders WHERE id = ? FOR UPDATE',
                 [$order->id],
             )->fetch('assoc');
             if (!is_array($locked)) {
@@ -59,6 +64,11 @@ class InvoiceService
             }
             if (in_array((string)$locked['payment_status'], ['refunded', 'partially_refunded'], true)) {
                 throw new InvalidArgumentException('A refunded order cannot be invoiced.');
+            }
+            if ($this->isOpenWebCheckoutRow($locked)) {
+                throw new InvalidArgumentException(
+                    'A website checkout that is still waiting for Stripe cannot be invoiced.',
+                );
             }
             $existing = $this->fetchTable('Invoices')->find()
                 ->where([
@@ -197,6 +207,19 @@ class InvoiceService
         return $this->connection()->transactional(function () use ($invoice, $amountCents, $actorUserId) {
             $this->connection()->execute('SELECT id FROM invoices WHERE id = ? FOR UPDATE', [$invoice->id]);
             $invoice = $this->fetchTable('Invoices')->get($invoice->id);
+            if ($invoice->sales_order_id) {
+                $order = $this->fetchTable('SalesOrders')->get((int)$invoice->sales_order_id);
+                $openCheckout = $this->isOpenWebCheckoutRow([
+                    'source_channel' => $order->get('source_channel'),
+                    'status' => $order->get('status'),
+                    'payment_status' => $order->get('payment_status'),
+                ]);
+                if ($openCheckout) {
+                    throw new InvalidArgumentException(
+                        'A website checkout that is still waiting for Stripe cannot take a manual payment.',
+                    );
+                }
+            }
             if ($invoice->status === Invoice::STATUS_VOID) {
                 throw new InvalidArgumentException('A void invoice cannot take a payment.');
             }
@@ -327,6 +350,17 @@ class InvoiceService
         }
 
         return $total;
+    }
+
+    /**
+     * @param array<string, mixed> $row Locked sales_orders columns.
+     * @return bool
+     */
+    private function isOpenWebCheckoutRow(array $row): bool
+    {
+        return (string)($row['source_channel'] ?? '') === SalesOrder::CHANNEL_WEB
+            && (string)($row['status'] ?? '') === SalesOrder::STATUS_DRAFT
+            && in_array((string)($row['payment_status'] ?? ''), ['pending', 'failed'], true);
     }
 
     /**

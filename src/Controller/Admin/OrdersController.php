@@ -78,15 +78,15 @@ class OrdersController extends AdminController
 
         $salesOrders = $this->paginate($query, ['limit' => 20]);
         $statusCounts = $this->countByField('SalesOrders', 'status');
-        $awaitingCount = 0;
-        foreach (SalesOrder::awaitingDispatchStatuses() as $awaitingStatus) {
-            $awaitingCount += $statusCounts[$awaitingStatus] ?? 0;
-        }
+        $awaitingCount = $this->fetchTable('SalesOrders')->find()
+            ->where(SalesOrder::awaitingDispatchConditions())
+            ->count();
         $overdueCount = $this->fetchTable('SalesOrders')->find()
             ->where([
                 'promised_delivery_date IS NOT' => null,
                 'promised_delivery_date <' => $today->format('Y-m-d'),
                 'status NOT IN' => SalesOrder::closedStatuses(),
+                'payment_status !=' => 'refunded',
             ])
             ->count();
 
@@ -114,7 +114,7 @@ class OrdersController extends AdminController
     {
         $salesOrder = $this->fetchTable('SalesOrders')->get($this->recordId($id), finder: 'detail');
         $today = Date::now('Australia/Melbourne');
-        $nextStatuses = OrderService::TRANSITIONS[$salesOrder->status] ?? [];
+        $nextStatuses = OrderService::allowedNextStatuses($salesOrder);
         $canSeeContact = $this->canViewCustomerContact();
         $existingInvoice = $this->fetchTable('Invoices')->find()
             ->where([

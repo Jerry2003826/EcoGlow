@@ -134,6 +134,35 @@ class StripePaymentGateway implements PaymentGatewayInterface
     }
 
     /**
+     * @inheritDoc
+     */
+    public function cancelPaymentIntent(string $paymentIntentId): string
+    {
+        if ($paymentIntentId === '') {
+            return 'already_canceled';
+        }
+
+        try {
+            $intent = $this->client()->paymentIntents->retrieve($paymentIntentId);
+            $status = (string)$intent->status;
+            if ($status === 'canceled') {
+                return 'already_canceled';
+            }
+            if (in_array($status, ['succeeded', 'processing'], true)) {
+                return 'already_succeeded';
+            }
+            $this->client()->paymentIntents->cancel($paymentIntentId);
+        } catch (ApiErrorException $exception) {
+            if ((string)$exception->getStripeCode() === 'payment_intent_unexpected_state') {
+                return 'already_succeeded';
+            }
+            $this->rethrowStripe($exception, 'The payment service could not cancel this charge.');
+        }
+
+        return 'canceled';
+    }
+
+    /**
      * @return \Stripe\StripeClient
      */
     private function client(): StripeClient

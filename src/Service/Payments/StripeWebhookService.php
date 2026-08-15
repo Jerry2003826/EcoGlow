@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\Service\Payments;
 
+use App\Model\Entity\Invoice;
 use App\Model\Entity\Payment;
 use App\Model\Entity\SalesOrder;
 use App\Service\Inventory\InventoryLedger;
@@ -10,6 +11,7 @@ use App\Service\Orders\OrderService;
 use App\Service\OutboundQueue;
 use Cake\Core\Configure;
 use Cake\Database\Connection;
+use Cake\Datasource\EntityInterface;
 use Cake\I18n\DateTime;
 use Cake\Log\Log;
 use Cake\ORM\Locator\LocatorAwareTrait;
@@ -119,7 +121,7 @@ class StripeWebhookService
         $intent = $event->data->object;
         $this->assertIntentSucceeded($event, $intent);
         $payment = $this->boundPendingPayment($intent);
-        if (in_array((string)$payment->status, ['captured', 'partially_refunded', 'refunded'], true)) {
+        if (in_array((string)$payment->status, ['partially_refunded', 'refunded'], true)) {
             return ['status' => 200, 'body' => ['received' => true, 'duplicate' => true]];
         }
         $order = $this->fetchTable('SalesOrders')->get((int)$payment->sales_order_id, contain: [
@@ -130,33 +132,52 @@ class StripeWebhookService
 
         $actorId = (int)($order->created_by_user_id ?: 0);
         $amount = $this->capturedAmount($intent);
-        $firstCapture = false;
+        $action = 'duplicate';
         $this->connection()->transactional(function () use (
             $order,
             $payment,
             $amount,
             $actorId,
             $intent,
-            &$firstCapture,
+            &$action,
         ): void {
             $this->orders->lockOrder((int)$order->id);
-            $order = $this->fetchTable('SalesOrders')->get((int)$order->id);
-            if ($order->status === SalesOrder::STATUS_CANCELLED) {
-                throw new InvalidArgumentException(
-                    'Payment succeeded for a cancelled order; queued for reconciliation.',
-                );
-            }
+            $order = $this->fetchTable('SalesOrders')->get((int)$order->get('id'));
             $this->lockPayment((int)$payment->id);
             $payment = $this->fetchTable('Payments')->get((int)$payment->id);
+            if (in_array((string)$payment->status, ['partially_refunded', 'refunded'], true)) {
+                $action = 'duplicate';
+
+                return;
+            }
+            $unexpected = $this->isUnexpectedStripeCapture($order, $payment);
+            if ((string)$payment->status === 'captured') {
+                $action = $unexpected ? 'refund' : 'duplicate';
+
+                return;
+            }
             $firstCapture = $this->markCaptured($payment, $amount, $intent);
             if (!$firstCapture) {
+                $action = $unexpected ? 'refund' : 'duplicate';
+
+                return;
+            }
+            if ($unexpected) {
+                $action = 'refund';
+
                 return;
             }
             $this->orders->confirmPaid($order, $actorId > 0 ? $actorId : (int)$order->customer_id);
             $this->creditInvoiceIfPresent($order, $amount, $payment);
+            $action = 'confirm';
         });
 
-        if ($firstCapture) {
+        if ($action === 'refund') {
+            $this->refundUnexpectedCaptureOrRetry($payment, $order, $event);
+
+            return ['status' => 200, 'body' => ['received' => true, 'refunded' => true]];
+        }
+        if ($action === 'confirm') {
             try {
                 $this->queueConfirmation($order);
             } catch (Throwable $exception) {
@@ -419,6 +440,145 @@ class StripeWebhookService
     }
 
     /**
+     * Stripe captured money that the local order can no longer accept.
+     *
+     * @param \Cake\Datasource\EntityInterface $order Locked order.
+     * @param \Cake\Datasource\EntityInterface $payment Locked Stripe payment.
+     * @return bool
+     */
+    private function isUnexpectedStripeCapture(EntityInterface $order, EntityInterface $payment): bool
+    {
+        if ((string)$order->get('status') === SalesOrder::STATUS_CANCELLED) {
+            return true;
+        }
+        if ((string)$order->get('payment_status') === 'paid') {
+            return $this->hasOtherSettledPayment((int)$order->get('id'), (int)$payment->get('id'));
+        }
+        $invoice = $this->fetchTable('Invoices')->find()
+            ->where(['sales_order_id' => $order->get('id'), 'status !=' => Invoice::STATUS_VOID])
+            ->first();
+        if ($invoice === null) {
+            return false;
+        }
+        if (!in_array((string)$invoice->get('status'), [Invoice::STATUS_PAID, Invoice::STATUS_CREDITED], true)) {
+            return false;
+        }
+
+        return !$this->hasCaptureAllocation((int)$invoice->id, (int)$payment->get('id'));
+    }
+
+    /**
+     * @param int $orderId Order id.
+     * @param int $paymentId Current Stripe payment.
+     * @return bool
+     */
+    private function hasOtherSettledPayment(int $orderId, int $paymentId): bool
+    {
+        return $this->fetchTable('Payments')->exists([
+            'sales_order_id' => $orderId,
+            'id !=' => $paymentId,
+            'status IN' => ['captured', 'partially_refunded', 'refunded'],
+        ]);
+    }
+
+    /**
+     * @param int $invoiceId Invoice id.
+     * @param int $paymentId Payment id.
+     * @return bool
+     */
+    private function hasCaptureAllocation(int $invoiceId, int $paymentId): bool
+    {
+        return $this->fetchTable('PaymentAllocations')->exists([
+            'invoice_id' => $invoiceId,
+            'payment_id' => $paymentId,
+            'allocation_type' => 'capture',
+        ]);
+    }
+
+    /**
+     * Refund a Stripe capture that would double-settle or pay a cancelled order.
+     *
+     * @param \Cake\Datasource\EntityInterface $payment Stripe payment.
+     * @param \Cake\Datasource\EntityInterface $order Order.
+     * @param \Stripe\Event $event Source event.
+     * @return void
+     */
+    private function refundUnexpectedCaptureOrRetry(
+        EntityInterface $payment,
+        EntityInterface $order,
+        Event $event,
+    ): void {
+        $paymentId = (int)$payment->get('id');
+        $payment = $this->fetchTable('Payments')->get($paymentId);
+        $paymentStatus = (string)$payment->get('status');
+        $providerPaymentId = (string)$payment->get('provider_payment_id');
+        $amountCents = (int)$payment->get('amount_cents');
+        if (in_array($paymentStatus, ['refunded', 'partially_refunded'], true)) {
+            return;
+        }
+        $existing = $this->fetchTable('PaymentRefunds')->find()
+            ->where([
+                'payment_id' => $paymentId,
+                'status IN' => ['pending', 'succeeded', 'completed'],
+            ])
+            ->first();
+        if ($existing !== null && in_array((string)$existing->get('status'), ['succeeded', 'completed'], true)) {
+            $this->fetchTable('Payments')->updateAll(
+                ['status' => 'refunded'],
+                ['id' => $paymentId],
+            );
+
+            return;
+        }
+
+        try {
+            $result = PaymentGatewayFactory::create()->refund(
+                $providerPaymentId,
+                $amountCents,
+                'unexpected-capture-' . $paymentId . '-' . $providerPaymentId,
+                ['reason' => 'unexpected_stripe_capture'],
+            );
+        } catch (Throwable $exception) {
+            throw new RuntimeException(
+                'Unexpected Stripe capture could not be refunded yet.',
+                0,
+                $exception,
+            );
+        }
+        if (!in_array($result->status, ['succeeded', 'paid'], true)) {
+            throw new RuntimeException('Unexpected Stripe capture refund is not ready.');
+        }
+
+        $refunds = $this->fetchTable('PaymentRefunds');
+        if ($existing === null) {
+            $row = $refunds->newEmptyEntity();
+            $row->set('payment_id', $paymentId);
+            $row->set('provider_refund_id', $result->id);
+            $row->set('idempotency_key', 'unexpected-capture-' . $paymentId . '-' . $providerPaymentId);
+            $row->set('status', 'succeeded');
+            $row->set('amount_cents', $amountCents);
+            $row->set('reason', 'Unexpected Stripe capture');
+            $row->set('completed_at', DateTime::now('UTC'));
+            $refunds->saveOrFail($row);
+        } else {
+            $existing->set('provider_refund_id', $result->id);
+            $existing->set('status', 'succeeded');
+            $existing->set('completed_at', DateTime::now('UTC'));
+            $refunds->saveOrFail($existing);
+        }
+        $this->fetchTable('Payments')->updateAll(
+            ['status' => 'refunded'],
+            ['id' => $paymentId],
+        );
+        $this->alert(
+            $event,
+            'Unexpected Stripe capture was automatically refunded for order '
+            . (string)$order->get('order_number')
+            . '.',
+        );
+    }
+
+    /**
      * @param \App\Model\Entity\SalesOrder $order Paid order.
      * @param int $amountCents Captured amount.
      * @param \App\Model\Entity\Payment $payment Captured payment.
@@ -430,6 +590,15 @@ class StripeWebhookService
             ->where(['sales_order_id' => $order->id, 'status !=' => 'void'])
             ->first();
         if ($invoice === null) {
+            return;
+        }
+        $status = (string)$invoice->get('status');
+        if (in_array($status, [Invoice::STATUS_PAID, Invoice::STATUS_CREDITED], true)) {
+            return;
+        }
+        $paid = (int)$invoice->get('amount_paid_cents');
+        $grand = (int)$invoice->get('grand_total_cents');
+        if ($grand > 0 && $paid + $amountCents > $grand) {
             return;
         }
         $now = DateTime::now('UTC')->format('Y-m-d H:i:s');
@@ -445,9 +614,12 @@ class StripeWebhookService
         }
         $this->connection()->execute('SELECT id FROM invoices WHERE id = ? FOR UPDATE', [$invoice->id]);
         $invoice = $this->fetchTable('Invoices')->get($invoice->id);
+        if (in_array((string)$invoice->get('status'), [Invoice::STATUS_PAID, Invoice::STATUS_CREDITED], true)) {
+            return;
+        }
         $invoice->amount_paid_cents = (int)$invoice->amount_paid_cents + $amountCents;
         if ((int)$invoice->amount_paid_cents >= (int)$invoice->grand_total_cents) {
-            $invoice->status = 'paid';
+            $invoice->set('status', 'paid');
             $invoice->paid_at = DateTime::now('UTC');
         }
         $this->fetchTable('Invoices')->saveOrFail($invoice);

@@ -10,9 +10,17 @@ SELECT
     END AS `cogs_cents`,
     CASE
         WHEN so.`status` = 'cancelled' OR so.`payment_status` = 'refunded' THEN 0
-        ELSE (so.`grand_total_cents` - so.`tax_cents`
-          - COALESCE(SUM(COALESCE(soi.`cost_snapshot_cents`, 0) * soi.`quantity`), 0)
-          - COALESCE(MAX(rf.`refunded_cents`), 0))
+        ELSE (
+            GREATEST(0, so.`grand_total_cents` - COALESCE(MAX(rf.`refunded_cents`), 0))
+            - CASE
+                WHEN so.`grand_total_cents` <= 0 THEN 0
+                ELSE GREATEST(0, so.`tax_cents` - CAST(
+                    so.`tax_cents` * COALESCE(MAX(rf.`refunded_cents`), 0)
+                    / so.`grand_total_cents` AS SIGNED
+                ))
+              END
+            - COALESCE(SUM(COALESCE(soi.`cost_snapshot_cents`, 0) * soi.`quantity`), 0)
+        )
     END AS `estimated_gross_profit_cents`
 FROM `sales_orders` so
 LEFT JOIN `sales_order_items` soi ON soi.`sales_order_id` = so.`id`

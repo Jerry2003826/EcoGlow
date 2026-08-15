@@ -7,6 +7,7 @@
  * @var \Cake\I18n\Date $today
  * @var iterable<\App\Model\Entity\Payment> $payments
  * @var \App\Model\Entity\Payment|null $stripePayment
+ * @var bool $blocksManualPayment
  */
 
 use App\Model\Entity\Invoice;
@@ -177,7 +178,12 @@ $this->assign('breadcrumb', $this->element('admin/breadcrumb', [
             </div>
         <?php endif; ?>
 
-        <?php if ($invoice->status !== Invoice::STATUS_VOID && (int)$invoice->balance_due_cents > 0) : ?>
+        <?php
+        $canRecordManualPayment = $invoice->status !== Invoice::STATUS_VOID
+            && (int)$invoice->balance_due_cents > 0
+            && empty($blocksManualPayment);
+        ?>
+        <?php if ($canRecordManualPayment) : ?>
             <?= $this->Form->create(null, ['url' => ['action' => 'recordPayment', $invoice->id], 'class' => 'mt-3']) ?>
             <div class="admin-filter-row">
                 <div class="admin-field">

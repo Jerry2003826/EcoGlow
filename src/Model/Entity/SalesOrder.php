@@ -104,6 +104,74 @@ class SalesOrder extends Entity
     }
 
     /**
+     * Open fulfilment work that still has money attached.
+     *
+     * @return array<string, mixed>
+     */
+    public static function awaitingDispatchConditions(): array
+    {
+        return [
+            'SalesOrders.status IN' => self::awaitingDispatchStatuses(),
+            'SalesOrders.payment_status !=' => 'refunded',
+        ];
+    }
+
+    /**
+     * Labels for payment-status chips. Text is required so colour is never
+     * the only cue.
+     *
+     * @return array<string, string>
+     */
+    public static function paymentStatusLabels(): array
+    {
+        return [
+            'pending' => 'Payment pending',
+            'failed' => 'Payment failed',
+            'paid' => 'Paid',
+            'partially_refunded' => 'Partially refunded',
+            'refunded' => 'Refunded',
+        ];
+    }
+
+    /**
+     * Visual tone for a payment-status pill.
+     *
+     * @param string $paymentStatus Payment status key.
+     * @return string success|warning|error|muted
+     */
+    public static function paymentStatusTone(string $paymentStatus): string
+    {
+        return match ($paymentStatus) {
+            'paid' => 'success',
+            'pending', 'partially_refunded' => 'warning',
+            'failed', 'refunded' => 'error',
+            default => 'muted',
+        };
+    }
+
+    /**
+     * Website checkout that is still waiting on Stripe.
+     *
+     * @return bool
+     */
+    public function isOpenWebCheckout(): bool
+    {
+        return $this->source_channel === self::CHANNEL_WEB
+            && $this->status === self::STATUS_DRAFT
+            && in_array((string)$this->payment_status, ['pending', 'failed'], true);
+    }
+
+    /**
+     * Goods that have not been handed to a courier.
+     *
+     * @return bool
+     */
+    public function isUnshipped(): bool
+    {
+        return !in_array($this->status, [self::STATUS_DISPATCHED, self::STATUS_COMPLETED], true);
+    }
+
+    /**
      * Statuses that close the promised-date clock.
      *
      * @return array<int, string>

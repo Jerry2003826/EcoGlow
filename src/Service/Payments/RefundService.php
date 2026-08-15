@@ -522,6 +522,20 @@ class RefundService
             $orderEntity->order_number = (string)$order['order_number'];
             $orderEntity->setNew(false);
             $this->orders->restockIfUnshipped($orderEntity, $actor);
+            if (
+                !in_array((string)$order['status'], [
+                    SalesOrder::STATUS_DISPATCHED,
+                    SalesOrder::STATUS_COMPLETED,
+                    SalesOrder::STATUS_CANCELLED,
+                ], true)
+            ) {
+                $this->orders->changeStatus(
+                    $orderEntity,
+                    SalesOrder::STATUS_CANCELLED,
+                    $actor > 0 ? $actor : 1,
+                    'Full refund; unshipped order cancelled.',
+                );
+            }
         }
     }
 
@@ -813,6 +827,8 @@ class RefundService
 
         $number = (new InventoryLedger())->nextDocumentNumber('credit_note', 'CN');
         $now = DateTime::now('UTC')->format('Y-m-d H:i:s');
+        $taxCents = $this->refundTaxCents($invoice, $amountCents);
+        $subtotalCents = $amountCents - $taxCents;
         $metadata = json_encode(
             [
                 'payment_refund_id' => (string)$refundId,
@@ -835,8 +851,8 @@ class RefundService
                 'refund',
                 'Stripe refund ' . $refundId,
                 (string)($invoice['currency'] ?: 'AUD'),
-                $amountCents,
-                0,
+                $subtotalCents,
+                $taxCents,
                 $amountCents,
                 $amountCents,
                 Date::now('Australia/Melbourne')->format('Y-m-d'),
@@ -856,15 +872,34 @@ class RefundService
             'INSERT INTO credit_note_items (
                 credit_note_id, line_number, description_snapshot, quantity,
                 unit_amount_cents, tax_cents, line_total_cents, created
-             ) VALUES (?, 1, ?, 1, ?, 0, ?, ?)',
+             ) VALUES (?, 1, ?, 1, ?, ?, ?, ?)',
             [
                 $creditNoteId,
                 'Refund allocation for payment refund ' . $refundId,
-                $amountCents,
+                $subtotalCents,
+                $taxCents,
                 $amountCents,
                 $now,
             ],
         );
+    }
+
+    /**
+     * GST portion of a refund, matching the dashboard remaining-tax formula.
+     *
+     * @param array<string, mixed> $invoice Locked invoice.
+     * @param int $amountCents Refunded amount.
+     * @return int
+     */
+    private function refundTaxCents(array $invoice, int $amountCents): int
+    {
+        $grand = (int)$invoice['grand_total_cents'];
+        $tax = (int)$invoice['tax_cents'];
+        if ($grand <= 0 || $tax <= 0 || $amountCents <= 0) {
+            return 0;
+        }
+
+        return min($amountCents, intdiv($tax * $amountCents, $grand));
     }
 
     /**

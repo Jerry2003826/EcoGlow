@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace App\Controller\Admin;
 
 use App\Model\Entity\Invoice;
+use App\Model\Entity\SalesOrder;
 use App\Service\Inventory\InventoryLedger;
 use App\Service\Invoices\InvoiceService;
 use App\Service\Orders\OrderService;
@@ -110,7 +111,14 @@ class InvoicesController extends AdminController
                 }
             }
         }
-        $this->set(compact('invoice', 'today', 'payments', 'stripePayment'));
+        $blocksManualPayment = false;
+        if ($invoice->sales_order_id) {
+            $order = $this->fetchTable('SalesOrders')->get((int)$invoice->sales_order_id);
+            $blocksManualPayment = (string)$order->get('source_channel') === SalesOrder::CHANNEL_WEB
+                && (string)$order->get('status') === SalesOrder::STATUS_DRAFT
+                && in_array((string)$order->get('payment_status'), ['pending', 'failed'], true);
+        }
+        $this->set(compact('invoice', 'today', 'payments', 'stripePayment', 'blocksManualPayment'));
     }
 
     /**

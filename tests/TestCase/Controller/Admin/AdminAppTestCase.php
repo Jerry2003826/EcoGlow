@@ -24,6 +24,8 @@ abstract class AdminAppTestCase extends TestCase
         'app.UserPermissionOverrides',
         'app.ContactMessages',
         'app.Customers',
+        'app.Carts',
+        'app.CartItems',
         'app.Products',
         'app.ProductVariants',
         'app.InventoryLocations',
@@ -43,6 +45,8 @@ abstract class AdminAppTestCase extends TestCase
         'app.ServiceRequests',
         'app.ServiceAppointments',
         'app.FeatureFlags',
+        'app.SiteSettings',
+        'app.Addresses',
     ];
 
     /**

@@ -205,12 +205,6 @@ parameters:
 			path: src/Controller/Admin/OrdersController.php
 
 		-
-			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$status\.$#'
-			identifier: property.notFound
-			count: 1
-			path: src/Controller/Admin/OrdersController.php
-
-		-
 			message: '#^Parameter \#1 \$order of method App\\Service\\Orders\\OrderService\:\:addNote\(\) expects App\\Model\\Entity\\SalesOrder, Cake\\Datasource\\EntityInterface given\.$#'
 			identifier: argument.type
 			count: 1

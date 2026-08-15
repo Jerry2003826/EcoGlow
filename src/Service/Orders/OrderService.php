@@ -10,7 +10,11 @@ use App\Service\AustralianStates;
 use App\Service\Cart\CartService;
 use App\Service\Inventory\InventoryLedger;
 use App\Service\Money;
+use App\Service\Payments\PaymentGatewayFactory;
+use App\Service\Payments\PaymentGatewayInterface;
+use App\Service\Payments\PaymentUncertainException;
 use Cake\Datasource\ConnectionInterface;
+use Cake\Datasource\EntityInterface;
 use Cake\I18n\Date;
 use Cake\I18n\DateTime;
 use Cake\ORM\Locator\LocatorAwareTrait;
@@ -71,10 +75,26 @@ class OrderService
     ];
 
     /**
-     * @param \App\Service\Inventory\InventoryLedger $ledger Inventory stored-procedure wrapper.
+     * Fulfilment moves that a refunded order must never take.
+     *
+     * @var array<int, string>
      */
-    public function __construct(private InventoryLedger $ledger)
-    {
+    private const BLOCKED_WHEN_REFUNDED = [
+        SalesOrder::STATUS_CONFIRMED,
+        SalesOrder::STATUS_PROCESSING,
+        SalesOrder::STATUS_DISPATCHED,
+        SalesOrder::STATUS_COMPLETED,
+        SalesOrder::STATUS_ON_HOLD,
+    ];
+
+    /**
+     * @param \App\Service\Inventory\InventoryLedger $ledger Inventory stored-procedure wrapper.
+     * @param \App\Service\Payments\PaymentGatewayInterface|null $payments Stripe or test double.
+     */
+    public function __construct(
+        private InventoryLedger $ledger,
+        private ?PaymentGatewayInterface $payments = null,
+    ) {
     }
 
     /**
@@ -248,6 +268,25 @@ class OrderService
                     $current->status,
                     $toStatus,
                 ));
+            }
+            if (
+                (string)$current->get('payment_status') === 'refunded'
+                && in_array($toStatus, self::BLOCKED_WHEN_REFUNDED, true)
+            ) {
+                throw new InvalidArgumentException('A refunded order cannot be fulfilled.');
+            }
+            if ($current->isOpenWebCheckout() && $toStatus !== SalesOrder::STATUS_CANCELLED) {
+                throw new InvalidArgumentException(
+                    'A website checkout that is still waiting for Stripe cannot be confirmed from admin.',
+                );
+            }
+            if ($toStatus === SalesOrder::STATUS_CANCELLED) {
+                $intentState = $this->cancelOpenStripeIntents($current);
+                if ($intentState === 'already_succeeded') {
+                    throw new InvalidArgumentException(
+                        'Stripe has already captured this payment. Wait for the webhook or refund it.',
+                    );
+                }
             }
 
             $from = $current->status;
@@ -544,6 +583,9 @@ class OrderService
                 return $order;
             }
             if ($this->hasCapturedPayment((int)$order->id)) {
+                return $order;
+            }
+            if ($this->cancelOpenStripeIntents($order) === 'already_succeeded') {
                 return $order;
             }
             $order->payment_status = 'failed';
@@ -1093,6 +1135,95 @@ class OrderService
         $trimmed = trim((string)$value);
 
         return $trimmed === '' ? null : $trimmed;
+    }
+
+    /**
+     * Status buttons that remain legal after payment-status guards.
+     *
+     * @param \Cake\Datasource\EntityInterface $order Order.
+     * @return array<int, string>
+     */
+    public static function allowedNextStatuses(EntityInterface $order): array
+    {
+        $status = (string)$order->get('status');
+        $paymentStatus = (string)$order->get('payment_status');
+        $next = self::TRANSITIONS[$status] ?? [];
+        if ($paymentStatus === 'refunded') {
+            $next = array_values(array_intersect($next, [SalesOrder::STATUS_CANCELLED]));
+        }
+        $openWebCheckout = (string)$order->get('source_channel') === SalesOrder::CHANNEL_WEB
+            && $status === SalesOrder::STATUS_DRAFT
+            && in_array($paymentStatus, ['pending', 'failed'], true);
+        if ($openWebCheckout) {
+            $next = array_values(array_intersect($next, [SalesOrder::STATUS_CANCELLED]));
+        }
+
+        return $next;
+    }
+
+    /**
+     * Cancel leftover Stripe PaymentIntents for an unpaid website checkout.
+     *
+     * @param \Cake\Datasource\EntityInterface $order Locked order.
+     * @return string none|canceled|already_canceled|already_succeeded|skipped
+     */
+    private function cancelOpenStripeIntents(EntityInterface $order): string
+    {
+        $intentIds = [];
+        $payments = $this->fetchTable('Payments')->find()
+            ->select(['provider_payment_id'])
+            ->where([
+                'sales_order_id' => (int)$order->get('id'),
+                'provider' => 'stripe',
+                'status IN' => ['pending', 'failed'],
+            ])
+            ->all();
+        foreach ($payments as $payment) {
+            $intentId = (string)$payment->get('provider_payment_id');
+            if ($intentId !== '') {
+                $intentIds[] = $intentId;
+            }
+        }
+        $meta = $order->get('metadata');
+        if (!is_array($meta)) {
+            $meta = [];
+        }
+        $metaIntent = (string)($meta['stripe_payment_intent_id'] ?? '');
+        if ($metaIntent !== '') {
+            $intentIds[] = $metaIntent;
+        }
+        $intentIds = array_values(array_unique($intentIds));
+        if ($intentIds === []) {
+            return 'none';
+        }
+
+        $state = 'none';
+        foreach ($intentIds as $intentId) {
+            try {
+                $result = $this->payments()->cancelPaymentIntent($intentId);
+            } catch (PaymentUncertainException $exception) {
+                throw $exception;
+            } catch (InvalidArgumentException $exception) {
+                if (str_contains($exception->getMessage(), 'not configured')) {
+                    return 'skipped';
+                }
+                throw $exception;
+            }
+            if ($result === 'already_succeeded') {
+                return 'already_succeeded';
+            }
+            $state = $result;
+        }
+
+        return $state;
+    }
+
+    /**
+     * @return \App\Service\Payments\PaymentGatewayInterface
+     */
+    private function payments(): PaymentGatewayInterface
+    {
+        return $this->payments ?? PaymentGatewayFactory::create();
     }
 
     /**

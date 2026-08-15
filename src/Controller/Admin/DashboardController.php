@@ -44,14 +44,11 @@ class DashboardController extends AdminController
             )->fetch('assoc');
             $ordersToday = $todayRow ? (int)$todayRow['orders_total'] : 0;
             $awaitingDispatch = $this->fetchTable('SalesOrders')->find()
-                ->where(['status IN' => SalesOrder::awaitingDispatchStatuses()])
+                ->where(SalesOrder::awaitingDispatchConditions())
                 ->count();
             $newOrders = $this->fetchTable('SalesOrders')->find()
                 ->contain(['Customers'])
-                ->where(['SalesOrders.status IN' => [
-                    SalesOrder::STATUS_CONFIRMED,
-                    SalesOrder::STATUS_PROCESSING,
-                ]])
+                ->where(SalesOrder::awaitingDispatchConditions())
                 ->orderBy(['SalesOrders.placed_at' => 'DESC', 'SalesOrders.id' => 'DESC'])
                 ->limit(5)
                 ->all();

@@ -50,4 +50,12 @@ interface PaymentGatewayInterface
      * @return \App\Service\Payments\RefundResult|null
      */
     public function retrieveRefund(string $refundId): ?RefundResult;
+
+    /**
+     * Cancel an unpaid PaymentIntent so a leftover checkout page cannot charge.
+     *
+     * @param string $paymentIntentId Stripe PaymentIntent id.
+     * @return string canceled|already_canceled|already_succeeded
+     */
+    public function cancelPaymentIntent(string $paymentIntentId): string;
 }

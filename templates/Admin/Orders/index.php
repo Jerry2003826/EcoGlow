@@ -152,6 +152,7 @@ $this->assign('breadcrumb', $this->element('admin/breadcrumb', [
                         <th><?= $this->Paginator->sort('source_channel', 'Channel') ?></th>
                         <th class="text-end"><?= $this->Paginator->sort('grand_total_cents', 'Amount') ?></th>
                         <th><?= $this->Paginator->sort('status') ?></th>
+                        <th><?= $this->Paginator->sort('payment_status', 'Payment') ?></th>
                         <th><?= $this->Paginator->sort('placed_at', 'Placed') ?></th>
                         <th><?= $this->Paginator->sort('promised_delivery_date', 'Promised') ?></th>
                         <th class="text-end"> </th>
@@ -175,6 +176,12 @@ $this->assign('breadcrumb', $this->element('admin/breadcrumb', [
                             <td data-label="Channel"><?= h($channelLabel) ?></td>
                             <td class="cell-qty" data-label="Amount"><?= $this->Money->aud((int)$order->grand_total_cents) ?></td>
                             <td data-label="Status"><?= $this->element('admin/status_pill', ['status' => $order->status]) ?></td>
+                            <td data-label="Payment"><?= $this->element('admin/status_pill', [
+                                'status' => (string)$order->payment_status,
+                                'label' => SalesOrder::paymentStatusLabels()[(string)$order->payment_status]
+                                    ?? ucfirst(str_replace('_', ' ', (string)$order->payment_status)),
+                                'toneOverride' => SalesOrder::paymentStatusTone((string)$order->payment_status),
+                            ]) ?></td>
                             <td class="text-nowrap" data-label="Placed"><?= h(($order->placed_at ?? $order->created)?->format('d M Y')) ?></td>
                             <td class="text-nowrap" data-label="Promised">
                                 <?= $order->promised_delivery_date ? h($order->promised_delivery_date->format('d M Y')) : '—' ?>

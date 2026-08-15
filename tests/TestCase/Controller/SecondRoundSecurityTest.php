@@ -57,6 +57,13 @@ class SecondRoundSecurityTest extends TestCase
         'app.FeatureFlags',
         'app.Payments',
         'app.PaymentRefunds',
+        'app.PaymentEffects',
+        'app.CreditNoteItems',
+        'app.CreditNotes',
+        'app.PaymentAllocations',
+        'app.InvoiceItems',
+        'app.InvoiceStatusHistory',
+        'app.Invoices',
         'app.IdempotencyRecords',
         'app.OrderAddresses',
         'app.OutboundMessages',
@@ -81,6 +88,8 @@ class SecondRoundSecurityTest extends TestCase
         Configure::write('Stripe.webhookSecret', self::WEBHOOK_SECRET);
         Configure::write('Stripe.secretKey', '');
         Configure::write('Stripe.publishableKey', 'pk_test_fake');
+        Configure::write('Stripe.gateway', new FakePaymentGateway());
+        $this->purgeInvoiceDocuments();
     }
 
     /**
@@ -729,7 +738,7 @@ class SecondRoundSecurityTest extends TestCase
         );
         $order = $this->fetchTable('SalesOrders')->get($order->id);
         $this->assertSame('refunded', $order->payment_status);
-        $this->assertNotSame(SalesOrder::STATUS_CANCELLED, $order->status);
+        $this->assertSame(SalesOrder::STATUS_CANCELLED, $order->status);
     }
 
     /**
@@ -1119,6 +1128,338 @@ class SecondRoundSecurityTest extends TestCase
     }
 
     /**
+     * Pending website checkouts cannot be invoiced from admin.
+     *
+     * @return void
+     */
+    public function testPendingWebCheckoutCannotBeInvoiced(): void
+    {
+        $order = $this->placeOrder('pi_no_invoice');
+        $this->loginAs(1);
+        $this->enableRetainFlashMessages();
+        $before = $this->fetchTable('Invoices')->find()->count();
+        $this->post('/admin/invoices/create-from-order/' . $order->id);
+        $this->assertResponseCode(302);
+        $this->assertFlashMessage(
+            'A website checkout that is still waiting for Stripe cannot be invoiced.',
+        );
+        $this->assertSame($before, $this->fetchTable('Invoices')->find()->count());
+    }
+
+    /**
+     * Leftover invoices on a pending Stripe checkout cannot take manual cash.
+     *
+     * @return void
+     */
+    public function testPendingStripeCheckoutRejectsManualPayment(): void
+    {
+        $order = $this->placeOrder('pi_no_manual');
+        $invoice = $this->issueInvoice($order);
+        $this->loginAs(1);
+        $this->enableRetainFlashMessages();
+        $this->post('/admin/invoices/record-payment/' . $invoice->id, ['amount' => '249.00']);
+        $this->assertResponseCode(302);
+        $this->assertFlashMessage(
+            'A website checkout that is still waiting for Stripe cannot take a manual payment.',
+        );
+        $invoice = $this->fetchTable('Invoices')->get($invoice->id);
+        $this->assertSame(0, (int)$invoice->amount_paid_cents);
+        $this->assertSame(
+            0,
+            $this->fetchTable('Payments')->find()
+                ->where(['sales_order_id' => $order->id, 'provider' => 'manual'])
+                ->count(),
+        );
+    }
+
+    /**
+     * Admin cannot confirm a draft website checkout that still has Stripe pending.
+     *
+     * @return void
+     */
+    public function testPendingWebCheckoutCannotBeConfirmedByAdmin(): void
+    {
+        $order = $this->placeOrder('pi_no_confirm');
+        $this->loginAs(1);
+        $this->enableRetainFlashMessages();
+        $this->post('/admin/orders/update-status/' . $order->id, [
+            'status' => SalesOrder::STATUS_CONFIRMED,
+        ]);
+        $this->assertResponseCode(302);
+        $this->assertFlashMessage(
+            'A website checkout that is still waiting for Stripe cannot be confirmed from admin.',
+        );
+        $order = $this->fetchTable('SalesOrders')->get($order->id);
+        $this->assertSame(SalesOrder::STATUS_DRAFT, $order->status);
+        $this->assertSame('pending', (string)$order->payment_status);
+    }
+
+    /**
+     * A later Stripe success must not stack onto a manually settled invoice.
+     *
+     * @return void
+     */
+    public function testManualPaymentThenStripeSuccessDoesNotDoubleSettle(): void
+    {
+        $order = $this->placeOrder('pi_double_pay');
+        $invoice = $this->issueInvoice($order);
+        $payments = $this->fetchTable('Payments');
+        $manual = $payments->newEmptyEntity();
+        $manual->set('sales_order_id', $order->id);
+        $manual->set('provider', 'manual');
+        $manual->set('provider_payment_id', 'manual-double-' . $order->id);
+        $manual->set('method', 'manual');
+        $manual->set('status', 'captured');
+        $manual->set('amount_cents', (int)$order->grand_total_cents);
+        $manual->set('currency', 'AUD');
+        $manual->set('captured_at', DateTime::now('UTC'));
+        $payments->saveOrFail($manual);
+        $invoice->amount_paid_cents = (int)$order->grand_total_cents;
+        $invoice->status = Invoice::STATUS_PAID;
+        $this->fetchTable('Invoices')->saveOrFail($invoice);
+        $this->fetchTable('SalesOrders')->updateAll(
+            ['payment_status' => 'paid'],
+            ['id' => $order->id],
+        );
+
+        $this->postSigned($this->eventPayload(
+            'evt_double_pay',
+            'payment_intent.succeeded',
+            'pi_double_pay',
+            (int)$order->grand_total_cents,
+            ['order_id' => (string)$order->id],
+        ));
+        $this->assertResponseOk();
+        $this->assertResponseContains('refunded');
+        $invoice = $this->fetchTable('Invoices')->get($invoice->id);
+        $this->assertSame((int)$order->grand_total_cents, (int)$invoice->amount_paid_cents);
+        $this->assertSame(0, (int)$invoice->balance_due_cents);
+        $this->assertSame(
+            'refunded',
+            (string)$this->fetchTable('Payments')->find()
+                ->where(['provider_payment_id' => 'pi_double_pay'])
+                ->first()
+                ?->status,
+        );
+        $this->assertSame(
+            'captured',
+            (string)$this->fetchTable('Payments')->get($manual->id)->status,
+        );
+        $order = $this->fetchTable('SalesOrders')->get($order->id);
+        $this->assertSame('paid', (string)$order->payment_status);
+        $this->assertSame(SalesOrder::STATUS_DRAFT, $order->status);
+    }
+
+    /**
+     * Hold expiry must cancel the Stripe PaymentIntent as well as the order.
+     *
+     * @return void
+     */
+    public function testExpiredCheckoutCancelsPaymentIntent(): void
+    {
+        $gateway = new FakePaymentGateway();
+        Configure::write('Stripe.gateway', $gateway);
+        $order = $this->placeOrder('pi_expire_cancel');
+        $order->set('hold_expires_at', DateTime::now('UTC')->subMinutes(1));
+        $this->fetchTable('SalesOrders')->saveOrFail($order);
+
+        $this->assertSame(1, (new OrderService(new InventoryLedger()))->releaseExpiredHolds());
+        $this->assertSame(
+            SalesOrder::STATUS_CANCELLED,
+            $this->fetchTable('SalesOrders')->get($order->id)->status,
+        );
+        $this->assertContains('pi_expire_cancel', $gateway->canceledIntentIds);
+    }
+
+    /**
+     * A late Stripe success after local cancel must refund, not confirm.
+     *
+     * @return void
+     */
+    public function testLateStripeSuccessAfterCancellationIsRefundedOrReconciled(): void
+    {
+        $order = $this->placeOrder('pi_late_success');
+        (new OrderService(new InventoryLedger()))->failUnpaid(
+            $order,
+            4,
+            'Staff cancelled unpaid checkout',
+        );
+        $order = $this->fetchTable('SalesOrders')->get($order->id);
+        $this->assertSame(SalesOrder::STATUS_CANCELLED, $order->status);
+
+        $this->postSigned($this->eventPayload(
+            'evt_late_success',
+            'payment_intent.succeeded',
+            'pi_late_success',
+            (int)$order->grand_total_cents,
+            ['order_id' => (string)$order->id],
+        ));
+        $this->assertResponseOk();
+        $this->assertResponseContains('refunded');
+        $order = $this->fetchTable('SalesOrders')->get($order->id);
+        $this->assertSame(SalesOrder::STATUS_CANCELLED, $order->status);
+        $this->assertNotSame('paid', (string)$order->payment_status);
+        $this->assertSame(
+            'refunded',
+            (string)$this->fetchTable('Payments')->find()
+                ->where(['provider_payment_id' => 'pi_late_success'])
+                ->first()
+                ?->status,
+        );
+    }
+
+    /**
+     * A full refund of an unshipped order cancels it in the same transaction.
+     *
+     * @return void
+     */
+    public function testFullRefundCancelsUnshippedOrder(): void
+    {
+        $order = $this->placeOrder('pi_refund_cancel');
+        $this->postSigned($this->eventPayload(
+            'evt_refund_cancel_pay',
+            'payment_intent.succeeded',
+            'pi_refund_cancel',
+            (int)$order->grand_total_cents,
+            ['order_id' => (string)$order->id],
+        ));
+        $this->assertResponseOk();
+        $gateway = new FakePaymentGateway();
+        $gateway->nextRefundId = 're_refund_cancel';
+        (new RefundService(new OrderService(new InventoryLedger()), $gateway))
+            ->refundOrder($this->fetchTable('SalesOrders')->get($order->id), 1);
+        (new RefundService(new OrderService(new InventoryLedger()), new StripePaymentGateway()))
+            ->applyWebhookStatus('re_refund_cancel', 'succeeded', 'pi_refund_cancel');
+
+        $order = $this->fetchTable('SalesOrders')->get($order->id);
+        $this->assertSame('refunded', (string)$order->payment_status);
+        $this->assertSame(SalesOrder::STATUS_CANCELLED, $order->status);
+        $this->assertTrue($this->fetchTable('OrderStatusHistory')->exists([
+            'sales_order_id' => $order->id,
+            'to_status' => SalesOrder::STATUS_CANCELLED,
+            'note' => 'Full refund; unshipped order cancelled.',
+        ]));
+    }
+
+    /**
+     * Refunded orders cannot be pushed to dispatched, even by a direct POST.
+     *
+     * @return void
+     */
+    public function testRefundedOrderCannotBeDispatched(): void
+    {
+        $order = $this->placeOrder('pi_no_dispatch');
+        $this->postSigned($this->eventPayload(
+            'evt_no_dispatch_pay',
+            'payment_intent.succeeded',
+            'pi_no_dispatch',
+            (int)$order->grand_total_cents,
+            ['order_id' => (string)$order->id],
+        ));
+        $gateway = new FakePaymentGateway();
+        $gateway->nextRefundId = 're_no_dispatch';
+        (new RefundService(new OrderService(new InventoryLedger()), $gateway))
+            ->refundOrder($this->fetchTable('SalesOrders')->get($order->id), 1);
+        (new RefundService(new OrderService(new InventoryLedger()), new StripePaymentGateway()))
+            ->applyWebhookStatus('re_no_dispatch', 'succeeded', 'pi_no_dispatch');
+
+        $this->loginAs(1);
+        $this->enableRetainFlashMessages();
+        $this->post('/admin/orders/update-status/' . $order->id, [
+            'status' => SalesOrder::STATUS_PROCESSING,
+        ]);
+        $this->assertFlashMessage('Cannot move an order from cancelled to processing.');
+        $this->post('/admin/orders/update-status/' . $order->id, [
+            'status' => SalesOrder::STATUS_DISPATCHED,
+        ]);
+        $order = $this->fetchTable('SalesOrders')->get($order->id);
+        $this->assertSame(SalesOrder::STATUS_CANCELLED, $order->status);
+        $this->assertSame('refunded', (string)$order->payment_status);
+    }
+
+    /**
+     * Dispatch after a full refund must not silently skip inventory.
+     *
+     * @return void
+     */
+    public function testDispatchAfterRefundCannotSkipInventoryMovement(): void
+    {
+        $before = $this->onHand();
+        $order = $this->placeOrder('pi_no_skip_stock');
+        $this->postSigned($this->eventPayload(
+            'evt_no_skip_pay',
+            'payment_intent.succeeded',
+            'pi_no_skip_stock',
+            (int)$order->grand_total_cents,
+            ['order_id' => (string)$order->id],
+        ));
+        $this->assertSame($before - 1, $this->onHand());
+        $gateway = new FakePaymentGateway();
+        $gateway->nextRefundId = 're_no_skip';
+        (new RefundService(new OrderService(new InventoryLedger()), $gateway))
+            ->refundOrder($this->fetchTable('SalesOrders')->get($order->id), 1);
+        (new RefundService(new OrderService(new InventoryLedger()), new StripePaymentGateway()))
+            ->applyWebhookStatus('re_no_skip', 'succeeded', 'pi_no_skip_stock');
+        $this->assertSame($before, $this->onHand());
+        $order = $this->fetchTable('SalesOrders')->get($order->id);
+        $this->assertSame(SalesOrder::STATUS_CANCELLED, $order->status);
+        $this->assertSame('refunded', (string)$order->payment_status);
+
+        try {
+            (new OrderService(new InventoryLedger()))->changeStatus(
+                $order,
+                SalesOrder::STATUS_DISPATCHED,
+                1,
+            );
+            $this->fail('A refunded unshipped order must not dispatch.');
+        } catch (InvalidArgumentException $exception) {
+            $this->assertStringContainsString('Cannot move an order from cancelled', $exception->getMessage());
+        }
+        $this->assertSame($before, $this->onHand());
+        $this->assertSame(
+            SalesOrder::STATUS_CANCELLED,
+            $this->fetchTable('SalesOrders')->get($order->id)->status,
+        );
+    }
+
+    /**
+     * Credit notes must carry the GST share of the refunded amount.
+     *
+     * @return void
+     */
+    public function testCreditNoteCarriesRefundedGst(): void
+    {
+        $order = $this->placeOrder('pi_cn_gst');
+        $invoice = $this->issueInvoice($order);
+        $this->postSigned($this->eventPayload(
+            'evt_cn_gst_pay',
+            'payment_intent.succeeded',
+            'pi_cn_gst',
+            (int)$order->grand_total_cents,
+            ['order_id' => (string)$order->id],
+        ));
+        $gateway = new FakePaymentGateway();
+        $gateway->nextRefundId = 're_cn_gst';
+        (new RefundService(new OrderService(new InventoryLedger()), $gateway))
+            ->refundOrder($this->fetchTable('SalesOrders')->get($order->id), 1);
+        (new RefundService(new OrderService(new InventoryLedger()), new StripePaymentGateway()))
+            ->applyWebhookStatus('re_cn_gst', 'succeeded', 'pi_cn_gst');
+
+        $credit = $this->fetchTable('Invoices')->getConnection()->execute(
+            'SELECT tax_cents, subtotal_cents, total_cents
+               FROM credit_notes WHERE invoice_id = ?',
+            [$invoice->id],
+        )->fetch('assoc');
+        $this->assertIsArray($credit);
+        $expectedTax = intdiv((int)$invoice->tax_cents * (int)$order->grand_total_cents, (int)$order->grand_total_cents);
+        $this->assertSame((int)$invoice->tax_cents, (int)$credit['tax_cents']);
+        $this->assertSame($expectedTax, (int)$credit['tax_cents']);
+        $this->assertSame((int)$order->grand_total_cents - $expectedTax, (int)$credit['subtotal_cents']);
+        $this->assertSame((int)$order->grand_total_cents, (int)$credit['total_cents']);
+        $this->assertGreaterThan(0, (int)$credit['tax_cents']);
+    }
+
+    /**
      * Hold cleanup must skip a row another connection already locked.
      *
      * @return void
@@ -1157,6 +1498,44 @@ class SecondRoundSecurityTest extends TestCase
             SalesOrder::STATUS_CANCELLED,
             $this->fetchTable('SalesOrders')->get($order->id)->status,
         );
+    }
+
+    /**
+     * Invoice tables are not always fixture-managed by earlier test classes.
+     *
+     * @return void
+     */
+    private function purgeInvoiceDocuments(): void
+    {
+        $connection = $this->fetchTable('SalesOrders')->getConnection();
+        $connection->execute('SET FOREIGN_KEY_CHECKS=0');
+        foreach (
+            [
+                'credit_note_items',
+                'credit_notes',
+                'payment_allocations',
+                'invoice_items',
+                'invoice_status_history',
+                'invoices',
+                'payment_effects',
+            ] as $table
+        ) {
+            $connection->execute('DELETE FROM `' . $table . '`');
+        }
+        $connection->execute('SET FOREIGN_KEY_CHECKS=1');
+    }
+
+    /**
+     * @param int $userId UsersFixture id.
+     * @return void
+     */
+    private function loginAs(int $userId): void
+    {
+        $user = $this->fetchTable('Users')->get($userId);
+        $this->session([
+            'AuthV2' => $userId,
+            'AuthVersion' => (int)($user->get('auth_version') ?: 1),
+        ]);
     }
 
     /**

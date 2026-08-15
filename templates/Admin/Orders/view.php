@@ -29,7 +29,15 @@ $this->assign('breadcrumb', $this->element('admin/breadcrumb', [
         <span class="eg-eyebrow">Order</span>
         <h1><?= h($salesOrder->order_number) ?></h1>
     </div>
-    <?= $this->element('admin/status_pill', ['status' => $salesOrder->status]) ?>
+    <div class="d-flex flex-wrap gap-2">
+        <?= $this->element('admin/status_pill', ['status' => $salesOrder->status]) ?>
+        <?= $this->element('admin/status_pill', [
+            'status' => (string)$salesOrder->payment_status,
+            'label' => SalesOrder::paymentStatusLabels()[(string)$salesOrder->payment_status]
+                ?? ucfirst(str_replace('_', ' ', (string)$salesOrder->payment_status)),
+            'toneOverride' => SalesOrder::paymentStatusTone((string)$salesOrder->payment_status),
+        ]) ?>
+    </div>
 </div>
 <?php if ($existingInvoice) : ?>
     <p class="admin-note">
@@ -38,7 +46,10 @@ $this->assign('breadcrumb', $this->element('admin/breadcrumb', [
             ['controller' => 'Invoices', 'action' => 'view', $existingInvoice->id],
         ) ?>
     </p>
-<?php elseif (!in_array((string)$salesOrder->payment_status, ['refunded', 'partially_refunded'], true)) : ?>
+<?php elseif (
+    !in_array((string)$salesOrder->payment_status, ['refunded', 'partially_refunded'], true)
+    && !$salesOrder->isOpenWebCheckout()
+) : ?>
     <div class="admin-actions mb-3">
         <?= $this->Form->postButton(
             'Issue invoice',
