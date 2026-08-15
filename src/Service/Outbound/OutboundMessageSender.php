@@ -66,9 +66,6 @@ class OutboundMessageSender
 
         try {
             $this->deliver($claimed);
-            $this->markSent($claimed);
-
-            return 'sent';
         } catch (Throwable $exception) {
             Log::error(sprintf(
                 'Outbound message #%d failed: %s',
@@ -78,6 +75,21 @@ class OutboundMessageSender
 
             return $this->markFailure($claimed, $exception->getMessage());
         }
+
+        try {
+            $this->recordEvent((int)$claimed->id, 'smtp_accepted', [
+                'recipient' => $claimed->get('recipient'),
+            ]);
+            $this->markSent($claimed);
+        } catch (Throwable $exception) {
+            Log::error(sprintf(
+                'Outbound message #%d was accepted by SMTP but not marked sent: %s',
+                $id,
+                $exception->getMessage(),
+            ));
+        }
+
+        return 'sent';
     }
 
     /**
@@ -150,13 +162,45 @@ class OutboundMessageSender
      */
     private function markSent(OutboundMessage $message): void
     {
+        $this->completeAcceptedSend((int)$message->id, (string)$message->get('recipient'));
+    }
+
+    /**
+     * Persist sent after SMTP accepted the message. Safe to call again.
+     *
+     * @param int $id Message id.
+     * @param string|null $recipient Recipient for the sent event.
+     * @return void
+     */
+    private function completeAcceptedSend(int $id, ?string $recipient = null): void
+    {
         $now = DateTime::now('UTC');
-        $message->set('status', 'sent');
-        $message->set('sent_at', $now);
-        $message->set('failed_at', null);
-        $message->set('failure_reason', null);
-        $this->fetchTable('OutboundMessages')->saveOrFail($message);
-        $this->recordEvent($message, 'sent', ['recipient' => $message->get('recipient')]);
+        $updated = $this->fetchTable('OutboundMessages')->updateAll(
+            [
+                'status' => 'sent',
+                'sent_at' => $now,
+                'failed_at' => null,
+                'failure_reason' => null,
+            ],
+            [
+                'id' => $id,
+                'status IN' => ['sending', 'queued'],
+            ],
+        );
+        if ($updated !== 1) {
+            return;
+        }
+        if (
+            $this->fetchTable('OutboundMessageEvents')->exists([
+                'outbound_message_id' => $id,
+                'event_type' => 'sent',
+            ])
+        ) {
+            return;
+        }
+        $this->recordEvent($id, 'sent', [
+            'recipient' => $recipient,
+        ]);
     }
 
     /**
@@ -169,7 +213,7 @@ class OutboundMessageSender
         $attempts = (int)$message->get('attempt_count') + 1;
         $message->set('attempt_count', $attempts);
         $message->set('failure_reason', $reason);
-        $this->recordEvent($message, 'failed', [
+        $this->recordEvent((int)$message->id, 'failed', [
             'attempt' => $attempts,
             'reason' => $reason,
         ]);
@@ -202,21 +246,40 @@ class OutboundMessageSender
             ->all();
 
         foreach ($stale as $message) {
+            $staleId = (int)$message->get('id');
+            if ($this->alreadyAcceptedBySmtp($staleId)) {
+                $this->completeAcceptedSend($staleId);
+                continue;
+            }
             $this->markFailure($message, 'Timed out while sending; reclaimed for retry.');
         }
     }
 
     /**
-     * @param \App\Model\Entity\OutboundMessage $message Queue row.
+     * SMTP already accepted this row; reclaim must not send again.
+     *
+     * @param int $id Message id.
+     * @return bool
+     */
+    private function alreadyAcceptedBySmtp(int $id): bool
+    {
+        return $this->fetchTable('OutboundMessageEvents')->exists([
+            'outbound_message_id' => $id,
+            'event_type IN' => ['sent', 'smtp_accepted'],
+        ]);
+    }
+
+    /**
+     * @param int $messageId Queue row id.
      * @param string $type Event type.
      * @param array<string, mixed> $payload Event payload.
      * @return void
      */
-    private function recordEvent(OutboundMessage $message, string $type, array $payload): void
+    private function recordEvent(int $messageId, string $type, array $payload): void
     {
         $events = $this->fetchTable('OutboundMessageEvents');
         $event = $events->newEmptyEntity();
-        $event->set('outbound_message_id', $message->id);
+        $event->set('outbound_message_id', $messageId);
         $event->set('event_type', $type);
         $event->set('payload', $payload);
         $event->set('occurred_at', DateTime::now('UTC'));

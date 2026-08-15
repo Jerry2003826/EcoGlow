@@ -220,4 +220,21 @@ class CartServiceTest extends TestCase
         $this->expectExceptionMessage('Only 5 of this item are left.');
         $carts->add($cart, 1, 6);
     }
+
+    /**
+     * Repeated adds must stack on the locked cart line.
+     *
+     * @return void
+     */
+    public function testRepeatedAddsStackQuantity(): void
+    {
+        $carts = new CartService();
+        $cart = $carts->current(null, 'stack-qty', true);
+        $this->assertNotNull($cart);
+        $carts->add($cart, 1, 1);
+        $carts->add($cart, 1, 2);
+        $cart = $carts->current(null, 'stack-qty', false);
+        $this->assertNotNull($cart);
+        $this->assertSame(3, (int)$cart->cart_items[0]->quantity);
+    }
 }

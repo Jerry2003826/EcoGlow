@@ -220,7 +220,7 @@ class InvoiceService
                 $payment = $payments->newEmptyEntity();
                 $payment->sales_order_id = $invoice->sales_order_id;
                 $payment->provider = 'manual';
-                $payment->provider_payment_id = 'inv-' . $invoice->id . '-' . time();
+                $payment->provider_payment_id = 'inv-' . $invoice->id . '-' . bin2hex(random_bytes(8));
                 $payment->method = 'manual';
                 $payment->status = 'captured';
                 $payment->amount_cents = $amountCents;
@@ -229,6 +229,15 @@ class InvoiceService
                 $payment->provider_metadata = ['invoice_id' => $invoice->id];
                 $payment->captured_at = DateTime::now('UTC');
                 $payments->saveOrFail($payment);
+                if ($invoice->status === Invoice::STATUS_PAID) {
+                    $this->fetchTable('SalesOrders')->updateAll(
+                        ['payment_status' => 'paid'],
+                        [
+                            'id' => $invoice->sales_order_id,
+                            'payment_status IN' => ['pending', 'failed'],
+                        ],
+                    );
+                }
             }
 
             return $invoice;

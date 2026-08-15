@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace App\Test\TestCase\Service;
 
 use App\Service\Outbound\OutboundMessageSender;
+use Cake\I18n\DateTime;
 use Cake\TestSuite\EmailTrait;
 use Cake\TestSuite\TestCase;
 
@@ -104,6 +105,43 @@ class OutboundMessageSenderTest extends TestCase
 
         $this->assertSame('skipped', $sender->processOne($id));
         $this->assertMailCount(0);
+    }
+
+    /**
+     * A stale sending row that SMTP already accepted must be marked sent, not resent.
+     *
+     * @return void
+     */
+    public function testReclaimAfterSmtpAcceptedDoesNotResend(): void
+    {
+        $id = $this->queueMessage([
+            'reference_number' => 'OM-TEST-SMTP',
+            'recipient' => 'casey@example.com',
+            'template_key' => 'contact_reply',
+            'subject' => 'Already handed to SMTP',
+            'body_text' => 'Do not send twice.',
+        ]);
+        $messages = $this->fetchTable('OutboundMessages');
+        $messages->getConnection()->execute(
+            "UPDATE outbound_messages
+                SET status = 'sending', modified = DATE_SUB(UTC_TIMESTAMP(6), INTERVAL 20 MINUTE)
+              WHERE id = ?",
+            [$id],
+        );
+
+        $events = $this->fetchTable('OutboundMessageEvents');
+        $event = $events->newEmptyEntity();
+        $event->set('outbound_message_id', $id);
+        $event->set('event_type', 'smtp_accepted');
+        $event->set('payload', ['recipient' => 'casey@example.com']);
+        $event->set('occurred_at', DateTime::now('UTC'));
+        $events->saveOrFail($event);
+
+        $sender = new OutboundMessageSender();
+        $stats = $sender->process(10);
+        $this->assertSame(0, $stats['sent']);
+        $this->assertMailCount(0);
+        $this->assertSame('sent', (string)$messages->get($id)->status);
     }
 
     /**

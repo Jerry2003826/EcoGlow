@@ -122,26 +122,64 @@ class CartService
     {
         $variant = $this->requireActiveVariant($variantId);
         $this->assertQuantity($quantity);
-        if ($requireStock) {
-            $this->assertStock($variant, $this->quantityInCart($cart, $variantId) + $quantity);
-        }
         $price = (int)$variant->get('price_cents');
-        $items = $this->fetchTable('CartItems');
-        $existing = $items->find()
-            ->where(['cart_id' => $cart->id, 'product_variant_id' => $variantId])
-            ->first();
-        if ($existing) {
-            $existing->set('quantity', min(99, (int)$existing->quantity + $quantity));
-            $existing->set('unit_price_snapshot_cents', $price);
-            $items->saveOrFail($existing);
-        } else {
+
+        $this->connection()->transactional(function () use (
+            $cart,
+            $variant,
+            $variantId,
+            $quantity,
+            $requireStock,
+            $price,
+        ): void {
+            $this->fetchTable('Carts')->find()
+                ->select(['id'])
+                ->where(['id' => $cart->id])
+                ->epilog('FOR UPDATE')
+                ->firstOrFail();
+            $items = $this->fetchTable('CartItems');
+            $existing = $items->find()
+                ->where(['cart_id' => $cart->id, 'product_variant_id' => $variantId])
+                ->epilog('FOR UPDATE')
+                ->first();
+            $currentQty = $existing ? (int)$existing->get('quantity') : 0;
+            if ($requireStock) {
+                $this->assertStock($variant, $currentQty + $quantity);
+            }
+            if ($existing) {
+                $existing->set('quantity', min(99, $currentQty + $quantity));
+                $existing->set('unit_price_snapshot_cents', $price);
+                $items->saveOrFail($existing);
+
+                return;
+            }
+
             $item = $items->newEmptyEntity();
             $item->set('cart_id', $cart->id);
             $item->set('product_variant_id', $variantId);
             $item->set('quantity', $quantity);
             $item->set('unit_price_snapshot_cents', $price);
-            $items->saveOrFail($item);
-        }
+            try {
+                $items->saveOrFail($item);
+            } catch (Throwable $exception) {
+                if (!$this->isDuplicateCartLine($exception)) {
+                    throw $exception;
+                }
+                $existing = $items->find()
+                    ->where(['cart_id' => $cart->id, 'product_variant_id' => $variantId])
+                    ->epilog('FOR UPDATE')
+                    ->first();
+                if ($existing === null) {
+                    throw $exception;
+                }
+                $existing->set(
+                    'quantity',
+                    min(99, (int)$existing->get('quantity') + $quantity),
+                );
+                $existing->set('unit_price_snapshot_cents', $price);
+                $items->saveOrFail($existing);
+            }
+        });
 
         return $this->reload($cart);
     }
@@ -459,20 +497,6 @@ class CartService
     }
 
     /**
-     * @param \App\Model\Entity\Cart $cart Cart.
-     * @param int $variantId Variant id.
-     * @return int
-     */
-    private function quantityInCart(Cart $cart, int $variantId): int
-    {
-        $item = $this->fetchTable('CartItems')->find()
-            ->where(['cart_id' => $cart->id, 'product_variant_id' => $variantId])
-            ->first();
-
-        return $item ? (int)$item->quantity : 0;
-    }
-
-    /**
      * @param int $variantId Variant id.
      * @return int
      */
@@ -704,6 +728,18 @@ class CartService
         }
 
         return is_numeric($value) ? (string)$value : $default;
+    }
+
+    /**
+     * @param \Throwable $exception Save failure.
+     * @return bool
+     */
+    private function isDuplicateCartLine(Throwable $exception): bool
+    {
+        $message = strtolower($exception->getMessage());
+
+        return str_contains($message, '1062')
+            || str_contains($message, 'duplicate');
     }
 
     /**

@@ -232,7 +232,7 @@ final class TotpService
         $binary = '';
         foreach (str_split($bits, 8) as $chunk) {
             if (strlen($chunk) === 8) {
-                $binary .= chr((int)bindec($chunk));
+                $binary .= chr((int)bindec($chunk) & 0xFF);
             }
         }
 

@@ -749,15 +749,26 @@ class RefundService
             || ($grandCents > 0 && $paidCents >= $grandCents);
         if ($settled) {
             $this->issueRefundCreditNote($invoice, $amountCents, $refundId);
-            $refundedTotal = $this->refundAllocatedTotal((int)$invoice['id']);
-            if (
-                $status !== Invoice::STATUS_CREDITED
-                && $refundedTotal >= $grandCents
-            ) {
-                $this->connection()->execute(
-                    'UPDATE invoices SET status = ? WHERE id = ?',
-                    [Invoice::STATUS_CREDITED, (int)$invoice['id']],
-                );
+            $credited = $this->connection()->execute(
+                "UPDATE invoices
+                    SET status = ?
+                  WHERE id = ?
+                    AND status IN (?, ?)
+                    AND grand_total_cents <= (
+                        SELECT COALESCE(SUM(amount_cents), 0)
+                          FROM payment_allocations
+                         WHERE invoice_id = ?
+                           AND allocation_type = 'refund'
+                    )",
+                [
+                    Invoice::STATUS_CREDITED,
+                    (int)$invoice['id'],
+                    Invoice::STATUS_PAID,
+                    Invoice::STATUS_OVERDUE,
+                    (int)$invoice['id'],
+                ],
+            )->rowCount() === 1;
+            if ($credited) {
                 $this->connection()->execute(
                     'INSERT INTO invoice_status_history
                         (invoice_id, from_status, to_status, note, created)
@@ -854,23 +865,6 @@ class RefundService
                 $now,
             ],
         );
-    }
-
-    /**
-     * @param int $invoiceId Invoice id.
-     * @return int
-     */
-    private function refundAllocatedTotal(int $invoiceId): int
-    {
-        $row = $this->connection()->execute(
-            "SELECT COALESCE(SUM(amount_cents), 0) AS refunded_cents
-               FROM payment_allocations
-              WHERE invoice_id = ?
-                AND allocation_type = 'refund'",
-            [$invoiceId],
-        )->fetch('assoc');
-
-        return (int)(is_array($row) ? ($row['refunded_cents'] ?? 0) : 0);
     }
 
     /**

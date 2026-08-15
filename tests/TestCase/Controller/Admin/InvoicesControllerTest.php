@@ -121,4 +121,51 @@ class InvoicesControllerTest extends AdminAppTestCase
         $this->assertFlashMessage('A refunded order cannot be invoiced.');
         $this->assertSame($before, $this->fetchTable('Invoices')->find()->count());
     }
+
+    /**
+     * Manual invoice payments must settle the order and use unique payment ids.
+     *
+     * @return void
+     */
+    public function testRecordPaymentMarksOrderPaidAndUsesUniqueIds(): void
+    {
+        $this->loginAs(1);
+        $this->post('/admin/orders/add', [
+            'customer_id' => 1,
+            'source_channel' => SalesOrder::CHANNEL_PHONE,
+            'lines' => [
+                ['product_variant_id' => 1, 'quantity' => 1],
+            ],
+        ]);
+        $order = $this->fetchTable('SalesOrders')->find()
+            ->orderBy(['id' => 'DESC'])
+            ->firstOrFail();
+        $this->post('/admin/invoices/create-from-order/' . $order->id);
+        $invoice = $this->fetchTable('Invoices')->find()
+            ->where(['sales_order_id' => $order->id])
+            ->firstOrFail();
+
+        $this->post('/admin/invoices/record-payment/' . $invoice->id, ['amount' => '100.00']);
+        $this->post('/admin/invoices/record-payment/' . $invoice->id, ['amount' => '149.00']);
+        $this->assertResponseCode(302);
+
+        $payments = $this->fetchTable('Payments')->find()
+            ->where([
+                'sales_order_id' => $order->id,
+                'provider' => 'manual',
+            ])
+            ->all()
+            ->toList();
+        $this->assertCount(2, $payments);
+        $this->assertNotSame(
+            (string)$payments[0]->provider_payment_id,
+            (string)$payments[1]->provider_payment_id,
+        );
+
+        $invoice = $this->fetchTable('Invoices')->get($invoice->id);
+        $this->assertSame('paid', (string)$invoice->status);
+        $this->assertSame(0, (int)$invoice->balance_due_cents);
+        $order = $this->fetchTable('SalesOrders')->get($order->id);
+        $this->assertSame('paid', (string)$order->payment_status);
+    }
 }
