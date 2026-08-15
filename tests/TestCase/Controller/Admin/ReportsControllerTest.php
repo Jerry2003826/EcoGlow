@@ -4,14 +4,12 @@ declare(strict_types=1);
 namespace App\Test\TestCase\Controller\Admin;
 
 use Cake\TestSuite\IntegrationTestTrait;
-use Cake\TestSuite\TestCase;
 
 /**
  * ReportsController smoke tests.
  */
-class ReportsControllerTest extends TestCase
+class ReportsControllerTest extends AdminAppTestCase
 {
-    use AdminAuthTrait;
     use IntegrationTestTrait;
 
     /**

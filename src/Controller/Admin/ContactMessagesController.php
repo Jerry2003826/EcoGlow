@@ -181,7 +181,7 @@ class ContactMessagesController extends AdminController
     private function staffOptions(): iterable
     {
         return $this->fetchTable('Users')->find()
-            ->matching('UserRoles', function ($query) {
+            ->innerJoinWith('UserRoles', function ($query) {
                 return $query->where(['UserRoles.revoked_at IS' => null]);
             })
             ->distinct(['Users.id'])

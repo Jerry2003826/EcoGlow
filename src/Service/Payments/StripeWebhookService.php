@@ -236,6 +236,7 @@ class StripeWebhookService
             $intentId,
             (int)($object->amount ?? 0),
             strtolower((string)($object->currency ?? '')),
+            $this->refundMetadata($object),
         );
     }
 
@@ -426,6 +427,7 @@ class StripeWebhookService
             $intent,
             (int)($refund->amount ?? 0),
             strtolower((string)($refund->currency ?? '')),
+            $this->refundMetadata($refund),
         );
     }
 
@@ -609,6 +611,29 @@ class StripeWebhookService
         }
 
         return 'payment_failed';
+    }
+
+    /**
+     * @param object $refund Stripe refund object.
+     * @return array<string, string>
+     */
+    private function refundMetadata(object $refund): array
+    {
+        $raw = $refund->metadata ?? [];
+        if (is_object($raw)) {
+            $raw = (array)$raw;
+        }
+        if (!is_array($raw)) {
+            return [];
+        }
+        $metadata = [];
+        foreach ($raw as $key => $value) {
+            if (is_scalar($value) || $value === null) {
+                $metadata[(string)$key] = (string)$value;
+            }
+        }
+
+        return $metadata;
     }
 
     /**

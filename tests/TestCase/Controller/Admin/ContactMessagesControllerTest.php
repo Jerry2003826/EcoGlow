@@ -4,16 +4,14 @@ declare(strict_types=1);
 namespace App\Test\TestCase\Controller\Admin;
 
 use Cake\TestSuite\IntegrationTestTrait;
-use Cake\TestSuite\TestCase;
 
 /**
  * App\Controller\Admin\ContactMessagesController Test Case
  *
  * @link \App\Controller\Admin\ContactMessagesController
  */
-class ContactMessagesControllerTest extends TestCase
+class ContactMessagesControllerTest extends AdminAppTestCase
 {
-    use AdminAuthTrait;
     use IntegrationTestTrait;
 
     /**

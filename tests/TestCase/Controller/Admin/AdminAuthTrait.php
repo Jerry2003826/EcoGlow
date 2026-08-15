@@ -4,45 +4,10 @@ declare(strict_types=1);
 namespace App\Test\TestCase\Controller\Admin;
 
 /**
- * Shared login helper and fixture list for staff-console tests.
+ * Session login helper for tests that cannot extend AdminAppTestCase.
  */
 trait AdminAuthTrait
 {
-    /**
-     * Fixtures required to exercise RBAC plus the order/inventory path.
-     *
-     * @var array<string>
-     */
-    protected array $fixtures = [
-        'app.Users',
-        'app.Roles',
-        'app.Permissions',
-        'app.RolePermissions',
-        'app.UserRoles',
-        'app.UserPermissionOverrides',
-        'app.ContactMessages',
-        'app.Customers',
-        'app.Products',
-        'app.ProductVariants',
-        'app.InventoryLocations',
-        'app.InventoryBalances',
-        'app.ReorderRules',
-        'app.SalesOrders',
-        'app.SalesOrderItems',
-        'app.OrderStatusHistory',
-        'app.OrderNotes',
-        'app.StockReservations',
-        'app.InventoryMovements',
-        'app.Payments',
-        'app.PaymentRefunds',
-        'app.OrderAddresses',
-        'app.IdempotencyRecords',
-        'app.ServiceTypes',
-        'app.ServiceRequests',
-        'app.ServiceAppointments',
-        'app.FeatureFlags',
-    ];
-
     /**
      * Log in a fixture user via the session.
      *

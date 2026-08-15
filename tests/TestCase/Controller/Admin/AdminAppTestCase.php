@@ -1,0 +1,62 @@
+<?php
+declare(strict_types=1);
+
+namespace App\Test\TestCase\Controller\Admin;
+
+use Cake\TestSuite\TestCase;
+
+/**
+ * Shared fixtures and login helper for staff-console tests.
+ */
+abstract class AdminAppTestCase extends TestCase
+{
+    /**
+     * Fixtures required to exercise RBAC plus the order/inventory path.
+     *
+     * @var array<string>
+     */
+    protected array $fixtures = [
+        'app.Users',
+        'app.Roles',
+        'app.Permissions',
+        'app.RolePermissions',
+        'app.UserRoles',
+        'app.UserPermissionOverrides',
+        'app.ContactMessages',
+        'app.Customers',
+        'app.Products',
+        'app.ProductVariants',
+        'app.InventoryLocations',
+        'app.InventoryBalances',
+        'app.ReorderRules',
+        'app.SalesOrders',
+        'app.SalesOrderItems',
+        'app.OrderStatusHistory',
+        'app.OrderNotes',
+        'app.StockReservations',
+        'app.InventoryMovements',
+        'app.Payments',
+        'app.PaymentRefunds',
+        'app.OrderAddresses',
+        'app.IdempotencyRecords',
+        'app.ServiceTypes',
+        'app.ServiceRequests',
+        'app.ServiceAppointments',
+        'app.FeatureFlags',
+    ];
+
+    /**
+     * Log in a fixture user via the session.
+     *
+     * @param int $userId UsersFixture id.
+     * @return void
+     */
+    protected function loginAs(int $userId): void
+    {
+        $user = $this->fetchTable('Users')->get($userId);
+        $this->session([
+            'AuthV2' => $userId,
+            'AuthVersion' => (int)($user->get('auth_version') ?: 1),
+        ]);
+    }
+}

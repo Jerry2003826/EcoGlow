@@ -4,14 +4,12 @@ declare(strict_types=1);
 namespace App\Test\TestCase\Controller\Admin;
 
 use Cake\TestSuite\IntegrationTestTrait;
-use Cake\TestSuite\TestCase;
 
 /**
  * CustomersController list and 360 view.
  */
-class CustomersControllerTest extends TestCase
+class CustomersControllerTest extends AdminAppTestCase
 {
-    use AdminAuthTrait;
     use IntegrationTestTrait;
 
     /**

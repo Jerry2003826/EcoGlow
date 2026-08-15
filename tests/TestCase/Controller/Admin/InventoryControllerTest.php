@@ -4,14 +4,12 @@ declare(strict_types=1);
 namespace App\Test\TestCase\Controller\Admin;
 
 use Cake\TestSuite\IntegrationTestTrait;
-use Cake\TestSuite\TestCase;
 
 /**
  * InventoryController smoke and adjust tests.
  */
-class InventoryControllerTest extends TestCase
+class InventoryControllerTest extends AdminAppTestCase
 {
-    use AdminAuthTrait;
     use IntegrationTestTrait;
 
     /**

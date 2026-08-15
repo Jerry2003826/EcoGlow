@@ -308,6 +308,193 @@ class SecondRoundSecurityTest extends TestCase
     }
 
     /**
+     * A Dashboard refund must not bind to an unrelated local pending refund.
+     *
+     * @return void
+     */
+    public function testDashboardRefundDoesNotHijackPendingStaffRefund(): void
+    {
+        $order = $this->placeOrder('pi_hijack_refund');
+        $this->postSigned($this->eventPayload(
+            'evt_hijack_pay',
+            'payment_intent.succeeded',
+            'pi_hijack_refund',
+            (int)$order->grand_total_cents,
+            ['order_id' => (string)$order->id],
+        ));
+        $this->assertResponseOk();
+        $gateway = new FakePaymentGateway();
+        $gateway->refundStatus = 'pending';
+        $gateway->nextRefundId = 're_staff_pending';
+        (new RefundService(new OrderService(new InventoryLedger()), $gateway))
+            ->refundOrder($this->fetchTable('SalesOrders')->get($order->id), 1);
+        $this->assertSame(
+            ['local_refund_id', 'local_payment_id'],
+            array_keys($gateway->lastRefundMetadata),
+        );
+
+        $this->postSigned($this->refundEventPayload(
+            'evt_hijack_dash',
+            'refund.updated',
+            're_dashboard_10',
+            'pi_hijack_refund',
+            'succeeded',
+            10,
+        ));
+        $this->assertResponseOk();
+        $staff = $this->fetchTable('PaymentRefunds')->find()
+            ->where(['provider_refund_id' => 're_staff_pending'])
+            ->first();
+        $this->assertNotNull($staff);
+        $this->assertSame('pending', (string)$staff->get('status'));
+        $this->assertSame(
+            0,
+            $this->fetchTable('PaymentRefunds')->find()
+                ->where(['provider_refund_id' => 're_dashboard_10'])
+                ->count(),
+        );
+        $this->assertGreaterThan(
+            0,
+            $this->fetchTable('PaymentReconciliationAlerts')->find()
+                ->where(['event_id' => 'refund:re_dashboard_10'])
+                ->count(),
+        );
+        $order = $this->fetchTable('SalesOrders')->get($order->id);
+        $this->assertSame('paid', $order->payment_status);
+    }
+
+    /**
+     * A Stripe-failed refund can be retried as a new attempt with a new key.
+     *
+     * @return void
+     */
+    public function testFailedRefundCanBeRetriedWithNewIdempotencyKey(): void
+    {
+        $order = $this->placeOrder('pi_refund_failed_retry');
+        $this->postSigned($this->eventPayload(
+            'evt_failed_retry_pay',
+            'payment_intent.succeeded',
+            'pi_refund_failed_retry',
+            (int)$order->grand_total_cents,
+            ['order_id' => (string)$order->id],
+        ));
+        $this->assertResponseOk();
+        $first = new FakePaymentGateway();
+        $first->refundStatus = 'pending';
+        $first->nextRefundId = 're_failed_attempt';
+        (new RefundService(new OrderService(new InventoryLedger()), $first))
+            ->refundOrder($this->fetchTable('SalesOrders')->get($order->id), 1);
+        $firstKey = $first->lastRefundIdempotencyKey;
+        $this->postSigned($this->refundEventPayload(
+            'evt_failed_retry_fail',
+            'refund.failed',
+            're_failed_attempt',
+            'pi_refund_failed_retry',
+            'failed',
+            (int)$order->grand_total_cents,
+        ));
+        $this->assertResponseOk();
+
+        $second = new FakePaymentGateway();
+        $second->nextRefundId = 're_failed_retry_ok';
+        $payment = (new RefundService(new OrderService(new InventoryLedger()), $second))
+            ->refundOrder($this->fetchTable('SalesOrders')->get($order->id), 1);
+        $this->assertSame('refunded', (string)$payment->status);
+        $this->assertNotSame($firstKey, $second->lastRefundIdempotencyKey);
+        $this->assertSame(
+            2,
+            $this->fetchTable('PaymentRefunds')->find()
+                ->where(['payment_id' => $payment->id])
+                ->count(),
+        );
+        $this->assertSame(
+            'succeeded',
+            (string)$this->fetchTable('PaymentRefunds')->find()
+                ->where(['provider_refund_id' => 're_failed_retry_ok'])
+                ->first()
+                ?->get('status'),
+        );
+    }
+
+    /**
+     * Two overlapping partial refunds must not lose invoice or status updates.
+     *
+     * @return void
+     */
+    public function testConcurrentPartialRefundsDoNotLoseInvoiceUpdates(): void
+    {
+        $config = ConnectionManager::get('test')->config();
+        $driver = (string)($config['driver'] ?? '');
+        if (!str_contains($driver, 'Mysql')) {
+            $this->markTestSkipped('Requires MySQL row locks.');
+        }
+        $order = $this->placeOrder('pi_concurrent_refund');
+        $invoice = $this->issueInvoice($order);
+        $this->postSigned($this->eventPayload(
+            'evt_concurrent_pay',
+            'payment_intent.succeeded',
+            'pi_concurrent_refund',
+            (int)$order->grand_total_cents,
+            ['order_id' => (string)$order->id],
+        ));
+        $this->assertResponseOk();
+        $payment = $this->fetchTable('Payments')->find()
+            ->where(['provider_payment_id' => 'pi_concurrent_refund'])
+            ->first();
+        $this->assertNotNull($payment);
+        $total = (int)$payment->amount_cents;
+        $firstAmount = intdiv($total, 2);
+        $secondAmount = $total - $firstAmount;
+        $refunds = $this->fetchTable('PaymentRefunds');
+        $first = $refunds->newEmptyEntity();
+        $first->set('payment_id', $payment->id);
+        $first->set('provider_refund_id', 're_conc_a');
+        $first->set('idempotency_key', 'refund-conc-a');
+        $first->set('status', 'pending');
+        $first->set('amount_cents', $firstAmount);
+        $refunds->saveOrFail($first);
+        $second = $refunds->newEmptyEntity();
+        $second->set('payment_id', $payment->id);
+        $second->set('provider_refund_id', 're_conc_b');
+        $second->set('idempotency_key', 'refund-conc-b');
+        $second->set('status', 'pending');
+        $second->set('amount_cents', $secondAmount);
+        $refunds->saveOrFail($second);
+
+        $connection = ConnectionManager::get('test');
+        if ($connection->inTransaction()) {
+            $connection->commit();
+        }
+
+        $firstChild = $this->startRefundChild('re_conc_a', 'succeeded', 'pi_concurrent_refund', $firstAmount, (string)$first->id);
+        $secondChild = $this->startRefundChild('re_conc_b', 'succeeded', 'pi_concurrent_refund', $secondAmount, (string)$second->id);
+        $firstResult = $this->finishRefundChild($firstChild);
+        $secondResult = $this->finishRefundChild($secondChild);
+        $this->assertSame(0, $firstResult['code'], $firstResult['output']);
+        $this->assertSame(0, $secondResult['code'], $secondResult['output']);
+
+        $pdo = $this->secondMysqlConnection($config);
+        $paymentStatus = $pdo->query(
+            'SELECT status FROM payments WHERE id = ' . (int)$payment->id,
+        )->fetchColumn();
+        $orderStatus = $pdo->query(
+            'SELECT payment_status FROM sales_orders WHERE id = ' . (int)$order->id,
+        )->fetchColumn();
+        $invoicePaid = $pdo->query(
+            'SELECT amount_paid_cents FROM invoices WHERE id = ' . (int)$invoice->id,
+        )->fetchColumn();
+        $allocationCount = $pdo->query(
+            'SELECT COUNT(*) FROM payment_allocations
+              WHERE payment_id = ' . (int)$payment->id . "
+                AND allocation_type = 'refund'",
+        )->fetchColumn();
+        $this->assertSame('refunded', (string)$paymentStatus);
+        $this->assertSame('refunded', (string)$orderStatus);
+        $this->assertSame(0, (int)$invoicePaid);
+        $this->assertSame(2, (int)$allocationCount);
+    }
+
+    /**
      * Late failed/canceled events cannot move a refunded payment backwards.
      *
      * @return void
@@ -1017,6 +1204,7 @@ class SecondRoundSecurityTest extends TestCase
      * @param string $intentId PaymentIntent id.
      * @param string $status Stripe refund status.
      * @param int $amountCents Refund amount.
+     * @param array<string, string> $metadata Stripe refund metadata.
      * @return string
      */
     private function refundEventPayload(
@@ -1026,6 +1214,7 @@ class SecondRoundSecurityTest extends TestCase
         string $intentId,
         string $status,
         int $amountCents = 100,
+        array $metadata = [],
     ): string {
         $event = [
             'id' => $eventId,
@@ -1044,11 +1233,87 @@ class SecondRoundSecurityTest extends TestCase
                     'currency' => 'aud',
                     'status' => $status,
                     'payment_intent' => $intentId,
+                    'metadata' => $metadata,
                 ],
             ],
         ];
 
         return json_encode($event, JSON_THROW_ON_ERROR);
+    }
+
+    /**
+     * @param string $providerRefundId Stripe refund id.
+     * @param string $status Stripe status.
+     * @param string $intentId PaymentIntent id.
+     * @param int $amountCents Amount.
+     * @param string $localRefundId Local refund id.
+     * @return array{process: resource, pipes: array<int, resource>}
+     */
+    private function startRefundChild(
+        string $providerRefundId,
+        string $status,
+        string $intentId,
+        int $amountCents,
+        string $localRefundId,
+    ): array {
+        $config = ConnectionManager::get('test')->config();
+        $script = dirname(__DIR__, 2) . '/bin/apply_refund_webhook.php';
+        $env = getenv();
+        if (!is_array($env)) {
+            $env = [];
+        }
+        $env['DEBUG'] = 'true';
+        $env['DATABASE_URL'] = $this->mysqlUrl($config);
+        if (($env['SECURITY_SALT'] ?? '') === '') {
+            $env['SECURITY_SALT'] = str_repeat('a', 64);
+        }
+        $process = proc_open(
+            [PHP_BINARY, $script, $providerRefundId, $status, $intentId, (string)$amountCents, $localRefundId],
+            [1 => ['pipe', 'w'], 2 => ['pipe', 'w']],
+            $pipes,
+            dirname(__DIR__, 3),
+            $env,
+        );
+        $this->assertIsResource($process);
+
+        return ['process' => $process, 'pipes' => $pipes];
+    }
+
+    /**
+     * @param array{process: resource, pipes: array<int, resource>} $child Child process.
+     * @return array{code: int, output: string}
+     */
+    private function finishRefundChild(array $child): array
+    {
+        $stdout = stream_get_contents($child['pipes'][1]) ?: '';
+        $stderr = stream_get_contents($child['pipes'][2]) ?: '';
+        fclose($child['pipes'][1]);
+        fclose($child['pipes'][2]);
+
+        return [
+            'code' => proc_close($child['process']),
+            'output' => $stdout . $stderr,
+        ];
+    }
+
+    /**
+     * @param array<string, mixed> $config Cake datasource config.
+     * @return string
+     */
+    private function mysqlUrl(array $config): string
+    {
+        if (!empty($config['url'])) {
+            return (string)$config['url'];
+        }
+
+        return sprintf(
+            'mysql://%s:%s@%s:%s/%s?encoding=utf8mb4',
+            rawurlencode((string)($config['username'] ?? '')),
+            rawurlencode((string)($config['password'] ?? '')),
+            (string)($config['host'] ?? '127.0.0.1'),
+            (string)($config['port'] ?? '3306'),
+            (string)($config['database'] ?? ''),
+        );
     }
 
     /**

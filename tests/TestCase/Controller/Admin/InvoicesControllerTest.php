@@ -5,14 +5,12 @@ namespace App\Test\TestCase\Controller\Admin;
 
 use App\Model\Entity\SalesOrder;
 use Cake\TestSuite\IntegrationTestTrait;
-use Cake\TestSuite\TestCase;
 
 /**
  * InvoicesController issue-from-order and list.
  */
-class InvoicesControllerTest extends TestCase
+class InvoicesControllerTest extends AdminAppTestCase
 {
-    use AdminAuthTrait;
     use IntegrationTestTrait;
 
     /**

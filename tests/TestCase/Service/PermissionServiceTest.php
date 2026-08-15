@@ -4,17 +4,14 @@ declare(strict_types=1);
 namespace App\Test\TestCase\Service;
 
 use App\Service\Authorization\PermissionService;
-use App\Test\TestCase\Controller\Admin\AdminAuthTrait;
+use App\Test\TestCase\Controller\Admin\AdminAppTestCase;
 use Cake\I18n\DateTime;
-use Cake\TestSuite\TestCase;
 
 /**
  * Data-driven permission resolution, including deny-wins overrides.
  */
-class PermissionServiceTest extends TestCase
+class PermissionServiceTest extends AdminAppTestCase
 {
-    use AdminAuthTrait;
-
     /**
      * @return void
      */

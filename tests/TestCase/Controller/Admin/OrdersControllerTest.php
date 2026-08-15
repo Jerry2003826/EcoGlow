@@ -5,14 +5,12 @@ namespace App\Test\TestCase\Controller\Admin;
 
 use App\Model\Entity\SalesOrder;
 use Cake\TestSuite\IntegrationTestTrait;
-use Cake\TestSuite\TestCase;
 
 /**
  * OrdersController tests including reservation on create.
  */
-class OrdersControllerTest extends TestCase
+class OrdersControllerTest extends AdminAppTestCase
 {
-    use AdminAuthTrait;
     use IntegrationTestTrait;
 
     /**

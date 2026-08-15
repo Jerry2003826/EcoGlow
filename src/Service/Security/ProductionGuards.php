@@ -21,6 +21,11 @@ use Throwable;
 final class ProductionGuards
 {
     /**
+     * @var bool
+     */
+    private static bool $probed = false;
+
+    /**
      * @return bool
      */
     public static function shouldEnforce(): bool
@@ -36,6 +41,8 @@ final class ProductionGuards
     }
 
     /**
+     * Cheap per-request checks. The Redis write probe runs once per process.
+     *
      * @return void
      */
     public static function assert(): void
@@ -44,7 +51,18 @@ final class ProductionGuards
             return;
         }
         self::assertEmailTransport();
-        self::assertRateLimitStore();
+        self::assertRateLimitStore(false);
+    }
+
+    /**
+     * Deployment / readiness probe. Always talks to Redis.
+     *
+     * @return void
+     */
+    public static function assertReady(): void
+    {
+        self::assertEmailTransport();
+        self::assertRateLimitStore(true);
     }
 
     /**
@@ -66,9 +84,10 @@ final class ProductionGuards
     }
 
     /**
+     * @param bool $forceProbe Always run the Redis write probe.
      * @return void
      */
-    public static function assertRateLimitStore(): void
+    public static function assertRateLimitStore(bool $forceProbe = false): void
     {
         $config = Cache::getConfig('login_throttle');
         if (!is_array($config)) {
@@ -90,7 +109,10 @@ final class ProductionGuards
         if (!$engine instanceof RedisEngine) {
             throw new RuntimeException('Production throttling requires a working Redis cache engine.');
         }
-        self::probeRateLimitStore();
+        if ($forceProbe || !self::$probed) {
+            self::probeRateLimitStore();
+            self::$probed = true;
+        }
     }
 
     /**
@@ -159,8 +181,11 @@ final class ProductionGuards
         if ($host === '' || self::isPrivateHost($host)) {
             return;
         }
-        if ($scheme !== 'rediss' && $password === '') {
-            throw new RuntimeException('Remote Redis must use rediss:// or a password.');
+        if ($scheme !== 'rediss') {
+            throw new RuntimeException('Public Redis must use rediss://.');
+        }
+        if ($password === '') {
+            throw new RuntimeException('Public Redis must require a password.');
         }
     }
 

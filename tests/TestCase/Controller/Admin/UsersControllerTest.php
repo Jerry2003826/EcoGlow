@@ -4,14 +4,12 @@ declare(strict_types=1);
 namespace App\Test\TestCase\Controller\Admin;
 
 use Cake\TestSuite\IntegrationTestTrait;
-use Cake\TestSuite\TestCase;
 
 /**
  * Admin UsersController — configurable RBAC.
  */
-class UsersControllerTest extends TestCase
+class UsersControllerTest extends AdminAppTestCase
 {
-    use AdminAuthTrait;
     use IntegrationTestTrait;
 
     /**

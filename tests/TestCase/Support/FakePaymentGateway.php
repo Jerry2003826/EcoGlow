@@ -79,6 +79,16 @@ final class FakePaymentGateway implements PaymentGatewayInterface
     public string $nextRefundId = 're_test_1';
 
     /**
+     * @var string
+     */
+    public string $lastRefundIdempotencyKey = '';
+
+    /**
+     * @var array<string, string>
+     */
+    public array $lastRefundMetadata = [];
+
+    /**
      * @inheritDoc
      */
     public function createPaymentIntent(
@@ -121,11 +131,17 @@ final class FakePaymentGateway implements PaymentGatewayInterface
     /**
      * @inheritDoc
      */
-    public function refund(string $paymentIntentId, int $amountCents, string $idempotencyKey): RefundResult
-    {
+    public function refund(
+        string $paymentIntentId,
+        int $amountCents,
+        string $idempotencyKey,
+        array $metadata = [],
+    ): RefundResult {
         if ($this->throwOnRefund) {
             throw new InvalidArgumentException('The refund request did not reach Stripe.');
         }
+        $this->lastRefundIdempotencyKey = $idempotencyKey;
+        $this->lastRefundMetadata = $metadata;
         $this->refundsById[$this->nextRefundId] = $this->refundStatus;
 
         return new RefundResult($this->nextRefundId, $this->refundStatus, $amountCents, 'aud');

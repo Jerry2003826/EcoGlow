@@ -7,9 +7,11 @@ use App\Model\Entity\Invoice;
 use App\Model\Entity\Payment;
 use App\Model\Entity\SalesOrder;
 use App\Service\Orders\OrderService;
-use Cake\Datasource\ConnectionInterface;
+use Cake\Database\Connection;
+use Cake\Database\Exception\QueryException;
 use Cake\I18n\DateTime;
 use Cake\ORM\Locator\LocatorAwareTrait;
+use Closure;
 use InvalidArgumentException;
 use RuntimeException;
 use Throwable;
@@ -40,99 +42,113 @@ class RefundService
     {
         $prepared = $this->connection()->transactional(function () use ($order, $actorUserId) {
             $this->orders->lockOrder((int)$order->id);
-            $payment = $this->capturedStripePayment($order);
-            if ($payment === null) {
+            $paymentRow = $this->lockAssoc(
+                "SELECT id, status, amount_cents, provider_payment_id, currency
+                   FROM payments
+                  WHERE sales_order_id = ?
+                    AND provider = 'stripe'
+                    AND status = 'captured'
+                  ORDER BY id DESC
+                  LIMIT 1
+                  FOR UPDATE",
+                [(int)$order->id],
+            );
+            if ($paymentRow === null) {
                 throw new InvalidArgumentException('This order has no captured Stripe payment to refund.');
             }
-            $this->connection()->execute('SELECT id FROM payments WHERE id = ? FOR UPDATE', [$payment->id]);
-            $payment = $this->fetchTable('Payments')->get($payment->id);
-            if ((string)$payment->status !== 'captured') {
-                throw new InvalidArgumentException('This order has no captured Stripe payment to refund.');
-            }
-            $already = $this->fetchTable('PaymentRefunds')->find()
-                ->where(['payment_id' => $payment->id, 'status IN' => ['pending', 'succeeded', 'completed']])
-                ->first();
-            $key = 'refund-payment-' . $payment->id;
-            if ($already) {
-                if (in_array((string)$already->get('status'), ['succeeded', 'completed'], true)) {
+            $siblings = $this->lockAll(
+                'SELECT id, status, provider_refund_id, idempotency_key, amount_cents
+                   FROM payment_refunds WHERE payment_id = ? FOR UPDATE',
+                [(int)$paymentRow['id']],
+            );
+            foreach ($siblings as $sibling) {
+                if (in_array((string)$sibling['status'], ['succeeded', 'completed'], true)) {
                     throw new InvalidArgumentException('A refund has already been recorded for this payment.');
                 }
-                if ((string)($already->get('provider_refund_id') ?? '') !== '') {
-                    return [
-                        'payment' => $payment,
-                        'refund' => $already,
-                        'key' => $key,
-                        'retry' => false,
-                    ];
+            }
+            foreach ($siblings as $sibling) {
+                if ((string)$sibling['status'] !== 'pending') {
+                    continue;
                 }
+                $providerId = (string)($sibling['provider_refund_id'] ?? '');
 
                 return [
-                    'payment' => $payment,
-                    'refund' => $already,
-                    'key' => (string)($already->get('idempotency_key') ?: $key),
-                    'retry' => true,
+                    'payment_id' => (int)$paymentRow['id'],
+                    'provider_payment_id' => (string)$paymentRow['provider_payment_id'],
+                    'amount_cents' => (int)$paymentRow['amount_cents'],
+                    'refund_id' => (int)$sibling['id'],
+                    'provider_refund_id' => $providerId,
+                    'key' => (string)($sibling['idempotency_key'] ?: ''),
+                    'retry' => $providerId === '',
                 ];
             }
+
             $refunds = $this->fetchTable('PaymentRefunds');
             $row = $refunds->newEmptyEntity();
-            $row->set('payment_id', $payment->id);
-            $row->set('idempotency_key', $key);
+            $draftKey = 'refund-draft-' . bin2hex(random_bytes(16));
+            $row->set('payment_id', (int)$paymentRow['id']);
+            $row->set('idempotency_key', $draftKey);
             $row->set('status', 'pending');
-            $row->set('amount_cents', (int)$payment->amount_cents);
+            $row->set('amount_cents', (int)$paymentRow['amount_cents']);
             $row->set('reason', 'Staff refund');
             $row->set('requested_by_user_id', $actorUserId);
             $refunds->saveOrFail($row);
+            $key = 'refund-payment-' . $paymentRow['id'] . '-attempt-' . $row->id;
+            $row->set('idempotency_key', $key);
+            $refunds->saveOrFail($row);
 
             return [
-                'payment' => $payment,
-                'refund' => $row,
+                'payment_id' => (int)$paymentRow['id'],
+                'provider_payment_id' => (string)$paymentRow['provider_payment_id'],
+                'amount_cents' => (int)$paymentRow['amount_cents'],
+                'refund_id' => (int)$row->id,
+                'provider_refund_id' => '',
                 'key' => $key,
                 'retry' => true,
             ];
         });
 
-        /** @var \App\Model\Entity\Payment $payment */
-        $payment = $prepared['payment'];
-        /** @var \App\Model\Entity\PaymentRefund $refund */
-        $refund = $prepared['refund'];
-
         if (!(bool)$prepared['retry']) {
-            $providerId = (string)($refund->get('provider_refund_id') ?? '');
-            $retrieved = $this->gateway->retrieveRefund($providerId);
+            $retrieved = $this->gateway->retrieveRefund((string)$prepared['provider_refund_id']);
             if ($retrieved !== null) {
-                $this->connection()->transactional(function () use ($refund, $retrieved, $actorUserId): void {
-                    $this->applyProviderResult(
-                        (int)$refund->id,
-                        $retrieved->id,
-                        $retrieved->status,
-                        $actorUserId,
-                        $retrieved->amountCents,
-                        $retrieved->currency,
-                    );
-                });
+                $this->applyProviderResult(
+                    (int)$prepared['refund_id'],
+                    $retrieved->id,
+                    $retrieved->status,
+                    $actorUserId,
+                    $retrieved->amountCents,
+                    $retrieved->currency,
+                );
             }
 
-            return $this->fetchTable('Payments')->get($payment->id);
+            /** @var \App\Model\Entity\Payment $payment */
+            $payment = $this->fetchTable('Payments')->get((int)$prepared['payment_id']);
+
+            return $payment;
         }
 
         $result = $this->gateway->refund(
-            (string)$payment->provider_payment_id,
-            (int)$payment->amount_cents,
+            (string)$prepared['provider_payment_id'],
+            (int)$prepared['amount_cents'],
             (string)$prepared['key'],
+            [
+                'local_refund_id' => (string)$prepared['refund_id'],
+                'local_payment_id' => (string)$prepared['payment_id'],
+            ],
+        );
+        $this->applyProviderResult(
+            (int)$prepared['refund_id'],
+            $result->id,
+            $result->status,
+            $actorUserId,
+            $result->amountCents,
+            $result->currency,
         );
 
-        $this->connection()->transactional(function () use ($refund, $result, $actorUserId): void {
-            $this->applyProviderResult(
-                (int)$refund->id,
-                $result->id,
-                $result->status,
-                $actorUserId,
-                $result->amountCents,
-                $result->currency,
-            );
-        });
+        /** @var \App\Model\Entity\Payment $payment */
+        $payment = $this->fetchTable('Payments')->get((int)$prepared['payment_id']);
 
-        return $this->fetchTable('Payments')->get($payment->id);
+        return $payment;
     }
 
     /**
@@ -156,16 +172,14 @@ class RefundService
                 continue;
             }
             $before = (string)$row->get('status');
-            $this->connection()->transactional(function () use ($row, $result): void {
-                $this->applyProviderResult(
-                    (int)$row->id,
-                    $result->id,
-                    $result->status,
-                    (int)($row->get('requested_by_user_id') ?: 0),
-                    $result->amountCents,
-                    $result->currency,
-                );
-            });
+            $this->applyProviderResult(
+                (int)$row->id,
+                $result->id,
+                $result->status,
+                (int)($row->get('requested_by_user_id') ?: 0),
+                $result->amountCents,
+                $result->currency,
+            );
             $after = (string)$this->fetchTable('PaymentRefunds')->get($row->id)->get('status');
             if ($after !== $before) {
                 $updated++;
@@ -186,6 +200,7 @@ class RefundService
      * @param string $paymentIntentId PaymentIntent id when the local row is missing.
      * @param int $amountCents Stripe refund amount.
      * @param string $currency Stripe currency.
+     * @param array<string, string> $metadata Stripe refund metadata.
      * @return void
      */
     public function applyWebhookStatus(
@@ -194,56 +209,53 @@ class RefundService
         string $paymentIntentId = '',
         int $amountCents = 0,
         string $currency = '',
+        array $metadata = [],
     ): void {
         if ($providerRefundId === '') {
             return;
         }
-        $this->connection()->transactional(function () use (
-            $providerRefundId,
-            $status,
-            $paymentIntentId,
-            $amountCents,
-            $currency,
-        ): void {
-            $refunds = $this->fetchTable('PaymentRefunds');
-            $row = $refunds->find()
-                ->where(['provider_refund_id' => $providerRefundId])
-                ->first();
-            /** @var \App\Model\Entity\Payment|null $payment */
-            $payment = null;
-            if ($paymentIntentId !== '') {
-                $payment = $this->fetchTable('Payments')->find()
-                    ->where(['provider' => 'stripe', 'provider_payment_id' => $paymentIntentId])
-                    ->first();
+        $payment = $this->findPaymentByIntent($paymentIntentId);
+        $refund = $this->findRefundByProvider($providerRefundId);
+        if ($refund === null) {
+            $refund = $this->findExactLocalRefund($metadata, $payment, $amountCents, $providerRefundId);
+        }
+        if ($refund === null) {
+            if ($payment === null && $paymentIntentId !== '') {
+                throw new RuntimeException('Stripe refund does not match a local payment yet.');
             }
-            if ($row === null && $payment !== null) {
-                $row = $refunds->find()
-                    ->where(['payment_id' => $payment->id, 'status' => 'pending'])
-                    ->first();
-            }
-            if ($row === null) {
-                if ($payment === null && $paymentIntentId !== '') {
-                    throw new RuntimeException('Stripe refund does not match a local payment yet.');
-                }
-                $this->raiseExternalRefundAlert(
-                    $providerRefundId,
-                    $paymentIntentId,
-                    $payment !== null ? (int)$payment->sales_order_id : null,
-                    $amountCents,
-                    $currency,
-                );
-
-                return;
-            }
-            $this->applyProviderResult(
-                (int)$row->id,
+            $this->raiseExternalRefundAlert(
                 $providerRefundId,
-                $status,
-                (int)($row->get('requested_by_user_id') ?: 0),
+                $paymentIntentId,
+                $payment !== null ? (int)$payment['sales_order_id'] : null,
                 $amountCents,
                 $currency,
             );
-        });
+
+            return;
+        }
+        if (
+            $payment !== null
+            && (int)$refund['payment_id'] !== (int)$payment['id']
+        ) {
+            $this->raiseExternalRefundAlert(
+                $providerRefundId,
+                $paymentIntentId,
+                (int)$payment['sales_order_id'],
+                $amountCents,
+                $currency,
+                'Refund metadata does not match the local payment.',
+            );
+
+            return;
+        }
+        $this->applyProviderResult(
+            (int)$refund['id'],
+            $providerRefundId,
+            $status,
+            (int)($refund['requested_by_user_id'] ?: 0),
+            $amountCents,
+            $currency,
+        );
     }
 
     /**
@@ -282,114 +294,428 @@ class RefundService
         int $amountCents = 0,
         string $currency = '',
     ): void {
-        $refunds = $this->fetchTable('PaymentRefunds');
-        $row = $refunds->get($refundId);
-        /** @var \App\Model\Entity\Payment $payment */
-        $payment = $this->fetchTable('Payments')->get((int)$row->get('payment_id'));
-        $this->orders->lockOrder((int)$payment->sales_order_id);
-        $this->connection()->execute('SELECT id FROM payments WHERE id = ? FOR UPDATE', [$payment->id]);
-        $this->connection()->execute('SELECT id FROM payment_refunds WHERE id = ? FOR UPDATE', [$refundId]);
-        $row = $refunds->get($refundId);
-        if (in_array((string)$row->get('status'), ['succeeded', 'completed'], true)) {
+        $ids = $this->refundGraph($refundId);
+        if ($ids === null) {
+            return;
+        }
+        $this->withRefundLockRetry(function () use (
+            $ids,
+            $refundId,
+            $providerRefundId,
+            $status,
+            $actorUserId,
+            $amountCents,
+            $currency,
+        ): void {
+            $this->applyLockedProviderResult(
+                (int)$ids['sales_order_id'],
+                (int)$ids['payment_id'],
+                $refundId,
+                $providerRefundId,
+                $status,
+                $actorUserId,
+                $amountCents,
+                $currency,
+            );
+        });
+    }
+
+    /**
+     * First statements in this transaction are locking reads.
+     *
+     * @param int $orderId Order id.
+     * @param int $paymentId Payment id.
+     * @param int $refundId Local refund id.
+     * @param string $providerRefundId Stripe refund id.
+     * @param string $status Stripe status.
+     * @param int $actorUserId Actor, or 0 for webhooks.
+     * @param int $amountCents Stripe amount when known.
+     * @param string $currency Stripe currency when known.
+     * @return void
+     */
+    private function applyLockedProviderResult(
+        int $orderId,
+        int $paymentId,
+        int $refundId,
+        string $providerRefundId,
+        string $status,
+        int $actorUserId,
+        int $amountCents,
+        string $currency,
+    ): void {
+        $this->orders->lockOrder($orderId);
+        $payment = $this->lockAssoc(
+            'SELECT * FROM payments WHERE id = ? FOR UPDATE',
+            [$paymentId],
+        );
+        if ($payment === null) {
+            return;
+        }
+        $order = $this->lockAssoc(
+            'SELECT * FROM sales_orders WHERE id = ? FOR UPDATE',
+            [$orderId],
+        );
+        $refund = $this->lockAssoc(
+            'SELECT * FROM payment_refunds WHERE id = ? FOR UPDATE',
+            [$refundId],
+        );
+        if ($refund === null) {
+            return;
+        }
+        $existingProvider = (string)($refund['provider_refund_id'] ?? '');
+        if ($existingProvider !== '' && $providerRefundId !== '' && $existingProvider !== $providerRefundId) {
+            $this->raiseExternalRefundAlert(
+                $providerRefundId,
+                (string)$payment['provider_payment_id'],
+                (int)$payment['sales_order_id'],
+                $amountCents,
+                $currency,
+                'Refund is already bound to a different Stripe refund.',
+            );
+
+            return;
+        }
+        $siblings = $this->lockAll(
+            'SELECT id, amount_cents, status FROM payment_refunds WHERE payment_id = ? FOR UPDATE',
+            [(int)$payment['id']],
+        );
+        $invoice = $this->lockAssoc(
+            'SELECT id, amount_paid_cents, grand_total_cents, status
+               FROM invoices
+              WHERE sales_order_id = ? AND status != ?
+              FOR UPDATE',
+            [(int)$payment['sales_order_id'], Invoice::STATUS_VOID],
+        );
+
+        if (in_array((string)$refund['status'], ['succeeded', 'completed'], true)) {
             return;
         }
 
         $normalized = strtolower($status);
-        $row->set('provider_refund_id', $providerRefundId !== '' ? $providerRefundId : $row->get('provider_refund_id'));
-        $row->set('provider_metadata', ['refund' => $providerRefundId, 'status' => $normalized]);
-        if ($amountCents > 0) {
-            $row->set('amount_cents', $amountCents);
-        }
         if ($currency !== '') {
-            $expected = strtolower((string)($payment->currency ?: 'AUD'));
+            $expected = strtolower((string)($payment['currency'] ?: 'AUD'));
             if (strtolower($currency) !== $expected) {
                 $this->raiseExternalRefundAlert(
                     $providerRefundId,
-                    (string)$payment->provider_payment_id,
-                    (int)$payment->sales_order_id,
+                    (string)$payment['provider_payment_id'],
+                    (int)$payment['sales_order_id'],
                     $amountCents,
                     $currency,
                     'Refund currency does not match the captured payment.',
                 );
-                $refunds->saveOrFail($row);
 
                 return;
             }
         }
 
+        $bindId = $providerRefundId !== '' ? $providerRefundId : $existingProvider;
         if (in_array($normalized, ['failed', 'canceled', 'cancelled'], true)) {
-            $row->set('status', 'failed');
-            $refunds->saveOrFail($row);
+            $this->connection()->execute(
+                "UPDATE payment_refunds
+                    SET status = 'failed', provider_refund_id = ?
+                  WHERE id = ?",
+                [$bindId !== '' ? $bindId : null, $refundId],
+            );
 
             return;
         }
 
         if (!in_array($normalized, ['succeeded', 'paid'], true)) {
-            $row->set('status', 'pending');
-            $refunds->saveOrFail($row);
+            $this->connection()->execute(
+                "UPDATE payment_refunds
+                    SET status = 'pending', provider_refund_id = ?
+                  WHERE id = ?",
+                [$bindId !== '' ? $bindId : null, $refundId],
+            );
 
             return;
         }
 
-        $applyAmount = $amountCents > 0 ? $amountCents : (int)$row->get('amount_cents');
-        $refundedTotal = $this->succeededRefundTotal((int)$payment->id);
-        $captured = (int)$payment->amount_cents;
+        $applyAmount = $amountCents > 0 ? $amountCents : (int)$refund['amount_cents'];
+        if ($amountCents > 0 && (int)$refund['amount_cents'] !== $amountCents) {
+            $this->raiseExternalRefundAlert(
+                $providerRefundId,
+                (string)$payment['provider_payment_id'],
+                (int)$payment['sales_order_id'],
+                $amountCents,
+                $currency,
+                'Refund amount does not match the local refund.',
+            );
+
+            return;
+        }
+        $refundedTotal = 0;
+        foreach ($siblings as $sibling) {
+            if (
+                (int)$sibling['id'] !== $refundId
+                && in_array((string)$sibling['status'], ['succeeded', 'completed'], true)
+            ) {
+                $refundedTotal += (int)$sibling['amount_cents'];
+            }
+        }
+        $captured = (int)$payment['amount_cents'];
         if ($applyAmount <= 0 || $refundedTotal + $applyAmount > $captured) {
             $this->raiseExternalRefundAlert(
                 $providerRefundId,
-                (string)$payment->provider_payment_id,
-                (int)$payment->sales_order_id,
+                (string)$payment['provider_payment_id'],
+                (int)$payment['sales_order_id'],
                 $amountCents,
                 $currency,
                 'Succeeded refunds exceed the captured amount.',
             );
-            $refunds->saveOrFail($row);
 
             return;
         }
 
-        $row->set('status', 'succeeded');
-        $row->set('completed_at', DateTime::now('UTC'));
-        $refunds->saveOrFail($row);
+        $this->connection()->execute(
+            "UPDATE payment_refunds
+                SET status = 'succeeded',
+                    provider_refund_id = ?,
+                    amount_cents = ?,
+                    completed_at = ?
+              WHERE id = ?",
+            [$bindId, $applyAmount, DateTime::now('UTC')->format('Y-m-d H:i:s'), $refundId],
+        );
 
-        /** @var \App\Model\Entity\Payment $payment */
-        $payment = $this->fetchTable('Payments')->get($payment->id);
-        $refundedTotal = $this->succeededRefundTotal((int)$payment->id);
+        $refundedTotal += $applyAmount;
         $nextStatus = $refundedTotal >= $captured ? 'refunded' : 'partially_refunded';
-        if (!in_array((string)$payment->status, ['refunded'], true)) {
-            $payment->status = $nextStatus;
-            $this->fetchTable('Payments')->saveOrFail($payment);
+        if ((string)$payment['status'] !== 'refunded') {
+            $this->connection()->execute(
+                'UPDATE payments SET status = ? WHERE id = ?',
+                [$nextStatus, (int)$payment['id']],
+            );
+        }
+        if ($order !== null && (string)$order['payment_status'] !== 'refunded') {
+            $this->connection()->execute(
+                'UPDATE sales_orders SET payment_status = ? WHERE id = ?',
+                [$nextStatus, (int)$order['id']],
+            );
         }
 
-        /** @var \App\Model\Entity\SalesOrder $order */
-        $order = $this->fetchTable('SalesOrders')->get((int)$payment->sales_order_id);
-        if ((string)$order->payment_status !== 'refunded') {
-            $order->payment_status = $nextStatus;
-            $this->fetchTable('SalesOrders')->saveOrFail($order);
-        }
-        $this->reverseInvoiceCredit($payment, (int)$row->get('amount_cents'), (int)$row->id);
-        $staffInitiated = $actorUserId > 0 || (string)$row->get('reason') === 'Staff refund';
-        if ($staffInitiated && $nextStatus === 'refunded') {
-            $actor = $actorUserId > 0 ? $actorUserId : (int)($order->created_by_user_id ?: 0);
-            $this->orders->restockIfUnshipped($order, $actor);
+        $this->reverseInvoiceCreditFromLock(
+            (int)$payment['id'],
+            $invoice,
+            $applyAmount,
+            $refundId,
+        );
+
+        $staffInitiated = $actorUserId > 0 || (string)$refund['reason'] === 'Staff refund';
+        if ($staffInitiated && $nextStatus === 'refunded' && $order !== null) {
+            $actor = $actorUserId > 0 ? $actorUserId : (int)($order['created_by_user_id'] ?: 0);
+            /** @var \App\Model\Entity\SalesOrder $orderEntity */
+            $orderEntity = $this->fetchTable('SalesOrders')->newEmptyEntity();
+            $orderEntity->id = (int)$order['id'];
+            $orderEntity->status = (string)$order['status'];
+            $orderEntity->order_number = (string)$order['order_number'];
+            $orderEntity->setNew(false);
+            $this->orders->restockIfUnshipped($orderEntity, $actor);
         }
     }
 
     /**
-     * @param int $paymentId Payment id.
-     * @return int
+     * @param int $refundId Local refund id.
+     * @return array<string, mixed>|null
      */
-    private function succeededRefundTotal(int $paymentId): int
+    private function refundGraph(int $refundId): ?array
     {
-        $total = 0;
-        $rows = $this->fetchTable('PaymentRefunds')->find()
-            ->where(['payment_id' => $paymentId, 'status IN' => ['succeeded', 'completed']])
-            ->all();
-        foreach ($rows as $row) {
-            $total += (int)$row->get('amount_cents');
+        $row = $this->connection()->execute(
+            'SELECT r.id AS refund_id, p.id AS payment_id, p.sales_order_id
+               FROM payment_refunds r
+               INNER JOIN payments p ON p.id = r.payment_id
+              WHERE r.id = ?',
+            [$refundId],
+        )->fetch('assoc');
+
+        return is_array($row) ? $row : null;
+    }
+
+    /**
+     * Retry lock conflicts from MySQL snapshot isolation or deadlocks.
+     *
+     * @param \Closure(): void $operation Locked refund application.
+     * @return void
+     */
+    private function withRefundLockRetry(Closure $operation): void
+    {
+        $attempt = 0;
+        while (true) {
+            try {
+                $this->connection()->transactional($operation);
+
+                return;
+            } catch (QueryException $exception) {
+                $attempt++;
+                if ($attempt >= 5 || !$this->isRetryableLockFailure($exception)) {
+                    throw $exception;
+                }
+                usleep(20_000 * $attempt);
+            }
+        }
+    }
+
+    /**
+     * @param \Throwable $exception Database error.
+     * @return bool
+     */
+    private function isRetryableLockFailure(Throwable $exception): bool
+    {
+        $message = $exception->getMessage();
+
+        return str_contains($message, '1020')
+            || str_contains($message, '1213')
+            || str_contains($message, 'Deadlock')
+            || str_contains($message, 'Record has changed since last read');
+    }
+
+    /**
+     * @param string $paymentIntentId Stripe PaymentIntent id.
+     * @return array<string, mixed>|null
+     */
+    private function findPaymentByIntent(string $paymentIntentId): ?array
+    {
+        if ($paymentIntentId === '') {
+            return null;
+        }
+        $statement = $this->connection()->execute(
+            "SELECT * FROM payments WHERE provider = 'stripe' AND provider_payment_id = ?",
+            [$paymentIntentId],
+        );
+        $row = $statement->fetch('assoc');
+
+        return is_array($row) ? $row : null;
+    }
+
+    /**
+     * @param string $providerRefundId Stripe refund id.
+     * @return array<string, mixed>|null
+     */
+    private function findRefundByProvider(string $providerRefundId): ?array
+    {
+        $statement = $this->connection()->execute(
+            'SELECT * FROM payment_refunds WHERE provider_refund_id = ?',
+            [$providerRefundId],
+        );
+        $row = $statement->fetch('assoc');
+
+        return is_array($row) ? $row : null;
+    }
+
+    /**
+     * Bind a webhook only when metadata identifies one local refund exactly.
+     *
+     * @param array<string, string> $metadata Stripe metadata.
+     * @param array<string, mixed>|null $payment Payment for this PaymentIntent.
+     * @param int $amountCents Stripe amount.
+     * @param string $providerRefundId Stripe refund id.
+     * @return array<string, mixed>|null
+     */
+    private function findExactLocalRefund(
+        array $metadata,
+        ?array $payment,
+        int $amountCents,
+        string $providerRefundId,
+    ): ?array {
+        $localRefundId = (int)($metadata['local_refund_id'] ?? 0);
+        if ($localRefundId < 1) {
+            return null;
+        }
+        $statement = $this->connection()->execute(
+            'SELECT * FROM payment_refunds WHERE id = ?',
+            [$localRefundId],
+        );
+        $refund = $statement->fetch('assoc');
+        if (!is_array($refund)) {
+            return null;
+        }
+        $existingProvider = (string)($refund['provider_refund_id'] ?? '');
+        if ($existingProvider !== '' && $existingProvider !== $providerRefundId) {
+            return null;
+        }
+        if ($payment !== null && (int)$refund['payment_id'] !== (int)$payment['id']) {
+            return null;
+        }
+        $expectedPaymentId = (int)($metadata['local_payment_id'] ?? 0);
+        if ($expectedPaymentId > 0 && (int)$refund['payment_id'] !== $expectedPaymentId) {
+            return null;
+        }
+        if ($amountCents > 0 && (int)$refund['amount_cents'] !== $amountCents) {
+            return null;
         }
 
-        return $total;
+        return $refund;
+    }
+
+    /**
+     * @param int $paymentId Payment id.
+     * @param array<string, mixed>|null $invoice Locked invoice.
+     * @param int $amountCents Refunded amount.
+     * @param int $refundId Local refund id.
+     * @return void
+     */
+    private function reverseInvoiceCreditFromLock(
+        int $paymentId,
+        ?array $invoice,
+        int $amountCents,
+        int $refundId,
+    ): void {
+        if ($invoice === null || $amountCents <= 0) {
+            return;
+        }
+        $allocations = $this->fetchTable('PaymentAllocations');
+        $existingQuery = [
+            'payment_id' => $paymentId,
+            'invoice_id' => (int)$invoice['id'],
+            'allocation_type' => 'refund',
+        ];
+        if ($refundId > 0 && $allocations->getSchema()->hasColumn('payment_refund_id')) {
+            $existingQuery['payment_refund_id'] = $refundId;
+        }
+        $existing = $allocations->find()->where($existingQuery)->first();
+        if ($existing !== null) {
+            return;
+        }
+        $row = $allocations->newEmptyEntity();
+        $row->set('payment_id', $paymentId);
+        $row->set('invoice_id', (int)$invoice['id']);
+        $row->set('allocation_type', 'refund');
+        if ($allocations->getSchema()->hasColumn('payment_refund_id') && $refundId > 0) {
+            $row->set('payment_refund_id', $refundId);
+        }
+        if ($allocations->getSchema()->hasColumn('effect_key')) {
+            $row->set('effect_key', $refundId > 0 ? 'refund-' . $refundId : 'refund');
+        }
+        $row->set('amount_cents', $amountCents);
+        $row->set('allocated_at', DateTime::now('UTC'));
+        $row->set('created', DateTime::now('UTC'));
+        try {
+            $allocations->saveOrFail($row);
+        } catch (Throwable $exception) {
+            if ($this->isDuplicateKey($exception)) {
+                return;
+            }
+            throw $exception;
+        }
+
+        $paid = max(0, (int)$invoice['amount_paid_cents'] - $amountCents);
+        $status = (string)$invoice['status'];
+        if (
+            $paid < (int)$invoice['grand_total_cents']
+            && in_array($status, [Invoice::STATUS_PAID, Invoice::STATUS_OVERDUE], true)
+        ) {
+            $status = Invoice::STATUS_ISSUED;
+            $this->connection()->execute(
+                'UPDATE invoices
+                    SET amount_paid_cents = ?, status = ?, paid_at = NULL
+                  WHERE id = ?',
+                [$paid, $status, (int)$invoice['id']],
+            );
+
+            return;
+        }
+        $this->connection()->execute(
+            'UPDATE invoices SET amount_paid_cents = ? WHERE id = ?',
+            [$paid, (int)$invoice['id']],
+        );
     }
 
     /**
@@ -420,84 +746,64 @@ class RefundService
         $row->set('created', DateTime::now('UTC'));
         try {
             $alerts->saveOrFail($row);
-        } catch (Throwable) {
-            // Duplicate alert for the same refund is acceptable.
-        }
-    }
-
-    /**
-     * Reverse a capture allocation after a succeeded refund.
-     *
-     * @param \App\Model\Entity\Payment $payment Refunded payment.
-     * @param int $amountCents Refunded amount.
-     * @param int $refundId Local refund id.
-     * @return void
-     */
-    private function reverseInvoiceCredit(Payment $payment, int $amountCents, int $refundId = 0): void
-    {
-        /** @var \App\Model\Entity\Invoice|null $invoice */
-        $invoice = $this->fetchTable('Invoices')->find()
-            ->where(['sales_order_id' => $payment->sales_order_id, 'status !=' => Invoice::STATUS_VOID])
-            ->first();
-        if ($invoice === null || $amountCents <= 0) {
-            return;
-        }
-        $this->connection()->execute('SELECT id FROM invoices WHERE id = ? FOR UPDATE', [$invoice->id]);
-        $invoice = $this->fetchTable('Invoices')->get($invoice->id);
-        $allocations = $this->fetchTable('PaymentAllocations');
-        $existingQuery = [
-            'payment_id' => $payment->id,
-            'invoice_id' => $invoice->id,
-            'allocation_type' => 'refund',
-        ];
-        if ($refundId > 0 && $allocations->getSchema()->hasColumn('payment_refund_id')) {
-            $existingQuery['payment_refund_id'] = $refundId;
-        }
-        $existing = $allocations->find()->where($existingQuery)->first();
-        if ($existing !== null) {
-            return;
-        }
-        $row = $allocations->newEmptyEntity();
-        $row->set('payment_id', $payment->id);
-        $row->set('invoice_id', $invoice->id);
-        $row->set('allocation_type', 'refund');
-        if ($allocations->getSchema()->hasColumn('payment_refund_id') && $refundId > 0) {
-            $row->set('payment_refund_id', $refundId);
-        }
-        if ($allocations->getSchema()->hasColumn('effect_key')) {
-            $row->set('effect_key', $refundId > 0 ? 'refund-' . $refundId : 'refund');
-        }
-        $row->set('amount_cents', $amountCents);
-        $row->set('allocated_at', DateTime::now('UTC'));
-        $row->set('created', DateTime::now('UTC'));
-        try {
-            $allocations->saveOrFail($row);
         } catch (Throwable $exception) {
-            if (
-                str_contains($exception->getMessage(), 'UNIQUE')
-                || str_contains($exception->getMessage(), 'Duplicate')
-                || str_contains($exception->getMessage(), '1062')
-            ) {
+            if ($this->isDuplicateKey($exception)) {
                 return;
             }
             throw $exception;
         }
-        $invoice->amount_paid_cents = max(0, (int)$invoice->amount_paid_cents - $amountCents);
-        if (
-            (int)$invoice->amount_paid_cents < (int)$invoice->grand_total_cents
-            && in_array((string)$invoice->status, [Invoice::STATUS_PAID, Invoice::STATUS_OVERDUE], true)
-        ) {
-            $invoice->status = Invoice::STATUS_ISSUED;
-            $invoice->paid_at = null;
-        }
-        $this->fetchTable('Invoices')->saveOrFail($invoice);
     }
 
     /**
-     * @return \Cake\Datasource\ConnectionInterface
+     * @param \Throwable $exception Persistence error.
+     * @return bool
      */
-    private function connection(): ConnectionInterface
+    private function isDuplicateKey(Throwable $exception): bool
     {
-        return $this->fetchTable('Payments')->getConnection();
+        $message = $exception->getMessage();
+
+        return str_contains($message, 'UNIQUE')
+            || str_contains($message, 'Duplicate')
+            || str_contains($message, '1062');
+    }
+
+    /**
+     * @param string $sql Locked read.
+     * @param array<int, mixed> $params Bound values.
+     * @return array<string, mixed>|null
+     */
+    private function lockAssoc(string $sql, array $params): ?array
+    {
+        $statement = $this->connection()->execute($sql, $params);
+        $row = $statement->fetch('assoc');
+
+        return is_array($row) ? $row : null;
+    }
+
+    /**
+     * @param string $sql Locked read.
+     * @param array<int, mixed> $params Bound values.
+     * @return list<array<string, mixed>>
+     */
+    private function lockAll(string $sql, array $params): array
+    {
+        $statement = $this->connection()->execute($sql, $params);
+        /** @var list<array<string, mixed>> $rows */
+        $rows = $statement->fetchAll('assoc');
+
+        return $rows;
+    }
+
+    /**
+     * @return \Cake\Database\Connection
+     */
+    private function connection(): Connection
+    {
+        $connection = $this->fetchTable('Payments')->getConnection();
+        if (!$connection instanceof Connection) {
+            throw new RuntimeException('Payments require a SQL connection.');
+        }
+
+        return $connection;
     }
 }

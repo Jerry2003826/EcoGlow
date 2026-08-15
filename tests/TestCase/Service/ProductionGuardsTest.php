@@ -14,6 +14,7 @@ use Cake\Mailer\Transport\SmtpTransport;
 use Cake\Mailer\TransportFactory;
 use Cake\TestSuite\TestCase;
 use Redis;
+use ReflectionClass;
 use RuntimeException;
 use Throwable;
 
@@ -38,6 +39,8 @@ class ProductionGuardsTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        $probed = (new ReflectionClass(ProductionGuards::class))->getProperty('probed');
+        $probed->setValue(null, false);
         $throttle = Cache::getConfig('login_throttle');
         $this->originalThrottle = is_array($throttle) ? $throttle : null;
         $mail = TransportFactory::getConfig('default');
@@ -129,6 +132,26 @@ class ProductionGuardsTest extends TestCase
             'url' => 'redis://redis.example.com:6379/0',
             'duration' => '+1 minute',
             'prefix' => 'test_throttle_public_',
+        ]);
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('rediss://');
+        ProductionGuards::assertRateLimitStore();
+    }
+
+    /**
+     * A password is not a substitute for TLS on a public Redis host.
+     *
+     * @return void
+     */
+    public function testPublicRedisPasswordWithoutTlsIsRejected(): void
+    {
+        Cache::drop('login_throttle');
+        Cache::setConfig('login_throttle', [
+            'className' => RedisEngine::class,
+            'fallback' => false,
+            'url' => 'redis://:secret@redis.example.com:6379/0',
+            'duration' => '+1 minute',
+            'prefix' => 'test_throttle_public_pw_',
         ]);
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('rediss://');

@@ -168,7 +168,7 @@ class Application extends BaseApplication implements
             ]))->skipCheckCallback(function (ServerRequestInterface $request): bool {
                 $path = rtrim($request->getUri()->getPath(), '/');
 
-                return in_array($path, ['/webhooks/stripe', '/csp-report'], true);
+                return in_array($path, ['/webhooks/stripe', '/csp-report', '/health/ready'], true);
             }))
 
             // Block locked-out login attempts *before* authentication so a

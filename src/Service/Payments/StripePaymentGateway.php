@@ -55,14 +55,22 @@ class StripePaymentGateway implements PaymentGatewayInterface
     /**
      * @inheritDoc
      */
-    public function refund(string $paymentIntentId, int $amountCents, string $idempotencyKey): RefundResult
-    {
+    public function refund(
+        string $paymentIntentId,
+        int $amountCents,
+        string $idempotencyKey,
+        array $metadata = [],
+    ): RefundResult {
         try {
+            $payload = [
+                'payment_intent' => $paymentIntentId,
+                'amount' => $amountCents,
+            ];
+            if ($metadata !== []) {
+                $payload['metadata'] = $metadata;
+            }
             $refund = $this->client()->refunds->create(
-                [
-                    'payment_intent' => $paymentIntentId,
-                    'amount' => $amountCents,
-                ],
+                $payload,
                 ['idempotency_key' => $idempotencyKey],
             );
         } catch (ApiErrorException $exception) {

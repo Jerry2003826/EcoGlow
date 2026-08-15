@@ -4,19 +4,16 @@ declare(strict_types=1);
 namespace App\Test\TestCase\Service;
 
 use App\Service\Inventory\InventoryLedger;
-use App\Test\TestCase\Controller\Admin\AdminAuthTrait;
+use App\Test\TestCase\Controller\Admin\AdminAppTestCase;
 use Cake\Datasource\ConnectionManager;
-use Cake\TestSuite\TestCase;
 use PDO;
 use PDOException;
 
 /**
  * Concurrency coverage for inventory reservation row locks.
  */
-class InventoryLedgerConcurrencyTest extends TestCase
+class InventoryLedgerConcurrencyTest extends AdminAppTestCase
 {
-    use AdminAuthTrait;
-
     /**
      * Two connections cannot reserve the last unit twice. The second waiter
      * hits the row lock, and after the first commit the stored procedure

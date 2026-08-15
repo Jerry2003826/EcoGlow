@@ -5,14 +5,12 @@ namespace App\Test\TestCase\Controller\Admin;
 
 use App\Model\Entity\ServiceRequest;
 use Cake\TestSuite\IntegrationTestTrait;
-use Cake\TestSuite\TestCase;
 
 /**
  * Staff appointment scheduling.
  */
-class AppointmentsControllerTest extends TestCase
+class AppointmentsControllerTest extends AdminAppTestCase
 {
-    use AdminAuthTrait;
     use IntegrationTestTrait;
 
     /**
