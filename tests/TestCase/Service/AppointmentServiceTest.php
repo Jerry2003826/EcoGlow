@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace App\Test\TestCase\Service;
 
 use App\Model\Entity\ServiceRequest;
+use App\Service\Inventory\InventoryLedger;
 use App\Service\Services\AppointmentService;
 use Cake\Datasource\ConnectionManager;
 use Cake\I18n\DateTime;
@@ -28,6 +29,9 @@ class AppointmentServiceTest extends TestCase
         'app.ServiceAppointments',
         'app.Products',
         'app.ProductVariants',
+        'app.InventoryLocations',
+        'app.InventoryBalances',
+        'app.InventoryMovements',
     ];
 
     /**
@@ -120,6 +124,54 @@ class AppointmentServiceTest extends TestCase
             DateTime::parse('2026-08-21 11:30:00', 'Australia/Melbourne')->setTimezone('UTC'),
             1,
         );
+    }
+
+    /**
+     * Recording a used part must deduct on-hand stock in the same transaction.
+     *
+     * @return void
+     */
+    public function testAddPartDecrementsOnHandAndStoresMovement(): void
+    {
+        $request = $this->newRequest('SRV-PART-1');
+        $before = $this->fetchTable('InventoryBalances')->get([
+            'product_variant_id' => 1,
+            'inventory_location_id' => 1,
+        ]);
+        $this->assertSame(5, (int)$before->quantity_on_hand);
+
+        (new AppointmentService(new InventoryLedger()))->addPart($request, 1, 2, 1);
+
+        $after = $this->fetchTable('InventoryBalances')->get([
+            'product_variant_id' => 1,
+            'inventory_location_id' => 1,
+        ]);
+        $this->assertSame(3, (int)$after->quantity_on_hand);
+
+        $part = $this->fetchTable('ServicePartsUsed')->find()
+            ->where(['service_request_id' => $request->id])
+            ->firstOrFail();
+        $this->assertSame(2, (int)$part->quantity);
+        $this->assertSame(1, (int)$part->inventory_location_id);
+        $this->assertGreaterThan(0, (int)$part->inventory_movement_id);
+        $this->assertTrue($this->fetchTable('InventoryMovements')->exists([
+            'id' => $part->inventory_movement_id,
+            'movement_type' => 'service_issue',
+            'on_hand_delta' => -2,
+        ]));
+    }
+
+    /**
+     * Parts cannot be recorded when on-hand stock is insufficient.
+     *
+     * @return void
+     */
+    public function testAddPartRejectsWhenStockIsShort(): void
+    {
+        $request = $this->newRequest('SRV-PART-SHORT');
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('not enough stock');
+        (new AppointmentService(new InventoryLedger()))->addPart($request, 1, 99, 1);
     }
 
     /**

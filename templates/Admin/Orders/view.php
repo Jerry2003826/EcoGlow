@@ -38,7 +38,7 @@ $this->assign('breadcrumb', $this->element('admin/breadcrumb', [
             ['controller' => 'Invoices', 'action' => 'view', $existingInvoice->id],
         ) ?>
     </p>
-<?php else : ?>
+<?php elseif (!in_array((string)$salesOrder->payment_status, ['refunded', 'partially_refunded'], true)) : ?>
     <div class="admin-actions mb-3">
         <?= $this->Form->postButton(
             'Issue invoice',

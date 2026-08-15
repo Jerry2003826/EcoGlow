@@ -604,15 +604,76 @@ class SecondRoundSecurityTest extends TestCase
         $invoicePaid = $pdo->query(
             'SELECT amount_paid_cents FROM invoices WHERE id = ' . (int)$invoice->id,
         )->fetchColumn();
+        $invoiceStatus = $pdo->query(
+            'SELECT status FROM invoices WHERE id = ' . (int)$invoice->id,
+        )->fetchColumn();
+        $invoiceBalance = $pdo->query(
+            'SELECT balance_due_cents FROM invoices WHERE id = ' . (int)$invoice->id,
+        )->fetchColumn();
         $allocationCount = $pdo->query(
             'SELECT COUNT(*) FROM payment_allocations
               WHERE payment_id = ' . (int)$payment->id . "
                 AND allocation_type = 'refund'",
         )->fetchColumn();
+        $creditNotes = $pdo->query(
+            'SELECT COUNT(*) FROM credit_notes WHERE invoice_id = ' . (int)$invoice->id,
+        )->fetchColumn();
         $this->assertSame('refunded', (string)$paymentStatus);
         $this->assertSame('refunded', (string)$orderStatus);
-        $this->assertSame(0, (int)$invoicePaid);
+        $this->assertSame((int)$order->grand_total_cents, (int)$invoicePaid);
+        $this->assertSame(Invoice::STATUS_CREDITED, (string)$invoiceStatus);
+        $this->assertSame(0, (int)$invoiceBalance);
         $this->assertSame(2, (int)$allocationCount);
+        $this->assertSame(2, (int)$creditNotes);
+    }
+
+    /**
+     * A paid invoice keeps its paid history after a full refund.
+     *
+     * @return void
+     */
+    public function testSucceededRefundKeepsPaidInvoiceAndWritesCreditNote(): void
+    {
+        $order = $this->placeOrder('pi_credit_note');
+        $invoice = $this->issueInvoice($order);
+        $this->postSigned($this->eventPayload(
+            'evt_credit_note_pay',
+            'payment_intent.succeeded',
+            'pi_credit_note',
+            (int)$order->grand_total_cents,
+            ['order_id' => (string)$order->id],
+        ));
+        $this->assertResponseOk();
+        $invoice = $this->fetchTable('Invoices')->get($invoice->id);
+        $this->assertSame(Invoice::STATUS_PAID, (string)$invoice->status);
+        $this->assertSame((int)$order->grand_total_cents, (int)$invoice->amount_paid_cents);
+
+        $gateway = new FakePaymentGateway();
+        $gateway->nextRefundId = 're_credit_note';
+        (new RefundService(new OrderService(new InventoryLedger()), $gateway))
+            ->refundOrder($this->fetchTable('SalesOrders')->get($order->id), 1);
+        (new RefundService(new OrderService(new InventoryLedger()), new StripePaymentGateway()))
+            ->applyWebhookStatus('re_credit_note', 'succeeded', 'pi_credit_note');
+
+        $invoice = $this->fetchTable('Invoices')->get($invoice->id);
+        $this->assertSame(Invoice::STATUS_CREDITED, (string)$invoice->status);
+        $this->assertSame((int)$order->grand_total_cents, (int)$invoice->amount_paid_cents);
+        $this->assertSame(0, (int)$invoice->balance_due_cents);
+        $this->assertNotNull($invoice->paid_at);
+        $this->assertSame(
+            1,
+            $this->fetchTable('PaymentAllocations')->find()
+                ->where(['invoice_id' => $invoice->id, 'allocation_type' => 'refund'])
+                ->count(),
+        );
+        $credit = $this->fetchTable('Invoices')->getConnection()->execute(
+            'SELECT credit_note_number, total_cents, status
+               FROM credit_notes WHERE invoice_id = ?',
+            [$invoice->id],
+        )->fetch('assoc');
+        $this->assertIsArray($credit);
+        $this->assertSame((int)$order->grand_total_cents, (int)$credit['total_cents']);
+        $this->assertSame('issued', (string)$credit['status']);
     }
 
     /**

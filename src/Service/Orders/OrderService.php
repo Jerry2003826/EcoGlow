@@ -237,37 +237,41 @@ class OrderService
         int $actorUserId,
         ?string $note = null,
     ): SalesOrder {
-        $allowed = self::TRANSITIONS[$order->status] ?? [];
-        if (!in_array($toStatus, $allowed, true)) {
-            throw new InvalidArgumentException(sprintf(
-                'Cannot move an order from %s to %s.',
-                $order->status,
-                $toStatus,
-            ));
-        }
-
         return $this->connection()->transactional(function () use ($order, $toStatus, $actorUserId, $note) {
-            $from = $order->status;
-            $order->status = $toStatus;
+            $this->lockOrder((int)$order->id);
+            /** @var \App\Model\Entity\SalesOrder $current */
+            $current = $this->fetchTable('SalesOrders')->get($order->id);
+            $allowed = self::TRANSITIONS[$current->status] ?? [];
+            if (!in_array($toStatus, $allowed, true)) {
+                throw new InvalidArgumentException(sprintf(
+                    'Cannot move an order from %s to %s.',
+                    $current->status,
+                    $toStatus,
+                ));
+            }
+
+            $from = $current->status;
+            $current->status = $toStatus;
+            $current->version_number = (int)$current->version_number + 1;
             if ($toStatus === SalesOrder::STATUS_COMPLETED) {
-                $order->completed_at = DateTime::now('UTC');
+                $current->completed_at = DateTime::now('UTC');
             }
             if ($toStatus === SalesOrder::STATUS_CANCELLED) {
-                $order->cancelled_at = DateTime::now('UTC');
+                $current->cancelled_at = DateTime::now('UTC');
             }
-            $this->fetchTable('SalesOrders')->saveOrFail($order);
-            $this->annotateLatestHistory($order, $from, $toStatus, $actorUserId, $note);
+            $this->fetchTable('SalesOrders')->saveOrFail($current);
+            $this->annotateLatestHistory($current, $from, $toStatus, $actorUserId, $note);
 
             if ($toStatus === SalesOrder::STATUS_CANCELLED) {
-                $this->releaseReservations((int)$order->id, $actorUserId, $order->order_number);
+                $this->releaseReservations((int)$current->id, $actorUserId, $current->order_number);
             } elseif (
                 $toStatus === SalesOrder::STATUS_DISPATCHED
                 || $toStatus === SalesOrder::STATUS_COMPLETED
             ) {
-                $this->consumeReservations((int)$order->id, $actorUserId, $order->order_number);
+                $this->consumeReservations((int)$current->id, $actorUserId, $current->order_number);
             }
 
-            return $order;
+            return $current;
         });
     }
 

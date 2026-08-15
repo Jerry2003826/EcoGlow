@@ -16,6 +16,8 @@ use Cake\ORM\Entity;
  * @property string|null $guest_email
  * @property string|null $guest_phone
  * @property string $status
+ * @property string $payment_status
+ * @property int $version_number
  * @property string $source_channel
  * @property string|null $external_source_reference
  * @property \Cake\I18n\Date|null $promised_delivery_date

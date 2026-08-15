@@ -91,4 +91,34 @@ class InvoicesControllerTest extends AdminAppTestCase
         $this->assertResponseContains('GST inclusive');
         $this->assertResponseContains($invoice->invoice_number);
     }
+
+    /**
+     * Fully or partially refunded orders must not receive a new unpaid invoice.
+     *
+     * @return void
+     */
+    public function testCreateFromOrderRejectsRefundedOrder(): void
+    {
+        $this->loginAs(1);
+        $this->post('/admin/orders/add', [
+            'customer_id' => 1,
+            'source_channel' => SalesOrder::CHANNEL_PHONE,
+            'lines' => [
+                ['product_variant_id' => 1, 'quantity' => 1],
+            ],
+        ]);
+        $order = $this->fetchTable('SalesOrders')->find()
+            ->orderBy(['id' => 'DESC'])
+            ->firstOrFail();
+        $this->fetchTable('SalesOrders')->getConnection()->execute(
+            "UPDATE sales_orders SET payment_status = 'refunded' WHERE id = ?",
+            [$order->id],
+        );
+        $before = $this->fetchTable('Invoices')->find()->count();
+
+        $this->post('/admin/invoices/create-from-order/' . $order->id);
+        $this->assertResponseCode(302);
+        $this->assertFlashMessage('A refunded order cannot be invoiced.');
+        $this->assertSame($before, $this->fetchTable('Invoices')->find()->count());
+    }
 }

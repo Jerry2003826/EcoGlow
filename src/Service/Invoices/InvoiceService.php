@@ -41,13 +41,25 @@ class InvoiceService
         if ($order->status === SalesOrder::STATUS_CANCELLED) {
             throw new InvalidArgumentException('A cancelled order cannot be invoiced.');
         }
+        if (in_array((string)$order->payment_status, ['refunded', 'partially_refunded'], true)) {
+            throw new InvalidArgumentException('A refunded order cannot be invoiced.');
+        }
         $order = $this->fetchTable('SalesOrders')->get($order->id, finder: 'detail');
 
         return $this->connection()->transactional(function () use ($order, $actorUserId) {
-            $this->connection()->execute(
-                'SELECT id FROM sales_orders WHERE id = ? FOR UPDATE',
+            $locked = $this->connection()->execute(
+                'SELECT status, payment_status FROM sales_orders WHERE id = ? FOR UPDATE',
                 [$order->id],
-            );
+            )->fetch('assoc');
+            if (!is_array($locked)) {
+                throw new InvalidArgumentException('The order could not be invoiced.');
+            }
+            if ((string)$locked['status'] === SalesOrder::STATUS_CANCELLED) {
+                throw new InvalidArgumentException('A cancelled order cannot be invoiced.');
+            }
+            if (in_array((string)$locked['payment_status'], ['refunded', 'partially_refunded'], true)) {
+                throw new InvalidArgumentException('A refunded order cannot be invoiced.');
+            }
             $existing = $this->fetchTable('Invoices')->find()
                 ->where([
                     'sales_order_id' => $order->id,
@@ -187,6 +199,9 @@ class InvoiceService
             $invoice = $this->fetchTable('Invoices')->get($invoice->id);
             if ($invoice->status === Invoice::STATUS_VOID) {
                 throw new InvalidArgumentException('A void invoice cannot take a payment.');
+            }
+            if ($invoice->status === Invoice::STATUS_CREDITED) {
+                throw new InvalidArgumentException('A credited invoice cannot take a payment.');
             }
             $balance = (int)$invoice->balance_due_cents;
             if ($amountCents > $balance) {

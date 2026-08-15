@@ -44,15 +44,29 @@ class ReportsController extends AdminController
         $average = $ordersTotal > 0 ? intdiv($grossSales, $ordersTotal) : 0;
 
         $channels = $connection->execute(
-            "SELECT source_channel,
+            "SELECT so.source_channel,
                     COUNT(*) AS order_count,
-                    COALESCE(SUM(grand_total_cents), 0) AS sales_cents
-               FROM sales_orders
-              WHERE placed_at IS NOT NULL
-                AND DATE(COALESCE(CONVERT_TZ(placed_at, 'UTC', 'Australia/Melbourne'), placed_at))
+                    COALESCE(SUM(
+                        CASE
+                            WHEN so.payment_status = 'refunded' THEN 0
+                            ELSE GREATEST(0, so.grand_total_cents - COALESCE(rf.refunded_cents, 0))
+                        END
+                    ), 0) AS sales_cents
+               FROM sales_orders so
+               LEFT JOIN (
+                    SELECT p.sales_order_id,
+                           SUM(CASE WHEN pr.status IN ('succeeded', 'completed')
+                                    THEN pr.amount_cents ELSE 0 END) AS refunded_cents
+                      FROM payments p
+                      INNER JOIN payment_refunds pr ON pr.payment_id = p.id
+                     GROUP BY p.sales_order_id
+               ) rf ON rf.sales_order_id = so.id
+              WHERE so.placed_at IS NOT NULL
+                AND DATE(COALESCE(CONVERT_TZ(so.placed_at, 'UTC', 'Australia/Melbourne'), so.placed_at))
                     BETWEEN ? AND ?
-                AND status <> 'cancelled'
-              GROUP BY source_channel
+                AND so.status <> 'cancelled'
+                AND so.payment_status <> 'refunded'
+              GROUP BY so.source_channel
               ORDER BY sales_cents DESC",
             [$fromSql, $toSql],
         )->fetchAll('assoc');
@@ -60,15 +74,33 @@ class ReportsController extends AdminController
         $categories = $connection->execute(
             "SELECT COALESCE(c.name, 'Uncategorised') AS category_name,
                     COUNT(soi.id) AS line_count,
-                    COALESCE(SUM(soi.line_total_cents), 0) AS sales_cents
+                    COALESCE(SUM(
+                        CASE
+                            WHEN so.grand_total_cents <= 0 THEN 0
+                            ELSE CAST(
+                                soi.line_total_cents
+                                * GREATEST(0, so.grand_total_cents - COALESCE(rf.refunded_cents, 0))
+                                / so.grand_total_cents AS SIGNED
+                            )
+                        END
+                    ), 0) AS sales_cents
                FROM sales_order_items soi
                INNER JOIN sales_orders so ON so.id = soi.sales_order_id
                LEFT JOIN products p ON p.id = soi.product_id
                LEFT JOIN categories c ON c.id = p.category_id
+               LEFT JOIN (
+                    SELECT p.sales_order_id,
+                           SUM(CASE WHEN pr.status IN ('succeeded', 'completed')
+                                    THEN pr.amount_cents ELSE 0 END) AS refunded_cents
+                      FROM payments p
+                      INNER JOIN payment_refunds pr ON pr.payment_id = p.id
+                     GROUP BY p.sales_order_id
+               ) rf ON rf.sales_order_id = so.id
               WHERE so.placed_at IS NOT NULL
                 AND DATE(COALESCE(CONVERT_TZ(so.placed_at, 'UTC', 'Australia/Melbourne'), so.placed_at))
                     BETWEEN ? AND ?
                 AND so.status <> 'cancelled'
+                AND so.payment_status <> 'refunded'
               GROUP BY COALESCE(c.name, 'Uncategorised')
               ORDER BY sales_cents DESC",
             [$fromSql, $toSql],
@@ -132,7 +164,8 @@ class ReportsController extends AdminController
               WHERE placed_at IS NOT NULL
                 AND DATE(COALESCE(CONVERT_TZ(placed_at, 'UTC', 'Australia/Melbourne'), placed_at))
                     BETWEEN ? AND ?
-                AND status <> 'cancelled'",
+                AND status <> 'cancelled'
+                AND payment_status <> 'refunded'",
             [$fromSql, $toSql],
         )->fetch('assoc') ?: [];
 
@@ -170,7 +203,10 @@ class ReportsController extends AdminController
     {
         $today = Date::now('Australia/Melbourne');
         if ($preset === 'custom') {
-            if ($from !== '' && $to !== '') {
+            if (
+                preg_match('/^\d{4}-\d{2}-\d{2}$/', $from) === 1
+                && preg_match('/^\d{4}-\d{2}-\d{2}$/', $to) === 1
+            ) {
                 return [Date::parse($from), Date::parse($to), 'custom'];
             }
 

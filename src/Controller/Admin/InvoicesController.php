@@ -48,7 +48,11 @@ class InvoicesController extends AdminController
             ->orderBy(['Invoices.issue_date' => 'DESC', 'Invoices.id' => 'DESC']);
         if ($status === Invoice::STATUS_OVERDUE) {
             $query->where([
-                'Invoices.status NOT IN' => [Invoice::STATUS_PAID, Invoice::STATUS_VOID],
+                'Invoices.status NOT IN' => [
+                    Invoice::STATUS_PAID,
+                    Invoice::STATUS_CREDITED,
+                    Invoice::STATUS_VOID,
+                ],
                 'Invoices.due_date <' => $today->format('Y-m-d'),
                 'Invoices.balance_due_cents >' => 0,
             ]);
@@ -71,7 +75,11 @@ class InvoicesController extends AdminController
         $statusCounts = $this->countByField('Invoices', 'status');
         $overdueCount = $this->fetchTable('Invoices')->find()
             ->where([
-                'status NOT IN' => [Invoice::STATUS_PAID, Invoice::STATUS_VOID],
+                'status NOT IN' => [
+                    Invoice::STATUS_PAID,
+                    Invoice::STATUS_CREDITED,
+                    Invoice::STATUS_VOID,
+                ],
                 'due_date <' => $today->format('Y-m-d'),
                 'balance_due_cents >' => 0,
             ])

@@ -5,10 +5,12 @@ namespace App\Service\Services;
 
 use App\Model\Entity\ServiceAppointment;
 use App\Model\Entity\ServiceRequest;
+use App\Service\Inventory\InventoryLedger;
 use Cake\Datasource\ConnectionInterface;
 use Cake\I18n\DateTime;
 use Cake\ORM\Locator\LocatorAwareTrait;
 use InvalidArgumentException;
+use Throwable;
 
 /**
  * Staff scheduling with overlap protection for a technician's diary.
@@ -16,6 +18,13 @@ use InvalidArgumentException;
 class AppointmentService
 {
     use LocatorAwareTrait;
+
+    /**
+     * @param \App\Service\Inventory\InventoryLedger|null $ledger Stock ledger.
+     */
+    public function __construct(private ?InventoryLedger $ledger = null)
+    {
+    }
 
     /**
      * Confirm a request and insert a non-overlapping appointment.
@@ -174,15 +183,53 @@ class AppointmentService
             throw new InvalidArgumentException('Choose a part and a quantity of at least 1.');
         }
         $variant = $this->fetchTable('ProductVariants')->get($variantId);
-        $parts = $this->fetchTable('ServicePartsUsed');
-        $part = $parts->newEmptyEntity();
-        $part->set('service_request_id', $request->id);
-        $part->set('product_variant_id', $variantId);
-        $part->set('quantity', $quantity);
-        $part->set('unit_cost_snapshot_cents', $variant->cost_cents);
-        $part->set('unit_charge_snapshot_cents', $variant->price_cents);
-        $part->set('created_by_user_id', $actorUserId);
-        $parts->saveOrFail($part);
+        $ledger = $this->ledger ?? new InventoryLedger();
+
+        $ledger->transactional(function () use (
+            $request,
+            $variant,
+            $variantId,
+            $quantity,
+            $actorUserId,
+            $ledger,
+        ): void {
+            $location = $ledger->bestLocationFor($variantId);
+            if ($location === null) {
+                throw new InvalidArgumentException('There is not enough stock to record that part.');
+            }
+            try {
+                $ledger->applyInTransaction(
+                    $variantId,
+                    (int)$location['id'],
+                    'service_issue',
+                    -$quantity,
+                    0,
+                    'service_request',
+                    (int)$request->id,
+                    'Service part used on request ' . $request->request_number,
+                    $actorUserId,
+                );
+            } catch (Throwable $exception) {
+                if (str_contains(strtolower($exception->getMessage()), 'negative')) {
+                    throw new InvalidArgumentException(
+                        'There is not enough stock to record that part.',
+                    );
+                }
+                throw $exception;
+            }
+
+            $parts = $this->fetchTable('ServicePartsUsed');
+            $part = $parts->newEmptyEntity();
+            $part->set('service_request_id', $request->id);
+            $part->set('product_variant_id', $variantId);
+            $part->set('quantity', $quantity);
+            $part->set('unit_cost_snapshot_cents', $variant->cost_cents);
+            $part->set('unit_charge_snapshot_cents', $variant->price_cents);
+            $part->set('inventory_location_id', (int)$location['id']);
+            $part->set('inventory_movement_id', $ledger->lastInsertId());
+            $part->set('created_by_user_id', $actorUserId);
+            $parts->saveOrFail($part);
+        });
     }
 
     /**

@@ -6,9 +6,11 @@ namespace App\Service\Payments;
 use App\Model\Entity\Invoice;
 use App\Model\Entity\Payment;
 use App\Model\Entity\SalesOrder;
+use App\Service\Inventory\InventoryLedger;
 use App\Service\Orders\OrderService;
 use Cake\Database\Connection;
 use Cake\Database\Exception\QueryException;
+use Cake\I18n\Date;
 use Cake\I18n\DateTime;
 use Cake\ORM\Locator\LocatorAwareTrait;
 use Cake\Utility\Security;
@@ -390,7 +392,8 @@ class RefundService
             [(int)$payment['id']],
         );
         $invoice = $this->lockAssoc(
-            'SELECT id, amount_paid_cents, grand_total_cents, status
+            'SELECT id, amount_paid_cents, grand_total_cents, status, paid_at,
+                    sales_order_id, customer_id, currency, tax_cents, subtotal_cents
                FROM invoices
               WHERE sales_order_id = ? AND status != ?
               FOR UPDATE',
@@ -739,26 +742,135 @@ class RefundService
             return;
         }
 
-        $paid = max(0, (int)$invoice['amount_paid_cents'] - $amountCents);
         $status = (string)$invoice['status'];
-        if (
-            $paid < (int)$invoice['grand_total_cents']
-            && in_array($status, [Invoice::STATUS_PAID, Invoice::STATUS_OVERDUE], true)
-        ) {
-            $status = Invoice::STATUS_ISSUED;
-            $this->connection()->execute(
-                'UPDATE invoices
-                    SET amount_paid_cents = ?, status = ?, paid_at = NULL
-                  WHERE id = ?',
-                [$paid, $status, (int)$invoice['id']],
-            );
+        $paidCents = (int)$invoice['amount_paid_cents'];
+        $grandCents = (int)$invoice['grand_total_cents'];
+        $settled = in_array($status, [Invoice::STATUS_PAID, Invoice::STATUS_CREDITED], true)
+            || ($grandCents > 0 && $paidCents >= $grandCents);
+        if ($settled) {
+            $this->issueRefundCreditNote($invoice, $amountCents, $refundId);
+            $refundedTotal = $this->refundAllocatedTotal((int)$invoice['id']);
+            if (
+                $status !== Invoice::STATUS_CREDITED
+                && $refundedTotal >= $grandCents
+            ) {
+                $this->connection()->execute(
+                    'UPDATE invoices SET status = ? WHERE id = ?',
+                    [Invoice::STATUS_CREDITED, (int)$invoice['id']],
+                );
+                $this->connection()->execute(
+                    'INSERT INTO invoice_status_history
+                        (invoice_id, from_status, to_status, note, created)
+                     VALUES (?, ?, ?, ?, ?)',
+                    [
+                        (int)$invoice['id'],
+                        $status,
+                        Invoice::STATUS_CREDITED,
+                        'Refund credited; paid history retained.',
+                        $now,
+                    ],
+                );
+            }
 
             return;
         }
+
+        $paid = max(0, $paidCents - $amountCents);
         $this->connection()->execute(
             'UPDATE invoices SET amount_paid_cents = ? WHERE id = ?',
             [$paid, (int)$invoice['id']],
         );
+    }
+
+    /**
+     * @param array<string, mixed> $invoice Locked invoice.
+     * @param int $amountCents Refunded amount.
+     * @param int $refundId Local refund id.
+     * @return void
+     */
+    private function issueRefundCreditNote(array $invoice, int $amountCents, int $refundId): void
+    {
+        $existing = $this->connection()->execute(
+            "SELECT id FROM credit_notes
+              WHERE invoice_id = ?
+                AND JSON_UNQUOTE(JSON_EXTRACT(metadata, '$.payment_refund_id')) = ?",
+            [(int)$invoice['id'], (string)$refundId],
+        )->fetch('assoc');
+        if (is_array($existing)) {
+            return;
+        }
+
+        $number = (new InventoryLedger())->nextDocumentNumber('credit_note', 'CN');
+        $now = DateTime::now('UTC')->format('Y-m-d H:i:s');
+        $metadata = json_encode(
+            [
+                'payment_refund_id' => (string)$refundId,
+                'source' => 'stripe_refund',
+            ],
+            JSON_UNESCAPED_SLASHES,
+        );
+        $this->connection()->execute(
+            'INSERT INTO credit_notes (
+                credit_note_number, invoice_id, sales_order_id, customer_id, status,
+                reason_code, reason, currency, subtotal_cents, tax_cents, total_cents,
+                applied_cents, issue_date, issued_at, metadata, created, modified
+             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            [
+                $number,
+                (int)$invoice['id'],
+                $invoice['sales_order_id'] !== null ? (int)$invoice['sales_order_id'] : null,
+                $invoice['customer_id'] !== null ? (int)$invoice['customer_id'] : null,
+                'issued',
+                'refund',
+                'Stripe refund ' . $refundId,
+                (string)($invoice['currency'] ?: 'AUD'),
+                $amountCents,
+                0,
+                $amountCents,
+                $amountCents,
+                Date::now('Australia/Melbourne')->format('Y-m-d'),
+                $now,
+                $metadata,
+                $now,
+                $now,
+            ],
+        );
+        $creditNoteId = (int)($this->connection()->execute(
+            'SELECT LAST_INSERT_ID() AS id',
+        )->fetch('assoc')['id'] ?? 0);
+        if ($creditNoteId < 1) {
+            throw new RuntimeException('Credit note insert did not return an id.');
+        }
+        $this->connection()->execute(
+            'INSERT INTO credit_note_items (
+                credit_note_id, line_number, description_snapshot, quantity,
+                unit_amount_cents, tax_cents, line_total_cents, created
+             ) VALUES (?, 1, ?, 1, ?, 0, ?, ?)',
+            [
+                $creditNoteId,
+                'Refund allocation for payment refund ' . $refundId,
+                $amountCents,
+                $amountCents,
+                $now,
+            ],
+        );
+    }
+
+    /**
+     * @param int $invoiceId Invoice id.
+     * @return int
+     */
+    private function refundAllocatedTotal(int $invoiceId): int
+    {
+        $row = $this->connection()->execute(
+            "SELECT COALESCE(SUM(amount_cents), 0) AS refunded_cents
+               FROM payment_allocations
+              WHERE invoice_id = ?
+                AND allocation_type = 'refund'",
+            [$invoiceId],
+        )->fetch('assoc');
+
+        return (int)(is_array($row) ? ($row['refunded_cents'] ?? 0) : 0);
     }
 
     /**

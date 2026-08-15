@@ -35,6 +35,7 @@ class Invoice extends Entity
     public const STATUS_DRAFT = 'draft';
     public const STATUS_ISSUED = 'issued';
     public const STATUS_PAID = 'paid';
+    public const STATUS_CREDITED = 'credited';
     public const STATUS_VOID = 'void';
     public const STATUS_OVERDUE = 'overdue';
 
@@ -54,6 +55,7 @@ class Invoice extends Entity
             self::STATUS_DRAFT => 'Draft',
             self::STATUS_ISSUED => 'Issued',
             self::STATUS_PAID => 'Paid',
+            self::STATUS_CREDITED => 'Credited',
             self::STATUS_VOID => 'Void',
             self::STATUS_OVERDUE => 'Overdue',
         ];
@@ -66,7 +68,7 @@ class Invoice extends Entity
     public static function statusTone(string $status): string
     {
         return match ($status) {
-            self::STATUS_PAID => 'success',
+            self::STATUS_PAID, self::STATUS_CREDITED => 'success',
             self::STATUS_ISSUED, self::STATUS_OVERDUE => 'warning',
             self::STATUS_VOID => 'error',
             default => 'muted',
@@ -84,7 +86,7 @@ class Invoice extends Entity
         if ($this->due_date === null) {
             return false;
         }
-        if (in_array($this->status, [self::STATUS_PAID, self::STATUS_VOID], true)) {
+        if (in_array($this->status, [self::STATUS_PAID, self::STATUS_CREDITED, self::STATUS_VOID], true)) {
             return false;
         }
         if ((int)$this->balance_due_cents <= 0) {
