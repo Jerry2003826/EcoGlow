@@ -283,7 +283,7 @@ FROM `sales_orders` so
 LEFT JOIN `sales_order_items` soi ON soi.`sales_order_id` = so.`id`
 LEFT JOIN (
     SELECT p.`sales_order_id`,
-           SUM(CASE WHEN pr.`status` IN ('succeeded', 'completed') THEN pr.`amount_cents` ELSE 0 END) AS `refunded_cents`
+           SUM(CASE WHEN pr.`status` IN ('succeeded', 'completed') AND COALESCE(pr.`refund_kind`, 'customer_refund') IN ('customer_refund', 'partial_customer_refund') THEN pr.`amount_cents` ELSE 0 END) AS `refunded_cents`
       FROM `payments` p
       INNER JOIN `payment_refunds` pr ON pr.`payment_id` = p.`id`
      GROUP BY p.`sales_order_id`
@@ -310,7 +310,7 @@ LEFT JOIN (
       FROM `sales_orders` so
       LEFT JOIN (
           SELECT p.`sales_order_id`,
-                 SUM(CASE WHEN pr.`status` IN ('succeeded', 'completed') THEN pr.`amount_cents` ELSE 0 END) AS `refunded_cents`
+                 SUM(CASE WHEN pr.`status` IN ('succeeded', 'completed') AND COALESCE(pr.`refund_kind`, 'customer_refund') IN ('customer_refund', 'partial_customer_refund') THEN pr.`amount_cents` ELSE 0 END) AS `refunded_cents`
             FROM `payments` p
             INNER JOIN `payment_refunds` pr ON pr.`payment_id` = p.`id`
            GROUP BY p.`sales_order_id`
@@ -346,7 +346,7 @@ SELECT
 FROM `sales_orders` so
 LEFT JOIN (
     SELECT p.`sales_order_id`,
-           SUM(CASE WHEN pr.`status` IN ('succeeded', 'completed') THEN pr.`amount_cents` ELSE 0 END) AS `refunded_cents`
+           SUM(CASE WHEN pr.`status` IN ('succeeded', 'completed') AND COALESCE(pr.`refund_kind`, 'customer_refund') IN ('customer_refund', 'partial_customer_refund') THEN pr.`amount_cents` ELSE 0 END) AS `refunded_cents`
       FROM `payments` p
       INNER JOIN `payment_refunds` pr ON pr.`payment_id` = p.`id`
      GROUP BY p.`sales_order_id`

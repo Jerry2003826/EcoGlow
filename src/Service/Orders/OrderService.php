@@ -280,7 +280,7 @@ class OrderService
                     'A website checkout that is still waiting for Stripe cannot be confirmed from admin.',
                 );
             }
-            if ($toStatus === SalesOrder::STATUS_CANCELLED) {
+            if ($toStatus === SalesOrder::STATUS_CANCELLED && $current->isOpenWebCheckout()) {
                 $intentState = $this->cancelOpenStripeIntents($current);
                 if ($intentState === 'already_succeeded') {
                     throw new InvalidArgumentException(
@@ -586,6 +586,8 @@ class OrderService
                 return $order;
             }
             if ($this->cancelOpenStripeIntents($order) === 'already_succeeded') {
+                $this->deferHoldForInFlightCapture($order);
+
                 return $order;
             }
             $order->payment_status = 'failed';
@@ -1169,6 +1171,13 @@ class OrderService
      */
     private function cancelOpenStripeIntents(EntityInterface $order): string
     {
+        $openWebCheckout = (string)$order->get('source_channel') === SalesOrder::CHANNEL_WEB
+            && (string)$order->get('status') === SalesOrder::STATUS_DRAFT
+            && in_array((string)$order->get('payment_status'), ['pending', 'failed'], true);
+        if (!$openWebCheckout) {
+            return 'none';
+        }
+
         $intentIds = [];
         $payments = $this->fetchTable('Payments')->find()
             ->select(['provider_payment_id'])
@@ -1216,6 +1225,29 @@ class OrderService
         }
 
         return $state;
+    }
+
+    /**
+     * Keep an in-flight Stripe capture out of the next expired-hold scan.
+     *
+     * @param \Cake\Datasource\EntityInterface $order Locked unpaid checkout.
+     * @return void
+     */
+    private function deferHoldForInFlightCapture(EntityInterface $order): void
+    {
+        $limit = DateTime::now('UTC')->addMinutes(15);
+        $meta = $order->get('metadata');
+        if (!is_array($meta)) {
+            $meta = [];
+        }
+        $meta['stripe_reconciliation'] = 'awaiting_capture';
+        $order->set('metadata', $meta);
+        $order->set('hold_expires_at', $limit);
+        $this->fetchTable('SalesOrders')->saveOrFail($order);
+        $this->fetchTable('StockReservations')->updateAll(
+            ['expires_at' => $limit],
+            ['sales_order_id' => (int)$order->get('id'), 'status' => 'active'],
+        );
     }
 
     /**

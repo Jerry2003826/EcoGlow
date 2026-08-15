@@ -508,68 +508,10 @@ class StripeWebhookService
         EntityInterface $order,
         Event $event,
     ): void {
-        $paymentId = (int)$payment->get('id');
-        $payment = $this->fetchTable('Payments')->get($paymentId);
-        $paymentStatus = (string)$payment->get('status');
-        $providerPaymentId = (string)$payment->get('provider_payment_id');
-        $amountCents = (int)$payment->get('amount_cents');
-        if (in_array($paymentStatus, ['refunded', 'partially_refunded'], true)) {
-            return;
-        }
-        $existing = $this->fetchTable('PaymentRefunds')->find()
-            ->where([
-                'payment_id' => $paymentId,
-                'status IN' => ['pending', 'succeeded', 'completed'],
-            ])
-            ->first();
-        if ($existing !== null && in_array((string)$existing->get('status'), ['succeeded', 'completed'], true)) {
-            $this->fetchTable('Payments')->updateAll(
-                ['status' => 'refunded'],
-                ['id' => $paymentId],
-            );
-
-            return;
-        }
-
-        try {
-            $result = PaymentGatewayFactory::create()->refund(
-                $providerPaymentId,
-                $amountCents,
-                'unexpected-capture-' . $paymentId . '-' . $providerPaymentId,
-                ['reason' => 'unexpected_stripe_capture'],
-            );
-        } catch (Throwable $exception) {
-            throw new RuntimeException(
-                'Unexpected Stripe capture could not be refunded yet.',
-                0,
-                $exception,
-            );
-        }
-        if (!in_array($result->status, ['succeeded', 'paid'], true)) {
-            throw new RuntimeException('Unexpected Stripe capture refund is not ready.');
-        }
-
-        $refunds = $this->fetchTable('PaymentRefunds');
-        if ($existing === null) {
-            $row = $refunds->newEmptyEntity();
-            $row->set('payment_id', $paymentId);
-            $row->set('provider_refund_id', $result->id);
-            $row->set('idempotency_key', 'unexpected-capture-' . $paymentId . '-' . $providerPaymentId);
-            $row->set('status', 'succeeded');
-            $row->set('amount_cents', $amountCents);
-            $row->set('reason', 'Unexpected Stripe capture');
-            $row->set('completed_at', DateTime::now('UTC'));
-            $refunds->saveOrFail($row);
-        } else {
-            $existing->set('provider_refund_id', $result->id);
-            $existing->set('status', 'succeeded');
-            $existing->set('completed_at', DateTime::now('UTC'));
-            $refunds->saveOrFail($existing);
-        }
-        $this->fetchTable('Payments')->updateAll(
-            ['status' => 'refunded'],
-            ['id' => $paymentId],
-        );
+        $kind = (string)$order->get('status') === SalesOrder::STATUS_CANCELLED
+            ? RefundService::KIND_CANCELLED_ORDER_REVERSAL
+            : RefundService::KIND_DUPLICATE_CAPTURE_REVERSAL;
+        $this->refunds()->reverseUnexpectedCapture((int)$payment->get('id'), $kind);
         $this->alert(
             $event,
             'Unexpected Stripe capture was automatically refunded for order '
@@ -681,7 +623,7 @@ class StripeWebhookService
      */
     private function refunds(): RefundService
     {
-        return new RefundService($this->orders, new StripePaymentGateway());
+        return new RefundService($this->orders, PaymentGatewayFactory::create());
     }
 
     /**

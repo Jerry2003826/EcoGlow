@@ -1460,6 +1460,277 @@ class SecondRoundSecurityTest extends TestCase
     }
 
     /**
+     * A succeeded PaymentIntent must not roll back a local full refund.
+     *
+     * @return void
+     */
+    public function testFullRefundCommitsWhenPaymentIntentAlreadySucceeded(): void
+    {
+        $gateway = new FakePaymentGateway();
+        $gateway->nextRefundId = 're_pi_succeeded_refund';
+        $gateway->intentStatusById['pi_refund_succeeded'] = 'succeeded';
+        Configure::write('Stripe.gateway', $gateway);
+
+        $before = $this->onHand();
+        $order = $this->placeOrder('pi_refund_succeeded');
+        $invoice = $this->issueInvoice($order);
+        $this->postSigned($this->eventPayload(
+            'evt_refund_succeeded_pay',
+            'payment_intent.succeeded',
+            'pi_refund_succeeded',
+            (int)$order->grand_total_cents,
+            ['order_id' => (string)$order->id],
+        ));
+        $this->assertResponseOk();
+        $this->assertSame($before - 1, $this->onHand());
+
+        $gateway->intentStatusById['pi_refund_succeeded'] = 'succeeded';
+        (new RefundService(new OrderService(new InventoryLedger(), $gateway), $gateway))
+            ->refundOrder($this->fetchTable('SalesOrders')->get($order->id), 1);
+
+        $this->assertSame([], $gateway->cancelAttempts);
+        $this->assertNotContains('pi_refund_succeeded', $gateway->canceledIntentIds);
+        $order = $this->fetchTable('SalesOrders')->get($order->id);
+        $this->assertSame(SalesOrder::STATUS_CANCELLED, $order->status);
+        $this->assertSame('refunded', (string)$order->payment_status);
+        $this->assertSame(
+            'refunded',
+            (string)$this->fetchTable('Payments')->find()
+                ->where(['provider_payment_id' => 'pi_refund_succeeded'])
+                ->first()
+                ?->status,
+        );
+        $this->assertSame(1, $this->fetchTable('CreditNotes')->find()
+            ->where(['invoice_id' => $invoice->id])
+            ->count());
+        $this->assertSame($before, $this->onHand());
+    }
+
+    /**
+     * Pending automatic reversals must persist and finish on refund.updated.
+     *
+     * @return void
+     */
+    public function testUnexpectedCapturePendingRefundCompletesOnUpdated(): void
+    {
+        $gateway = new FakePaymentGateway();
+        $gateway->refundStatus = 'pending';
+        $gateway->nextRefundId = 're_pending_auto';
+        Configure::write('Stripe.gateway', $gateway);
+
+        $order = $this->placeOrder('pi_pending_auto');
+        (new OrderService(new InventoryLedger(), $gateway))->failUnpaid(
+            $order,
+            4,
+            'Staff cancelled unpaid checkout',
+        );
+        $this->assertSame(
+            SalesOrder::STATUS_CANCELLED,
+            $this->fetchTable('SalesOrders')->get($order->id)->status,
+        );
+
+        $this->postSigned($this->eventPayload(
+            'evt_pending_auto_pay',
+            'payment_intent.succeeded',
+            'pi_pending_auto',
+            (int)$order->grand_total_cents,
+            ['order_id' => (string)$order->id],
+        ));
+        $this->assertResponseOk();
+        $this->assertResponseNotContains('"error"');
+
+        $refund = $this->fetchTable('PaymentRefunds')->find()
+            ->where(['provider_refund_id' => 're_pending_auto'])
+            ->first();
+        $this->assertNotNull($refund);
+        $this->assertSame('pending', (string)$refund->get('status'));
+        $this->assertSame(
+            RefundService::KIND_CANCELLED_ORDER_REVERSAL,
+            (string)$refund->get('refund_kind'),
+        );
+        $this->assertSame((string)$refund->id, $gateway->lastRefundMetadata['local_refund_id'] ?? '');
+        $this->assertArrayHasKey('local_payment_id', $gateway->lastRefundMetadata);
+        $this->assertArrayHasKey('refund_binding_token', $gateway->lastRefundMetadata);
+        $this->assertSame(
+            RefundService::KIND_CANCELLED_ORDER_REVERSAL,
+            $gateway->lastRefundMetadata['refund_type'] ?? '',
+        );
+        $this->assertSame(
+            'captured',
+            (string)$this->fetchTable('Payments')->find()
+                ->where(['provider_payment_id' => 'pi_pending_auto'])
+                ->first()
+                ?->status,
+        );
+
+        $gateway->refundsById['re_pending_auto'] = 'succeeded';
+        $this->postSigned($this->refundEventPayload(
+            'evt_pending_auto_updated',
+            'refund.updated',
+            're_pending_auto',
+            'pi_pending_auto',
+            'succeeded',
+            (int)$order->grand_total_cents,
+            $gateway->lastRefundMetadata,
+        ));
+        $this->assertResponseOk();
+        $this->assertSame(
+            'succeeded',
+            (string)$this->fetchTable('PaymentRefunds')->get($refund->id)->get('status'),
+        );
+        $this->assertSame(
+            1,
+            $this->fetchTable('PaymentRefunds')->find()
+                ->where(['payment_id' => $refund->get('payment_id'), 'status' => 'succeeded'])
+                ->count(),
+        );
+        $this->assertSame(
+            'refunded',
+            (string)$this->fetchTable('Payments')->find()
+                ->where(['provider_payment_id' => 'pi_pending_auto'])
+                ->first()
+                ?->status,
+        );
+        $this->assertSame(
+            SalesOrder::STATUS_CANCELLED,
+            $this->fetchTable('SalesOrders')->get($order->id)->status,
+        );
+        $this->assertNotSame(
+            'paid',
+            (string)$this->fetchTable('SalesOrders')->get($order->id)->payment_status,
+        );
+    }
+
+    /**
+     * Reversing a duplicate Stripe capture must not wipe recognised sales.
+     *
+     * @return void
+     */
+    public function testDuplicateCaptureReversalDoesNotReduceGrossSales(): void
+    {
+        $order = $this->placeOrder('pi_dup_sales');
+        $invoice = $this->issueInvoice($order);
+        $payments = $this->fetchTable('Payments');
+        $manual = $payments->newEmptyEntity();
+        $manual->set('sales_order_id', $order->id);
+        $manual->set('provider', 'manual');
+        $manual->set('provider_payment_id', 'manual-dup-sales-' . $order->id);
+        $manual->set('method', 'manual');
+        $manual->set('status', 'captured');
+        $manual->set('amount_cents', (int)$order->grand_total_cents);
+        $manual->set('currency', 'AUD');
+        $manual->set('captured_at', DateTime::now('UTC'));
+        $payments->saveOrFail($manual);
+        $invoice->amount_paid_cents = (int)$order->grand_total_cents;
+        $invoice->status = Invoice::STATUS_PAID;
+        $this->fetchTable('Invoices')->saveOrFail($invoice);
+        $this->fetchTable('SalesOrders')->updateAll(
+            ['payment_status' => 'paid'],
+            ['id' => $order->id],
+        );
+
+        $this->postSigned($this->eventPayload(
+            'evt_dup_sales_pay',
+            'payment_intent.succeeded',
+            'pi_dup_sales',
+            (int)$order->grand_total_cents,
+            ['order_id' => (string)$order->id],
+        ));
+        $this->assertResponseOk();
+        $this->assertSame('paid', (string)$this->fetchTable('SalesOrders')->get($order->id)->payment_status);
+        $this->assertSame(
+            RefundService::KIND_DUPLICATE_CAPTURE_REVERSAL,
+            (string)$this->fetchTable('PaymentRefunds')->find()
+                ->where(['reason' => 'Unexpected Stripe capture'])
+                ->first()
+                ?->get('refund_kind'),
+        );
+
+        $placed = $this->fetchTable('SalesOrders')->getConnection()->execute(
+            "SELECT DATE(COALESCE(CONVERT_TZ(placed_at, 'UTC', 'Australia/Melbourne'), placed_at))
+                    AS business_date
+               FROM sales_orders WHERE id = ?",
+            [$order->id],
+        )->fetch('assoc');
+        $this->assertIsArray($placed);
+        $dashboard = $this->fetchTable('SalesOrders')->getConnection()->execute(
+            'SELECT COALESCE(SUM(gross_sales_cents), 0) AS gross_sales_cents
+               FROM v_business_dashboard_daily
+              WHERE business_date = ?',
+            [$placed['business_date']],
+        )->fetch('assoc');
+        $this->assertSame((int)$order->grand_total_cents, (int)($dashboard['gross_sales_cents'] ?? -1));
+
+        $lifetime = $this->fetchTable('SalesOrders')->getConnection()->execute(
+            'SELECT lifetime_order_value_cents
+               FROM v_customer_360_summary
+              WHERE customer_id = ?',
+            [$order->customer_id],
+        )->fetch('assoc');
+        $this->assertSame((int)$order->grand_total_cents, (int)($lifetime['lifetime_order_value_cents'] ?? -1));
+
+        $stripePayment = $this->fetchTable('Payments')->find()
+            ->where(['provider_payment_id' => 'pi_dup_sales'])
+            ->firstOrFail();
+        $reversal = $this->fetchTable('PaymentRefunds')->find()
+            ->where(['payment_id' => $stripePayment->id])
+            ->firstOrFail();
+        $ledger = $this->fetchTable('SalesOrders')->getConnection()->execute(
+            "SELECT transaction_type, reference_number, amount_cents, status
+               FROM v_recent_transactions
+              WHERE (transaction_type = 'payment' AND transaction_id = ?)
+                 OR (transaction_type = 'refund' AND transaction_id = ?)
+              ORDER BY transaction_type",
+            [(int)$stripePayment->id, (int)$reversal->id],
+        )->fetchAll('assoc');
+        $this->assertCount(2, $ledger);
+        $types = array_column($ledger, 'transaction_type');
+        $this->assertContains('payment', $types);
+        $this->assertContains('refund', $types);
+        $refundRow = null;
+        foreach ($ledger as $row) {
+            if ($row['transaction_type'] === 'refund') {
+                $refundRow = $row;
+            }
+        }
+        $this->assertNotNull($refundRow);
+        $this->assertSame(-(int)$order->grand_total_cents, (int)$refundRow['amount_cents']);
+    }
+
+    /**
+     * A processing PaymentIntent must not be cancelled 500 times by hold cleanup.
+     *
+     * @return void
+     */
+    public function testExpiredHoldWithProcessingIntentDoesNotLoop(): void
+    {
+        $gateway = new FakePaymentGateway();
+        $gateway->intentStatusById['pi_hold_processing'] = 'processing';
+        Configure::write('Stripe.gateway', $gateway);
+
+        $order = $this->placeOrder('pi_hold_processing');
+        $order->set('hold_expires_at', DateTime::now('UTC')->subMinutes(1));
+        $this->fetchTable('SalesOrders')->saveOrFail($order);
+
+        $started = microtime(true);
+        $released = (new OrderService(new InventoryLedger(), $gateway))->releaseExpiredHolds();
+        $this->assertLessThan(2.0, microtime(true) - $started);
+        $this->assertSame(0, $released);
+        $this->assertSame(['pi_hold_processing'], $gateway->cancelAttempts);
+
+        $order = $this->fetchTable('SalesOrders')->get($order->id);
+        $this->assertSame(SalesOrder::STATUS_DRAFT, $order->status);
+        $this->assertSame('pending', (string)$order->payment_status);
+        $this->assertSame('awaiting_capture', $order->get('metadata')['stripe_reconciliation'] ?? null);
+        $hold = $order->get('hold_expires_at');
+        $this->assertInstanceOf(DateTime::class, $hold);
+        $this->assertTrue($hold->greaterThan(DateTime::now('UTC')));
+
+        $this->assertSame(0, (new OrderService(new InventoryLedger(), $gateway))->releaseExpiredHolds());
+        $this->assertSame(['pi_hold_processing'], $gateway->cancelAttempts);
+    }
+
+    /**
      * Hold cleanup must skip a row another connection already locked.
      *
      * @return void

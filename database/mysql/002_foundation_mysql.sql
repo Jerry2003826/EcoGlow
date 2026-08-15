@@ -510,6 +510,7 @@ CREATE TABLE IF NOT EXISTS `payment_refunds` (
     `provider_refund_id` VARCHAR(255),
     `idempotency_key` VARCHAR(255) NOT NULL UNIQUE,
     `status` VARCHAR(30) NOT NULL DEFAULT 'pending',
+    `refund_kind` VARCHAR(40) NOT NULL DEFAULT 'customer_refund',
     `amount_cents` BIGINT NOT NULL,
     `reason` TEXT,
     `provider_metadata` JSON NOT NULL DEFAULT (JSON_OBJECT()),

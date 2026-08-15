@@ -56,6 +56,8 @@ class ReportsController extends AdminController
                LEFT JOIN (
                     SELECT p.sales_order_id,
                            SUM(CASE WHEN pr.status IN ('succeeded', 'completed')
+                                    AND COALESCE(pr.refund_kind, 'customer_refund')
+                                        IN ('customer_refund', 'partial_customer_refund')
                                     THEN pr.amount_cents ELSE 0 END) AS refunded_cents
                       FROM payments p
                       INNER JOIN payment_refunds pr ON pr.payment_id = p.id
@@ -91,6 +93,8 @@ class ReportsController extends AdminController
                LEFT JOIN (
                     SELECT p.sales_order_id,
                            SUM(CASE WHEN pr.status IN ('succeeded', 'completed')
+                                    AND COALESCE(pr.refund_kind, 'customer_refund')
+                                        IN ('customer_refund', 'partial_customer_refund')
                                     THEN pr.amount_cents ELSE 0 END) AS refunded_cents
                       FROM payments p
                       INNER JOIN payment_refunds pr ON pr.payment_id = p.id

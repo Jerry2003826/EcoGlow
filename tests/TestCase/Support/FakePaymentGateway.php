@@ -89,9 +89,19 @@ final class FakePaymentGateway implements PaymentGatewayInterface
     public array $lastRefundMetadata = [];
 
     /**
+     * @var array<string, string>
+     */
+    public array $refundsByKey = [];
+
+    /**
      * @var list<string>
      */
     public array $canceledIntentIds = [];
+
+    /**
+     * @var list<string>
+     */
+    public array $cancelAttempts = [];
 
     /**
      * @var array<string, string>
@@ -158,7 +168,20 @@ final class FakePaymentGateway implements PaymentGatewayInterface
         $this->lastRefundIdempotencyKey = $idempotencyKey;
         $this->lastRefundMetadata = $metadata;
         $this->lastRefundPaymentIntentId = $paymentIntentId;
+        if ($idempotencyKey !== '' && isset($this->refundsByKey[$idempotencyKey])) {
+            $existingId = $this->refundsByKey[$idempotencyKey];
+
+            return new RefundResult(
+                $existingId,
+                $this->refundsById[$existingId] ?? $this->refundStatus,
+                $amountCents,
+                'aud',
+            );
+        }
         $this->refundsById[$this->nextRefundId] = $this->refundStatus;
+        if ($idempotencyKey !== '') {
+            $this->refundsByKey[$idempotencyKey] = $this->nextRefundId;
+        }
 
         return new RefundResult($this->nextRefundId, $this->refundStatus, $amountCents, 'aud');
     }
@@ -197,6 +220,7 @@ final class FakePaymentGateway implements PaymentGatewayInterface
      */
     public function cancelPaymentIntent(string $paymentIntentId): string
     {
+        $this->cancelAttempts[] = $paymentIntentId;
         if ($paymentIntentId === '') {
             return 'already_canceled';
         }

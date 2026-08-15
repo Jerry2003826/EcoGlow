@@ -28,6 +28,36 @@ class RefundService
     use LocatorAwareTrait;
 
     /**
+     * @var string
+     */
+    public const KIND_CUSTOMER_REFUND = 'customer_refund';
+
+    /**
+     * @var string
+     */
+    public const KIND_PARTIAL_CUSTOMER_REFUND = 'partial_customer_refund';
+
+    /**
+     * @var string
+     */
+    public const KIND_DUPLICATE_CAPTURE_REVERSAL = 'duplicate_capture_reversal';
+
+    /**
+     * @var string
+     */
+    public const KIND_CANCELLED_ORDER_REVERSAL = 'cancelled_order_reversal';
+
+    /**
+     * Refunds that reduce recognised order revenue.
+     *
+     * @var array<int, string>
+     */
+    public const REVENUE_KINDS = [
+        self::KIND_CUSTOMER_REFUND,
+        self::KIND_PARTIAL_CUSTOMER_REFUND,
+    ];
+
+    /**
      * @param \App\Service\Orders\OrderService $orders Restock helper.
      * @param \App\Service\Payments\PaymentGatewayInterface $gateway Stripe or test double.
      */
@@ -96,6 +126,7 @@ class RefundService
             $row->set('status', 'pending');
             $row->set('amount_cents', (int)$paymentRow['amount_cents']);
             $row->set('reason', 'Staff refund');
+            $row->set('refund_kind', self::KIND_CUSTOMER_REFUND);
             $row->set('requested_by_user_id', $actorUserId);
             $refunds->saveOrFail($row);
             $key = 'refund-payment-' . $paymentRow['id'] . '-attempt-' . $row->id;
@@ -161,6 +192,150 @@ class RefundService
         $payment = $this->fetchTable('Payments')->get((int)$prepared['payment_id']);
 
         return $payment;
+    }
+
+    /**
+     * Reverse a Stripe capture that the local order can no longer accept.
+     *
+     * Pending is a saved local state, not an error. Uncertain network
+     * results stay retryable with the same idempotency key.
+     *
+     * @param int $paymentId Local Stripe payment.
+     * @param string $kind duplicate_capture_reversal|cancelled_order_reversal.
+     * @return void
+     */
+    public function reverseUnexpectedCapture(int $paymentId, string $kind): void
+    {
+        if (!in_array($kind, [self::KIND_DUPLICATE_CAPTURE_REVERSAL, self::KIND_CANCELLED_ORDER_REVERSAL], true)) {
+            throw new InvalidArgumentException('Unknown unexpected-capture refund kind.');
+        }
+        $prepared = $this->connection()->transactional(function () use ($paymentId, $kind) {
+            $payment = $this->lockAssoc(
+                'SELECT * FROM payments WHERE id = ? FOR UPDATE',
+                [$paymentId],
+            );
+            if ($payment === null) {
+                throw new InvalidArgumentException('Payment not found.');
+            }
+            if (in_array((string)$payment['status'], ['refunded', 'partially_refunded'], true)) {
+                return null;
+            }
+            $providerPaymentId = (string)$payment['provider_payment_id'];
+            $amountCents = (int)$payment['amount_cents'];
+            $currency = strtolower((string)($payment['currency'] ?: 'aud'));
+            $key = 'unexpected-capture-' . $paymentId . '-' . $providerPaymentId;
+            $siblings = $this->lockAll(
+                'SELECT id, status, provider_refund_id, idempotency_key
+                   FROM payment_refunds WHERE payment_id = ? FOR UPDATE',
+                [$paymentId],
+            );
+            foreach ($siblings as $sibling) {
+                if (in_array((string)$sibling['status'], ['succeeded', 'completed'], true)) {
+                    $this->connection()->execute(
+                        "UPDATE payments SET status = 'refunded' WHERE id = ?",
+                        [$paymentId],
+                    );
+
+                    return null;
+                }
+            }
+            foreach ($siblings as $sibling) {
+                if ((string)$sibling['status'] !== 'pending') {
+                    continue;
+                }
+                $providerId = (string)($sibling['provider_refund_id'] ?? '');
+
+                return [
+                    'payment_id' => $paymentId,
+                    'provider_payment_id' => $providerPaymentId,
+                    'amount_cents' => $amountCents,
+                    'currency' => $currency,
+                    'refund_id' => (int)$sibling['id'],
+                    'provider_refund_id' => $providerId,
+                    'key' => (string)($sibling['idempotency_key'] ?: $key),
+                    'retry' => $providerId === '',
+                ];
+            }
+
+            $refunds = $this->fetchTable('PaymentRefunds');
+            $row = $refunds->newEmptyEntity();
+            $row->set('payment_id', $paymentId);
+            $row->set('idempotency_key', $key);
+            $row->set('status', 'pending');
+            $row->set('amount_cents', $amountCents);
+            $row->set('reason', 'Unexpected Stripe capture');
+            $row->set('refund_kind', $kind);
+            $refunds->saveOrFail($row);
+
+            return [
+                'payment_id' => $paymentId,
+                'provider_payment_id' => $providerPaymentId,
+                'amount_cents' => $amountCents,
+                'currency' => $currency,
+                'refund_id' => (int)$row->get('id'),
+                'provider_refund_id' => '',
+                'key' => $key,
+                'retry' => true,
+            ];
+        });
+        if ($prepared === null) {
+            return;
+        }
+
+        if (!(bool)$prepared['retry']) {
+            $retrieved = $this->gateway->retrieveRefund((string)$prepared['provider_refund_id']);
+            if ($retrieved !== null) {
+                $this->applyProviderResult(
+                    (int)$prepared['refund_id'],
+                    $retrieved->id,
+                    $retrieved->status,
+                    0,
+                    $retrieved->amountCents,
+                    $retrieved->currency,
+                );
+            }
+
+            return;
+        }
+
+        try {
+            $result = $this->gateway->refund(
+                (string)$prepared['provider_payment_id'],
+                (int)$prepared['amount_cents'],
+                (string)$prepared['key'],
+                [
+                    'local_refund_id' => (string)$prepared['refund_id'],
+                    'local_payment_id' => (string)$prepared['payment_id'],
+                    'refund_binding_token' => self::bindingToken(
+                        (int)$prepared['refund_id'],
+                        (int)$prepared['payment_id'],
+                        (int)$prepared['amount_cents'],
+                        (string)$prepared['currency'],
+                    ),
+                    'refund_type' => $kind,
+                ],
+            );
+        } catch (PaymentUncertainException $exception) {
+            throw new RuntimeException(
+                'Unexpected Stripe capture could not be refunded yet.',
+                0,
+                $exception,
+            );
+        } catch (Throwable $exception) {
+            throw new RuntimeException(
+                'Unexpected Stripe capture could not be refunded yet.',
+                0,
+                $exception,
+            );
+        }
+        $this->applyProviderResult(
+            (int)$prepared['refund_id'],
+            $result->id,
+            $result->status,
+            0,
+            $result->amountCents,
+            $result->currency,
+        );
     }
 
     /**
@@ -498,19 +673,30 @@ class RefundService
                 [$nextStatus, (int)$payment['id']],
             );
         }
-        if ($order !== null && (string)$order['payment_status'] !== 'refunded') {
+        $kind = (string)($refund['refund_kind'] ?? self::KIND_CUSTOMER_REFUND);
+        if ($kind === '') {
+            $kind = self::KIND_CUSTOMER_REFUND;
+        }
+        $affectsRevenue = in_array($kind, self::REVENUE_KINDS, true);
+        if (
+            $affectsRevenue
+            && $order !== null
+            && (string)$order['payment_status'] !== 'refunded'
+        ) {
             $this->connection()->execute(
                 'UPDATE sales_orders SET payment_status = ? WHERE id = ?',
                 [$nextStatus, (int)$order['id']],
             );
         }
 
-        $this->reverseInvoiceCreditFromLock(
-            (int)$payment['id'],
-            $invoice,
-            $applyAmount,
-            $refundId,
-        );
+        if ($affectsRevenue) {
+            $this->reverseInvoiceCreditFromLock(
+                (int)$payment['id'],
+                $invoice,
+                $applyAmount,
+                $refundId,
+            );
+        }
 
         $staffInitiated = $actorUserId > 0 || (string)$refund['reason'] === 'Staff refund';
         if ($staffInitiated && $nextStatus === 'refunded' && $order !== null) {
