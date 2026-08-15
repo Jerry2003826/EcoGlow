@@ -15,6 +15,41 @@ use RuntimeException;
 class RefundIntegrityPreflightTest extends TestCase
 {
     /**
+     * Prospective effect_key grouping must run under ONLY_FULL_GROUP_BY.
+     *
+     * @return void
+     */
+    public function testProspectiveEffectKeyQueryAcceptsOnlyFullGroupBy(): void
+    {
+        $connection = $this->connection();
+        $driver = $connection->getDriver();
+        if (!str_contains($driver::class, 'Mysql')) {
+            $this->markTestSkipped('Requires MySQL information_schema.');
+        }
+        $connection->execute("SET SESSION sql_mode = 'ONLY_FULL_GROUP_BY'");
+        try {
+            $rows = $connection->execute(
+                'SELECT CONCAT(payment_id, "/", invoice_id, "/", prospective_effect_key) AS value,
+                        COUNT(*) AS c
+                   FROM (
+                        SELECT payment_id,
+                               invoice_id,
+                               CASE
+                                   WHEN allocation_type = \'refund\' THEN CONCAT(\'refund-\', id)
+                                   ELSE \'capture\'
+                               END AS prospective_effect_key
+                          FROM payment_allocations
+                   ) prospective
+                  GROUP BY payment_id, invoice_id, prospective_effect_key
+                 HAVING COUNT(*) > 1',
+            )->fetchAll('assoc');
+            $this->assertIsArray($rows);
+        } finally {
+            $connection->execute('SET SESSION sql_mode = DEFAULT');
+        }
+    }
+
+    /**
      * Refreshing metadata after DDL must keep the new allocation columns.
      *
      * @return void

@@ -121,10 +121,17 @@ final class RefundIntegrityPreflight
             ? "CASE WHEN allocation_type = 'refund' THEN CONCAT('refund-', id) ELSE 'capture' END"
             : "'capture'";
 
-        return 'SELECT CONCAT(payment_id, "/", invoice_id, "/", ' . $effect . ') AS value,
+        // Subquery so ONLY_FULL_GROUP_BY (CI MySQL 8.4) does not see
+        // allocation_type / id as ungrouped SELECT columns.
+        return 'SELECT CONCAT(payment_id, "/", invoice_id, "/", prospective_effect_key) AS value,
                         COUNT(*) AS c
-                   FROM payment_allocations
-                  GROUP BY payment_id, invoice_id, ' . $effect . '
+                   FROM (
+                        SELECT payment_id,
+                               invoice_id,
+                               ' . $effect . ' AS prospective_effect_key
+                          FROM payment_allocations
+                   ) prospective
+                  GROUP BY payment_id, invoice_id, prospective_effect_key
                  HAVING COUNT(*) > 1';
     }
 
