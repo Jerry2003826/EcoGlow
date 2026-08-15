@@ -75,6 +75,11 @@ class OrderService
     ];
 
     /**
+     * @var int
+     */
+    private const MAX_HOLD_DEFERRALS = 8;
+
+    /**
      * Fulfilment moves that a refunded order must never take.
      *
      * @var array<int, string>
@@ -1235,12 +1240,15 @@ class OrderService
      */
     private function deferHoldForInFlightCapture(EntityInterface $order): void
     {
-        $limit = DateTime::now('UTC')->addMinutes(15);
         $meta = $order->get('metadata');
         if (!is_array($meta)) {
             $meta = [];
         }
-        $meta['stripe_reconciliation'] = 'awaiting_capture';
+        $deferrals = (int)($meta['stripe_hold_deferrals'] ?? 0) + 1;
+        $exhausted = $deferrals >= self::MAX_HOLD_DEFERRALS;
+        $meta['stripe_hold_deferrals'] = $deferrals;
+        $meta['stripe_reconciliation'] = $exhausted ? 'hold_exhausted' : 'awaiting_capture';
+        $limit = DateTime::now('UTC')->addMinutes($exhausted ? 24 * 60 : 15);
         $order->set('metadata', $meta);
         $order->set('hold_expires_at', $limit);
         $this->fetchTable('SalesOrders')->saveOrFail($order);
@@ -1248,6 +1256,29 @@ class OrderService
             ['expires_at' => $limit],
             ['sales_order_id' => (int)$order->get('id'), 'status' => 'active'],
         );
+        if ($exhausted) {
+            $this->alertHoldExhausted((int)$order->get('id'), (string)$order->get('order_number'));
+        }
+    }
+
+    /**
+     * @param int $orderId Order id.
+     * @param string $orderNumber Order number.
+     * @return void
+     */
+    private function alertHoldExhausted(int $orderId, string $orderNumber): void
+    {
+        $alerts = $this->fetchTable('PaymentReconciliationAlerts');
+        if ($alerts->exists(['event_id' => 'hold-exhausted-' . $orderId])) {
+            return;
+        }
+        $row = $alerts->newEmptyEntity();
+        $row->set('event_id', 'hold-exhausted-' . $orderId);
+        $row->set('sales_order_id', $orderId);
+        $row->set('reason', 'Checkout hold exhausted while Stripe is still processing');
+        $row->set('detail', 'Order ' . $orderNumber . ' kept a reservation after repeated processing holds.');
+        $row->set('payload_digest', hash('sha256', 'hold-exhausted-' . $orderId));
+        $alerts->saveOrFail($row);
     }
 
     /**

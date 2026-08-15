@@ -1602,6 +1602,206 @@ class SecondRoundSecurityTest extends TestCase
     }
 
     /**
+     * A hard Stripe reversal failure must keep the failed row and start a new key.
+     *
+     * @return void
+     */
+    public function testUnexpectedCaptureFailedRefundStartsNewAttempt(): void
+    {
+        $gateway = new FakePaymentGateway();
+        $gateway->refundStatusQueue = ['failed', 'succeeded'];
+        $gateway->nextRefundIds = ['re_auto_fail', 're_auto_ok'];
+        Configure::write('Stripe.gateway', $gateway);
+
+        $order = $this->placeOrder('pi_auto_fail');
+        (new OrderService(new InventoryLedger(), $gateway))->failUnpaid(
+            $order,
+            4,
+            'Staff cancelled unpaid checkout',
+        );
+        $this->postSigned($this->eventPayload(
+            'evt_auto_fail_pay',
+            'payment_intent.succeeded',
+            'pi_auto_fail',
+            (int)$order->grand_total_cents,
+            ['order_id' => (string)$order->id],
+        ));
+        $this->assertResponseOk();
+        $this->assertResponseContains('"refund_status":"failed"');
+
+        $failed = $this->fetchTable('PaymentRefunds')->find()
+            ->where(['provider_refund_id' => 're_auto_fail'])
+            ->first();
+        $this->assertNotNull($failed);
+        $this->assertSame(RefundService::STATUS_RETRYABLE_FAILED, (string)$failed->get('status'));
+        $firstKey = (string)$failed->get('idempotency_key');
+        $this->assertStringContainsString('unexpected-capture-', $firstKey);
+
+        $payment = $this->fetchTable('Payments')->find()
+            ->where(['provider_payment_id' => 'pi_auto_fail'])
+            ->firstOrFail();
+        $result = (new RefundService(new OrderService(new InventoryLedger(), $gateway), $gateway))
+            ->reverseUnexpectedCapture((int)$payment->id, RefundService::KIND_CANCELLED_ORDER_REVERSAL);
+        $this->assertSame('succeeded', $result->status);
+        $this->assertSame('re_auto_ok', $result->providerRefundId);
+        $this->assertNotSame($firstKey, $gateway->lastRefundIdempotencyKey);
+        $this->assertSame(2, $this->fetchTable('PaymentRefunds')->find()
+            ->where(['payment_id' => $payment->id])
+            ->count());
+        $this->assertSame(
+            'failed',
+            (string)$this->fetchTable('PaymentRefunds')->get($failed->id)->get('status'),
+        );
+        $this->assertSame(
+            'refunded',
+            (string)$this->fetchTable('Payments')->get($payment->id)->status,
+        );
+    }
+
+    /**
+     * refund.failed must re-enter the retry job and finish exactly once.
+     *
+     * @return void
+     */
+    public function testUnexpectedCaptureFailedWebhookRetriesThenSucceeds(): void
+    {
+        $gateway = new FakePaymentGateway();
+        $gateway->refundStatus = 'pending';
+        $gateway->nextRefundIds = ['re_job_fail', 're_job_retry'];
+        Configure::write('Stripe.gateway', $gateway);
+
+        $order = $this->placeOrder('pi_job_retry');
+        (new OrderService(new InventoryLedger(), $gateway))->failUnpaid(
+            $order,
+            4,
+            'Staff cancelled unpaid checkout',
+        );
+        $this->postSigned($this->eventPayload(
+            'evt_job_retry_pay',
+            'payment_intent.succeeded',
+            'pi_job_retry',
+            (int)$order->grand_total_cents,
+            ['order_id' => (string)$order->id],
+        ));
+        $this->assertResponseOk();
+        $this->postSigned($this->refundEventPayload(
+            'evt_job_retry_fail',
+            'refund.failed',
+            're_job_fail',
+            'pi_job_retry',
+            'failed',
+            (int)$order->grand_total_cents,
+            $gateway->lastRefundMetadata,
+        ));
+        $this->assertResponseOk();
+        $failed = $this->fetchTable('PaymentRefunds')->find()
+            ->where(['provider_refund_id' => 're_job_fail'])
+            ->firstOrFail();
+        $this->assertSame(RefundService::STATUS_RETRYABLE_FAILED, (string)$failed->get('status'));
+        $this->fetchTable('PaymentRefunds')->updateAll(
+            ['retry_scheduled_at' => DateTime::now('UTC')->subMinutes(1)],
+            ['id' => $failed->id],
+        );
+
+        $retried = (new RefundService(new OrderService(new InventoryLedger(), $gateway), $gateway))
+            ->retryFailedReversals();
+        $this->assertSame(1, $retried);
+        $second = $this->fetchTable('PaymentRefunds')->find()
+            ->where(['provider_refund_id' => 're_job_retry'])
+            ->firstOrFail();
+        $this->assertSame('pending', (string)$second->get('status'));
+        $this->assertNotSame((string)$failed->get('idempotency_key'), (string)$second->get('idempotency_key'));
+
+        $this->postSigned($this->refundEventPayload(
+            'evt_job_retry_ok',
+            'refund.updated',
+            're_job_retry',
+            'pi_job_retry',
+            'succeeded',
+            (int)$order->grand_total_cents,
+            $gateway->lastRefundMetadata,
+        ));
+        $this->assertResponseOk();
+        $this->assertSame(
+            1,
+            $this->fetchTable('PaymentRefunds')->find()
+                ->where(['payment_id' => $second->get('payment_id'), 'status' => 'succeeded'])
+                ->count(),
+        );
+        $this->assertSame(
+            'refunded',
+            (string)$this->fetchTable('Payments')->find()
+                ->where(['provider_payment_id' => 'pi_job_retry'])
+                ->first()
+                ?->status,
+        );
+    }
+
+    /**
+     * Staff refund must not reuse an automatic reversal row.
+     *
+     * @return void
+     */
+    public function testStaffRefundDoesNotReuseDuplicateCaptureReversal(): void
+    {
+        $gateway = new FakePaymentGateway();
+        $gateway->refundStatus = 'pending';
+        $gateway->nextRefundId = 're_staff_reuse';
+        Configure::write('Stripe.gateway', $gateway);
+
+        $order = $this->placeOrder('pi_staff_reuse');
+        $stock = $this->onHand();
+        $payments = $this->fetchTable('Payments');
+        $manual = $payments->newEmptyEntity();
+        $manual->set('sales_order_id', $order->id);
+        $manual->set('provider', 'manual');
+        $manual->set('provider_payment_id', 'manual-staff-reuse-' . $order->id);
+        $manual->set('method', 'manual');
+        $manual->set('status', 'captured');
+        $manual->set('amount_cents', (int)$order->grand_total_cents);
+        $manual->set('currency', 'AUD');
+        $manual->set('captured_at', DateTime::now('UTC'));
+        $payments->saveOrFail($manual);
+        $this->fetchTable('SalesOrders')->updateAll(
+            ['payment_status' => 'paid'],
+            ['id' => $order->id],
+        );
+        $this->postSigned($this->eventPayload(
+            'evt_staff_reuse_pay',
+            'payment_intent.succeeded',
+            'pi_staff_reuse',
+            (int)$order->grand_total_cents,
+            ['order_id' => (string)$order->id],
+        ));
+        $this->assertResponseOk();
+        $reversal = $this->fetchTable('PaymentRefunds')->find()
+            ->where(['reason' => 'Unexpected Stripe capture'])
+            ->firstOrFail();
+        $this->assertSame(RefundService::KIND_DUPLICATE_CAPTURE_REVERSAL, (string)$reversal->get('refund_kind'));
+        $this->assertSame('pending', (string)$reversal->get('status'));
+
+        try {
+            (new RefundService(new OrderService(new InventoryLedger(), $gateway), $gateway))
+                ->refundOrder($this->fetchTable('SalesOrders')->get($order->id), 1);
+            $this->fail('Staff refund must not reuse an automatic reversal.');
+        } catch (InvalidArgumentException $exception) {
+            $this->assertStringContainsString('automatic capture reversal', $exception->getMessage());
+        }
+
+        $this->assertSame('pending', (string)$this->fetchTable('PaymentRefunds')->get($reversal->id)->get('status'));
+        $this->assertSame(
+            RefundService::KIND_DUPLICATE_CAPTURE_REVERSAL,
+            (string)$this->fetchTable('PaymentRefunds')->get($reversal->id)->get('refund_kind'),
+        );
+        $this->assertSame(0, $this->fetchTable('PaymentRefunds')->find()
+            ->where(['refund_kind' => RefundService::KIND_CUSTOMER_REFUND])
+            ->count());
+        $this->assertSame('paid', (string)$this->fetchTable('SalesOrders')->get($order->id)->payment_status);
+        $this->assertNotSame(SalesOrder::STATUS_CANCELLED, $this->fetchTable('SalesOrders')->get($order->id)->status);
+        $this->assertSame($stock, $this->onHand());
+    }
+
+    /**
      * Reversing a duplicate Stripe capture must not wipe recognised sales.
      *
      * @return void
@@ -1628,6 +1828,7 @@ class SecondRoundSecurityTest extends TestCase
             ['payment_status' => 'paid'],
             ['id' => $order->id],
         );
+        $stock = $this->onHand();
 
         $this->postSigned($this->eventPayload(
             'evt_dup_sales_pay',
@@ -1637,7 +1838,10 @@ class SecondRoundSecurityTest extends TestCase
             ['order_id' => (string)$order->id],
         ));
         $this->assertResponseOk();
-        $this->assertSame('paid', (string)$this->fetchTable('SalesOrders')->get($order->id)->payment_status);
+        $order = $this->fetchTable('SalesOrders')->get($order->id);
+        $this->assertSame('paid', (string)$order->payment_status);
+        $this->assertNotSame(SalesOrder::STATUS_CANCELLED, $order->status);
+        $this->assertSame($stock, $this->onHand());
         $this->assertSame(
             RefundService::KIND_DUPLICATE_CAPTURE_REVERSAL,
             (string)$this->fetchTable('PaymentRefunds')->find()

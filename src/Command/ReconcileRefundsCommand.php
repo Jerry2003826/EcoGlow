@@ -34,7 +34,12 @@ class ReconcileRefundsCommand extends Command
             PaymentGatewayFactory::create(),
         );
         $updated = $service->reconcilePending();
-        $io->out(sprintf('Reconciled %d pending refund(s).', $updated));
+        $retried = $service->retryFailedReversals();
+        $io->out(sprintf(
+            'Reconciled %d pending refund(s) and retried %d failed reversal(s).',
+            $updated,
+            $retried,
+        ));
 
         return static::CODE_SUCCESS;
     }

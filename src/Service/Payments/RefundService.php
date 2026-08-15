@@ -58,6 +58,31 @@ class RefundService
     ];
 
     /**
+     * Automatic capture reversals that must not change recognised sales.
+     *
+     * @var array<int, string>
+     */
+    public const REVERSAL_KINDS = [
+        self::KIND_DUPLICATE_CAPTURE_REVERSAL,
+        self::KIND_CANCELLED_ORDER_REVERSAL,
+    ];
+
+    /**
+     * @var string
+     */
+    public const STATUS_RETRYABLE_FAILED = 'retryable_failed';
+
+    /**
+     * @var int
+     */
+    public const MAX_REVERSAL_ATTEMPTS = 5;
+
+    /**
+     * @var int
+     */
+    public const REVERSAL_RETRY_MINUTES = 5;
+
+    /**
      * @param \App\Service\Orders\OrderService $orders Restock helper.
      * @param \App\Service\Payments\PaymentGatewayInterface $gateway Stripe or test double.
      */
@@ -91,17 +116,30 @@ class RefundService
                 throw new InvalidArgumentException('This order has no captured Stripe payment to refund.');
             }
             $siblings = $this->lockAll(
-                'SELECT id, status, provider_refund_id, idempotency_key, amount_cents
+                'SELECT id, status, provider_refund_id, idempotency_key, amount_cents, refund_kind
                    FROM payment_refunds WHERE payment_id = ? FOR UPDATE',
                 [(int)$paymentRow['id']],
             );
             foreach ($siblings as $sibling) {
-                if (in_array((string)$sibling['status'], ['succeeded', 'completed'], true)) {
+                if (self::isReversalKind((string)($sibling['refund_kind'] ?? ''))) {
+                    throw new InvalidArgumentException(
+                        'An automatic capture reversal is already in progress for this payment.',
+                    );
+                }
+            }
+            foreach ($siblings as $sibling) {
+                if (
+                    in_array((string)$sibling['status'], ['succeeded', 'completed'], true)
+                    && self::isRevenueKind((string)($sibling['refund_kind'] ?? self::KIND_CUSTOMER_REFUND))
+                ) {
                     throw new InvalidArgumentException('A refund has already been recorded for this payment.');
                 }
             }
             foreach ($siblings as $sibling) {
                 if ((string)$sibling['status'] !== 'pending') {
+                    continue;
+                }
+                if (!self::isRevenueKind((string)($sibling['refund_kind'] ?? self::KIND_CUSTOMER_REFUND))) {
                     continue;
                 }
                 $providerId = (string)($sibling['provider_refund_id'] ?? '');
@@ -198,91 +236,30 @@ class RefundService
      * Reverse a Stripe capture that the local order can no longer accept.
      *
      * Pending is a saved local state, not an error. Uncertain network
-     * results stay retryable with the same idempotency key.
+     * results stay retryable with the same idempotency key. A Stripe
+     * failed/canceled result starts a new attempt with a new key.
      *
      * @param int $paymentId Local Stripe payment.
      * @param string $kind duplicate_capture_reversal|cancelled_order_reversal.
-     * @return void
+     * @return \App\Service\Payments\ReversalResult
      */
-    public function reverseUnexpectedCapture(int $paymentId, string $kind): void
+    public function reverseUnexpectedCapture(int $paymentId, string $kind): ReversalResult
     {
-        if (!in_array($kind, [self::KIND_DUPLICATE_CAPTURE_REVERSAL, self::KIND_CANCELLED_ORDER_REVERSAL], true)) {
+        if (!self::isReversalKind($kind)) {
             throw new InvalidArgumentException('Unknown unexpected-capture refund kind.');
         }
         $prepared = $this->connection()->transactional(function () use ($paymentId, $kind) {
-            $payment = $this->lockAssoc(
-                'SELECT * FROM payments WHERE id = ? FOR UPDATE',
-                [$paymentId],
-            );
-            if ($payment === null) {
-                throw new InvalidArgumentException('Payment not found.');
-            }
-            if (in_array((string)$payment['status'], ['refunded', 'partially_refunded'], true)) {
-                return null;
-            }
-            $providerPaymentId = (string)$payment['provider_payment_id'];
-            $amountCents = (int)$payment['amount_cents'];
-            $currency = strtolower((string)($payment['currency'] ?: 'aud'));
-            $key = 'unexpected-capture-' . $paymentId . '-' . $providerPaymentId;
-            $siblings = $this->lockAll(
-                'SELECT id, status, provider_refund_id, idempotency_key
-                   FROM payment_refunds WHERE payment_id = ? FOR UPDATE',
-                [$paymentId],
-            );
-            foreach ($siblings as $sibling) {
-                if (in_array((string)$sibling['status'], ['succeeded', 'completed'], true)) {
-                    $this->connection()->execute(
-                        "UPDATE payments SET status = 'refunded' WHERE id = ?",
-                        [$paymentId],
-                    );
-
-                    return null;
-                }
-            }
-            foreach ($siblings as $sibling) {
-                if ((string)$sibling['status'] !== 'pending') {
-                    continue;
-                }
-                $providerId = (string)($sibling['provider_refund_id'] ?? '');
-
-                return [
-                    'payment_id' => $paymentId,
-                    'provider_payment_id' => $providerPaymentId,
-                    'amount_cents' => $amountCents,
-                    'currency' => $currency,
-                    'refund_id' => (int)$sibling['id'],
-                    'provider_refund_id' => $providerId,
-                    'key' => (string)($sibling['idempotency_key'] ?: $key),
-                    'retry' => $providerId === '',
-                ];
-            }
-
-            $refunds = $this->fetchTable('PaymentRefunds');
-            $row = $refunds->newEmptyEntity();
-            $row->set('payment_id', $paymentId);
-            $row->set('idempotency_key', $key);
-            $row->set('status', 'pending');
-            $row->set('amount_cents', $amountCents);
-            $row->set('reason', 'Unexpected Stripe capture');
-            $row->set('refund_kind', $kind);
-            $refunds->saveOrFail($row);
-
-            return [
-                'payment_id' => $paymentId,
-                'provider_payment_id' => $providerPaymentId,
-                'amount_cents' => $amountCents,
-                'currency' => $currency,
-                'refund_id' => (int)$row->get('id'),
-                'provider_refund_id' => '',
-                'key' => $key,
-                'retry' => true,
-            ];
+            return $this->prepareUnexpectedCapture($paymentId, $kind);
         });
-        if ($prepared === null) {
-            return;
+        if (($prepared['outcome'] ?? '') !== 'call' && ($prepared['outcome'] ?? '') !== 'retrieve') {
+            return $this->reversalResultFromRow(
+                (int)($prepared['refund_id'] ?? 0),
+                (string)($prepared['status'] ?? 'failed'),
+                isset($prepared['provider_refund_id']) ? (string)$prepared['provider_refund_id'] : null,
+            );
         }
 
-        if (!(bool)$prepared['retry']) {
+        if (($prepared['outcome'] ?? '') === 'retrieve') {
             $retrieved = $this->gateway->retrieveRefund((string)$prepared['provider_refund_id']);
             if ($retrieved !== null) {
                 $this->applyProviderResult(
@@ -295,7 +272,7 @@ class RefundService
                 );
             }
 
-            return;
+            return $this->reversalSnapshot((int)$prepared['refund_id']);
         }
 
         try {
@@ -336,6 +313,8 @@ class RefundService
             $result->amountCents,
             $result->currency,
         );
+
+        return $this->reversalSnapshot((int)$prepared['refund_id']);
     }
 
     /**
@@ -374,6 +353,47 @@ class RefundService
         }
 
         return $updated;
+    }
+
+    /**
+     * Start a new automatic-reversal attempt after Stripe reported a hard failure.
+     *
+     * @return int Number of payments that started a new attempt.
+     */
+    public function retryFailedReversals(): int
+    {
+        $due = $this->fetchTable('PaymentRefunds')->find()
+            ->where([
+                'status' => self::STATUS_RETRYABLE_FAILED,
+                'refund_kind IN' => self::REVERSAL_KINDS,
+                'OR' => [
+                    'retry_scheduled_at IS' => null,
+                    'retry_scheduled_at <=' => DateTime::now('UTC')->format('Y-m-d H:i:s'),
+                ],
+            ])
+            ->all();
+        $retried = 0;
+        $seen = [];
+        foreach ($due as $row) {
+            $paymentId = (int)$row->get('payment_id');
+            if (isset($seen[$paymentId])) {
+                continue;
+            }
+            $seen[$paymentId] = true;
+            $kind = (string)$row->get('refund_kind');
+            $before = (string)$row->get('idempotency_key');
+            $result = $this->reverseUnexpectedCapture($paymentId, $kind);
+            if ($result->refundId > 0 && $result->refundId !== (int)$row->get('id')) {
+                $retried++;
+                continue;
+            }
+            $after = (string)$this->fetchTable('PaymentRefunds')->get($row->get('id'))->get('idempotency_key');
+            if ($after !== $before || $result->status !== 'failed') {
+                $retried++;
+            }
+        }
+
+        return $retried;
     }
 
     /**
@@ -598,11 +618,11 @@ class RefundService
 
         $bindId = $providerRefundId !== '' ? $providerRefundId : $existingProvider;
         if (in_array($normalized, ['failed', 'canceled', 'cancelled'], true)) {
-            $this->connection()->execute(
-                "UPDATE payment_refunds
-                    SET status = 'failed', provider_refund_id = ?
-                  WHERE id = ?",
-                [$bindId !== '' ? $bindId : null, $refundId],
+            $this->markRefundFailed(
+                $refund,
+                $payment,
+                $bindId !== '' ? $bindId : null,
+                $normalized,
             );
 
             return;
@@ -699,7 +719,12 @@ class RefundService
         }
 
         $staffInitiated = $actorUserId > 0 || (string)$refund['reason'] === 'Staff refund';
-        if ($staffInitiated && $nextStatus === 'refunded' && $order !== null) {
+        if (
+            $affectsRevenue
+            && $staffInitiated
+            && $nextStatus === 'refunded'
+            && $order !== null
+        ) {
             $actor = $actorUserId > 0 ? $actorUserId : (int)($order['created_by_user_id'] ?: 0);
             /** @var \App\Model\Entity\SalesOrder $orderEntity */
             $orderEntity = $this->fetchTable('SalesOrders')->newEmptyEntity();
@@ -1086,6 +1111,217 @@ class RefundService
         }
 
         return min($amountCents, intdiv($tax * $amountCents, $grand));
+    }
+
+    /**
+     * @param int $paymentId Local payment.
+     * @param string $kind Reversal kind.
+     * @return array<string, mixed>
+     */
+    private function prepareUnexpectedCapture(int $paymentId, string $kind): array
+    {
+        $payment = $this->lockAssoc(
+            'SELECT * FROM payments WHERE id = ? FOR UPDATE',
+            [$paymentId],
+        );
+        if ($payment === null) {
+            throw new InvalidArgumentException('Payment not found.');
+        }
+        $siblings = $this->lockAll(
+            'SELECT id, status, provider_refund_id, idempotency_key, refund_kind, attempt_count
+               FROM payment_refunds WHERE payment_id = ? FOR UPDATE',
+            [$paymentId],
+        );
+        foreach ($siblings as $sibling) {
+            if (in_array((string)$sibling['status'], ['succeeded', 'completed'], true)) {
+                if ((string)$payment['status'] !== 'refunded') {
+                    $this->connection()->execute(
+                        "UPDATE payments SET status = 'refunded' WHERE id = ?",
+                        [$paymentId],
+                    );
+                }
+
+                return [
+                    'outcome' => 'done',
+                    'status' => 'succeeded',
+                    'refund_id' => (int)$sibling['id'],
+                    'provider_refund_id' => (string)($sibling['provider_refund_id'] ?? ''),
+                ];
+            }
+        }
+        if (in_array((string)$payment['status'], ['refunded', 'partially_refunded'], true)) {
+            return [
+                'outcome' => 'done',
+                'status' => 'succeeded',
+                'refund_id' => (int)($siblings[0]['id'] ?? 0),
+                'provider_refund_id' => (string)($siblings[0]['provider_refund_id'] ?? ''),
+            ];
+        }
+        foreach ($siblings as $sibling) {
+            if ((string)$sibling['status'] !== 'pending') {
+                continue;
+            }
+            $providerId = (string)($sibling['provider_refund_id'] ?? '');
+
+            return [
+                'outcome' => $providerId === '' ? 'call' : 'retrieve',
+                'payment_id' => $paymentId,
+                'provider_payment_id' => (string)$payment['provider_payment_id'],
+                'amount_cents' => (int)$payment['amount_cents'],
+                'currency' => strtolower((string)($payment['currency'] ?: 'aud')),
+                'refund_id' => (int)$sibling['id'],
+                'provider_refund_id' => $providerId,
+                'key' => (string)($sibling['idempotency_key'] ?? ''),
+            ];
+        }
+
+        $attempt = 1;
+        $last = null;
+        foreach ($siblings as $sibling) {
+            $attempt = max($attempt, (int)($sibling['attempt_count'] ?? 1) + 1);
+            $last = $sibling;
+        }
+        if ($attempt > self::MAX_REVERSAL_ATTEMPTS) {
+            return [
+                'outcome' => 'done',
+                'status' => 'failed',
+                'refund_id' => (int)($last['id'] ?? 0),
+                'provider_refund_id' => (string)($last['provider_refund_id'] ?? ''),
+            ];
+        }
+
+        $this->connection()->execute(
+            "UPDATE payment_refunds
+                SET status = 'failed', retry_scheduled_at = NULL
+              WHERE payment_id = ?
+                AND status = ?",
+            [$paymentId, self::STATUS_RETRYABLE_FAILED],
+        );
+
+        $refunds = $this->fetchTable('PaymentRefunds');
+        $row = $refunds->newEmptyEntity();
+        $draftKey = 'reversal-draft-' . bin2hex(random_bytes(16));
+        $row->set('payment_id', $paymentId);
+        $row->set('idempotency_key', $draftKey);
+        $row->set('status', 'pending');
+        $row->set('amount_cents', (int)$payment['amount_cents']);
+        $row->set('reason', 'Unexpected Stripe capture');
+        $row->set('refund_kind', $kind);
+        $row->set('attempt_count', $attempt);
+        $refunds->saveOrFail($row);
+        $key = 'unexpected-capture-' . $paymentId . '-attempt-' . (int)$row->get('id');
+        $row->set('idempotency_key', $key);
+        $refunds->saveOrFail($row);
+
+        return [
+            'outcome' => 'call',
+            'payment_id' => $paymentId,
+            'provider_payment_id' => (string)$payment['provider_payment_id'],
+            'amount_cents' => (int)$payment['amount_cents'],
+            'currency' => strtolower((string)($payment['currency'] ?: 'aud')),
+            'refund_id' => (int)$row->get('id'),
+            'provider_refund_id' => '',
+            'key' => $key,
+        ];
+    }
+
+    /**
+     * @param array<string, mixed> $refund Locked refund.
+     * @param array<string, mixed> $payment Locked payment.
+     * @param string|null $providerRefundId Stripe refund id.
+     * @param string $status Stripe failure status.
+     * @return void
+     */
+    private function markRefundFailed(
+        array $refund,
+        array $payment,
+        ?string $providerRefundId,
+        string $status,
+    ): void {
+        $refundId = (int)$refund['id'];
+        $kind = (string)($refund['refund_kind'] ?? '');
+        $attempts = max(1, (int)($refund['attempt_count'] ?? 1));
+        $retryable = self::isReversalKind($kind) && $attempts < self::MAX_REVERSAL_ATTEMPTS;
+        $nextStatus = $retryable ? self::STATUS_RETRYABLE_FAILED : 'failed';
+        $retryAt = $retryable
+            ? DateTime::now('UTC')->addMinutes(self::REVERSAL_RETRY_MINUTES)->format('Y-m-d H:i:s')
+            : null;
+        $this->connection()->execute(
+            'UPDATE payment_refunds
+                SET status = ?,
+                    provider_refund_id = ?,
+                    failure_reason = ?,
+                    retry_scheduled_at = ?
+              WHERE id = ?',
+            [$nextStatus, $providerRefundId, $status, $retryAt, $refundId],
+        );
+        if (!$retryable && self::isReversalKind($kind)) {
+            $this->raiseExternalRefundAlert(
+                $providerRefundId ?: 'reversal-' . $refundId,
+                (string)$payment['provider_payment_id'],
+                (int)$payment['sales_order_id'],
+                (int)$refund['amount_cents'],
+                (string)($payment['currency'] ?? ''),
+                'Automatic capture reversal exhausted retries.',
+            );
+        }
+    }
+
+    /**
+     * @param int $refundId Local refund id.
+     * @return \App\Service\Payments\ReversalResult
+     */
+    private function reversalSnapshot(int $refundId): ReversalResult
+    {
+        $row = $this->fetchTable('PaymentRefunds')->get($refundId);
+
+        return $this->reversalResultFromRow(
+            $refundId,
+            (string)$row->get('status'),
+            (string)$row->get('provider_refund_id') ?: null,
+        );
+    }
+
+    /**
+     * @param int $refundId Local refund id.
+     * @param string $status Local refund status.
+     * @param string|null $providerRefundId Stripe refund id.
+     * @return \App\Service\Payments\ReversalResult
+     */
+    private function reversalResultFromRow(
+        int $refundId,
+        string $status,
+        ?string $providerRefundId,
+    ): ReversalResult {
+        $normalized = match ($status) {
+            'succeeded', 'completed', 'paid' => 'succeeded',
+            'pending' => 'pending',
+            default => 'failed',
+        };
+
+        return new ReversalResult(
+            $normalized,
+            $refundId,
+            $providerRefundId !== '' ? $providerRefundId : null,
+        );
+    }
+
+    /**
+     * @param string $kind Refund kind.
+     * @return bool
+     */
+    public static function isRevenueKind(string $kind): bool
+    {
+        return in_array($kind, self::REVENUE_KINDS, true);
+    }
+
+    /**
+     * @param string $kind Refund kind.
+     * @return bool
+     */
+    public static function isReversalKind(string $kind): bool
+    {
+        return in_array($kind, self::REVERSAL_KINDS, true);
     }
 
     /**

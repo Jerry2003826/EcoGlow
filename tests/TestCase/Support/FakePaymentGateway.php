@@ -74,6 +74,21 @@ final class FakePaymentGateway implements PaymentGatewayInterface
     public string $refundStatus = 'succeeded';
 
     /**
+     * @var list<string>
+     */
+    public array $refundStatusQueue = [];
+
+    /**
+     * @var list<string>
+     */
+    public array $nextRefundIds = [];
+
+    /**
+     * @var list<string>
+     */
+    public array $refundIdempotencyKeys = [];
+
+    /**
      * @var string
      */
     public string $nextRefundId = 're_test_1';
@@ -166,6 +181,7 @@ final class FakePaymentGateway implements PaymentGatewayInterface
             throw new InvalidArgumentException('The refund request did not reach Stripe.');
         }
         $this->lastRefundIdempotencyKey = $idempotencyKey;
+        $this->refundIdempotencyKeys[] = $idempotencyKey;
         $this->lastRefundMetadata = $metadata;
         $this->lastRefundPaymentIntentId = $paymentIntentId;
         if ($idempotencyKey !== '' && isset($this->refundsByKey[$idempotencyKey])) {
@@ -178,12 +194,18 @@ final class FakePaymentGateway implements PaymentGatewayInterface
                 'aud',
             );
         }
-        $this->refundsById[$this->nextRefundId] = $this->refundStatus;
+        if ($this->nextRefundIds !== []) {
+            $this->nextRefundId = array_shift($this->nextRefundIds);
+        }
+        $status = $this->refundStatusQueue !== []
+            ? array_shift($this->refundStatusQueue)
+            : $this->refundStatus;
+        $this->refundsById[$this->nextRefundId] = $status;
         if ($idempotencyKey !== '') {
             $this->refundsByKey[$idempotencyKey] = $this->nextRefundId;
         }
 
-        return new RefundResult($this->nextRefundId, $this->refundStatus, $amountCents, 'aud');
+        return new RefundResult($this->nextRefundId, $status, $amountCents, 'aud');
     }
 
     /**

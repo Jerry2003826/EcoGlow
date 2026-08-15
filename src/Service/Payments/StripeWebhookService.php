@@ -173,9 +173,16 @@ class StripeWebhookService
         });
 
         if ($action === 'refund') {
-            $this->refundUnexpectedCaptureOrRetry($payment, $order, $event);
+            $reversal = $this->refundUnexpectedCaptureOrRetry($payment, $order, $event);
 
-            return ['status' => 200, 'body' => ['received' => true, 'refunded' => true]];
+            return [
+                'status' => 200,
+                'body' => [
+                    'received' => true,
+                    'refunded' => $reversal->status === 'succeeded',
+                    'refund_status' => $reversal->status,
+                ],
+            ];
         }
         if ($action === 'confirm') {
             try {
@@ -501,23 +508,25 @@ class StripeWebhookService
      * @param \Cake\Datasource\EntityInterface $payment Stripe payment.
      * @param \Cake\Datasource\EntityInterface $order Order.
      * @param \Stripe\Event $event Source event.
-     * @return void
+     * @return \App\Service\Payments\ReversalResult
      */
     private function refundUnexpectedCaptureOrRetry(
         EntityInterface $payment,
         EntityInterface $order,
         Event $event,
-    ): void {
+    ): ReversalResult {
         $kind = (string)$order->get('status') === SalesOrder::STATUS_CANCELLED
             ? RefundService::KIND_CANCELLED_ORDER_REVERSAL
             : RefundService::KIND_DUPLICATE_CAPTURE_REVERSAL;
-        $this->refunds()->reverseUnexpectedCapture((int)$payment->get('id'), $kind);
-        $this->alert(
-            $event,
-            'Unexpected Stripe capture was automatically refunded for order '
-            . (string)$order->get('order_number')
-            . '.',
-        );
+        $result = $this->refunds()->reverseUnexpectedCapture((int)$payment->get('id'), $kind);
+        $detail = match ($result->status) {
+            'succeeded' => 'Unexpected Stripe capture was automatically refunded for order ',
+            'pending' => 'Unexpected Stripe capture reversal is pending for order ',
+            default => 'Unexpected Stripe capture reversal failed for order ',
+        };
+        $this->alert($event, $detail . (string)$order->get('order_number') . '.');
+
+        return $result;
     }
 
     /**
