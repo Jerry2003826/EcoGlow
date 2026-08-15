@@ -714,42 +714,29 @@ class RefundService
         int $amountCents,
         int $refundId,
     ): void {
-        if ($invoice === null || $amountCents <= 0) {
+        if ($invoice === null || $amountCents <= 0 || $refundId < 1) {
             return;
         }
-        $allocations = $this->fetchTable('PaymentAllocations');
-        $existingQuery = [
-            'payment_id' => $paymentId,
-            'invoice_id' => (int)$invoice['id'],
-            'allocation_type' => 'refund',
-        ];
-        if ($refundId > 0 && $allocations->getSchema()->hasColumn('payment_refund_id')) {
-            $existingQuery['payment_refund_id'] = $refundId;
-        }
-        $existing = $allocations->find()->where($existingQuery)->first();
-        if ($existing !== null) {
+        $now = DateTime::now('UTC')->format('Y-m-d H:i:s');
+        $inserted = $this->connection()->execute(
+            'INSERT INTO payment_allocations (
+                payment_id, invoice_id, payment_refund_id, allocation_type, effect_key,
+                amount_cents, allocated_at, created
+             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+             ON DUPLICATE KEY UPDATE id = id',
+            [
+                $paymentId,
+                (int)$invoice['id'],
+                $refundId,
+                'refund',
+                'refund-' . $refundId,
+                $amountCents,
+                $now,
+                $now,
+            ],
+        )->rowCount() === 1;
+        if (!$inserted) {
             return;
-        }
-        $row = $allocations->newEmptyEntity();
-        $row->set('payment_id', $paymentId);
-        $row->set('invoice_id', (int)$invoice['id']);
-        $row->set('allocation_type', 'refund');
-        if ($allocations->getSchema()->hasColumn('payment_refund_id') && $refundId > 0) {
-            $row->set('payment_refund_id', $refundId);
-        }
-        if ($allocations->getSchema()->hasColumn('effect_key')) {
-            $row->set('effect_key', $refundId > 0 ? 'refund-' . $refundId : 'refund');
-        }
-        $row->set('amount_cents', $amountCents);
-        $row->set('allocated_at', DateTime::now('UTC'));
-        $row->set('created', DateTime::now('UTC'));
-        try {
-            $allocations->saveOrFail($row);
-        } catch (Throwable $exception) {
-            if ($this->isDuplicateKey($exception)) {
-                return;
-            }
-            throw $exception;
         }
 
         $paid = max(0, (int)$invoice['amount_paid_cents'] - $amountCents);
@@ -791,36 +778,21 @@ class RefundService
         string $currency,
         string $reason = 'External Stripe refund requires reconciliation.',
     ): void {
-        $alerts = $this->fetchTable('PaymentReconciliationAlerts');
-        $row = $alerts->newEmptyEntity();
-        $row->set('event_id', 'refund:' . $providerRefundId);
-        $row->set('provider_payment_id', $paymentIntentId !== '' ? $paymentIntentId : $providerRefundId);
-        $row->set('sales_order_id', $orderId);
-        $row->set('reason', substr($reason, 0, 64));
-        $row->set('detail', $reason . ' amount=' . $amountCents . ' currency=' . $currency);
-        $row->set('payload_digest', hash('sha256', $providerRefundId . $reason . $amountCents));
-        $row->set('created', DateTime::now('UTC'));
-        try {
-            $alerts->saveOrFail($row);
-        } catch (Throwable $exception) {
-            if ($this->isDuplicateKey($exception)) {
-                return;
-            }
-            throw $exception;
-        }
-    }
-
-    /**
-     * @param \Throwable $exception Persistence error.
-     * @return bool
-     */
-    private function isDuplicateKey(Throwable $exception): bool
-    {
-        $message = $exception->getMessage();
-
-        return str_contains($message, 'UNIQUE')
-            || str_contains($message, 'Duplicate')
-            || str_contains($message, '1062');
+        $this->connection()->execute(
+            'INSERT INTO payment_reconciliation_alerts (
+                event_id, provider_payment_id, sales_order_id, reason, detail, payload_digest, created
+             ) VALUES (?, ?, ?, ?, ?, ?, ?)
+             ON DUPLICATE KEY UPDATE id = id',
+            [
+                'refund:' . $providerRefundId,
+                $paymentIntentId !== '' ? $paymentIntentId : $providerRefundId,
+                $orderId,
+                substr($reason, 0, 64),
+                $reason . ' amount=' . $amountCents . ' currency=' . $currency,
+                hash('sha256', $providerRefundId . $reason . $amountCents),
+                DateTime::now('UTC')->format('Y-m-d H:i:s'),
+            ],
+        );
     }
 
     /**

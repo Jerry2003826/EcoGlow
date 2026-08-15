@@ -45,6 +45,7 @@ final class AddRefundAllocationKeys extends BaseMigration
                     END",
             );
         }
+        RefundIntegrityPreflight::refreshCachedSchema($this->cakeConnection(), 'payment_allocations');
         RefundIntegrityPreflight::assert($this->cakeConnection());
         if (!$this->hasIndexByName('payment_allocations', 'uq_payment_allocations_effect_key')) {
             $this->table('payment_allocations')
@@ -71,6 +72,11 @@ final class AddRefundAllocationKeys extends BaseMigration
                     ->update();
             }
         }
+        RefundIntegrityPreflight::refreshCachedSchema(
+            $this->cakeConnection(),
+            'payment_allocations',
+            'payment_refunds',
+        );
     }
 
     /**

@@ -489,6 +489,55 @@ class SecondRoundSecurityTest extends TestCase
     }
 
     /**
+     * A succeeded refund must write refund-{id} even when ORM schema is stale.
+     *
+     * @return void
+     */
+    public function testSucceededRefundIgnoresStaleAllocationSchema(): void
+    {
+        $order = $this->placeOrder('pi_stale_schema');
+        $this->issueInvoice($order);
+        $this->postSigned($this->eventPayload(
+            'evt_stale_schema_pay',
+            'payment_intent.succeeded',
+            'pi_stale_schema',
+            (int)$order->grand_total_cents,
+            ['order_id' => (string)$order->id],
+        ));
+        $this->assertResponseOk();
+
+        $table = $this->fetchTable('PaymentAllocations');
+        $schema = $table->getSchema();
+        if ($schema->hasColumn('effect_key')) {
+            $schema->removeColumn('effect_key');
+        }
+        if ($schema->hasColumn('payment_refund_id')) {
+            $schema->removeColumn('payment_refund_id');
+        }
+        $table->setSchema($schema);
+        try {
+            $payment = (new RefundService(new OrderService(new InventoryLedger()), new FakePaymentGateway()))
+                ->refundOrder($this->fetchTable('SalesOrders')->get($order->id), 1);
+            $this->assertSame('refunded', (string)$payment->status);
+            $refund = $this->fetchTable('PaymentRefunds')->find()
+                ->where(['payment_id' => $payment->id, 'status' => 'succeeded'])
+                ->first();
+            $this->assertNotNull($refund);
+            $row = ConnectionManager::get('test')->execute(
+                'SELECT effect_key, payment_refund_id
+                   FROM payment_allocations
+                  WHERE payment_id = ? AND allocation_type = ?',
+                [$payment->id, 'refund'],
+            )->fetch('assoc');
+            $this->assertIsArray($row);
+            $this->assertSame('refund-' . $refund->id, (string)$row['effect_key']);
+            $this->assertSame((string)$refund->id, (string)$row['payment_refund_id']);
+        } finally {
+            $this->getTableLocator()->remove('PaymentAllocations');
+        }
+    }
+
+    /**
      * Two overlapping partial refunds must not lose invoice or status updates.
      *
      * @return void

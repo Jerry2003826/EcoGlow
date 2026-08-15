@@ -60,6 +60,12 @@ final class AddRefundIntegrityGuards extends BaseMigration
                 ['provider_refund_id'],
             );
         }
+        RefundIntegrityPreflight::refreshCachedSchema(
+            $this->cakeConnection(),
+            'payment_allocations',
+            'payment_refunds',
+            'payment_reconciliation_alerts',
+        );
     }
 
     /**

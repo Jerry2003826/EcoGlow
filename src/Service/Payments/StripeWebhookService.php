@@ -364,26 +364,13 @@ class StripeWebhookService
         if ($providerPaymentId === '') {
             return false;
         }
-        $effects = $this->fetchTable('PaymentEffects');
-        $row = $effects->newEmptyEntity();
-        $row->set('provider', 'stripe');
-        $row->set('provider_payment_id', $providerPaymentId);
-        $row->set('effect_type', 'capture');
-        $row->set('created', DateTime::now('UTC'));
-        try {
-            $effects->saveOrFail($row);
-        } catch (Throwable $exception) {
-            if (
-                str_contains($exception->getMessage(), 'UNIQUE')
-                || str_contains($exception->getMessage(), 'Duplicate')
-                || str_contains($exception->getMessage(), '1062')
-            ) {
-                return false;
-            }
-            throw $exception;
-        }
 
-        return true;
+        return $this->connection()->execute(
+            'INSERT INTO payment_effects (provider, provider_payment_id, effect_type, created)
+             VALUES (?, ?, ?, ?)
+             ON DUPLICATE KEY UPDATE id = id',
+            ['stripe', $providerPaymentId, 'capture', DateTime::now('UTC')->format('Y-m-d H:i:s')],
+        )->rowCount() === 1;
     }
 
     /**
@@ -445,37 +432,16 @@ class StripeWebhookService
         if ($invoice === null) {
             return;
         }
-        $allocations = $this->fetchTable('PaymentAllocations');
-        $existing = $allocations->find()
-            ->where([
-                'payment_id' => $payment->id,
-                'invoice_id' => $invoice->id,
-                'allocation_type' => 'capture',
-            ])
-            ->first();
-        if ($existing !== null) {
+        $now = DateTime::now('UTC')->format('Y-m-d H:i:s');
+        $inserted = $this->connection()->execute(
+            'INSERT INTO payment_allocations (
+                payment_id, invoice_id, allocation_type, effect_key, amount_cents, allocated_at, created
+             ) VALUES (?, ?, ?, ?, ?, ?, ?)
+             ON DUPLICATE KEY UPDATE id = id',
+            [(int)$payment->id, (int)$invoice->id, 'capture', 'capture', $amountCents, $now, $now],
+        )->rowCount() === 1;
+        if (!$inserted) {
             return;
-        }
-        $row = $allocations->newEmptyEntity();
-        $row->set('payment_id', $payment->id);
-        $row->set('invoice_id', $invoice->id);
-        $row->set('allocation_type', 'capture');
-        if ($allocations->getSchema()->hasColumn('effect_key')) {
-            $row->set('effect_key', 'capture');
-        }
-        $row->set('amount_cents', $amountCents);
-        $row->set('allocated_at', DateTime::now('UTC'));
-        $row->set('created', DateTime::now('UTC'));
-        try {
-            $allocations->saveOrFail($row);
-        } catch (Throwable $exception) {
-            if (
-                str_contains($exception->getMessage(), 'UNIQUE')
-                || str_contains($exception->getMessage(), 'Duplicate')
-            ) {
-                return;
-            }
-            throw $exception;
         }
         $this->connection()->execute('SELECT id FROM invoices WHERE id = ? FOR UPDATE', [$invoice->id]);
         $invoice = $this->fetchTable('Invoices')->get($invoice->id);
@@ -495,16 +461,28 @@ class StripeWebhookService
     private function alert(Event $event, string $reason): int
     {
         $intent = $event->data->object ?? null;
-        $row = $this->fetchTable('PaymentReconciliationAlerts')->newEmptyEntity();
-        $row->set('event_id', (string)$event->id);
-        $row->set('provider_payment_id', is_object($intent) ? (string)($intent->id ?? '') : null);
-        $row->set('sales_order_id', is_object($intent) ? $this->metadataOrderId($intent) : null);
-        $row->set('reason', substr($reason, 0, 64));
-        $row->set('detail', $reason);
-        $row->set('payload_digest', hash('sha256', (string)$event->id . $reason));
-        $saved = $this->fetchTable('PaymentReconciliationAlerts')->saveOrFail($row);
+        $eventId = (string)$event->id;
+        $this->connection()->execute(
+            'INSERT INTO payment_reconciliation_alerts (
+                event_id, provider_payment_id, sales_order_id, reason, detail, payload_digest, created
+             ) VALUES (?, ?, ?, ?, ?, ?, ?)
+             ON DUPLICATE KEY UPDATE id = id',
+            [
+                $eventId,
+                is_object($intent) ? (string)($intent->id ?? '') : null,
+                is_object($intent) ? $this->metadataOrderId($intent) : null,
+                substr($reason, 0, 64),
+                $reason,
+                hash('sha256', $eventId . $reason),
+                DateTime::now('UTC')->format('Y-m-d H:i:s'),
+            ],
+        );
+        $saved = $this->connection()->execute(
+            'SELECT id FROM payment_reconciliation_alerts WHERE event_id = ?',
+            [$eventId],
+        )->fetch('assoc');
 
-        return (int)$saved->id;
+        return is_array($saved) ? (int)$saved['id'] : 0;
     }
 
     /**

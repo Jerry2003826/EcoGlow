@@ -3,11 +3,9 @@ declare(strict_types=1);
 
 namespace App\Service\Payments;
 
-use Cake\Datasource\ConnectionInterface;
+use Cake\Database\Connection;
 use Cake\I18n\DateTime;
 use Cake\ORM\Locator\LocatorAwareTrait;
-use PDOException;
-use Throwable;
 
 /**
  * Claims a unique (scope, key) row so duplicate Stripe deliveries run once.
@@ -50,23 +48,24 @@ class IdempotencyService
                 ->first();
 
             if ($existing === null) {
-                $row = $table->newEmptyEntity();
-                $row->set('scope', $scope);
-                $row->set('idempotency_key', $key);
-                $row->set('lease_owner', $owner);
-                $row->set('expires_at', DateTime::now('UTC')->addDays(7));
-                $row->set('locked_until', DateTime::now('UTC')->addMinutes(2));
-                try {
-                    $table->saveOrFail($row);
-                } catch (Throwable $exception) {
-                    if (!$this->isDuplicateKey($exception)) {
-                        throw $exception;
-                    }
-
-                    return ['status' => self::IN_FLIGHT, 'owner' => ''];
+                $inserted = $this->connection()->execute(
+                    'INSERT INTO idempotency_records
+                        (scope, idempotency_key, lease_owner, expires_at, locked_until)
+                     VALUES (?, ?, ?, ?, ?)
+                     ON DUPLICATE KEY UPDATE id = id',
+                    [
+                        $scope,
+                        $key,
+                        $owner,
+                        DateTime::now('UTC')->addDays(7)->format('Y-m-d H:i:s'),
+                        DateTime::now('UTC')->addMinutes(2)->format('Y-m-d H:i:s'),
+                    ],
+                )->rowCount() === 1;
+                if ($inserted) {
+                    return ['status' => self::ACQUIRED, 'owner' => $owner];
                 }
 
-                return ['status' => self::ACQUIRED, 'owner' => $owner];
+                return ['status' => self::IN_FLIGHT, 'owner' => ''];
             }
 
             if ($existing->get('completed_at') !== null) {
@@ -155,27 +154,9 @@ class IdempotencyService
     }
 
     /**
-     * @param \Throwable $exception Persistence error.
-     * @return bool
+     * @return \Cake\Database\Connection
      */
-    private function isDuplicateKey(Throwable $exception): bool
-    {
-        $previous = $exception->getPrevious();
-        if ($previous instanceof PDOException) {
-            return (int)($previous->errorInfo[1] ?? 0) === 1062
-                || str_contains($previous->getMessage(), 'Duplicate')
-                || str_contains($previous->getMessage(), 'UNIQUE');
-        }
-
-        return str_contains($exception->getMessage(), 'Duplicate')
-            || str_contains($exception->getMessage(), 'UNIQUE')
-            || str_contains($exception->getMessage(), '1062');
-    }
-
-    /**
-     * @return \Cake\Datasource\ConnectionInterface
-     */
-    private function connection(): ConnectionInterface
+    private function connection(): Connection
     {
         return $this->fetchTable('IdempotencyRecords')->getConnection();
     }

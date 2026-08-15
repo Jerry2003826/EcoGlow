@@ -8,6 +8,9 @@ use RuntimeException;
 
 /**
  * Fail closed before unique refund indexes or FKs are created.
+ *
+ * Column presence is read from INFORMATION_SCHEMA so this never writes a
+ * stale Cake metadata cache entry for payment_allocations.
  */
 final class RefundIntegrityPreflight
 {
@@ -48,20 +51,13 @@ final class RefundIntegrityPreflight
                 ),
             );
         }
-        if (
-            in_array('payment_allocations', $tables, true)
-            && self::hasColumn($connection, 'payment_allocations', 'effect_key')
-        ) {
+        if (in_array('payment_allocations', $tables, true)) {
             $duplicates = array_merge(
                 $duplicates,
                 self::duplicateLabels(
                     $connection,
                     'payment_allocations.effect_key',
-                    'SELECT CONCAT(payment_id, "/", invoice_id, "/", effect_key) AS value,
-                            COUNT(*) AS c
-                       FROM payment_allocations
-                      GROUP BY payment_id, invoice_id, effect_key
-                     HAVING COUNT(*) > 1',
+                    self::allocationDuplicateSql($connection),
                 ),
             );
         }
@@ -87,6 +83,49 @@ final class RefundIntegrityPreflight
             'Refund integrity preflight failed; merge or delete the conflicting rows before migrating. '
             . implode('; ', $parts),
         );
+    }
+
+    /**
+     * Rewrite Cake metadata cache from the live table after DDL.
+     *
+     * @param \Cake\Database\Connection $connection Connection.
+     * @param string ...$tables Tables that just changed.
+     * @return void
+     */
+    public static function refreshCachedSchema(Connection $connection, string ...$tables): void
+    {
+        $collection = $connection->getSchemaCollection();
+        $existing = $collection->listTables();
+        foreach ($tables as $table) {
+            if (!in_array($table, $existing, true)) {
+                continue;
+            }
+            $collection->describe($table, ['forceRefresh' => true]);
+        }
+    }
+
+    /**
+     * @param \Cake\Database\Connection $connection Connection.
+     * @return string
+     */
+    private static function allocationDuplicateSql(Connection $connection): string
+    {
+        if (self::hasColumn($connection, 'payment_allocations', 'effect_key')) {
+            return 'SELECT CONCAT(payment_id, "/", invoice_id, "/", effect_key) AS value,
+                            COUNT(*) AS c
+                       FROM payment_allocations
+                      GROUP BY payment_id, invoice_id, effect_key
+                     HAVING COUNT(*) > 1';
+        }
+        $effect = self::hasColumn($connection, 'payment_allocations', 'allocation_type')
+            ? "CASE WHEN allocation_type = 'refund' THEN CONCAT('refund-', id) ELSE 'capture' END"
+            : "'capture'";
+
+        return 'SELECT CONCAT(payment_id, "/", invoice_id, "/", ' . $effect . ') AS value,
+                        COUNT(*) AS c
+                   FROM payment_allocations
+                  GROUP BY payment_id, invoice_id, ' . $effect . '
+                 HAVING COUNT(*) > 1';
     }
 
     /**
@@ -136,8 +175,18 @@ final class RefundIntegrityPreflight
      */
     private static function hasColumn(Connection $connection, string $table, string $column): bool
     {
-        $schema = $connection->getSchemaCollection()->describe($table);
+        if (!preg_match('/^[A-Za-z0-9_]+$/', $table) || !preg_match('/^[A-Za-z0-9_]+$/', $column)) {
+            return false;
+        }
+        $row = $connection->execute(
+            'SELECT COUNT(*) AS c
+               FROM information_schema.COLUMNS
+              WHERE TABLE_SCHEMA = DATABASE()
+                AND TABLE_NAME = ?
+                AND COLUMN_NAME = ?',
+            [$table, $column],
+        )->fetch('assoc');
 
-        return $schema->hasColumn($column);
+        return is_array($row) && (int)$row['c'] > 0;
     }
 }

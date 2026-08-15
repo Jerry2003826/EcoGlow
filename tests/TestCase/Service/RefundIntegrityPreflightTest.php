@@ -15,6 +15,24 @@ use RuntimeException;
 class RefundIntegrityPreflightTest extends TestCase
 {
     /**
+     * Refreshing metadata after DDL must keep the new allocation columns.
+     *
+     * @return void
+     */
+    public function testRefreshCachedSchemaKeepsNewAllocationColumns(): void
+    {
+        $connection = $this->connection();
+        $driver = $connection->getDriver();
+        if (!str_contains($driver::class, 'Mysql')) {
+            $this->markTestSkipped('Requires MySQL information_schema.');
+        }
+        RefundIntegrityPreflight::refreshCachedSchema($connection, 'payment_allocations');
+        $schema = $connection->getSchemaCollection()->describe('payment_allocations');
+        $this->assertTrue($schema->hasColumn('effect_key'));
+        $this->assertTrue($schema->hasColumn('payment_refund_id'));
+    }
+
+    /**
      * Duplicate provider refund IDs abort before any index is created.
      *
      * @return void
