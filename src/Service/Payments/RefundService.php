@@ -16,6 +16,7 @@ use Closure;
 use InvalidArgumentException;
 use RuntimeException;
 use Throwable;
+use function Cake\Core\env;
 
 /**
  * Staff-initiated Stripe refunds. Full captured amount only.
@@ -683,8 +684,21 @@ class RefundService
         return hash_hmac(
             'sha256',
             $refundId . '|' . $paymentId . '|' . $amountCents . '|' . strtolower($currency),
-            Security::getSalt(),
+            self::bindingSecret(),
         );
+    }
+
+    /**
+     * @return string
+     */
+    private static function bindingSecret(): string
+    {
+        $dedicated = (string)env('REFUND_BINDING_KEY', '');
+        if ($dedicated !== '') {
+            return $dedicated;
+        }
+
+        return Security::getSalt();
     }
 
     /**

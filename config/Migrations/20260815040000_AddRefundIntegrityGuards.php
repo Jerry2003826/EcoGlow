@@ -1,6 +1,9 @@
 <?php
 declare(strict_types=1);
 
+use App\Service\Security\RefundIntegrityPreflight;
+use Cake\Database\Connection;
+use Cake\Datasource\ConnectionManager;
 use Migrations\BaseMigration;
 
 /**
@@ -13,7 +16,7 @@ final class AddRefundIntegrityGuards extends BaseMigration
      */
     public function up(): void
     {
-        $this->assertRefundIntegrityPreflight();
+        RefundIntegrityPreflight::assert($this->cakeConnection());
 
         if ($this->hasTable('payment_reconciliation_alerts')) {
             $this->ensureUniqueIndex(
@@ -60,123 +63,16 @@ final class AddRefundIntegrityGuards extends BaseMigration
     }
 
     /**
-     * Refuse to add unique indexes or FKs when historical rows would collide.
-     *
-     * @return void
+     * @return \Cake\Database\Connection
      */
-    private function assertRefundIntegrityPreflight(): void
+    private function cakeConnection(): Connection
     {
-        $duplicates = [];
-        if ($this->hasTable('payment_reconciliation_alerts')) {
-            $duplicates = array_merge(
-                $duplicates,
-                $this->duplicateValues(
-                    'payment_reconciliation_alerts',
-                    'event_id',
-                    'SELECT event_id AS value, COUNT(*) AS c
-                       FROM payment_reconciliation_alerts
-                      GROUP BY event_id
-                     HAVING COUNT(*) > 1',
-                ),
-            );
-        }
-        if ($this->hasTable('payment_refunds')) {
-            $duplicates = array_merge(
-                $duplicates,
-                $this->duplicateValues(
-                    'payment_refunds',
-                    'provider_refund_id',
-                    "SELECT provider_refund_id AS value, COUNT(*) AS c
-                       FROM payment_refunds
-                      WHERE provider_refund_id IS NOT NULL
-                        AND provider_refund_id != ''
-                      GROUP BY provider_refund_id
-                     HAVING COUNT(*) > 1",
-                ),
-            );
-        }
-        $orphans = [];
-        if (
-            $this->hasTable('payment_allocations')
-            && $this->table('payment_allocations')->hasColumn('payment_refund_id')
-            && $this->hasTable('payment_refunds')
-        ) {
-            $orphans = $this->orphanAllocationIds();
-        }
-        if ($duplicates === [] && $orphans === []) {
-            return;
-        }
-        $parts = [];
-        if ($duplicates !== []) {
-            $parts[] = 'duplicate keys: ' . implode(', ', $duplicates);
-        }
-        if ($orphans !== []) {
-            $parts[] = 'orphan payment_allocations.payment_refund_id: ' . implode(', ', $orphans);
+        $connection = ConnectionManager::get('default');
+        if (!$connection instanceof Connection) {
+            throw new \RuntimeException('Refund preflight requires a SQL connection.');
         }
 
-        throw new RuntimeException(
-            'Refund integrity preflight failed; merge or delete the conflicting rows before migrating. '
-            . implode('; ', $parts),
-        );
-    }
-
-    /**
-     * @param string $table Table name for the error label.
-     * @param string $column Column name for the error label.
-     * @param string $sql Grouped duplicate query returning value, c.
-     * @return list<string>
-     */
-    private function duplicateValues(string $table, string $column, string $sql): array
-    {
-        $rows = $this->fetchAssoc($sql);
-        $labels = [];
-        foreach ($rows as $row) {
-            $labels[] = $table . '.' . $column . '=' . (string)($row['value'] ?? '')
-                . ' x' . (string)($row['c'] ?? '0');
-        }
-
-        return $labels;
-    }
-
-    /**
-     * @return list<string>
-     */
-    private function orphanAllocationIds(): array
-    {
-        $rows = $this->fetchAssoc(
-            'SELECT pa.id AS value
-               FROM payment_allocations pa
-               LEFT JOIN payment_refunds pr ON pr.id = pa.payment_refund_id
-              WHERE pa.payment_refund_id IS NOT NULL
-                AND pr.id IS NULL',
-        );
-        $ids = [];
-        foreach ($rows as $row) {
-            $ids[] = (string)($row['value'] ?? '');
-        }
-
-        return $ids;
-    }
-
-    /**
-     * @param string $sql Read-only diagnostic query.
-     * @return list<array<string, mixed>>
-     */
-    private function fetchAssoc(string $sql): array
-    {
-        $statement = $this->getAdapter()->query($sql);
-        if (!is_object($statement) || !method_exists($statement, 'fetchAll')) {
-            return [];
-        }
-        $rows = $statement->fetchAll('assoc');
-        if (!is_array($rows)) {
-            return [];
-        }
-        if (count($rows) > 20) {
-            $rows = array_slice($rows, 0, 20);
-        }
-
-        return $rows;
+        return $connection;
     }
 
     /**
@@ -273,6 +169,6 @@ final class AddRefundIntegrityGuards extends BaseMigration
      */
     public function down(): void
     {
-        throw new RuntimeException('Irreversible additive security migration.');
+        throw new \RuntimeException('Irreversible additive security migration.');
     }
 }

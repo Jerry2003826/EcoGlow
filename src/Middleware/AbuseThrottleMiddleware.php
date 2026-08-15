@@ -48,19 +48,6 @@ final class AbuseThrottleMiddleware implements MiddlewareInterface
         $path = rtrim($request->getUri()->getPath(), '/') ?: '/';
         $ip = $this->clientIp($request);
         $method = strtoupper($request->getMethod());
-        if ($method === 'GET' && $path === '/health/ready') {
-            if (RateLimitService::locked(self::SCOPE_HEALTH, $ip, self::MAX_HEALTH)) {
-                return (new Response())
-                    ->withStatus(429)
-                    ->withHeader('Retry-After', '900')
-                    ->withHeader('Cache-Control', 'no-store')
-                    ->withType('application/json')
-                    ->withStringBody('{"ok":false}');
-            }
-            RateLimitService::hit(self::SCOPE_HEALTH, $ip);
-
-            return $handler->handle($request);
-        }
         if ($method !== 'POST') {
             return $handler->handle($request);
         }

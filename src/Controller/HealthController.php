@@ -3,7 +3,9 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Service\Security\HealthGate;
 use App\Service\Security\ProductionGuards;
+use Cake\Cache\Cache;
 use Cake\Database\Connection;
 use Cake\Datasource\ConnectionManager;
 use Cake\Http\Response;
@@ -34,14 +36,14 @@ class HealthController extends AppController
     public function ready(): Response
     {
         $this->request->allowMethod(['get']);
-        $token = (string)env('HEALTH_READY_TOKEN', '');
-        $provided = (string)$this->request->getHeaderLine('X-Health-Token');
-        if ($token !== '') {
-            if ($provided === '' || !hash_equals($token, $provided)) {
-                return $this->healthResponse(401, false);
-            }
-        } elseif (ProductionGuards::shouldEnforce()) {
-            return $this->healthResponse(503, false);
+        $denied = HealthGate::denyStatus(
+            (string)env('HEALTH_READY_TOKEN', ''),
+            (string)$this->request->getHeaderLine('X-Health-Token'),
+            ProductionGuards::shouldEnforce(),
+            $this->request->clientIp() ?: 'unknown',
+        );
+        if ($denied !== null) {
+            return $this->healthResponse($denied, false);
         }
 
         try {
@@ -50,8 +52,11 @@ class HealthController extends AppController
                 throw new RuntimeException('Readiness requires a SQL connection.');
             }
             $connection->execute('SELECT 1');
+            $throttle = Cache::getConfig('login_throttle');
             if (ProductionGuards::shouldEnforce()) {
                 ProductionGuards::assertReady();
+            } elseif (is_array($throttle) && ProductionGuards::isRedisStore($throttle)) {
+                ProductionGuards::probeRateLimitStore();
             }
         } catch (Throwable) {
             return $this->healthResponse(503, false);

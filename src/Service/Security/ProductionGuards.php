@@ -8,8 +8,10 @@ use Cake\Cache\Engine\RedisEngine;
 use Cake\Core\Configure;
 use Cake\Mailer\Transport\DebugTransport;
 use Cake\Mailer\TransportFactory;
+use Cake\Utility\Security;
 use RuntimeException;
 use Throwable;
+use function Cake\Core\env;
 
 /**
  * Production bootstrap checks against the engines Cake actually registered.
@@ -20,11 +22,6 @@ use Throwable;
  */
 final class ProductionGuards
 {
-    /**
-     * @var bool
-     */
-    private static bool $probed = false;
-
     /**
      * @return bool
      */
@@ -41,7 +38,7 @@ final class ProductionGuards
     }
 
     /**
-     * Cheap per-request checks. The Redis write probe runs once per process.
+     * Cheap per-request checks. Config and engine type only - no Redis writes.
      *
      * @return void
      */
@@ -50,6 +47,7 @@ final class ProductionGuards
         if (!self::shouldEnforce()) {
             return;
         }
+        self::assertSecrets();
         self::assertEmailTransport();
         self::assertRateLimitStore(false);
     }
@@ -61,8 +59,25 @@ final class ProductionGuards
      */
     public static function assertReady(): void
     {
+        self::assertSecrets();
         self::assertEmailTransport();
         self::assertRateLimitStore(true);
+    }
+
+    /**
+     * @return void
+     */
+    public static function assertSecrets(): void
+    {
+        $salt = (string)Security::getSalt();
+        $placeholders = ['', '__SALT__', 'changeme', 'secret', 'password'];
+        if (strlen($salt) < 32 || in_array($salt, $placeholders, true)) {
+            throw new RuntimeException('Production SECURITY_SALT is missing or too weak.');
+        }
+        $binding = (string)env('REFUND_BINDING_KEY', '');
+        if ($binding !== '' && (strlen($binding) < 32 || in_array($binding, $placeholders, true))) {
+            throw new RuntimeException('Production REFUND_BINDING_KEY is missing or too weak.');
+        }
     }
 
     /**
@@ -109,9 +124,8 @@ final class ProductionGuards
         if (!$engine instanceof RedisEngine) {
             throw new RuntimeException('Production throttling requires a working Redis cache engine.');
         }
-        if ($forceProbe || !self::$probed) {
+        if ($forceProbe) {
             self::probeRateLimitStore();
-            self::$probed = true;
         }
     }
 

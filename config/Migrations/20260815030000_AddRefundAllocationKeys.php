@@ -1,6 +1,9 @@
 <?php
 declare(strict_types=1);
 
+use App\Service\Security\RefundIntegrityPreflight;
+use Cake\Database\Connection;
+use Cake\Datasource\ConnectionManager;
 use Migrations\BaseMigration;
 
 /**
@@ -13,6 +16,7 @@ final class AddRefundAllocationKeys extends BaseMigration
      */
     public function up(): void
     {
+        RefundIntegrityPreflight::assert($this->cakeConnection());
         if (!$this->hasTable('payment_allocations')) {
             return;
         }
@@ -41,6 +45,7 @@ final class AddRefundAllocationKeys extends BaseMigration
                     END",
             );
         }
+        RefundIntegrityPreflight::assert($this->cakeConnection());
         if (!$this->hasIndexByName('payment_allocations', 'uq_payment_allocations_effect_key')) {
             $this->table('payment_allocations')
                 ->addIndex(['payment_id', 'invoice_id', 'effect_key'], [
@@ -56,6 +61,7 @@ final class AddRefundAllocationKeys extends BaseMigration
             $this->execute(
                 "UPDATE payment_refunds SET provider_refund_id = NULL WHERE provider_refund_id = ''",
             );
+            RefundIntegrityPreflight::assert($this->cakeConnection());
             if (!$this->hasIndexByName('payment_refunds', 'uq_payment_refunds_provider_refund_id')) {
                 $this->table('payment_refunds')
                     ->addIndex(['provider_refund_id'], [
@@ -87,10 +93,23 @@ final class AddRefundAllocationKeys extends BaseMigration
     }
 
     /**
+     * @return \Cake\Database\Connection
+     */
+    private function cakeConnection(): Connection
+    {
+        $connection = ConnectionManager::get('default');
+        if (!$connection instanceof Connection) {
+            throw new \RuntimeException('Refund preflight requires a SQL connection.');
+        }
+
+        return $connection;
+    }
+
+    /**
      * @return void
      */
     public function down(): void
     {
-        throw new RuntimeException('Irreversible additive security migration.');
+        throw new \RuntimeException('Irreversible additive security migration.');
     }
 }

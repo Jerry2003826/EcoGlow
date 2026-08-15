@@ -13,8 +13,8 @@ use Cake\Mailer\Transport\DebugTransport;
 use Cake\Mailer\Transport\SmtpTransport;
 use Cake\Mailer\TransportFactory;
 use Cake\TestSuite\TestCase;
+use Cake\Utility\Security;
 use Redis;
-use ReflectionClass;
 use RuntimeException;
 use Throwable;
 
@@ -39,8 +39,6 @@ class ProductionGuardsTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $probed = (new ReflectionClass(ProductionGuards::class))->getProperty('probed');
-        $probed->setValue(null, false);
         $throttle = Cache::getConfig('login_throttle');
         $this->originalThrottle = is_array($throttle) ? $throttle : null;
         $mail = TransportFactory::getConfig('default');
@@ -180,7 +178,7 @@ class ProductionGuardsTest extends TestCase
         ]);
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('working Redis');
-        ProductionGuards::assertRateLimitStore();
+        ProductionGuards::assertRateLimitStore(true);
     }
 
     /**
@@ -203,8 +201,27 @@ class ProductionGuardsTest extends TestCase
             'duration' => '+1 minute',
             'prefix' => 'test_throttle_ok_',
         ]);
-        ProductionGuards::assertRateLimitStore();
+        ProductionGuards::assertRateLimitStore(true);
         $this->assertInstanceOf(RedisEngine::class, Cache::pool('login_throttle'));
+    }
+
+    /**
+     * Placeholder salts are not acceptable in production.
+     *
+     * @return void
+     */
+    public function testWeakSaltIsRejected(): void
+    {
+        $original = Security::getSalt();
+        Security::setSalt('__SALT__');
+        try {
+            ProductionGuards::assertSecrets();
+            $this->fail('Weak salts must be rejected.');
+        } catch (RuntimeException $exception) {
+            $this->assertStringContainsString('SECURITY_SALT', $exception->getMessage());
+        } finally {
+            Security::setSalt($original);
+        }
     }
 
     /**
@@ -250,11 +267,12 @@ class ProductionGuardsTest extends TestCase
             'EMAIL_TRANSPORT' => 'Smtp',
             'CACHE_LOGIN_THROTTLE_URL' => 'redis://127.0.0.1:6379/0',
         ]);
-        if ($this->redisIsReachable()) {
+        if (extension_loaded('redis')) {
             $this->assertSame(0, $redis['code'], $redis['output']);
             $this->assertStringContainsString('"ok":true', $redis['output']);
         } else {
             $this->assertNotSame(0, $redis['code'], $redis['output']);
+            $this->assertStringContainsString('Redis', $redis['output']);
         }
 
         $file = $this->bootProduction([
