@@ -6,12 +6,16 @@ namespace App\Test\TestCase\Service;
 use App\Service\Security\ProductionGuards;
 use Cake\Cache\Cache;
 use Cake\Cache\Engine\FileEngine;
+use Cake\Cache\Engine\NullEngine;
+use Cake\Cache\Engine\RedisEngine;
 use Cake\Core\Configure;
 use Cake\Mailer\Transport\DebugTransport;
 use Cake\Mailer\Transport\SmtpTransport;
 use Cake\Mailer\TransportFactory;
 use Cake\TestSuite\TestCase;
+use Redis;
 use RuntimeException;
+use Throwable;
 
 /**
  * Production bootstrap guards read registered engines, not consumed Configure.
@@ -72,6 +76,115 @@ class ProductionGuardsTest extends TestCase
     }
 
     /**
+     * Cake fallback to NullEngine is forbidden in production.
+     *
+     * @return void
+     */
+    public function testFallbackMustBeDisabled(): void
+    {
+        Cache::drop('login_throttle');
+        Cache::setConfig('login_throttle', [
+            'className' => RedisEngine::class,
+            'fallback' => true,
+            'host' => '127.0.0.1',
+            'port' => 6379,
+            'duration' => '+1 minute',
+            'prefix' => 'test_throttle_fallback_',
+        ]);
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('fallback=false');
+        ProductionGuards::assertRateLimitStore();
+    }
+
+    /**
+     * NullEngine looks successful to counters but stores nothing.
+     *
+     * @return void
+     */
+    public function testNullEngineIsRejected(): void
+    {
+        Cache::drop('login_throttle');
+        Cache::setConfig('login_throttle', [
+            'className' => NullEngine::class,
+            'fallback' => false,
+            'duration' => '+1 minute',
+            'prefix' => 'test_throttle_null_',
+        ]);
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('working Redis');
+        ProductionGuards::assertRateLimitStore();
+    }
+
+    /**
+     * Public Redis without TLS or a password is rejected before connect.
+     *
+     * @return void
+     */
+    public function testRemoteRedisWithoutAuthIsRejected(): void
+    {
+        Cache::drop('login_throttle');
+        Cache::setConfig('login_throttle', [
+            'className' => RedisEngine::class,
+            'fallback' => false,
+            'url' => 'redis://redis.example.com:6379/0',
+            'duration' => '+1 minute',
+            'prefix' => 'test_throttle_public_',
+        ]);
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('rediss://');
+        ProductionGuards::assertRateLimitStore();
+    }
+
+    /**
+     * A Redis URL that cannot be reached must fail closed.
+     *
+     * @return void
+     */
+    public function testUnreachableRedisIsRejected(): void
+    {
+        if (!extension_loaded('redis')) {
+            $this->markTestSkipped('ext-redis is not installed.');
+        }
+        Cache::drop('login_throttle');
+        Cache::setConfig('login_throttle', [
+            'className' => RedisEngine::class,
+            'fallback' => false,
+            'host' => '127.0.0.1',
+            'port' => 1,
+            'timeout' => 0.2,
+            'duration' => '+1 minute',
+            'prefix' => 'test_throttle_bad_',
+        ]);
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('working Redis');
+        ProductionGuards::assertRateLimitStore();
+    }
+
+    /**
+     * A reachable Redis engine is accepted after a write/increment/read probe.
+     *
+     * @return void
+     */
+    public function testWorkingRedisIsAccepted(): void
+    {
+        if (!$this->redisIsReachable()) {
+            $this->markTestSkipped('Redis is not reachable on 127.0.0.1:6379.');
+        }
+        Cache::drop('login_throttle');
+        Cache::setConfig('login_throttle', [
+            'className' => RedisEngine::class,
+            'fallback' => false,
+            'host' => '127.0.0.1',
+            'port' => 6379,
+            'timeout' => 1,
+            'duration' => '+1 minute',
+            'prefix' => 'test_throttle_ok_',
+        ]);
+        ProductionGuards::assertRateLimitStore();
+        $this->assertInstanceOf(RedisEngine::class, Cache::pool('login_throttle'));
+    }
+
+    /**
      * Debug mail is not an acceptable production transport.
      *
      * @return void
@@ -86,26 +199,20 @@ class ProductionGuardsTest extends TestCase
     }
 
     /**
-     * SMTP plus a Redis URL is accepted without instantiating Redis.
+     * Remote SMTP without TLS is rejected.
      *
      * @return void
      */
-    public function testRedisUrlIsRecognised(): void
+    public function testRemoteSmtpWithoutTlsIsRejected(): void
     {
-        Cache::drop('login_throttle');
-        Cache::setConfig('login_throttle', [
-            'className' => FileEngine::class,
-            'prefix' => 'test_throttle_redis_',
-            'path' => CACHE,
-            'duration' => '+1 minute',
-            'url' => 'redis://127.0.0.1:6379/0',
-        ]);
-        $config = Cache::getConfig('login_throttle');
-        $this->assertIsArray($config);
-        $this->assertTrue(ProductionGuards::isRedisStore($config));
-        ProductionGuards::assertRateLimitStore();
         TransportFactory::drop('default');
-        TransportFactory::setConfig('default', ['className' => SmtpTransport::class]);
+        TransportFactory::setConfig('default', [
+            'className' => SmtpTransport::class,
+            'host' => 'smtp.example.com',
+            'tls' => false,
+        ]);
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('TLS');
         ProductionGuards::assertEmailTransport();
     }
 
@@ -116,13 +223,16 @@ class ProductionGuardsTest extends TestCase
      */
     public function testProductionBootstrapScenarios(): void
     {
-        $ok = $this->bootProduction([
+        $redis = $this->bootProduction([
             'EMAIL_TRANSPORT' => 'Smtp',
             'CACHE_LOGIN_THROTTLE_URL' => 'redis://127.0.0.1:6379/0',
         ]);
-        $this->assertSame(0, $ok['code'], $ok['output']);
-        $this->assertStringContainsString('"ok":true', $ok['output']);
-        $this->assertStringContainsString('"redis":true', $ok['output']);
+        if ($this->redisIsReachable()) {
+            $this->assertSame(0, $redis['code'], $redis['output']);
+            $this->assertStringContainsString('"ok":true', $redis['output']);
+        } else {
+            $this->assertNotSame(0, $redis['code'], $redis['output']);
+        }
 
         $file = $this->bootProduction([
             'EMAIL_TRANSPORT' => 'Smtp',
@@ -147,10 +257,32 @@ class ProductionGuardsTest extends TestCase
         Cache::drop('login_throttle');
         Cache::setConfig('login_throttle', [
             'className' => FileEngine::class,
+            'fallback' => false,
             'prefix' => 'test_throttle_file_',
             'path' => CACHE,
             'duration' => '+1 minute',
         ]);
+    }
+
+    /**
+     * @return bool
+     */
+    private function redisIsReachable(): bool
+    {
+        if (!extension_loaded('redis')) {
+            return false;
+        }
+        try {
+            $redis = new Redis();
+            if (!$redis->connect('127.0.0.1', 6379, 0.2)) {
+                return false;
+            }
+            $redis->close();
+
+            return true;
+        } catch (Throwable) {
+            return false;
+        }
     }
 
     /**

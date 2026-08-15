@@ -128,7 +128,7 @@ final class FakePaymentGateway implements PaymentGatewayInterface
         }
         $this->refundsById[$this->nextRefundId] = $this->refundStatus;
 
-        return new RefundResult($this->nextRefundId, $this->refundStatus);
+        return new RefundResult($this->nextRefundId, $this->refundStatus, $amountCents, 'aud');
     }
 
     /**
@@ -152,6 +152,6 @@ final class FakePaymentGateway implements PaymentGatewayInterface
             return null;
         }
 
-        return new RefundResult($refundId, $this->refundsById[$refundId]);
+        return new RefundResult($refundId, $this->refundsById[$refundId], 0, 'aud');
     }
 }

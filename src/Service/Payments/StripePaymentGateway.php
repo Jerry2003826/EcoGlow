@@ -69,7 +69,12 @@ class StripePaymentGateway implements PaymentGatewayInterface
             $this->rethrowStripe($exception, 'The refund could not be completed. Please try again.');
         }
 
-        return new RefundResult((string)$refund->id, (string)$refund->status);
+        return new RefundResult(
+            (string)$refund->id,
+            (string)$refund->status,
+            (int)$refund->amount,
+            strtolower((string)$refund->currency),
+        );
     }
 
     /**
@@ -112,7 +117,12 @@ class StripePaymentGateway implements PaymentGatewayInterface
             $this->rethrowStripe($exception, 'The payment service could not load this refund. Please try again.');
         }
 
-        return new RefundResult((string)$refund->id, (string)$refund->status);
+        return new RefundResult(
+            (string)$refund->id,
+            (string)$refund->status,
+            (int)$refund->amount,
+            strtolower((string)$refund->currency),
+        );
     }
 
     /**

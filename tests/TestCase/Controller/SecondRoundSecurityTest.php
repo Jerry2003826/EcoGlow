@@ -261,11 +261,11 @@ class SecondRoundSecurityTest extends TestCase
     }
 
     /**
-     * A Dashboard refund without a local pending row still reverses the invoice.
+     * A Dashboard refund without a local pending row is alerted, not auto-applied.
      *
      * @return void
      */
-    public function testExternalRefundCreatesLocalRowAndReversesInvoice(): void
+    public function testExternalRefundCreatesReconciliationAlert(): void
     {
         $order = $this->placeOrder('pi_dash_refund');
         $invoice = $this->issueInvoice($order);
@@ -277,34 +277,167 @@ class SecondRoundSecurityTest extends TestCase
             ['order_id' => (string)$order->id],
         ));
         $this->assertResponseOk();
-        $invoice = $this->fetchTable('Invoices')->get($invoice->id);
-        $this->assertSame((int)$order->grand_total_cents, (int)$invoice->amount_paid_cents);
-        $this->assertSame(Invoice::STATUS_PAID, (string)$invoice->status);
-
+        $consumed = $this->onHand();
         $this->postSigned($this->refundEventPayload(
             'evt_dash_refund',
             'refund.updated',
             're_dash_1',
             'pi_dash_refund',
             'succeeded',
+            10,
         ));
         $this->assertResponseOk();
-        $refund = $this->fetchTable('PaymentRefunds')->find()
-            ->where(['provider_refund_id' => 're_dash_1'])
-            ->first();
-        $this->assertNotNull($refund);
-        $this->assertSame('succeeded', (string)$refund->get('status'));
-        $invoice = $this->fetchTable('Invoices')->get($invoice->id);
-        $this->assertSame(0, (int)$invoice->amount_paid_cents);
-        $this->assertSame(Invoice::STATUS_ISSUED, (string)$invoice->status);
         $this->assertSame(
-            1,
-            $this->fetchTable('PaymentAllocations')->find()
-                ->where(['invoice_id' => $invoice->id, 'allocation_type' => 'refund'])
+            0,
+            $this->fetchTable('PaymentRefunds')->find()
+                ->where(['provider_refund_id' => 're_dash_1'])
                 ->count(),
+        );
+        $this->assertGreaterThan(
+            0,
+            $this->fetchTable('PaymentReconciliationAlerts')->find()
+                ->where(['event_id' => 'refund:re_dash_1'])
+                ->count(),
+        );
+        $invoice = $this->fetchTable('Invoices')->get($invoice->id);
+        $this->assertSame((int)$order->grand_total_cents, (int)$invoice->amount_paid_cents);
+        $this->assertSame(Invoice::STATUS_PAID, (string)$invoice->status);
+        $order = $this->fetchTable('SalesOrders')->get($order->id);
+        $this->assertSame('paid', $order->payment_status);
+        $this->assertSame($consumed, $this->onHand());
+    }
+
+    /**
+     * Late failed/canceled events cannot move a refunded payment backwards.
+     *
+     * @return void
+     */
+    public function testLateFailureDoesNotUndoRefundedPayment(): void
+    {
+        $order = $this->placeOrder('pi_late_fail');
+        $this->postSigned($this->eventPayload(
+            'evt_late_pay',
+            'payment_intent.succeeded',
+            'pi_late_fail',
+            (int)$order->grand_total_cents,
+            ['order_id' => (string)$order->id],
+        ));
+        $this->assertResponseOk();
+        $gateway = new FakePaymentGateway();
+        $gateway->nextRefundId = 're_late_1';
+        (new RefundService(new OrderService(new InventoryLedger()), $gateway))
+            ->refundOrder($this->fetchTable('SalesOrders')->get($order->id), 1);
+        $this->assertSame(
+            'refunded',
+            (string)$this->fetchTable('Payments')->find()
+                ->where(['provider_payment_id' => 'pi_late_fail'])
+                ->first()
+                ?->status,
+        );
+
+        $this->postSigned($this->eventPayload(
+            'evt_late_fail',
+            'payment_intent.payment_failed',
+            'pi_late_fail',
+            (int)$order->grand_total_cents,
+            ['order_id' => (string)$order->id],
+        ));
+        $this->assertResponseOk();
+        $this->postSigned($this->eventPayload(
+            'evt_late_cancel',
+            'payment_intent.canceled',
+            'pi_late_fail',
+            (int)$order->grand_total_cents,
+            ['order_id' => (string)$order->id],
+        ));
+        $this->assertResponseOk();
+        $this->assertSame(
+            'refunded',
+            (string)$this->fetchTable('Payments')->find()
+                ->where(['provider_payment_id' => 'pi_late_fail'])
+                ->first()
+                ?->status,
         );
         $order = $this->fetchTable('SalesOrders')->get($order->id);
         $this->assertSame('refunded', $order->payment_status);
+        $this->assertNotSame(SalesOrder::STATUS_CANCELLED, $order->status);
+    }
+
+    /**
+     * A failed attempt can still be captured when the later succeeded event arrives.
+     *
+     * @return void
+     */
+    public function testFailedThenSucceededCapturesPayment(): void
+    {
+        $order = $this->placeOrder('pi_fail_then_ok');
+        $this->postSigned($this->eventPayload(
+            'evt_first_fail',
+            'payment_intent.payment_failed',
+            'pi_fail_then_ok',
+            (int)$order->grand_total_cents,
+            ['order_id' => (string)$order->id],
+        ));
+        $this->assertResponseOk();
+        $this->assertSame(
+            'failed',
+            (string)$this->fetchTable('Payments')->find()
+                ->where(['provider_payment_id' => 'pi_fail_then_ok'])
+                ->first()
+                ?->status,
+        );
+        $this->postSigned($this->eventPayload(
+            'evt_later_ok',
+            'payment_intent.succeeded',
+            'pi_fail_then_ok',
+            (int)$order->grand_total_cents,
+            ['order_id' => (string)$order->id],
+        ));
+        $this->assertResponseOk();
+        $this->assertSame(
+            'captured',
+            (string)$this->fetchTable('Payments')->find()
+                ->where(['provider_payment_id' => 'pi_fail_then_ok'])
+                ->first()
+                ?->status,
+        );
+        $order = $this->fetchTable('SalesOrders')->get($order->id);
+        $this->assertSame('paid', $order->payment_status);
+    }
+
+    /**
+     * A late failure after capture must not rewrite the payment.
+     *
+     * @return void
+     */
+    public function testSucceededThenFailedKeepsCapture(): void
+    {
+        $order = $this->placeOrder('pi_ok_then_fail');
+        $this->postSigned($this->eventPayload(
+            'evt_ok_first',
+            'payment_intent.succeeded',
+            'pi_ok_then_fail',
+            (int)$order->grand_total_cents,
+            ['order_id' => (string)$order->id],
+        ));
+        $this->assertResponseOk();
+        $this->postSigned($this->eventPayload(
+            'evt_fail_later',
+            'payment_intent.payment_failed',
+            'pi_ok_then_fail',
+            (int)$order->grand_total_cents,
+            ['order_id' => (string)$order->id],
+        ));
+        $this->assertResponseOk();
+        $this->assertSame(
+            'captured',
+            (string)$this->fetchTable('Payments')->find()
+                ->where(['provider_payment_id' => 'pi_ok_then_fail'])
+                ->first()
+                ?->status,
+        );
+        $order = $this->fetchTable('SalesOrders')->get($order->id);
+        $this->assertSame('paid', $order->payment_status);
     }
 
     /**
@@ -883,6 +1016,7 @@ class SecondRoundSecurityTest extends TestCase
      * @param string $refundId Refund id.
      * @param string $intentId PaymentIntent id.
      * @param string $status Stripe refund status.
+     * @param int $amountCents Refund amount.
      * @return string
      */
     private function refundEventPayload(
@@ -891,6 +1025,7 @@ class SecondRoundSecurityTest extends TestCase
         string $refundId,
         string $intentId,
         string $status,
+        int $amountCents = 100,
     ): string {
         $event = [
             'id' => $eventId,
@@ -905,7 +1040,7 @@ class SecondRoundSecurityTest extends TestCase
                 'object' => [
                     'id' => $refundId,
                     'object' => 'refund',
-                    'amount' => 100,
+                    'amount' => $amountCents,
                     'currency' => 'aud',
                     'status' => $status,
                     'payment_intent' => $intentId,

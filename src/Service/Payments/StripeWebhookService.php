@@ -9,7 +9,7 @@ use App\Service\Inventory\InventoryLedger;
 use App\Service\Orders\OrderService;
 use App\Service\OutboundQueue;
 use Cake\Core\Configure;
-use Cake\Datasource\ConnectionInterface;
+use Cake\Database\Connection;
 use Cake\I18n\DateTime;
 use Cake\Log\Log;
 use Cake\ORM\Locator\LocatorAwareTrait;
@@ -119,7 +119,7 @@ class StripeWebhookService
         $intent = $event->data->object;
         $this->assertIntentSucceeded($event, $intent);
         $payment = $this->boundPendingPayment($intent);
-        if ((string)$payment->status === 'captured') {
+        if (in_array((string)$payment->status, ['captured', 'partially_refunded', 'refunded'], true)) {
             return ['status' => 200, 'body' => ['received' => true, 'duplicate' => true]];
         }
         $order = $this->fetchTable('SalesOrders')->get((int)$payment->sales_order_id, contain: [
@@ -177,14 +177,7 @@ class StripeWebhookService
         $payment = $this->boundPendingPayment($intent, false);
         $this->connection()->transactional(function () use ($payment, $intent): void {
             $this->lockPayment((int)$payment->id);
-            $payment = $this->fetchTable('Payments')->get((int)$payment->id);
-            if ($payment->status === 'captured') {
-                return;
-            }
-            $payment->status = 'failed';
-            $payment->failed_at = DateTime::now('UTC');
-            $payment->failure_reason = $this->failureMessage($intent);
-            $this->fetchTable('Payments')->saveOrFail($payment);
+            $this->markFailedIfPending((int)$payment->id, $this->failureMessage($intent));
         });
     }
 
@@ -201,13 +194,7 @@ class StripeWebhookService
         $this->connection()->transactional(function () use ($order, $payment, $actorId, $intent): void {
             $this->orders->lockOrder((int)$order->id);
             $this->lockPayment((int)$payment->id);
-            $payment = $this->fetchTable('Payments')->get((int)$payment->id);
-            if ($payment->status !== 'captured') {
-                $payment->status = 'failed';
-                $payment->failed_at = DateTime::now('UTC');
-                $payment->failure_reason = $this->failureMessage($intent);
-                $this->fetchTable('Payments')->saveOrFail($payment);
-            }
+            $this->markFailedIfPending((int)$payment->id, $this->failureMessage($intent));
             $this->orders->failUnpaid(
                 $order,
                 $actorId > 0 ? $actorId : (int)$order->customer_id,
@@ -223,21 +210,33 @@ class StripeWebhookService
     private function onRefund(Event $event): void
     {
         $object = $event->data->object;
-        $refundId = (string)($object->id ?? '');
+        $intentId = (string)($object->payment_intent ?? '');
+        if ($event->type === 'charge.refunded') {
+            $items = $object->refunds->data ?? [];
+            if (!is_iterable($items)) {
+                return;
+            }
+            foreach ($items as $item) {
+                if (is_object($item)) {
+                    $this->applyStripeRefundObject($item, $intentId);
+                }
+            }
+
+            return;
+        }
         $status = (string)($object->status ?? '');
         if ($event->type === 'refund.failed') {
             $status = 'failed';
         } elseif ($event->type === 'refund.canceled') {
             $status = 'canceled';
         }
-        $intentId = (string)($object->payment_intent ?? '');
-        if ($event->type === 'charge.refunded' && isset($object->refunds->data[0])) {
-            $first = $object->refunds->data[0];
-            $refundId = (string)($first->id ?? $refundId);
-            $status = (string)($first->status ?? 'succeeded');
-            $intentId = (string)($object->payment_intent ?? $intentId);
-        }
-        $this->refunds()->applyWebhookStatus($refundId, $status !== '' ? $status : 'pending', $intentId);
+        $this->refunds()->applyWebhookStatus(
+            (string)($object->id ?? ''),
+            $status !== '' ? $status : 'pending',
+            $intentId,
+            (int)($object->amount ?? 0),
+            strtolower((string)($object->currency ?? '')),
+        );
     }
 
     /**
@@ -278,7 +277,7 @@ class StripeWebhookService
             throw new InvalidArgumentException('PaymentIntent order_id does not match the stored payment.');
         }
         if ($requirePending && !in_array((string)$payment->status, ['pending', 'failed'], true)) {
-            if ((string)$payment->status === 'captured') {
+            if (in_array((string)$payment->status, ['captured', 'partially_refunded', 'refunded'], true)) {
                 return $payment;
             }
             throw new InvalidArgumentException('Stored payment is not awaiting capture.');
@@ -339,7 +338,7 @@ class StripeWebhookService
      */
     private function markCaptured(Payment $payment, int $amountCents, object $intent): bool
     {
-        if ((string)$payment->status === 'captured') {
+        if (in_array((string)$payment->status, ['captured', 'partially_refunded', 'refunded'], true)) {
             return false;
         }
         if (!$this->recordCaptureEffect((string)$intent->id)) {
@@ -396,6 +395,41 @@ class StripeWebhookService
     }
 
     /**
+     * Failed/canceled events may not move captured or refunded payments backwards.
+     *
+     * @param int $paymentId Payment id.
+     * @param string $reason Failure reason.
+     * @return void
+     */
+    private function markFailedIfPending(int $paymentId, string $reason): void
+    {
+        $this->connection()->execute(
+            "UPDATE payments
+                SET status = 'failed', failed_at = ?, failure_reason = ?
+              WHERE id = ?
+                AND status IN ('pending', 'failed')",
+            [DateTime::now('UTC')->format('Y-m-d H:i:s'), $reason, $paymentId],
+        );
+    }
+
+    /**
+     * @param object $refund Stripe refund object.
+     * @param string $intentId PaymentIntent id.
+     * @return void
+     */
+    private function applyStripeRefundObject(object $refund, string $intentId): void
+    {
+        $intent = $intentId !== '' ? $intentId : (string)($refund->payment_intent ?? '');
+        $this->refunds()->applyWebhookStatus(
+            (string)($refund->id ?? ''),
+            (string)($refund->status ?? 'pending'),
+            $intent,
+            (int)($refund->amount ?? 0),
+            strtolower((string)($refund->currency ?? '')),
+        );
+    }
+
+    /**
      * @param \App\Model\Entity\SalesOrder $order Paid order.
      * @param int $amountCents Captured amount.
      * @param \App\Model\Entity\Payment $payment Captured payment.
@@ -424,6 +458,9 @@ class StripeWebhookService
         $row->set('payment_id', $payment->id);
         $row->set('invoice_id', $invoice->id);
         $row->set('allocation_type', 'capture');
+        if ($allocations->getSchema()->hasColumn('effect_key')) {
+            $row->set('effect_key', 'capture');
+        }
         $row->set('amount_cents', $amountCents);
         $row->set('allocated_at', DateTime::now('UTC'));
         $row->set('created', DateTime::now('UTC'));
@@ -575,10 +612,15 @@ class StripeWebhookService
     }
 
     /**
-     * @return \Cake\Datasource\ConnectionInterface
+     * @return \Cake\Database\Connection
      */
-    private function connection(): ConnectionInterface
+    private function connection(): Connection
     {
-        return $this->fetchTable('SalesOrders')->getConnection();
+        $connection = $this->fetchTable('SalesOrders')->getConnection();
+        if (!$connection instanceof Connection) {
+            throw new RuntimeException('Payments require a SQL connection.');
+        }
+
+        return $connection;
     }
 }

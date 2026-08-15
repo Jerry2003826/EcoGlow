@@ -38,6 +38,15 @@ jobs:
           --health-interval=5s
           --health-timeout=5s
           --health-retries=20
+      redis:
+        image: redis:7.4
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd="redis-cli ping"
+          --health-interval=5s
+          --health-timeout=3s
+          --health-retries=10
 
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -48,7 +57,7 @@ jobs:
       uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # v2
       with:
         php-version: ${{ matrix.php-version }}
-        extensions: mbstring, intl, pdo_mysql
+        extensions: mbstring, intl, pdo_mysql, redis
         ini-values: zend.assertions=1
         coverage: none
 
@@ -58,11 +67,17 @@ jobs:
     - name: Composer post install
       run: composer run-script post-install-cmd --no-interaction
 
+    - name: Grant MySQL migration privileges
+      run: |
+        mysql -h 127.0.0.1 -uroot -proot -e "SET GLOBAL log_bin_trust_function_creators = 1;"
+        mysql -h 127.0.0.1 -uroot -proot -e "GRANT TRIGGER, CREATE ROUTINE, ALTER ROUTINE, CREATE VIEW, CREATE, ALTER, INDEX, REFERENCES, DROP ON test_ecoglow.* TO 'my_app'@'%'; FLUSH PRIVILEGES;"
+
     - name: Run PHPUnit
       run: vendor/bin/phpunit
       env:
         SECURITY_SALT: f76f1c8475585c46c6acd3ddcb8f5e0f15de524637bb4080a08c4afe7cfc9144
         DATABASE_TEST_URL: mysql://my_app:secret@127.0.0.1:3306/test_ecoglow?encoding=utf8mb4
+        CACHE_LOGIN_THROTTLE_URL: redis://127.0.0.1:6379/0
 
   coding-standard:
     name: Coding Standard & Static Analysis
@@ -78,7 +93,7 @@ jobs:
       uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # v2
       with:
         php-version: '8.4'
-        extensions: mbstring, intl
+        extensions: mbstring, intl, redis
         coverage: none
         tools: cs2pr, phpstan:2.1
 
@@ -89,7 +104,10 @@ jobs:
       run: composer validate --strict
 
     - name: Composer audit
-      run: composer audit --locked --abandoned=fail | tee composer-audit.txt
+      shell: bash
+      run: |
+        set -o pipefail
+        composer audit --locked --abandoned=fail | tee composer-audit.txt
 
     - name: Upload composer audit
       if: always()
@@ -99,7 +117,10 @@ jobs:
         path: composer-audit.txt
 
     - name: Run PHP CodeSniffer
-      run: vendor/bin/phpcs --report=checkstyle | cs2pr
+      shell: bash
+      run: |
+        set -o pipefail
+        vendor/bin/phpcs --report=checkstyle | cs2pr
 
     - name: Run phpstan
       run: phpstan

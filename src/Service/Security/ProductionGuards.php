@@ -57,6 +57,12 @@ final class ProductionGuards
         if (in_array($class, [DebugTransport::class, 'Debug'], true)) {
             throw new RuntimeException('Production must not use the Debug email transport.');
         }
+        $host = strtolower((string)($config['host'] ?? ''));
+        $local = in_array($host, ['', 'localhost', '127.0.0.1', '::1'], true);
+        $tls = (bool)($config['tls'] ?? false);
+        if (!$local && !$tls) {
+            throw new RuntimeException('Production SMTP must use TLS.');
+        }
     }
 
     /**
@@ -65,9 +71,26 @@ final class ProductionGuards
     public static function assertRateLimitStore(): void
     {
         $config = Cache::getConfig('login_throttle');
-        if (!is_array($config) || !self::isRedisStore($config)) {
+        if (!is_array($config)) {
             throw new RuntimeException('Production login/MFA/checkout throttling must use Redis.');
         }
+        if (($config['fallback'] ?? true) !== false) {
+            throw new RuntimeException('Production login_throttle must set fallback=false.');
+        }
+        self::assertRedisNetwork($config);
+        try {
+            $engine = Cache::pool('login_throttle');
+        } catch (Throwable $exception) {
+            throw new RuntimeException(
+                'Production throttling requires a working Redis cache engine.',
+                0,
+                $exception,
+            );
+        }
+        if (!$engine instanceof RedisEngine) {
+            throw new RuntimeException('Production throttling requires a working Redis cache engine.');
+        }
+        self::probeRateLimitStore();
     }
 
     /**
@@ -82,15 +105,78 @@ final class ProductionGuards
             return true;
         }
         $url = (string)($config['url'] ?? '');
-        if (str_starts_with($url, 'redis:') || str_starts_with($url, 'rediss:')) {
+
+        return str_starts_with($url, 'redis:') || str_starts_with($url, 'rediss:');
+    }
+
+    /**
+     * @return void
+     */
+    public static function probeRateLimitStore(): void
+    {
+        $key = 'prod_guard_' . bin2hex(random_bytes(8));
+        try {
+            if (!Cache::write($key, 1, 'login_throttle')) {
+                throw new RuntimeException('Redis probe write failed.');
+            }
+            $incremented = Cache::increment($key, 1, 'login_throttle');
+            if ($incremented !== 2) {
+                throw new RuntimeException('Redis probe increment failed.');
+            }
+            if ((int)Cache::read($key, 'login_throttle') !== 2) {
+                throw new RuntimeException('Redis probe read failed.');
+            }
+        } catch (Throwable $exception) {
+            if ($exception instanceof RuntimeException && str_contains($exception->getMessage(), 'Redis probe')) {
+                throw $exception;
+            }
+            throw new RuntimeException(
+                'Production throttling requires a working Redis cache engine.',
+                0,
+                $exception,
+            );
+        } finally {
+            Cache::delete($key, 'login_throttle');
+        }
+    }
+
+    /**
+     * @param array<string, mixed> $config Registered cache config.
+     * @return void
+     */
+    private static function assertRedisNetwork(array $config): void
+    {
+        $url = (string)($config['url'] ?? '');
+        $host = strtolower((string)($config['host'] ?? ''));
+        $scheme = 'redis';
+        $password = (string)($config['password'] ?? '');
+        if ($url !== '') {
+            $parts = parse_url($url);
+            $host = strtolower((string)($parts['host'] ?? $host));
+            $scheme = strtolower((string)($parts['scheme'] ?? 'redis'));
+            $password = (string)($parts['pass'] ?? $password);
+        }
+        if ($host === '' || self::isPrivateHost($host)) {
+            return;
+        }
+        if ($scheme !== 'rediss' && $password === '') {
+            throw new RuntimeException('Remote Redis must use rediss:// or a password.');
+        }
+    }
+
+    /**
+     * @param string $host Hostname or IP.
+     * @return bool
+     */
+    private static function isPrivateHost(string $host): bool
+    {
+        if (in_array($host, ['localhost', '127.0.0.1', '::1'], true)) {
             return true;
         }
-        try {
-            $engine = Cache::pool('login_throttle');
-
-            return $engine instanceof RedisEngine;
-        } catch (Throwable) {
-            return false;
+        if (str_starts_with($host, '10.') || str_starts_with($host, '192.168.')) {
+            return true;
         }
+
+        return (bool)preg_match('/^172\.(1[6-9]|2\d|3[0-1])\./', $host);
     }
 }

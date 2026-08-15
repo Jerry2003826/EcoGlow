@@ -6,6 +6,7 @@
     "homepage": "https://cakephp.org",
     "require": {
         "php": ">=8.4.1",
+        "ext-redis": "*",
         "cakephp/authentication": "^4.2",
         "cakephp/authorization": "^3.4",
         "cakephp/cakephp": "5.4.*",

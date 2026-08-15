@@ -2253,7 +2253,7 @@ parameters:
 		-
 			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$payment_status\.$#'
 			identifier: property.notFound
-			count: 6
+			count: 7
 			path: src/Service/Orders/OrderService.php
 
 		-
@@ -2605,9 +2605,27 @@ parameters:
 			path: src/Service/Payments/IdempotencyService.php
 
 		-
-			message: '#^Access to an undefined property App\\Model\\Entity\\Payment\:\:\$provider_payment_id\.$#'
+			message: '#^Access to an undefined property App\\Model\\Entity\\Payment\:\:\$currency\.$#'
 			identifier: property.notFound
 			count: 1
+			path: src/Service/Payments/RefundService.php
+
+		-
+			message: '#^Access to an undefined property App\\Model\\Entity\\Payment\:\:\$provider_payment_id\.$#'
+			identifier: property.notFound
+			count: 3
+			path: src/Service/Payments/RefundService.php
+
+		-
+			message: '#^Access to an undefined property App\\Model\\Entity\\SalesOrder\:\:\$created_by_user_id\.$#'
+			identifier: property.notFound
+			count: 1
+			path: src/Service/Payments/RefundService.php
+
+		-
+			message: '#^Access to an undefined property App\\Model\\Entity\\SalesOrder\:\:\$payment_status\.$#'
+			identifier: property.notFound
+			count: 2
 			path: src/Service/Payments/RefundService.php
 
 		-
@@ -2623,12 +2641,6 @@ parameters:
 			path: src/Service/Payments/RefundService.php
 
 		-
-			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$created_by_user_id\.$#'
-			identifier: property.notFound
-			count: 1
-			path: src/Service/Payments/RefundService.php
-
-		-
 			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$grand_total_cents\.$#'
 			identifier: property.notFound
 			count: 1
@@ -2637,7 +2649,7 @@ parameters:
 		-
 			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$id\.$#'
 			identifier: property.notFound
-			count: 13
+			count: 10
 			path: src/Service/Payments/RefundService.php
 
 		-
@@ -2647,21 +2659,15 @@ parameters:
 			path: src/Service/Payments/RefundService.php
 
 		-
-			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$payment_status\.$#'
+			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$sales_order_id\.$#'
 			identifier: property.notFound
 			count: 1
 			path: src/Service/Payments/RefundService.php
 
 		-
-			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$sales_order_id\.$#'
-			identifier: property.notFound
-			count: 2
-			path: src/Service/Payments/RefundService.php
-
-		-
 			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$status\.$#'
 			identifier: property.notFound
-			count: 4
+			count: 3
 			path: src/Service/Payments/RefundService.php
 
 		-
@@ -2677,33 +2683,9 @@ parameters:
 			path: src/Service/Payments/RefundService.php
 
 		-
-			message: '#^Method App\\Service\\Payments\\RefundService\:\:recordExternalRefund\(\) should return App\\Model\\Entity\\PaymentRefund but returns Cake\\Datasource\\EntityInterface\.$#'
-			identifier: return.type
-			count: 2
-			path: src/Service/Payments/RefundService.php
-
-		-
 			message: '#^Method App\\Service\\Payments\\RefundService\:\:refundOrder\(\) should return App\\Model\\Entity\\Payment but returns Cake\\Datasource\\EntityInterface\.$#'
 			identifier: return.type
 			count: 2
-			path: src/Service/Payments/RefundService.php
-
-		-
-			message: '#^Parameter \#1 \$order of method App\\Service\\Orders\\OrderService\:\:restockIfUnshipped\(\) expects App\\Model\\Entity\\SalesOrder, Cake\\Datasource\\EntityInterface given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Service/Payments/RefundService.php
-
-		-
-			message: '#^Parameter \#1 \$payment of method App\\Service\\Payments\\RefundService\:\:recordExternalRefund\(\) expects App\\Model\\Entity\\Payment, Cake\\Datasource\\EntityInterface given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Service/Payments/RefundService.php
-
-		-
-			message: '#^Parameter \#1 \$payment of method App\\Service\\Payments\\RefundService\:\:reverseInvoiceCredit\(\) expects App\\Model\\Entity\\Payment, Cake\\Datasource\\EntityInterface given\.$#'
-			identifier: argument.type
-			count: 1
 			path: src/Service/Payments/RefundService.php
 
 		-
@@ -2755,18 +2737,6 @@ parameters:
 			path: src/Service/Payments/StripeWebhookService.php
 
 		-
-			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$failed_at\.$#'
-			identifier: property.notFound
-			count: 2
-			path: src/Service/Payments/StripeWebhookService.php
-
-		-
-			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$failure_reason\.$#'
-			identifier: property.notFound
-			count: 2
-			path: src/Service/Payments/StripeWebhookService.php
-
-		-
 			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$grand_total_cents\.$#'
 			identifier: property.notFound
 			count: 2
@@ -2805,7 +2775,7 @@ parameters:
 		-
 			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$status\.$#'
 			identifier: property.notFound
-			count: 6
+			count: 4
 			path: src/Service/Payments/StripeWebhookService.php
 
 		-
@@ -2815,20 +2785,14 @@ parameters:
 			path: src/Service/Payments/StripeWebhookService.php
 
 		-
-			message: '#^Call to an undefined method Cake\\Datasource\\ConnectionInterface\:\:execute\(\)\.$#'
-			identifier: method.notFound
-			count: 2
-			path: src/Service/Payments/StripeWebhookService.php
-
-		-
-			message: '#^Call to an undefined method Cake\\Datasource\\ConnectionInterface\:\:transactional\(\)\.$#'
-			identifier: method.notFound
-			count: 3
-			path: src/Service/Payments/StripeWebhookService.php
-
-		-
 			message: '#^Cannot access offset ''order_id'' on array\<mixed, mixed\>\|object\.$#'
 			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: src/Service/Payments/StripeWebhookService.php
+
+		-
+			message: '#^Instanceof between Cake\\Database\\Connection and Cake\\Database\\Connection will always evaluate to true\.$#'
+			identifier: instanceof.alwaysTrue
 			count: 1
 			path: src/Service/Payments/StripeWebhookService.php
 
@@ -2836,6 +2800,12 @@ parameters:
 			message: '#^Method App\\Service\\Payments\\StripeWebhookService\:\:boundPendingPayment\(\) should return App\\Model\\Entity\\Payment but returns Cake\\Datasource\\EntityInterface\.$#'
 			identifier: return.type
 			count: 2
+			path: src/Service/Payments/StripeWebhookService.php
+
+		-
+			message: '#^PHPDoc tag @return with type Cake\\Datasource\\ConnectionInterface is not subtype of native type Cake\\Database\\Connection\.$#'
+			identifier: return.phpDocType
+			count: 1
 			path: src/Service/Payments/StripeWebhookService.php
 
 		-

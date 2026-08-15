@@ -59,7 +59,7 @@ final class AddThirdRoundSecurityGuards extends BaseMigration
         if (!$this->hasTable($table)) {
             return;
         }
-        if ($this->uniqueIndexExists($table, $name)) {
+        if ($this->uniqueIndexMatches($table, $name, $columns)) {
             return;
         }
         if ($this->indexExists($table, $name)) {
@@ -77,17 +77,34 @@ final class AddThirdRoundSecurityGuards extends BaseMigration
     /**
      * @param string $table Table name.
      * @param string $name Index name.
+     * @param array<int, string> $columns Expected columns in order.
      * @return bool
      */
-    private function uniqueIndexExists(string $table, string $name): bool
+    private function uniqueIndexMatches(string $table, string $name, array $columns): bool
     {
-        foreach ($this->indexRows($table, $name) as $row) {
-            if ((int)($row['Non_unique'] ?? 1) === 0) {
-                return true;
+        $rows = $this->indexRows($table, $name);
+        if ($rows === []) {
+            return false;
+        }
+        usort(
+            $rows,
+            static function (array $left, array $right): int {
+                $leftSeq = (int)($left['Seq_in_index'] ?? $left['seq_in_index'] ?? 0);
+                $rightSeq = (int)($right['Seq_in_index'] ?? $right['seq_in_index'] ?? 0);
+
+                return $leftSeq <=> $rightSeq;
+            },
+        );
+        $actual = [];
+        $unique = false;
+        foreach ($rows as $row) {
+            if ((int)($row['Non_unique'] ?? $row['non_unique'] ?? 1) === 0) {
+                $unique = true;
             }
+            $actual[] = (string)($row['Column_name'] ?? $row['column_name'] ?? '');
         }
 
-        return false;
+        return $unique && $actual === $columns;
     }
 
     /**
@@ -116,7 +133,7 @@ final class AddThirdRoundSecurityGuards extends BaseMigration
             return [];
         }
 
-        $rows = $statement->fetchAll();
+        $rows = $statement->fetchAll('assoc');
 
         return is_array($rows) ? $rows : [];
     }
@@ -147,7 +164,7 @@ final class AddThirdRoundSecurityGuards extends BaseMigration
         $statement = $this->getAdapter()->query($sql);
         $count = 0;
         if (is_object($statement) && method_exists($statement, 'fetchColumn')) {
-            $count = (int)($statement->fetchColumn() ?: 0);
+            $count = (int)($statement->fetchColumn(0) ?: 0);
         }
         if ($count > 0) {
             throw new RuntimeException(

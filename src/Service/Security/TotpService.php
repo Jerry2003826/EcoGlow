@@ -207,7 +207,7 @@ final class TotpService
             if (strlen($chunk) < 5) {
                 $chunk = str_pad($chunk, 5, '0');
             }
-            $encoded .= $alphabet[bindec($chunk)];
+            $encoded .= $alphabet[(int)bindec($chunk)];
         }
 
         return $encoded;

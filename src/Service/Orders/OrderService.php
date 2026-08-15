@@ -533,7 +533,10 @@ class OrderService
         return $this->connection()->transactional(function () use ($order, $actorUserId, $note) {
             $this->lockOrder((int)$order->id);
             $order = $this->fetchTable('SalesOrders')->get($order->id);
-            if ($order->payment_status === 'paid' || $order->status === SalesOrder::STATUS_CANCELLED) {
+            if (
+                in_array((string)$order->payment_status, ['paid', 'partially_refunded', 'refunded'], true)
+                || $order->status === SalesOrder::STATUS_CANCELLED
+            ) {
                 return $order;
             }
             if ($this->hasCapturedPayment((int)$order->id)) {
@@ -571,7 +574,7 @@ class OrderService
     {
         return $this->fetchTable('Payments')->exists([
             'sales_order_id' => $orderId,
-            'status' => 'captured',
+            'status IN' => ['captured', 'partially_refunded', 'refunded'],
         ]);
     }
 

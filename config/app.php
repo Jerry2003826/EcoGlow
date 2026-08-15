@@ -1,6 +1,7 @@
 <?php
 
 use Cake\Cache\Engine\FileEngine;
+use Cake\Cache\Engine\RedisEngine;
 use Cake\Database\Connection;
 use Cake\Database\Driver\Mysql;
 use Cake\Log\Engine\FileLog;
@@ -171,10 +172,11 @@ return [
          * threshold is reached (see App\Controller\UsersController).
          */
         'login_throttle' => [
-            'className' => FileEngine::class,
+            'className' => env('CACHE_LOGIN_THROTTLE_URL') ? RedisEngine::class : FileEngine::class,
             'prefix' => 'myapp_login_throttle_',
             'path' => CACHE,
             'duration' => '+15 minutes',
+            'fallback' => false,
             'url' => env('CACHE_LOGIN_THROTTLE_URL', null),
         ],
     ],
