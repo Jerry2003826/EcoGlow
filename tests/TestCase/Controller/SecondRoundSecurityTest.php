@@ -329,8 +329,25 @@ class SecondRoundSecurityTest extends TestCase
         (new RefundService(new OrderService(new InventoryLedger()), $gateway))
             ->refundOrder($this->fetchTable('SalesOrders')->get($order->id), 1);
         $this->assertSame(
-            ['local_refund_id', 'local_payment_id'],
+            ['local_refund_id', 'local_payment_id', 'refund_binding_token'],
             array_keys($gateway->lastRefundMetadata),
+        );
+        $payment = $this->fetchTable('Payments')->find()
+            ->where(['provider_payment_id' => 'pi_hijack_refund'])
+            ->first();
+        $this->assertNotNull($payment);
+        $staffId = (int)$this->fetchTable('PaymentRefunds')->find()
+            ->where(['payment_id' => $payment->id])
+            ->first()
+            ?->id;
+        $this->assertSame(
+            RefundService::bindingToken(
+                $staffId,
+                (int)$payment->id,
+                (int)$payment->amount_cents,
+                strtolower((string)($payment->currency ?: 'aud')),
+            ),
+            $gateway->lastRefundMetadata['refund_binding_token'],
         );
 
         $this->postSigned($this->refundEventPayload(
@@ -361,6 +378,61 @@ class SecondRoundSecurityTest extends TestCase
         );
         $order = $this->fetchTable('SalesOrders')->get($order->id);
         $this->assertSame('paid', $order->payment_status);
+    }
+
+    /**
+     * Copied local IDs without a valid HMAC cannot bind a pending staff refund.
+     *
+     * @return void
+     */
+    public function testForgedRefundBindingTokenDoesNotHijackPendingRefund(): void
+    {
+        $order = $this->placeOrder('pi_forged_token');
+        $this->postSigned($this->eventPayload(
+            'evt_forged_pay',
+            'payment_intent.succeeded',
+            'pi_forged_token',
+            (int)$order->grand_total_cents,
+            ['order_id' => (string)$order->id],
+        ));
+        $this->assertResponseOk();
+        $gateway = new FakePaymentGateway();
+        $gateway->refundStatus = 'pending';
+        $gateway->nextRefundId = 're_staff_forged';
+        (new RefundService(new OrderService(new InventoryLedger()), $gateway))
+            ->refundOrder($this->fetchTable('SalesOrders')->get($order->id), 1);
+        $payment = $this->fetchTable('Payments')->find()
+            ->where(['provider_payment_id' => 'pi_forged_token'])
+            ->first();
+        $this->assertNotNull($payment);
+        $staff = $this->fetchTable('PaymentRefunds')->find()
+            ->where(['payment_id' => $payment->id])
+            ->first();
+        $this->assertNotNull($staff);
+
+        $this->postSigned($this->refundEventPayload(
+            'evt_forged_token',
+            'refund.updated',
+            're_forged_dash',
+            'pi_forged_token',
+            'succeeded',
+            (int)$staff->get('amount_cents'),
+            [
+                'local_refund_id' => (string)$staff->id,
+                'local_payment_id' => (string)$payment->id,
+                'refund_binding_token' => str_repeat('a', 64),
+            ],
+        ));
+        $this->assertResponseOk();
+        $staff = $this->fetchTable('PaymentRefunds')->get($staff->id);
+        $this->assertSame('pending', (string)$staff->get('status'));
+        $this->assertSame('re_staff_forged', (string)$staff->get('provider_refund_id'));
+        $this->assertGreaterThan(
+            0,
+            $this->fetchTable('PaymentReconciliationAlerts')->find()
+                ->where(['event_id' => 'refund:re_forged_dash'])
+                ->count(),
+        );
     }
 
     /**

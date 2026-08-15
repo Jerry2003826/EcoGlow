@@ -95,7 +95,9 @@ jobs:
         php-version: '8.4'
         extensions: mbstring, intl, redis
         coverage: none
-        tools: cs2pr, phpstan:2.1
+        # Pin the exact 2.1.x. debug_kit pulls composer/pcre, which conflicts
+        # with phpstan/phpstan as a Composer package, so CI installs the tool.
+        tools: cs2pr, phpstan:2.1.56
 
     - name: Composer install
       run: composer install --no-interaction --prefer-dist --no-progress
@@ -123,6 +125,6 @@ jobs:
         vendor/bin/phpcs --report=checkstyle | cs2pr
 
     - name: Run phpstan
-      run: phpstan
+      run: phpstan analyse --no-progress
       env:
         SECURITY_SALT: f76f1c8475585c46c6acd3ddcb8f5e0f15de524637bb4080a08c4afe7cfc9144

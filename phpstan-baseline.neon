@@ -31,36 +31,6 @@ parameters:
 			path: src/Controller/AccountController.php
 
 		-
-			message: '#^Cannot call method allowMethod\(\) on Cake\\Http\\ServerRequest\|null\.$#'
-			identifier: method.nonObject
-			count: 3
-			path: src/Controller/AccountController.php
-
-		-
-			message: '#^Cannot call method getAttribute\(\) on Cake\\Http\\ServerRequest\|null\.$#'
-			identifier: method.nonObject
-			count: 1
-			path: src/Controller/AccountController.php
-
-		-
-			message: '#^Cannot call method getData\(\) on Cake\\Http\\ServerRequest\|null\.$#'
-			identifier: method.nonObject
-			count: 6
-			path: src/Controller/AccountController.php
-
-		-
-			message: '#^Cannot call method getParam\(\) on Cake\\Http\\ServerRequest\|null\.$#'
-			identifier: method.nonObject
-			count: 1
-			path: src/Controller/AccountController.php
-
-		-
-			message: '#^Cannot call method is\(\) on Cake\\Http\\ServerRequest\|null\.$#'
-			identifier: method.nonObject
-			count: 1
-			path: src/Controller/AccountController.php
-
-		-
 			message: '#^Method App\\Controller\\AccountController\:\:beforeRender\(\) has parameter \$event with generic interface Cake\\Event\\EventInterface but does not specify its types\: TSubject$#'
 			identifier: missingType.generics
 			count: 1
@@ -79,18 +49,6 @@ parameters:
 			path: src/Controller/AccountController.php
 
 		-
-			message: '#^Cannot call method getAttribute\(\) on Cake\\Http\\ServerRequest\|null\.$#'
-			identifier: method.nonObject
-			count: 2
-			path: src/Controller/Admin/AdminController.php
-
-		-
-			message: '#^Cannot call method getParam\(\) on Cake\\Http\\ServerRequest\|null\.$#'
-			identifier: method.nonObject
-			count: 3
-			path: src/Controller/Admin/AdminController.php
-
-		-
 			message: '#^Method App\\Controller\\Admin\\AdminController\:\:beforeRender\(\) has parameter \$event with generic interface Cake\\Event\\EventInterface but does not specify its types\: TSubject$#'
 			identifier: missingType.generics
 			count: 1
@@ -100,24 +58,6 @@ parameters:
 			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$id\.$#'
 			identifier: property.notFound
 			count: 4
-			path: src/Controller/Admin/AppointmentsController.php
-
-		-
-			message: '#^Cannot call method allowMethod\(\) on Cake\\Http\\ServerRequest\|null\.$#'
-			identifier: method.nonObject
-			count: 4
-			path: src/Controller/Admin/AppointmentsController.php
-
-		-
-			message: '#^Cannot call method getData\(\) on Cake\\Http\\ServerRequest\|null\.$#'
-			identifier: method.nonObject
-			count: 10
-			path: src/Controller/Admin/AppointmentsController.php
-
-		-
-			message: '#^Cannot call method getQuery\(\) on Cake\\Http\\ServerRequest\|null\.$#'
-			identifier: method.nonObject
-			count: 1
 			path: src/Controller/Admin/AppointmentsController.php
 
 		-
@@ -151,24 +91,6 @@ parameters:
 			path: src/Controller/Admin/ContactMessagesController.php
 
 		-
-			message: '#^Cannot call method allowMethod\(\) on Cake\\Http\\ServerRequest\|null\.$#'
-			identifier: method.nonObject
-			count: 5
-			path: src/Controller/Admin/ContactMessagesController.php
-
-		-
-			message: '#^Cannot call method getData\(\) on Cake\\Http\\ServerRequest\|null\.$#'
-			identifier: method.nonObject
-			count: 3
-			path: src/Controller/Admin/ContactMessagesController.php
-
-		-
-			message: '#^Cannot call method getQuery\(\) on Cake\\Http\\ServerRequest\|null\.$#'
-			identifier: method.nonObject
-			count: 1
-			path: src/Controller/Admin/ContactMessagesController.php
-
-		-
 			message: '#^Method App\\Controller\\Admin\\ContactMessagesController\:\:staffOptions\(\) should return iterable\<App\\Model\\Entity\\User\> but returns Cake\\Datasource\\ResultSetInterface\<\(int\|string\), Cake\\Datasource\\EntityInterface\>\.$#'
 			identifier: return.type
 			count: 1
@@ -193,32 +115,8 @@ parameters:
 			path: src/Controller/Admin/CustomersController.php
 
 		-
-			message: '#^Cannot call method getQuery\(\) on Cake\\Http\\ServerRequest\|null\.$#'
-			identifier: method.nonObject
-			count: 1
-			path: src/Controller/Admin/CustomersController.php
-
-		-
 			message: '#^Cannot access property \$id on Cake\\Datasource\\EntityInterface\|null\.$#'
 			identifier: property.nonObject
-			count: 1
-			path: src/Controller/Admin/InventoryController.php
-
-		-
-			message: '#^Cannot call method allowMethod\(\) on Cake\\Http\\ServerRequest\|null\.$#'
-			identifier: method.nonObject
-			count: 1
-			path: src/Controller/Admin/InventoryController.php
-
-		-
-			message: '#^Cannot call method getData\(\) on Cake\\Http\\ServerRequest\|null\.$#'
-			identifier: method.nonObject
-			count: 5
-			path: src/Controller/Admin/InventoryController.php
-
-		-
-			message: '#^Cannot call method getQuery\(\) on Cake\\Http\\ServerRequest\|null\.$#'
-			identifier: method.nonObject
 			count: 1
 			path: src/Controller/Admin/InventoryController.php
 
@@ -244,24 +142,6 @@ parameters:
 			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$status\.$#'
 			identifier: property.notFound
 			count: 1
-			path: src/Controller/Admin/InvoicesController.php
-
-		-
-			message: '#^Cannot call method allowMethod\(\) on Cake\\Http\\ServerRequest\|null\.$#'
-			identifier: method.nonObject
-			count: 4
-			path: src/Controller/Admin/InvoicesController.php
-
-		-
-			message: '#^Cannot call method getData\(\) on Cake\\Http\\ServerRequest\|null\.$#'
-			identifier: method.nonObject
-			count: 1
-			path: src/Controller/Admin/InvoicesController.php
-
-		-
-			message: '#^Cannot call method getQuery\(\) on Cake\\Http\\ServerRequest\|null\.$#'
-			identifier: method.nonObject
-			count: 2
 			path: src/Controller/Admin/InvoicesController.php
 
 		-
@@ -331,36 +211,6 @@ parameters:
 			path: src/Controller/Admin/OrdersController.php
 
 		-
-			message: '#^Cannot call method allowMethod\(\) on Cake\\Http\\ServerRequest\|null\.$#'
-			identifier: method.nonObject
-			count: 6
-			path: src/Controller/Admin/OrdersController.php
-
-		-
-			message: '#^Cannot call method getData\(\) on Cake\\Http\\ServerRequest\|null\.$#'
-			identifier: method.nonObject
-			count: 4
-			path: src/Controller/Admin/OrdersController.php
-
-		-
-			message: '#^Cannot call method getQuery\(\) on Cake\\Http\\ServerRequest\|null\.$#'
-			identifier: method.nonObject
-			count: 7
-			path: src/Controller/Admin/OrdersController.php
-
-		-
-			message: '#^Cannot call method is\(\) on Cake\\Http\\ServerRequest\|null\.$#'
-			identifier: method.nonObject
-			count: 1
-			path: src/Controller/Admin/OrdersController.php
-
-		-
-			message: '#^Cannot call method withType\(\) on Cake\\Http\\Response\|null\.$#'
-			identifier: method.nonObject
-			count: 1
-			path: src/Controller/Admin/OrdersController.php
-
-		-
 			message: '#^Parameter \#1 \$order of method App\\Service\\Orders\\OrderService\:\:addNote\(\) expects App\\Model\\Entity\\SalesOrder, Cake\\Datasource\\EntityInterface given\.$#'
 			identifier: argument.type
 			count: 1
@@ -385,12 +235,6 @@ parameters:
 			path: src/Controller/Admin/OrdersController.php
 
 		-
-			message: '#^Cannot call method getQuery\(\) on Cake\\Http\\ServerRequest\|null\.$#'
-			identifier: method.nonObject
-			count: 8
-			path: src/Controller/Admin/ReportsController.php
-
-		-
 			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$id\.$#'
 			identifier: property.notFound
 			count: 7
@@ -413,30 +257,6 @@ parameters:
 			identifier: method.notFound
 			count: 1
 			path: src/Controller/Admin/UsersController.php
-
-		-
-			message: '#^Cannot call method allowMethod\(\) on Cake\\Http\\ServerRequest\|null\.$#'
-			identifier: method.nonObject
-			count: 7
-			path: src/Controller/Admin/UsersController.php
-
-		-
-			message: '#^Cannot call method getData\(\) on Cake\\Http\\ServerRequest\|null\.$#'
-			identifier: method.nonObject
-			count: 6
-			path: src/Controller/Admin/UsersController.php
-
-		-
-			message: '#^Cannot call method getAttribute\(\) on Cake\\Http\\ServerRequest\|null\.$#'
-			identifier: method.nonObject
-			count: 1
-			path: src/Controller/AppController.php
-
-		-
-			message: '#^Cannot call method getParam\(\) on Cake\\Http\\ServerRequest\|null\.$#'
-			identifier: method.nonObject
-			count: 1
-			path: src/Controller/AppController.php
 
 		-
 			message: '#^Method App\\Controller\\AppController\:\:beforeRender\(\) has parameter \$event with generic interface Cake\\Event\\EventInterface but does not specify its types\: TSubject$#'
@@ -475,24 +295,6 @@ parameters:
 			path: src/Controller/CartsController.php
 
 		-
-			message: '#^Cannot call method allowMethod\(\) on Cake\\Http\\ServerRequest\|null\.$#'
-			identifier: method.nonObject
-			count: 5
-			path: src/Controller/CartsController.php
-
-		-
-			message: '#^Cannot call method getData\(\) on Cake\\Http\\ServerRequest\|null\.$#'
-			identifier: method.nonObject
-			count: 7
-			path: src/Controller/CartsController.php
-
-		-
-			message: '#^Parameter \#1 \$request of method App\\Service\\Cart\\CartService\:\:token\(\) expects Cake\\Http\\ServerRequest, Cake\\Http\\ServerRequest\|null given\.$#'
-			identifier: argument.type
-			count: 4
-			path: src/Controller/CartsController.php
-
-		-
 			message: '#^Access to an undefined property App\\Controller\\CheckoutController\:\:\$Authentication\.$#'
 			identifier: property.notFound
 			count: 1
@@ -517,24 +319,6 @@ parameters:
 			path: src/Controller/CheckoutController.php
 
 		-
-			message: '#^Cannot call method getData\(\) on Cake\\Http\\ServerRequest\|null\.$#'
-			identifier: method.nonObject
-			count: 11
-			path: src/Controller/CheckoutController.php
-
-		-
-			message: '#^Cannot call method getSession\(\) on Cake\\Http\\ServerRequest\|null\.$#'
-			identifier: method.nonObject
-			count: 3
-			path: src/Controller/CheckoutController.php
-
-		-
-			message: '#^Cannot call method is\(\) on Cake\\Http\\ServerRequest\|null\.$#'
-			identifier: method.nonObject
-			count: 2
-			path: src/Controller/CheckoutController.php
-
-		-
 			message: '#^Method App\\Controller\\CheckoutController\:\:requireCustomer\(\) should return App\\Model\\Entity\\Customer but returns Cake\\Datasource\\EntityInterface\.$#'
 			identifier: return.type
 			count: 1
@@ -545,30 +329,6 @@ parameters:
 			identifier: argument.type
 			count: 1
 			path: src/Controller/CheckoutController.php
-
-		-
-			message: '#^Parameter \#1 \$request of method App\\Service\\Cart\\CartService\:\:token\(\) expects Cake\\Http\\ServerRequest, Cake\\Http\\ServerRequest\|null given\.$#'
-			identifier: argument.type
-			count: 1
-			path: src/Controller/CheckoutController.php
-
-		-
-			message: '#^Cannot call method clientIp\(\) on Cake\\Http\\ServerRequest\|null\.$#'
-			identifier: method.nonObject
-			count: 1
-			path: src/Controller/ContactController.php
-
-		-
-			message: '#^Cannot call method getData\(\) on Cake\\Http\\ServerRequest\|null\.$#'
-			identifier: method.nonObject
-			count: 3
-			path: src/Controller/ContactController.php
-
-		-
-			message: '#^Cannot call method is\(\) on Cake\\Http\\ServerRequest\|null\.$#'
-			identifier: method.nonObject
-			count: 1
-			path: src/Controller/ContactController.php
 
 		-
 			message: '#^Property App\\Controller\\ContactController\:\:\$ContactMessages \(App\\Model\\Table\\ContactMessagesTable\) does not accept Cake\\ORM\\Table\.$#'
@@ -583,48 +343,6 @@ parameters:
 			path: src/Controller/CspReportsController.php
 
 		-
-			message: '#^Cannot call method allowMethod\(\) on Cake\\Http\\ServerRequest\|null\.$#'
-			identifier: method.nonObject
-			count: 1
-			path: src/Controller/CspReportsController.php
-
-		-
-			message: '#^Cannot call method getBody\(\) on Cake\\Http\\ServerRequest\|null\.$#'
-			identifier: method.nonObject
-			count: 1
-			path: src/Controller/CspReportsController.php
-
-		-
-			message: '#^Cannot call method getHeaderLine\(\) on Cake\\Http\\ServerRequest\|null\.$#'
-			identifier: method.nonObject
-			count: 2
-			path: src/Controller/CspReportsController.php
-
-		-
-			message: '#^Cannot call method withStatus\(\) on Cake\\Http\\Response\|null\.$#'
-			identifier: method.nonObject
-			count: 4
-			path: src/Controller/CspReportsController.php
-
-		-
-			message: '#^Access to an undefined property App\\Controller\\HealthController\:\:\$Authentication\.$#'
-			identifier: property.notFound
-			count: 1
-			path: src/Controller/HealthController.php
-
-		-
-			message: '#^Cannot call method allowMethod\(\) on Cake\\Http\\ServerRequest\|null\.$#'
-			identifier: method.nonObject
-			count: 1
-			path: src/Controller/HealthController.php
-
-		-
-			message: '#^Cannot call method withType\(\) on Cake\\Http\\Response\|null\.$#'
-			identifier: method.nonObject
-			count: 1
-			path: src/Controller/HealthController.php
-
-		-
 			message: '#^Access to an undefined property App\\Controller\\PagesController\:\:\$Authentication\.$#'
 			identifier: property.notFound
 			count: 1
@@ -633,18 +351,6 @@ parameters:
 		-
 			message: '#^Access to an undefined property App\\Controller\\ServicesController\:\:\$Authentication\.$#'
 			identifier: property.notFound
-			count: 1
-			path: src/Controller/ServicesController.php
-
-		-
-			message: '#^Cannot call method getData\(\) on Cake\\Http\\ServerRequest\|null\.$#'
-			identifier: method.nonObject
-			count: 1
-			path: src/Controller/ServicesController.php
-
-		-
-			message: '#^Cannot call method is\(\) on Cake\\Http\\ServerRequest\|null\.$#'
-			identifier: method.nonObject
 			count: 1
 			path: src/Controller/ServicesController.php
 
@@ -664,36 +370,6 @@ parameters:
 			message: '#^Call to an undefined method Cake\\Datasource\\ConnectionInterface\:\:transactional\(\)\.$#'
 			identifier: method.notFound
 			count: 1
-			path: src/Controller/UsersController.php
-
-		-
-			message: '#^Cannot call method clientIp\(\) on Cake\\Http\\ServerRequest\|null\.$#'
-			identifier: method.nonObject
-			count: 6
-			path: src/Controller/UsersController.php
-
-		-
-			message: '#^Cannot call method getData\(\) on Cake\\Http\\ServerRequest\|null\.$#'
-			identifier: method.nonObject
-			count: 12
-			path: src/Controller/UsersController.php
-
-		-
-			message: '#^Cannot call method getQuery\(\) on Cake\\Http\\ServerRequest\|null\.$#'
-			identifier: method.nonObject
-			count: 1
-			path: src/Controller/UsersController.php
-
-		-
-			message: '#^Cannot call method getSession\(\) on Cake\\Http\\ServerRequest\|null\.$#'
-			identifier: method.nonObject
-			count: 15
-			path: src/Controller/UsersController.php
-
-		-
-			message: '#^Cannot call method is\(\) on Cake\\Http\\ServerRequest\|null\.$#'
-			identifier: method.nonObject
-			count: 9
 			path: src/Controller/UsersController.php
 
 		-
@@ -724,30 +400,6 @@ parameters:
 			message: '#^Access to an undefined property App\\Controller\\WebhooksController\:\:\$Authentication\.$#'
 			identifier: property.notFound
 			count: 1
-			path: src/Controller/WebhooksController.php
-
-		-
-			message: '#^Cannot call method allowMethod\(\) on Cake\\Http\\ServerRequest\|null\.$#'
-			identifier: method.nonObject
-			count: 1
-			path: src/Controller/WebhooksController.php
-
-		-
-			message: '#^Cannot call method getBody\(\) on Cake\\Http\\ServerRequest\|null\.$#'
-			identifier: method.nonObject
-			count: 1
-			path: src/Controller/WebhooksController.php
-
-		-
-			message: '#^Cannot call method getHeaderLine\(\) on Cake\\Http\\ServerRequest\|null\.$#'
-			identifier: method.nonObject
-			count: 1
-			path: src/Controller/WebhooksController.php
-
-		-
-			message: '#^Cannot call method withStatus\(\) on Cake\\Http\\Response\|null\.$#'
-			identifier: method.nonObject
-			count: 2
 			path: src/Controller/WebhooksController.php
 
 		-
@@ -2137,37 +1789,13 @@ parameters:
 			path: src/Service/Orders/OrderService.php
 
 		-
-			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$customer_type\.$#'
-			identifier: property.notFound
-			count: 1
-			path: src/Service/Orders/OrderService.php
-
-		-
 			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$discount_cents\.$#'
 			identifier: property.notFound
 			count: 2
 			path: src/Service/Orders/OrderService.php
 
 		-
-			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$display_name\.$#'
-			identifier: property.notFound
-			count: 1
-			path: src/Service/Orders/OrderService.php
-
-		-
-			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$email\.$#'
-			identifier: property.notFound
-			count: 1
-			path: src/Service/Orders/OrderService.php
-
-		-
 			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$external_source_reference\.$#'
-			identifier: property.notFound
-			count: 1
-			path: src/Service/Orders/OrderService.php
-
-		-
-			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$first_name\.$#'
 			identifier: property.notFound
 			count: 1
 			path: src/Service/Orders/OrderService.php
@@ -2211,7 +1839,7 @@ parameters:
 		-
 			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$id\.$#'
 			identifier: property.notFound
-			count: 21
+			count: 20
 			path: src/Service/Orders/OrderService.php
 
 		-
@@ -2224,12 +1852,6 @@ parameters:
 			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$inventory_location_id\.$#'
 			identifier: property.notFound
 			count: 5
-			path: src/Service/Orders/OrderService.php
-
-		-
-			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$last_name\.$#'
-			identifier: property.notFound
-			count: 1
 			path: src/Service/Orders/OrderService.php
 
 		-
@@ -2272,12 +1894,6 @@ parameters:
 			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$payment_status\.$#'
 			identifier: property.notFound
 			count: 7
-			path: src/Service/Orders/OrderService.php
-
-		-
-			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$phone\.$#'
-			identifier: property.notFound
-			count: 1
 			path: src/Service/Orders/OrderService.php
 
 		-
@@ -2359,12 +1975,6 @@ parameters:
 			path: src/Service/Orders/OrderService.php
 
 		-
-			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$source\.$#'
-			identifier: property.notFound
-			count: 1
-			path: src/Service/Orders/OrderService.php
-
-		-
 			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$source_channel\.$#'
 			identifier: property.notFound
 			count: 2
@@ -2373,19 +1983,13 @@ parameters:
 		-
 			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$status\.$#'
 			identifier: property.notFound
-			count: 11
+			count: 10
 			path: src/Service/Orders/OrderService.php
 
 		-
 			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$subtotal_cents\.$#'
 			identifier: property.notFound
 			count: 2
-			path: src/Service/Orders/OrderService.php
-
-		-
-			message: '#^Access to an undefined property Cake\\Datasource\\EntityInterface\:\:\$tags\.$#'
-			identifier: property.notFound
-			count: 1
 			path: src/Service/Orders/OrderService.php
 
 		-

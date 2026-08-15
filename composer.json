@@ -56,6 +56,7 @@
         ],
         "cs-check": "phpcs --colors -p",
         "cs-fix": "phpcbf --colors -p",
+        "stan": "phpstan analyse --no-progress",
         "test": "phpunit --colors=always",
         "dev-up": "php bin/dev_up.php"
     }

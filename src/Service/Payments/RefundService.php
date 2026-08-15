@@ -11,6 +11,7 @@ use Cake\Database\Connection;
 use Cake\Database\Exception\QueryException;
 use Cake\I18n\DateTime;
 use Cake\ORM\Locator\LocatorAwareTrait;
+use Cake\Utility\Security;
 use Closure;
 use InvalidArgumentException;
 use RuntimeException;
@@ -76,6 +77,7 @@ class RefundService
                     'payment_id' => (int)$paymentRow['id'],
                     'provider_payment_id' => (string)$paymentRow['provider_payment_id'],
                     'amount_cents' => (int)$paymentRow['amount_cents'],
+                    'currency' => strtolower((string)($paymentRow['currency'] ?: 'aud')),
                     'refund_id' => (int)$sibling['id'],
                     'provider_refund_id' => $providerId,
                     'key' => (string)($sibling['idempotency_key'] ?: ''),
@@ -101,6 +103,7 @@ class RefundService
                 'payment_id' => (int)$paymentRow['id'],
                 'provider_payment_id' => (string)$paymentRow['provider_payment_id'],
                 'amount_cents' => (int)$paymentRow['amount_cents'],
+                'currency' => strtolower((string)($paymentRow['currency'] ?: 'aud')),
                 'refund_id' => (int)$row->id,
                 'provider_refund_id' => '',
                 'key' => $key,
@@ -134,6 +137,12 @@ class RefundService
             [
                 'local_refund_id' => (string)$prepared['refund_id'],
                 'local_payment_id' => (string)$prepared['payment_id'],
+                'refund_binding_token' => self::bindingToken(
+                    (int)$prepared['refund_id'],
+                    (int)$prepared['payment_id'],
+                    (int)$prepared['amount_cents'],
+                    (string)$prepared['currency'],
+                ),
             ],
         );
         $this->applyProviderResult(
@@ -641,8 +650,41 @@ class RefundService
         if ($amountCents > 0 && (int)$refund['amount_cents'] !== $amountCents) {
             return null;
         }
+        $currency = strtolower((string)($payment['currency'] ?? 'aud'));
+        $expected = self::bindingToken(
+            $localRefundId,
+            (int)$refund['payment_id'],
+            (int)$refund['amount_cents'],
+            $currency,
+        );
+        $given = (string)($metadata['refund_binding_token'] ?? '');
+        if ($given === '' || !hash_equals($expected, $given)) {
+            return null;
+        }
 
         return $refund;
+    }
+
+    /**
+     * Unforgeable binding for a staff-created Stripe refund.
+     *
+     * @param int $refundId Local refund id.
+     * @param int $paymentId Local payment id.
+     * @param int $amountCents Refund amount.
+     * @param string $currency ISO currency.
+     * @return string
+     */
+    public static function bindingToken(
+        int $refundId,
+        int $paymentId,
+        int $amountCents,
+        string $currency,
+    ): string {
+        return hash_hmac(
+            'sha256',
+            $refundId . '|' . $paymentId . '|' . $amountCents . '|' . strtolower($currency),
+            Security::getSalt(),
+        );
     }
 
     /**

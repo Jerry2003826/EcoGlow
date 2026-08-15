@@ -13,17 +13,19 @@ final class AddRefundIntegrityGuards extends BaseMigration
      */
     public function up(): void
     {
+        $this->assertRefundIntegrityPreflight();
+
         if ($this->hasTable('payment_reconciliation_alerts')) {
-            if ($this->indexExists('payment_reconciliation_alerts', 'idx_payment_alerts_event_id')) {
-                $this->table('payment_reconciliation_alerts')
-                    ->removeIndexByName('idx_payment_alerts_event_id')
-                    ->update();
-            }
             $this->ensureUniqueIndex(
                 'payment_reconciliation_alerts',
                 'uq_payment_alerts_event_id',
                 ['event_id'],
             );
+            if ($this->indexExists('payment_reconciliation_alerts', 'idx_payment_alerts_event_id')) {
+                $this->table('payment_reconciliation_alerts')
+                    ->removeIndexByName('idx_payment_alerts_event_id')
+                    ->update();
+            }
         }
 
         if ($this->hasTable('payment_allocations')) {
@@ -55,6 +57,126 @@ final class AddRefundIntegrityGuards extends BaseMigration
                 ['provider_refund_id'],
             );
         }
+    }
+
+    /**
+     * Refuse to add unique indexes or FKs when historical rows would collide.
+     *
+     * @return void
+     */
+    private function assertRefundIntegrityPreflight(): void
+    {
+        $duplicates = [];
+        if ($this->hasTable('payment_reconciliation_alerts')) {
+            $duplicates = array_merge(
+                $duplicates,
+                $this->duplicateValues(
+                    'payment_reconciliation_alerts',
+                    'event_id',
+                    'SELECT event_id AS value, COUNT(*) AS c
+                       FROM payment_reconciliation_alerts
+                      GROUP BY event_id
+                     HAVING COUNT(*) > 1',
+                ),
+            );
+        }
+        if ($this->hasTable('payment_refunds')) {
+            $duplicates = array_merge(
+                $duplicates,
+                $this->duplicateValues(
+                    'payment_refunds',
+                    'provider_refund_id',
+                    "SELECT provider_refund_id AS value, COUNT(*) AS c
+                       FROM payment_refunds
+                      WHERE provider_refund_id IS NOT NULL
+                        AND provider_refund_id != ''
+                      GROUP BY provider_refund_id
+                     HAVING COUNT(*) > 1",
+                ),
+            );
+        }
+        $orphans = [];
+        if (
+            $this->hasTable('payment_allocations')
+            && $this->table('payment_allocations')->hasColumn('payment_refund_id')
+            && $this->hasTable('payment_refunds')
+        ) {
+            $orphans = $this->orphanAllocationIds();
+        }
+        if ($duplicates === [] && $orphans === []) {
+            return;
+        }
+        $parts = [];
+        if ($duplicates !== []) {
+            $parts[] = 'duplicate keys: ' . implode(', ', $duplicates);
+        }
+        if ($orphans !== []) {
+            $parts[] = 'orphan payment_allocations.payment_refund_id: ' . implode(', ', $orphans);
+        }
+
+        throw new RuntimeException(
+            'Refund integrity preflight failed; merge or delete the conflicting rows before migrating. '
+            . implode('; ', $parts),
+        );
+    }
+
+    /**
+     * @param string $table Table name for the error label.
+     * @param string $column Column name for the error label.
+     * @param string $sql Grouped duplicate query returning value, c.
+     * @return list<string>
+     */
+    private function duplicateValues(string $table, string $column, string $sql): array
+    {
+        $rows = $this->fetchAssoc($sql);
+        $labels = [];
+        foreach ($rows as $row) {
+            $labels[] = $table . '.' . $column . '=' . (string)($row['value'] ?? '')
+                . ' x' . (string)($row['c'] ?? '0');
+        }
+
+        return $labels;
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function orphanAllocationIds(): array
+    {
+        $rows = $this->fetchAssoc(
+            'SELECT pa.id AS value
+               FROM payment_allocations pa
+               LEFT JOIN payment_refunds pr ON pr.id = pa.payment_refund_id
+              WHERE pa.payment_refund_id IS NOT NULL
+                AND pr.id IS NULL',
+        );
+        $ids = [];
+        foreach ($rows as $row) {
+            $ids[] = (string)($row['value'] ?? '');
+        }
+
+        return $ids;
+    }
+
+    /**
+     * @param string $sql Read-only diagnostic query.
+     * @return list<array<string, mixed>>
+     */
+    private function fetchAssoc(string $sql): array
+    {
+        $statement = $this->getAdapter()->query($sql);
+        if (!is_object($statement) || !method_exists($statement, 'fetchAll')) {
+            return [];
+        }
+        $rows = $statement->fetchAll('assoc');
+        if (!is_array($rows)) {
+            return [];
+        }
+        if (count($rows) > 20) {
+            $rows = array_slice($rows, 0, 20);
+        }
+
+        return $rows;
     }
 
     /**

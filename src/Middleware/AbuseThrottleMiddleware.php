@@ -24,6 +24,8 @@ final class AbuseThrottleMiddleware implements MiddlewareInterface
 
     public const SCOPE_CSP = 'csp_report';
 
+    public const SCOPE_HEALTH = 'health_ready';
+
     public const MAX_REGISTER = 5;
 
     public const MAX_CONTACT = 5;
@@ -34,6 +36,8 @@ final class AbuseThrottleMiddleware implements MiddlewareInterface
 
     public const MAX_CHECKOUT_USER = 8;
 
+    public const MAX_HEALTH = 60;
+
     /**
      * @inheritDoc
      */
@@ -41,12 +45,25 @@ final class AbuseThrottleMiddleware implements MiddlewareInterface
         ServerRequestInterface $request,
         RequestHandlerInterface $handler,
     ): ResponseInterface {
-        if (strtoupper($request->getMethod()) !== 'POST') {
-            return $handler->handle($request);
-        }
-
         $path = rtrim($request->getUri()->getPath(), '/') ?: '/';
         $ip = $this->clientIp($request);
+        $method = strtoupper($request->getMethod());
+        if ($method === 'GET' && $path === '/health/ready') {
+            if (RateLimitService::locked(self::SCOPE_HEALTH, $ip, self::MAX_HEALTH)) {
+                return (new Response())
+                    ->withStatus(429)
+                    ->withHeader('Retry-After', '900')
+                    ->withHeader('Cache-Control', 'no-store')
+                    ->withType('application/json')
+                    ->withStringBody('{"ok":false}');
+            }
+            RateLimitService::hit(self::SCOPE_HEALTH, $ip);
+
+            return $handler->handle($request);
+        }
+        if ($method !== 'POST') {
+            return $handler->handle($request);
+        }
 
         if ($path === '/register') {
             if (RateLimitService::locked(self::SCOPE_REGISTER, $ip, self::MAX_REGISTER)) {

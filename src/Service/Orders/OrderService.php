@@ -900,6 +900,7 @@ class OrderService
             }
         }
 
+        /** @var \App\Model\Entity\Customer $customer */
         $customer = $customers->newEmptyEntity();
         $customer->first_name = $first !== '' ? $first : ($email !== '' ? strtok($email, '@') : 'Customer');
         $customer->last_name = $last !== '' ? $last : null;
@@ -907,10 +908,10 @@ class OrderService
         $customer->phone = $phone !== '' ? $phone : null;
         $customer->status = 'active';
         $customer->source = $channel;
-        $customer->customer_type = 'individual';
-        $customer->display_name = trim($customer->first_name . ' ' . (string)$customer->last_name);
-        $customer->tags = [];
-        $customer->metadata = ['created_via' => 'admin_order'];
+        $customer->set('customer_type', 'individual');
+        $customer->set('display_name', trim($customer->first_name . ' ' . (string)$customer->last_name));
+        $customer->set('tags', []);
+        $customer->set('metadata', ['created_via' => 'admin_order']);
         $customers->saveOrFail($customer);
 
         return (int)$customer->id;
