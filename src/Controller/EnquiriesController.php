@@ -18,6 +18,8 @@ class EnquiriesController extends AppController
         // for all controllers in our application, make index and view
         // actions public, skipping the authentication check
         $this->Authentication->allowUnauthenticated(['add']);
+
+        $this->loadComponent('Turnstile');
     }
 
     /**
@@ -56,10 +58,26 @@ class EnquiriesController extends AppController
         $enquiry = $this->Enquiries->newEmptyEntity();
         if ($this->request->is('post')) {
             $enquiry = $this->Enquiries->patchEntity($enquiry, $this->request->getData());
+
+            // Validate Turnstile response with CloudFlare
+            $turnstileToken = $this->request->getData('cf-turnstile-response');
+            if ($turnstileToken) {
+                $turnstileResponse = $this->Turnstile->validateTurnstile($turnstileToken, $this->request->clientIp());
+                // On failed validation, send user back to reset password page and try again
+                if (!$turnstileResponse || !$turnstileResponse['success']) {
+                    $this->log('Turnstile Response Error: ' . json_encode($turnstileResponse));
+                    $this->Flash->error('CAPTCHA challenge failed. Please try again.');
+
+                    $this->set(compact('enquiry')); // Need to return the $user entity so the form is autofilled
+
+                    return $this->render(); // Skip the rest of the controller and render the view
+                }
+            }
+
             if ($this->Enquiries->save($enquiry)) {
                 $this->Flash->success(__('The enquiry has been saved.'));
 
-                return $this->redirect(['action' => 'index']);
+                return $this->redirect(['controller' => 'Pages', 'action' => 'display']);
             }
             $this->Flash->error(__('The enquiry could not be saved. Please, try again.'));
         }

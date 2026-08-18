@@ -71,17 +71,15 @@
 }
 
 
-.login-form input[type="submit"] {
+.login-form .btn {
     width: 100%;
     background-color: #5B5545;
-    opacity: 0.9;
     color: #F7F5EF;
     border: none;
     border-radius: 20px;
     cursor: pointer;
 }
 
-
-.login-form input[type="submit"]:hover {
+.login-form .btn:hover {
     background-color: #3F3A2F;
 }

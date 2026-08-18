@@ -25,12 +25,26 @@ class UsersController extends AppController
         $this->Authentication->allowUnauthenticated(['login']);
         // In UsersController::beforeFilter()
         $this->Authentication->allowUnauthenticated(['login', 'add']);
+        $this->loadComponent('Turnstile');
     }
 
     public function login()
     {
         $result = $this->Authentication->getResult();
         // If the user is logged in send them away.
+        $turnstileToken = $this->request->getData('cf-turnstile-response');
+        if ($this->request->is('post') && $turnstileToken) {
+            $turnstileResponse = $this->Turnstile->validateTurnstile($turnstileToken, $this->request->clientIp());
+            // On failed validation, log the user out of the system to prevent access
+            if (!$turnstileResponse || !$turnstileResponse['success']) {
+                $this->log('Turnstile Response Error: ' . json_encode($turnstileResponse));
+                $this->Flash->error('CAPTCHA challenge failed. Please try again.');
+                $this->Authentication->logout();
+
+                return $this->redirect(['controller' => 'Pages', 'action' => 'display']);
+            }
+        }
+
         if ($result && $result->isValid()) {
             $target = $this->Authentication->getLoginRedirect() ?? [
                 'controller' => 'Enquiries',
