@@ -4,8 +4,7 @@
  * @var iterable<\App\Model\Entity\Enquiry> $enquiries
  */
 ?>
-<div class="enquiries index content">
-    <?= $this->Html->link(__('New Enquiry'), ['action' => 'add'], ['class' => 'button float-right']) ?>
+<div class="enquiries index content" style="margin-top: 100px;">
     <h3><?= __('Enquiries') ?></h3>
     <div class="table-responsive">
         <table>
@@ -45,15 +44,5 @@
                 <?php endforeach; ?>
             </tbody>
         </table>
-    </div>
-    <div class="paginator">
-        <ul class="pagination">
-            <?= $this->Paginator->first('<< ' . __('first')) ?>
-            <?= $this->Paginator->prev('< ' . __('previous')) ?>
-            <?= $this->Paginator->numbers() ?>
-            <?= $this->Paginator->next(__('next') . ' >') ?>
-            <?= $this->Paginator->last(__('last') . ' >>') ?>
-        </ul>
-        <p><?= $this->Paginator->counter(__('Page {{page}} of {{pages}}, showing {{current}} record(s) out of {{count}} total')) ?></p>
     </div>
 </div>

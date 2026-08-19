@@ -91,7 +91,7 @@ $featuredProducts = [
     >
         <div class="section-heading">
             <div>
-                <p class="section-eyebrow">Our collection</p>
+                <p class="section-eyebrow">Our Product Range</p>
 
                 <h2 id="featured-products-title">
                     Lighting for every space
