@@ -23,10 +23,10 @@ VALUES
 CREATE TABLE users (
     id INT(11) NOT NULL AUTO_INCREMENT PRIMARY KEY,
     username VARCHAR(100) NOT NULL,
-    user_password VARCHAR(100) NOT NULL,
+    user_password VARCHAR(250) NOT NULL,
     user_role ENUM('admin', 'customer', 'staff') NOT NULL DEFAULT 'customer'
 );
 
 INSERT INTO users (username, user_password, user_role)
 VALUES
-('admin', 'admin1234', 'admin');
+('admin', '$2y$12$XfJxcVyViPjo2Vs.rD5LU.WaCiblSFPpybqYk9aO9oRyBXTN7GgdO', 'admin');
