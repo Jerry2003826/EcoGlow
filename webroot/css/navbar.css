@@ -5,7 +5,7 @@
     align-items: center;
     justify-content: space-between;
     padding: 0 50px;
-    opacity: 0.9;
+    opacity: 1;
     background-color: #5B5545;
 }
 
@@ -14,8 +14,13 @@
     font-size: 24px;
     font-weight: 700;
 
-    color: #F7F5EF;
+    color: #E4D2A8;
 }
+
+.navbar-brand .logo {
+    height: 200px;
+    vertical-align:bottom;
+} 
 
 
 .navbar-links {

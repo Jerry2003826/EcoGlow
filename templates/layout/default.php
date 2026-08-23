@@ -24,7 +24,7 @@ $cakeDescription = 'Eco Glow Lighting';
     <title>
         <?= $cakeDescription ?>
     </title>
-    <?= $this->Html->meta('icon') ?>
+   <?= $this->Html->meta('icon', '/img/icon_leaf.svg') ?>
 
     <?= $this->Html->css(['normalize.min', 'milligram.min', 'fonts', 'cake', 'navbar']) ?>
 
@@ -36,10 +36,9 @@ $cakeDescription = 'Eco Glow Lighting';
     <nav class="navbar">
 
     <div class="navbar-brand">
-        <?= $this->Html->link(
-            'Eco Glow Lighting',
-            '/'
-        ) ?>
+        <a href="<?= $this->Url->build('/')?>">
+            <?= $this->Html->image('logo_leaf.png', ['class' => 'logo'])?>
+        </a>
     </div>
 
     <div class="navbar-links">
