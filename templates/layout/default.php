@@ -24,7 +24,7 @@ $cakeDescription = 'Eco Glow Lighting';
     <title>
         <?= $cakeDescription ?>
     </title>
-   <?= $this->Html->meta('icon', '/img/icon_leaf.svg') ?>
+    <?= $this->Html->meta('icon', '/img/icon_lamp.svg', ['type' => 'image/svg+xml']) ?>
 
     <?= $this->Html->css(['normalize.min', 'milligram.min', 'fonts', 'cake', 'navbar']) ?>
 
