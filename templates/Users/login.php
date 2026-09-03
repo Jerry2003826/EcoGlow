@@ -2,6 +2,8 @@
 
 use Cake\Core\Configure;
 
+$this->assign('title', 'Login');
+
 $this->Html->script('https://challenges.cloudflare.com/turnstile/v0/api.js', [
     'block' => true,
     'async' => true,
@@ -12,50 +14,79 @@ $this->Html->meta([
     'link' => 'https://challenges.cloudflare.com',
     'rel' => 'preconnect',
 ]);
+
+$loginUrl = '/login';
+$redirect = $this->request->getQuery('redirect');
+if (is_string($redirect) && $redirect !== '') {
+    $loginUrl .= '?redirect=' . rawurlencode($redirect);
+}
 ?>
 
-<link rel="stylesheet" href = "/css/login.css" />
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-5">
 
-<div class="login-page">
-    <div class="login">
-        <div class="login-content">
-            <h1>Log In</h1>
+            <div class="card shadow-sm">
+                <div class="card-body">
 
-            <div class ="login-image">
-                <div class="image-placeholder">
-                    Image
+                    <h1 class="h3 mb-4">
+                        Employee Login
+                    </h1>
+
+                    <?= $this->Flash->render() ?>
+
+                    <?= $this->Form->create(null, [
+                        'url' => $loginUrl,
+                    ]) ?>
+
+                    <div class="mb-3">
+                        <?= $this->Form->control('email', [
+                            'label' => 'Email',
+                            'required' => true,
+                            'type' => 'email',
+                            'class' => 'form-control',
+                        ]) ?>
+                    </div>
+
+                    <div class="mb-3">
+                        <?= $this->Form->control('password', [
+                            'label' => 'Password',
+                            'required' => true,
+                            'type' => 'password',
+                            'class' => 'form-control',
+                        ]) ?>
+                    </div>
+
+                    <div class="mb-3">
+                        <div
+                            class="cf-turnstile"
+                            data-size="flexible"
+                            data-theme="light"
+                            data-callback="turnstileOnSuccess"
+                            data-error-callback="turnstileOnError"
+                            data-expired-callback="turnstileOnExpired"
+                            data-timeout-callback="turnstileOnTimeout"
+                            data-sitekey="<?= h((string)Configure::read('Captcha.turnstile.siteKey')) ?>">
+                        </div>
+                        <blockquote id="turnstile-message" style="display:none"></blockquote>
+                    </div>
+
+                    <div>
+                        <?= $this->Form->button('Sign In', [
+                            'class' => 'btn btn-primary',
+                        ]) ?>
+                    </div>
+
+                    <?= $this->Form->end() ?>
+
                 </div>
             </div>
-        </div>
 
-         <div class="login-form">
-            <?= $this->Flash->render() ?>
-            <?= $this->Form->create() ?>
-            <fieldset>
-                <?= $this->Form->control('username', ['required' => true]) ?>
-                <?= $this->Form->control('user_password', ['label' => 'Password', 'type' => 'password', 'required' => true]) ?>
-                <div class="cf-turnstile"
-                    data-size="flexible"
-                    data-theme="light"
-                    data-callback="turnstileOnSuccess"
-                    data-error-callback="turnstileOnError"
-                    data-expired-callback="turnstileOnExpired"
-                    data-timeout-callback="turnstileOnTimeout"
-                    data-sitekey="<?= Configure::read('Captcha.turnstile.siteKey') ?>"
-            ></div>
-            <blockquote id="turnstile-message" style="display:none"></blockquote>
-            </fieldset>
-
-            <?= $this->Form->button('Login', ['class' => 'btn', 'disabled' => true]); ?>
-            <?= $this->Form->end()?>
         </div>
-        
     </div>
-
 </div>
 
 <script>
-    // Callbacks for Turnstile. Login button is disabled until Turnstile passes.
     var turnstileMessageBlock = document.querySelector('#turnstile-message');
     var actionButton = document.querySelector('button.btn');
 
@@ -67,18 +98,15 @@ $this->Html->meta([
     function turnstileOnError(errorCode) {
         turnstileMessageBlock.style.display = 'block';
         turnstileMessageBlock.innerText = "Challenge error. Please refresh the webpage and try again.";
-        actionButton.setAttribute('disabled');
     }
 
     function turnstileOnExpired() {
         turnstileMessageBlock.style.display = 'block';
         turnstileMessageBlock.innerText = "Challenge token expired. Please validate again.";
-        actionButton.setAttribute('disabled');
     }
 
     function turnstileOnTimeout() {
         turnstileMessageBlock.style.display = 'block';
         turnstileMessageBlock.innerText = "Challenge timed out. Please validate again.";
-        actionButton.setAttribute('disabled');
     }
 </script>
