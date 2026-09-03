@@ -6,18 +6,9 @@ namespace App\Controller\Component;
 use Cake\Controller\Component;
 use Cake\Core\Configure;
 
-/**
- * Turnstile Component
- */
 class TurnstileComponent extends Component
 {
-    /**
-     * Validate Turnstile token returned from the client page (validate CAPTCHA)
-     *
-     * @param string $token Turnstile token
-     * @param string|null $remoteIp IP address of the visitor
-     * @return mixed|array Validation results from CloudFlare
-     */
+
     public function validateTurnstile(string $token, ?string $remoteIp = null)
     {
         $data = [

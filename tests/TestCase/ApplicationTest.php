@@ -26,18 +26,10 @@ use Cake\Routing\Middleware\RoutingMiddleware;
 use Cake\TestSuite\IntegrationTestTrait;
 use Cake\TestSuite\TestCase;
 
-/**
- * ApplicationTest class
- */
 class ApplicationTest extends TestCase
 {
     use IntegrationTestTrait;
 
-    /**
-     * Test bootstrap in production.
-     *
-     * @return void
-     */
     public function testBootstrap()
     {
         Configure::write('debug', false);
@@ -50,11 +42,6 @@ class ApplicationTest extends TestCase
         $this->assertTrue($plugins->has('Migrations'), 'plugins has Migrations?');
     }
 
-    /**
-     * Test bootstrap add DebugKit plugin in debug mode.
-     *
-     * @return void
-     */
     public function testBootstrapInDebug()
     {
         Configure::write('debug', true);
@@ -65,11 +52,6 @@ class ApplicationTest extends TestCase
         $this->assertTrue($plugins->has('DebugKit'), 'plugins has DebugKit?');
     }
 
-    /**
-     * testMiddleware
-     *
-     * @return void
-     */
     public function testMiddleware()
     {
         $app = new Application(dirname(__DIR__, 2) . '/config');

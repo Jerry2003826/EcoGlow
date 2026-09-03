@@ -1,9 +1,5 @@
 <?php
-/**
- * @var \App\View\AppView $this
- * @var string $message
- * @var string $url
- */
+
 use Cake\Core\Configure;
 
 $this->setLayout('error');

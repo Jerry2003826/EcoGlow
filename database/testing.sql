@@ -19,7 +19,6 @@ VALUES
  'Could you please provide more information about your pricing?',
  '2026-08-15 14:20:00');
 
-
 CREATE TABLE users (
     id INT(11) NOT NULL AUTO_INCREMENT PRIMARY KEY,
     username VARCHAR(100) NOT NULL,

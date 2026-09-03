@@ -1,10 +1,6 @@
 <?php
-/**
- * @var \App\View\AppView $this
- * @var \App\Model\Entity\Enquiry $enquiry
- */
-use Cake\Core\Configure;
 
+use Cake\Core\Configure;
 
 $this->Html->script('https://challenges.cloudflare.com/turnstile/v0/api.js', [
     'block' => true,
@@ -39,7 +35,7 @@ $this->Html->meta([
                 <?php
                     echo $this->Form->control('first_name');
                     echo $this->Form->control('last_name');
-                    echo $this->Form->control('email');                    
+                    echo $this->Form->control('email');
                     echo $this->Form->control('contact_number');
                     echo $this->Form->control('enquiry_message');
                 ?>
@@ -61,7 +57,6 @@ $this->Html->meta([
 </div>
 
 <script>
-    // Callbacks for Turnstile. Login button is disabled until Turnstile passes.
     var turnstileMessageBlock = document.querySelector('#turnstile-message');
     var actionButton = document.querySelector('button.btn');
 

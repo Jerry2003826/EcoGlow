@@ -42,8 +42,8 @@ $cakeDescription = 'Eco Glow Lighting';
     </div>
 
     <div class="navbar-links">
-        <?php 
-            $identity = $this->getRequest()->getAttribute('identity'); 
+        <?php
+            $identity = $this->getRequest()->getAttribute('identity');
         ?>
         <?= $this->Html->link('Services', '#services') ?>
 

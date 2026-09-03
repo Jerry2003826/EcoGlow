@@ -1,7 +1,4 @@
 <?php
-/**
- * @var \App\View\AppView $this
- */
 
 $this->assign('title', 'Eco Glow Lighting');
 $this->Html->css('landingPage/home', ['block' => true]);
