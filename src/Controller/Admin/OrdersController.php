@@ -17,24 +17,43 @@ class OrdersController extends AdminController
             return;
         }
 
-        $permissionService = new PermissionService();
         $userId = (int)$identity->getIdentifier();
 
-        if (!$permissionService->hasPermission($userId, 'orders.view')) {
-            throw new ForbiddenException('Forbidden');
+        $permissionService = new PermissionService();
+
+        $canViewOrders = $permissionService->hasPermission($userId, 'orders.view');
+        $canManageServices = $permissionService->hasPermission($userId, 'services.manage');
+
+        if (!$canViewOrders && !$canManageServices) {
+            throw new ForbiddenException();
         }
 
-        $query = $this->fetchTable('SalesOrders')
-            ->find()
-            ->contain(['Customers'])
-            ->orderBy([
-                'SalesOrders.placed_at' => 'DESC',
-                'SalesOrders.id' => 'DESC',
-            ]);
+        $orders = [];
+        $bookings = [];
 
-        $orders = $this->paginate($query);
+        if ($canViewOrders) {
+            $orders = $this->paginate(
+                $this->fetchTable('SalesOrders')
+                    ->find()
+                    ->contain(['Customers'])
+                    ->orderBy([
+                        'SalesOrders.placed_at' => 'DESC',
+                        'SalesOrders.id' => 'DESC',
+                    ])
+            );
+        }
 
-        $this->set(compact('orders'));
+        if ($canManageServices) {
+            $bookings = $this->fetchTable('ServiceBookings')
+                ->find()
+                ->contain(['Customers'])
+                ->orderBy([
+                    'ServiceBookings.scheduled_at' => 'ASC',
+                ])
+                ->all();
+        }
+
+        $this->set(compact('orders', 'bookings', 'canViewOrders', 'canManageServices'));
     }
 
     public function view(int|string $id)
@@ -46,14 +65,32 @@ class OrdersController extends AdminController
         }
 
         $permissionService = new PermissionService();
-        $userId = (int)$identity->getIdentifier();
 
-        if (!$permissionService->hasPermission($userId, 'orders.view')) {
-            throw new ForbiddenException('Forbidden');
+        if (!$permissionService->hasPermission((int)$identity->getIdentifier(), 'orders.view')) {
+            throw new ForbiddenException();
         }
 
         $order = $this->fetchTable('SalesOrders')->get($id, contain: ['Customers']);
 
         $this->set(compact('order'));
+    }
+
+    public function booking(int|string $id)
+    {
+        $identity = $this->request->getAttribute('identity');
+
+        if ($identity === null) {
+            return;
+        }
+
+        $permissionService = new PermissionService();
+
+        if (!$permissionService->hasPermission((int)$identity->getIdentifier(), 'services.manage')) {
+            throw new ForbiddenException();
+        }
+
+        $booking = $this->fetchTable('ServiceBookings')->get($id, contain: ['Customers']);
+
+        $this->set(compact('booking'));
     }
 }
