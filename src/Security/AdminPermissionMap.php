@@ -26,9 +26,13 @@ final class AdminPermissionMap
             'Orders' => [
                 'index' => [
                     'orders.view',
+                    'services.manage',
                 ],
                 'view' => [
                     'orders.view',
+                ],
+                'booking' => [
+                    'services.manage',
                 ],
             ],
 
