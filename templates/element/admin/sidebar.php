@@ -5,6 +5,7 @@ $currentModule = (string)($this->request->getParam('pass')[0] ?? '');
 
 $unreadCount = (int)($unreadCount ?? 0);
 $dashboardActive = $currentController === 'Dashboard';
+$ordersActive = $currentController === 'Orders';
 
 $linkOptions = static function (bool $active): array {
     $options = [
@@ -52,8 +53,8 @@ if ($unreadCount > 0) {
 
             <?= $this->Html->link(
                 'Orders',
-                '/admin/coming-soon/orders',
-                $linkOptions($comingSoonActive('orders'))
+                '/admin/orders',
+                $linkOptions($ordersActive)
             ) ?>
 
             <?= $this->Html->link(
