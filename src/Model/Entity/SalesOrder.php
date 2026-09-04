@@ -24,6 +24,8 @@ class SalesOrder extends Entity
         'grand_total_cents' => true,
         'placed_at' => true,
         'source_channel' => true,
+        'promised_delivery_on' => true,
+        'delivery_notes' => true,
         'created_by_user_id' => true,
         'created' => true,
         'modified' => true,
