@@ -27,6 +27,9 @@ final class AdminPermissionMap
                 'index' => [
                     'orders.view',
                 ],
+                'view' => [
+                    'orders.view',
+                ],
             ],
 
             'Inventory' => [
