@@ -18,6 +18,15 @@ $pendingShipment = (int)($widgets['pendingShipment'] ?? 0);
 
 <h1 class="page-title">Dashboard</h1>
 
+<?php if ($lowStock > 0): ?>
+    <div class="panel-card">
+        <strong>Low inventory alert:</strong>
+        <?= h((string)$lowStock) ?>
+        product variant(s) are at or below reorder levels.
+        <?= $this->Html->link('View low stock inventory', '/admin/inventory') ?>
+    </div>
+<?php endif; ?>
+
 <div class="dashboard-grid">
     <div class="stat-card">
         <div class="stat-label">
@@ -34,7 +43,9 @@ $pendingShipment = (int)($widgets['pendingShipment'] ?? 0);
     </div>
 
     <div class="stat-card">
-        <div class="stat-label">Low Stock Items</div>
+        <div class="stat-label">
+            <?= $this->Html->link('Low Stock Items', '/admin/inventory') ?>
+        </div>
         <div class="stat-value"><?= $lowStock ?></div>
     </div>
 
