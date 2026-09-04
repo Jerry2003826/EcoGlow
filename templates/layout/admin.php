@@ -7,6 +7,7 @@ $identity = $this->request->getAttribute('identity');
 $email = '';
 $roleName = 'Staff';
 $unreadCount = 0;
+$lowStockCount = 0;
 
 if ($identity !== null) {
     $email = (string)($identity->get('email') ?? '');
@@ -54,6 +55,19 @@ if ($identity !== null) {
     } catch (\Throwable $exception) {
         $unreadCount = 0;
     }
+
+    try {
+        $lowStockRow = TableRegistry::getTableLocator()
+            ->get('Users')
+            ->getConnection()
+            ->execute(
+                'SELECT COUNT(*) AS total FROM v_low_stock_items'
+            )
+            ->fetch('assoc');
+        $lowStockCount = (int)($lowStockRow['total'] ?? 0);
+    } catch (\Throwable $exception) {
+        $lowStockCount = 0;
+    }
 }
 
 $pageTitle = (string)($this->fetch('title') ?: 'Dashboard');
@@ -79,7 +93,10 @@ $pageTitle = (string)($this->fetch('title') ?: 'Dashboard');
 
 <div class="admin-shell">
 
-    <?= $this->element('admin/sidebar', ['unreadCount' => $unreadCount]) ?>
+    <?= $this->element('admin/sidebar', [
+        'unreadCount' => $unreadCount,
+        'lowStockCount' => $lowStockCount,
+    ]) ?>
 
     <div id="admin-page" class="admin-page">
 

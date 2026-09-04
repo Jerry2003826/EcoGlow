@@ -4,8 +4,10 @@ $currentController = (string)$this->request->getParam('controller');
 $currentModule = (string)($this->request->getParam('pass')[0] ?? '');
 
 $unreadCount = (int)($unreadCount ?? 0);
+$lowStockCount = (int)($lowStockCount ?? 0);
 $dashboardActive = $currentController === 'Dashboard';
 $ordersActive = $currentController === 'Orders';
+$inventoryActive = $currentController === 'Inventory';
 
 $linkOptions = static function (bool $active): array {
     $options = [
@@ -27,6 +29,11 @@ $comingSoonActive = static function (string $module) use ($currentController, $c
 $messagesLabel = 'Messages';
 if ($unreadCount > 0) {
     $messagesLabel .= ' <span class="sidebar-badge">' . h((string)$unreadCount) . '</span>';
+}
+
+$inventoryLabel = 'Inventory';
+if ($lowStockCount > 0) {
+    $inventoryLabel .= ' <span class="sidebar-badge">' . h((string)$lowStockCount) . '</span>';
 }
 ?>
 
@@ -76,9 +83,9 @@ if ($unreadCount > 0) {
             ) ?>
 
             <?= $this->Html->link(
-                'Inventory',
-                '/admin/coming-soon/inventory',
-                $linkOptions($comingSoonActive('inventory'))
+                $inventoryLabel,
+                '/admin/inventory',
+                $linkOptions($inventoryActive)
             ) ?>
         </div>
 
