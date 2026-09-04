@@ -13,19 +13,23 @@ $lowStockItems = $widgets['lowStockItems'] ?? [];
 
 $financial = $widgets['financial'] ?? [];
 
-$pendingShipment = 0;
+$pendingShipment = (int)($widgets['pendingShipment'] ?? 0);
 ?>
 
 <h1 class="page-title">Dashboard</h1>
 
 <div class="dashboard-grid">
     <div class="stat-card">
-        <div class="stat-label">Today's Orders</div>
+        <div class="stat-label">
+            <?= $this->Html->link("Today's Orders", '/admin/orders') ?>
+        </div>
         <div class="stat-value"><?= $orders ?></div>
     </div>
 
     <div class="stat-card">
-        <div class="stat-label">Pending Shipment</div>
+        <div class="stat-label">
+            <?= $this->Html->link('Pending Shipment', '/admin/orders') ?>
+        </div>
         <div class="stat-value"><?= $pendingShipment ?></div>
     </div>
 

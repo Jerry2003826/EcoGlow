@@ -34,12 +34,21 @@ class DashboardController extends AdminController
         if ($permissionService->hasPermission($userId, 'orders.view')) {
             $widgets['orders'] = $connection
                 ->execute(
-                    'SELECT business_date, orders_total, gross_sales_cents, tax_cents
+                    "SELECT business_date, orders_total, gross_sales_cents, tax_cents
                      FROM v_business_dashboard_daily
-                     ORDER BY business_date DESC
-                     LIMIT 1'
+                     WHERE business_date = DATE(
+                         COALESCE(
+                             CONVERT_TZ(UTC_TIMESTAMP(), 'UTC', 'Australia/Melbourne'),
+                             UTC_TIMESTAMP()
+                         )
+                     )
+                     LIMIT 1"
                 )
                 ->fetch('assoc') ?: [];
+
+            $widgets['pendingShipment'] = $this->fetchTable('SalesOrders')
+                ->find('pendingShipment')
+                ->count();
         }
 
         if (
