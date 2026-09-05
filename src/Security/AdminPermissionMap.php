@@ -52,6 +52,20 @@ final class AdminPermissionMap
                 ],
             ],
 
+            'Customers' => [
+                'index' => [
+                    'customers.view',
+                    'customers.edit',
+                ],
+                'view' => [
+                    'customers.view',
+                    'customers.edit',
+                ],
+                'edit' => [
+                    'customers.edit',
+                ],
+            ],
+
             'Quotations' => [
                 'index' => [
                     'quotations.manage',
