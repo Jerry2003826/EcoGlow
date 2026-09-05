@@ -1,3 +1,5 @@
+-- Fresh install: run schema.sql, then views.sql, then the seed_*.sql files.
+-- Already-running dest: run unread files in patches/ in filename order.
 SET NAMES utf8mb4;
 SET FOREIGN_KEY_CHECKS = 1;
 

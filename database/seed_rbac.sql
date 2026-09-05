@@ -1,4 +1,7 @@
+-- Roles and permission keys. Run after schema.sql.
+
 INSERT INTO `permissions` (`permission_key`, `module`, `name`, `risk_level`) VALUES
+  ('dashboard.view','dashboard','View the staff dashboard','normal'),
   ('access.manage','access','Manage staff access and roles','critical'),
   ('customers.view','customers','View customer records','normal'),
   ('customers.edit','customers','Edit customer records','normal'),

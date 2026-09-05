@@ -1,3 +1,5 @@
+-- Reporting views used by the dest dashboard. Run after schema.sql.
+
 DROP VIEW IF EXISTS `v_low_stock_items`;
 CREATE VIEW `v_low_stock_items` AS
 SELECT
