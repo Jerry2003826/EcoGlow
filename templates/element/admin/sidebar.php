@@ -8,6 +8,7 @@ $lowStockCount = (int)($lowStockCount ?? 0);
 $dashboardActive = $currentController === 'Dashboard';
 $ordersActive = $currentController === 'Orders';
 $inventoryActive = $currentController === 'Inventory';
+$suppliersActive = $currentController === 'Suppliers';
 
 $linkOptions = static function (bool $active): array {
     $options = [
@@ -86,6 +87,12 @@ if ($lowStockCount > 0) {
                 $inventoryLabel,
                 '/admin/inventory',
                 $linkOptions($inventoryActive)
+            ) ?>
+
+            <?= $this->Html->link(
+                'Suppliers',
+                '/admin/suppliers',
+                $linkOptions($suppliersActive)
             ) ?>
         </div>
 

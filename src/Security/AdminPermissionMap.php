@@ -43,6 +43,15 @@ final class AdminPermissionMap
                 ],
             ],
 
+            'Suppliers' => [
+                'index' => [
+                    'purchasing.manage',
+                ],
+                'view' => [
+                    'purchasing.manage',
+                ],
+            ],
+
             'Messages' => [
                 'index' => [
                     'messages.manage',
