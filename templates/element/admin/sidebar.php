@@ -12,6 +12,7 @@ $suppliersActive = $currentController === 'Suppliers';
 $customersActive = $currentController === 'Customers';
 $quotationsActive = $currentController === 'Quotations';
 $invoicesActive = $currentController === 'Invoices';
+$messagesActive = $currentController === 'Messages';
 
 $linkOptions = static function (bool $active): array {
     $options = [
@@ -112,8 +113,8 @@ if ($lowStockCount > 0) {
 
             <?= $this->Html->link(
                 $messagesLabel,
-                '/admin/coming-soon/messages',
-                $linkOptions($comingSoonActive('messages'))
+                '/admin/messages',
+                $linkOptions($messagesActive)
             ) ?>
         </div>
 
