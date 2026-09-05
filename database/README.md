@@ -26,6 +26,8 @@ patches/20260905_04_schema_suppliers.sql
 patches/20260905_05_seed_suppliers.sql
 patches/20260905_06_schema_quotations.sql
 patches/20260905_07_seed_quotations.sql
+patches/20260905_08_alter_customers_address.sql
+patches/20260905_09_seed_customer_addresses.sql
 ```
 
 `CREATE TABLE IF NOT EXISTS` / `INSERT IGNORE` 可以再跑一遍。`ALTER TABLE ... ADD COLUMN` 只能跑一次。
