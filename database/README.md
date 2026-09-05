@@ -22,6 +22,8 @@ CakePHP 自带的 `config/schema/*.sql` 和 `tests/schema.sql` 不要和这套�
 patches/20260905_01_alter_order_delivery.sql
 patches/20260905_02_schema_service_bookings.sql
 patches/20260905_03_seed_service_bookings.sql
+patches/20260905_04_schema_suppliers.sql
+patches/20260905_05_seed_suppliers.sql
 ```
 
 `CREATE TABLE IF NOT EXISTS` / `INSERT IGNORE` 可以再跑一遍。`ALTER TABLE ... ADD COLUMN` 只能跑一次。
