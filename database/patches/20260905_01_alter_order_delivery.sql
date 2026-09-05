@@ -1,4 +1,4 @@
--- database/alter_order_delivery.sql
+-- Already-running dest only. Fresh installs already have these columns in schema.sql.
 
 ALTER TABLE sales_orders
     ADD COLUMN promised_delivery_on DATE NULL AFTER source_channel,

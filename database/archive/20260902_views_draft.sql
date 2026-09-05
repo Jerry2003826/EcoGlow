@@ -1,3 +1,5 @@
+-- Archived draft. Do not run. Live views are in database/views.sql.
+
 DROP VIEW IF EXISTS v_recent_transactions;
 DROP VIEW IF EXISTS v_low_stock_items;
 DROP VIEW IF EXISTS v_business_dashboard_daily;

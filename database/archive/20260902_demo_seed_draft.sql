@@ -1,3 +1,5 @@
+-- Archived draft. Do not run. Live demo seed is in database/seed_demo.sql.
+
 INSERT INTO contact_messages
 (id, name, email, subject, is_read, created)
 VALUES

@@ -1,3 +1,5 @@
+-- Archived onboarding leftover. Do not run. The live contact form uses contact_messages.
+
 CREATE TABLE enquiries (
     id INT(11) NOT NULL AUTO_INCREMENT PRIMARY KEY,
     first_name VARCHAR(100) NOT NULL,

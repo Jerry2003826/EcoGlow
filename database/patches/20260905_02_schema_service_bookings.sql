@@ -1,4 +1,4 @@
--- database/schema_service_bookings.sql
+-- Already-running dest only. Fresh installs already have this table in schema.sql.
 
 CREATE TABLE IF NOT EXISTS service_bookings (
     id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,

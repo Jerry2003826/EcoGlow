@@ -1,4 +1,4 @@
--- database/seed_service_bookings.sql
+-- Already-running dest only. Fresh installs get this data from seed_demo.sql.
 
 INSERT IGNORE INTO service_bookings (
     booking_number,

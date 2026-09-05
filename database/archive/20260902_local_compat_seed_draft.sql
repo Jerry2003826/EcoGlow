@@ -1,3 +1,5 @@
+-- Archived draft. Do not run. dashboard.view now lives in database/seed_rbac.sql.
+
 INSERT INTO permissions
 (
     permission_key,

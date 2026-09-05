@@ -1,3 +1,5 @@
+-- Archived draft. Do not run. Live RBAC seed is in database/seed_rbac.sql.
+
 INSERT INTO roles
 (
     id,
