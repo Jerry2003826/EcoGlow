@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace App\Controller\Admin;
 
+use App\Mailer\QuotationMailer;
 use App\Service\PermissionService;
 use Cake\Http\Exception\ForbiddenException;
+use Cake\Log\Log;
 
 class QuotationsController extends AdminController
 {
@@ -162,6 +164,34 @@ class QuotationsController extends AdminController
             );
 
             if ($quotationsTable->save($quotation, ['associated' => ['QuotationItems']])) {
+                try {
+                    $savedQuotation = $quotationsTable->get(
+                        $quotation->id,
+                        contain: ['Customers', 'QuotationItems']
+                    );
+
+                    if ((string)$savedQuotation->status === 'issued') {
+                        $email = (string)($savedQuotation->customer->email ?? '');
+
+                        if ($email === '') {
+                            Log::warning(
+                                'Quotation email skipped: missing customer email for quotation ' .
+                                $savedQuotation->quotation_number
+                            );
+                        } else {
+                            $mailer = new QuotationMailer();
+                            $mailer->send('quotationIssued', [$savedQuotation]);
+                        }
+                    }
+                } catch (\Throwable $exception) {
+                    Log::error(
+                        'Quotation email failed for quotation #' .
+                        $quotation->id .
+                        ': ' .
+                        $exception->getMessage()
+                    );
+                }
+
                 return $this->redirect([
                     'action' => 'view',
                     $quotation->id,
