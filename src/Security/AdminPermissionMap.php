@@ -78,6 +78,18 @@ final class AdminPermissionMap
                 ],
             ],
 
+            'Invoices' => [
+                'index' => [
+                    'invoices.issue',
+                ],
+                'view' => [
+                    'invoices.issue',
+                ],
+                'add' => [
+                    'invoices.issue',
+                ],
+            ],
+
             'Messages' => [
                 'index' => [
                     'messages.manage',

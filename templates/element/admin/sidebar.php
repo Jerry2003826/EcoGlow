@@ -11,6 +11,7 @@ $inventoryActive = $currentController === 'Inventory';
 $suppliersActive = $currentController === 'Suppliers';
 $customersActive = $currentController === 'Customers';
 $quotationsActive = $currentController === 'Quotations';
+$invoicesActive = $currentController === 'Invoices';
 
 $linkOptions = static function (bool $active): array {
     $options = [
@@ -129,8 +130,8 @@ if ($lowStockCount > 0) {
 
             <?= $this->Html->link(
                 'Invoices',
-                '/admin/coming-soon/invoices',
-                $linkOptions($comingSoonActive('invoices'))
+                '/admin/invoices',
+                $linkOptions($invoicesActive)
             ) ?>
 
             <?= $this->Html->link(
