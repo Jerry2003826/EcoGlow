@@ -52,6 +52,18 @@ final class AdminPermissionMap
                 ],
             ],
 
+            'Quotations' => [
+                'index' => [
+                    'quotations.manage',
+                ],
+                'view' => [
+                    'quotations.manage',
+                ],
+                'add' => [
+                    'quotations.manage',
+                ],
+            ],
+
             'Messages' => [
                 'index' => [
                     'messages.manage',

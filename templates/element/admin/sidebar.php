@@ -9,6 +9,7 @@ $dashboardActive = $currentController === 'Dashboard';
 $ordersActive = $currentController === 'Orders';
 $inventoryActive = $currentController === 'Inventory';
 $suppliersActive = $currentController === 'Suppliers';
+$quotationsActive = $currentController === 'Quotations';
 
 $linkOptions = static function (bool $active): array {
     $options = [
@@ -118,6 +119,12 @@ if ($lowStockCount > 0) {
             <div class="sidebar-group-title">
                 Finance
             </div>
+
+            <?= $this->Html->link(
+                'Quotations',
+                '/admin/quotations',
+                $linkOptions($quotationsActive)
+            ) ?>
 
             <?= $this->Html->link(
                 'Invoices',
