@@ -24,6 +24,8 @@ patches/20260905_02_schema_service_bookings.sql
 patches/20260905_03_seed_service_bookings.sql
 patches/20260905_04_schema_suppliers.sql
 patches/20260905_05_seed_suppliers.sql
+patches/20260905_06_schema_quotations.sql
+patches/20260905_07_seed_quotations.sql
 ```
 
 `CREATE TABLE IF NOT EXISTS` / `INSERT IGNORE` 可以再跑一遍。`ALTER TABLE ... ADD COLUMN` 只能跑一次。

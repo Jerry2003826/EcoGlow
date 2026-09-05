@@ -148,3 +148,86 @@ SELECT p.`id`, s.`id`
   INNER JOIN `suppliers` s ON s.`code` = 'SUP-MEL-02'
  WHERE p.`slug` = 'rowan-rotary-dimmer';
 
+INSERT IGNORE INTO quotations
+(
+    quotation_number,
+    customer_id,
+    status,
+    subtotal_cents,
+    tax_cents,
+    grand_total_cents
+)
+SELECT
+    'QT-3001',
+    id,
+    'issued',
+    18900,
+    1890,
+    20790
+FROM customers
+WHERE email = 'mira.holt@example.com';
+
+INSERT IGNORE INTO quotations
+(
+    quotation_number,
+    customer_id,
+    status,
+    subtotal_cents,
+    tax_cents,
+    grand_total_cents
+)
+SELECT
+    'QT-3002',
+    id,
+    'draft',
+    29800,
+    2980,
+    32780
+FROM customers
+WHERE email = 'dev.raman@example.com';
+
+INSERT IGNORE INTO quotation_items
+(
+    quotation_id,
+    product_variant_id,
+    product_name,
+    sku,
+    quantity,
+    unit_price_cents,
+    line_total_cents
+)
+SELECT q.id, pv.id, pv.name, pv.sku, 1, 18900, 18900
+FROM quotations q
+JOIN product_variants pv ON pv.sku = 'ASH-TWN-BR'
+WHERE q.quotation_number = 'QT-3001';
+
+INSERT IGNORE INTO quotation_items
+(
+    quotation_id,
+    product_variant_id,
+    product_name,
+    sku,
+    quantity,
+    unit_price_cents,
+    line_total_cents
+)
+SELECT q.id, pv.id, pv.name, pv.sku, 1, 4900, 4900
+FROM quotations q
+JOIN product_variants pv ON pv.sku = 'ROW-DIM-WH'
+WHERE q.quotation_number = 'QT-3002';
+
+INSERT IGNORE INTO quotation_items
+(
+    quotation_id,
+    product_variant_id,
+    product_name,
+    sku,
+    quantity,
+    unit_price_cents,
+    line_total_cents
+)
+SELECT q.id, pv.id, pv.name, pv.sku, 1, 24900, 24900
+FROM quotations q
+JOIN product_variants pv ON pv.sku = 'HAL-PND-OK'
+WHERE q.quotation_number = 'QT-3002';
+
