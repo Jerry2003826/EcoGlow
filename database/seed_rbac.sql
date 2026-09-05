@@ -49,7 +49,7 @@ SELECT r.`id`, p.`id`
   FROM `roles` r
   JOIN `permissions` p
     ON p.`permission_key` IN ('refunds.process','invoices.issue','orders.dispatch',
-                              'payments.record','orders.view','customers.view')
+                              'payments.record','orders.view','customers.view','dashboard.view')
  WHERE r.`role_key` = 'standard_staff';
 
 DELETE rp FROM `role_permissions` rp
@@ -57,5 +57,5 @@ DELETE rp FROM `role_permissions` rp
   JOIN `permissions` p ON p.`id` = rp.`permission_id`
  WHERE r.`role_key` = 'standard_staff'
    AND p.`permission_key` NOT IN ('refunds.process','invoices.issue','orders.dispatch',
-                                  'payments.record','orders.view','customers.view');
+                                  'payments.record','orders.view','customers.view','dashboard.view');
 
