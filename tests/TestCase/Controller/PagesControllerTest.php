@@ -34,6 +34,14 @@ class PagesControllerTest extends TestCase
         $this->assertResponseContains('<html>');
     }
 
+    public function testShopRouteShowsHome(): void
+    {
+        $this->get('/shop');
+        $this->assertResponseOk();
+        $this->assertResponseContains('Eco Glow Lighting');
+        $this->assertResponseContains('id="shop"');
+    }
+
     public function testMissingTemplate()
     {
         Configure::write('debug', false);

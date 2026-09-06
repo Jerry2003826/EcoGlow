@@ -38,7 +38,7 @@ $featuredProducts = [
 ?>
 
 <div class="landing-page">
-    <section class="hero" aria-labelledby="hero-title">
+    <section class="hero" id="about" aria-labelledby="hero-title">
         <div class="hero-content">
             <p class="section-eyebrow">Lighting for everyday living</p>
 
@@ -58,7 +58,7 @@ $featuredProducts = [
             <div class="hero-buttons">
                 <?= $this->Html->link(
                     'Shop all Lighting',
-                    '#featured-products',
+                    '#shop',
                     ['class' => 'home-btn home-btn-primary']
                 ) ?>
 
@@ -83,7 +83,7 @@ $featuredProducts = [
 
     <section
         class="featured-products"
-        id="featured-products"
+        id="shop"
         aria-labelledby="featured-products-title"
     >
         <div class="section-heading">
@@ -133,7 +133,7 @@ $featuredProducts = [
         </div>
     </section>
 
-    <section class="home-service" aria-labelledby="home-service-title">
+    <section class="home-service" id="services" aria-labelledby="home-service-title">
         <div class="home-service-content">
             <p class="section-eyebrow">Installation and repairs</p>
 

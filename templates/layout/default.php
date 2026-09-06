@@ -45,11 +45,11 @@ $cakeDescription = 'Eco Glow Lighting';
         <?php
             $identity = $this->getRequest()->getAttribute('identity');
         ?>
-        <?= $this->Html->link('Services', '#services') ?>
+        <?= $this->Html->link('Services', '/#services') ?>
 
-        <?= $this->Html->link('Shop', '#shop') ?>
+        <?= $this->Html->link('Shop', '/#shop') ?>
 
-        <?= $this->Html->link('About Us', '#about') ?>
+        <?= $this->Html->link('About Us', '/#about') ?>
 
         <?= $this->Html->link('Contact Us', '/enquiries/add',
             ['class' => 'nav-button contact-button']

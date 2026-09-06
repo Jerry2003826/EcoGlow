@@ -25,6 +25,24 @@ return function (RouteBuilder $routes): void {
             'home',
         ]);
 
+        $builder->connect('/shop', [
+            'controller' => 'Pages',
+            'action' => 'display',
+            'home',
+        ]);
+
+        $builder->connect('/services', [
+            'controller' => 'Pages',
+            'action' => 'display',
+            'home',
+        ]);
+
+        $builder->connect('/about', [
+            'controller' => 'Pages',
+            'action' => 'display',
+            'home',
+        ]);
+
         $builder->fallbacks();
     });
 

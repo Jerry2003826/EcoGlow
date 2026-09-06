@@ -31,7 +31,14 @@ patches/20260905_09_seed_customer_addresses.sql
 patches/20260905_10_seed_standard_staff.sql
 patches/20260905_11_schema_invoices.sql
 patches/20260905_12_seed_invoices.sql
+patches/20260905_13_dest_users_legacy_compat.sql
 ```
+
+dest 必须按顺序跑完 01–13。缺 01–07 时订单 / 报价 / 供应商页会 500。
+
+`20260905_13` 只给 dest 遗留的 `users.username` / `users.user_password` 用。新库按上面「从零装」走，不要跑这一条。
+
+补丁 10 只写 `email/password/first_name/role/status`。dest 若这两列仍是 NOT NULL，staff403 种不进去，要先跑 13。
 
 `CREATE TABLE IF NOT EXISTS` / `INSERT IGNORE` 可以再跑一遍。`ALTER TABLE ... ADD COLUMN` 只能跑一次。
 
