@@ -1,0 +1,13 @@
+{
+  "license": "https://unsplash.com/license",
+  "photos": [
+    {"file": "interior.jpg", "photographer": "Collov Home Design", "source": "https://unsplash.com/photos/white-pendant-lamp-turned-off-nORl7NsrhHE"},
+    {"file": "floor-lamp.jpg", "photographer": "Spencer", "source": "https://unsplash.com/photos/powered-off-floor-lamp-beside-comforter-HHWwqWV6d5k"},
+    {"file": "table-lamp.jpg", "photographer": "Calum Lewis", "source": "https://unsplash.com/photos/table-lamp-on-top-of-nightstand-h0j-H2jyFj4"},
+    {"file": "wall-light.jpg", "photographer": "Evan Marvell", "source": "https://unsplash.com/photos/a-modern-wall-lamp-illuminates-a-textured-surface-9iM1jla-z4A"},
+    {"file": "globe.jpg", "photographer": "Terry Vlisidis", "source": "https://unsplash.com/photos/light-bulb-WsEbnsnKbUE"},
+    {"file": "pendants.jpg", "photographer": "Muhammad Haikal Sjukri", "source": "https://unsplash.com/photos/clear-pendant-lights-eQwkfNmrVaY"},
+    {"file": "opal-lamp.jpg", "photographer": "Luis Felipe Lins", "source": "https://unsplash.com/es/fotos/lampara-de-mesa-encendida-AGud9OBTTmo"},
+    {"file": "outdoor-lighting.jpg", "photographer": "David Pennington", "source" : "https://unsplash.com/photos/piled-hanging-lighted-bulb-beside-house-U5xmOrV2yzk"}
+  ]
+}
