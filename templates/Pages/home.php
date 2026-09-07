@@ -5,53 +5,57 @@ $this->Html->css('landingPage/home', ['block' => true]);
 
 $carouselSlides = [
     [
-        'image' => 'pendants.jpg',
-        'title' => 'Make a statement with light',
+        'image' => 'interior.jpg',
+        'title' => 'A brighter space. A warmer welcome.',
         'description' => 'Layered pendant lighting that gives dining and living spaces a warm, considered glow.',
+        'button' => 'Explore lighting', 'url' => '#shop',
         'alt' => 'Clear pendant lights hanging in a row',
     ],
     [
         'image' => 'opal-lamp.jpg',
-        'title' => 'Bring the evening outside',
-        'description' => 'Thoughtful outdoor lighting for welcoming entrances, patios and late summer dinners.',
-        'alt' => 'Warm outdoor lights beside a house',
+        'title' => 'Great lighting starts with a conversation',
+        'description' => 'Get in touch with our team to discuss your lighting needs.',
+        'button' => 'Talk to our team', 
+        'url' => ['controller' => 'Enquiries', 'action' => 'add'],
+        'alt' => 'Opal table lamp on a side table in a living room',
     ],
     [
-        'image' => 'interior.jpg',
-        'title' => 'A softer way to come home',
-        'description' => 'Quiet, beautiful fixtures designed to make every room feel more like your own.',
-        'alt' => 'White pendant lamp in a bright interior',
+        'image' => 'pendants.jpg',
+        'title' => 'Lighting for every space',
+        'description' => 'Explore our range of pendant, wall, table and floor lighting for your home.',
+        'button' => 'View our products', 'url' => '/products',
+        'alt' => 'Pendant lights in a modern interior',
     ],
 ];
 
 $featuredProducts = [
     [
-        'name' => 'Oak Pendant Light',
-        'description' => 'A warm timber pendant designed to bring soft, focused light to kitchens and dining spaces.',
+        'name' => 'Pendant Lights',
+        'description' => 'Ceiling-mounted and pendant lighting for indoor spaces.',
         'alt' => 'Oak pendant light above a dining table',
     ],
     [
-        'name' => 'Linen Table Lamp',
+        'name' => 'Table Lamps',
         'description' => 'A simple table lamp with a natural linen shade, ideal for bedside tables and reading corners.',
         'alt' => 'Linen table lamp on a side table',
     ],
     [
-        'name' => 'Brass Wall Light',
-        'description' => 'A compact wall light with a brushed brass finish for hallways, bedrooms and living areas.',
+        'name' => 'Wall Lights',
+        'description' => 'Wall-mounted lighting for indoor and decorative use.',
         'alt' => 'Brass wall light mounted on an interior wall',
     ],
     [
-        'name' => 'Dome Floor Lamp',
-        'description' => 'A practical floor lamp with a wide shade that provides comfortable light for reading and relaxing.',
+        'name' => 'Floor Lamps',
+        'description' => 'Freestanding lighting for living and reading areas.',
         'alt' => 'Dome floor lamp beside an armchair',
     ],
     [
-        'name' => 'Opal Ceiling Light',
-        'description' => 'A clean, low-profile ceiling light that distributes an even glow throughout smaller rooms.',
-        'alt' => 'Opal glass ceiling light in a modern room',
+        'name' => 'Outdoor Lights',
+        'description' => 'Weather-resistant lighting for gardens and outdoor areas.',
+        'alt' => 'Outdoor lights in a garden setting',
     ],
     [
-        'name' => 'Smart LED Globe',
+        'name' => 'Smart Lights',
         'description' => 'An energy-efficient smart globe with adjustable brightness for a flexible home lighting setup.',
         'alt' => 'Smart LED light globe',
     ],
@@ -78,6 +82,7 @@ $featuredProducts = [
                         <p class="section-eyebrow">Featured collection</p>
                         <h2><?= h($slide['title']) ?></h2>
                         <p><?= h($slide['description']) ?></p>
+                        <?= $this->Html->link($slide['button'], $slide['url'], ['class' => 'home-btn home-btn-light']) ?>
                     </div>
                 </article>
             <?php endforeach; ?>
@@ -172,7 +177,7 @@ $featuredProducts = [
                                     'table-lamp.jpg',
                                     'wall-light.jpg',
                                     'floor-lamp.jpg',
-                                    'opal-lamp.jpg',
+                                    'outdoor-lighting.jpg',
                                     'globe.jpg',
                                 ][array_search($product['name'], array_column($featuredProducts, 'name'), true)],
                                 ['alt' => h($product['alt'])]
