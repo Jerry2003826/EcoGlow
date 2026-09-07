@@ -1,86 +1,95 @@
 <?php
-// templates/layout/default.php
+/**
+ * CakePHP(tm) : Rapid Development Framework (https://cakephp.org)
+ * Copyright (c) Cake Software Foundation, Inc. (https://cakefoundation.org)
+ *
+ * Licensed under The MIT License
+ * For full copyright and license information, please see the LICENSE.txt
+ * Redistributions of files must retain the above copyright notice.
+ *
+ * @copyright     Copyright (c) Cake Software Foundation, Inc. (https://cakefoundation.org)
+ * @link          https://cakephp.org CakePHP(tm) Project
+ * @since         0.10.0
+ * @license       https://opensource.org/licenses/mit-license.php MIT License
+ * @var \App\View\AppView $this
+ */
+
+$cakeDescription = 'Eco Glow Lighting';
 ?>
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
     <?= $this->Html->charset() ?>
-
     <meta name="viewport" content="width=device-width, initial-scale=1">
-
-    <title>Eco Glow Lighting</title>
-
+    <title>
+        <?= $cakeDescription ?>
+    </title>
     <?= $this->Html->meta('icon', '/img/icon_lamp.svg', ['type' => 'image/svg+xml']) ?>
 
     <?= $this->Html->css(['normalize.min', 'milligram.min', 'fonts', 'cake', 'navbar']) ?>
 
     <?= $this->fetch('meta') ?>
     <?= $this->fetch('css') ?>
-
     <?= $this->Html->script('landing', ['defer' => true]) ?>
+    <?= $this->fetch('script') ?>
 </head>
 <body>
-
-<nav class="navbar">
-    <button
-        class="navbar-toggle"
-        type="button"
-        aria-controls="primary-navigation"
-        aria-expanded="false"
-    >
-        ☰
-    </button>
-
-    <div class="navbar-brand">
-        <?= $this->Html->link(
-            $this->Html->image('logo_leaf.png', [
-                'alt' => 'Eco Glow Lighting',
-            ]),
-            $this->Url->build('/'),
-            ['escape' => false]
-        ) ?>
-    </div>
-
-    <div
-        class="navbar-links"
-        id="primary-navigation"
-    >
-        <?= $this->Html->link('Services', '/#services') ?>
-
-        <?= $this->Html->link('Shop', '/products') ?>
-
-        <?= $this->Html->link('Cart', '/cart') ?>
-
-        <?= $this->Html->link('About Us', '/#about') ?>
-
-        <?= $this->Html->link(
-            'Contact Us',
-            '/enquiries/add',
-            ['class' => 'nav-button contact-button']
-        ) ?>
-
-        <?php if ($this->request->getAttribute('identity')): ?>
+    <nav class="navbar" aria-label="Main navigation">
+        <div class="navbar-brand">
             <?= $this->Html->link(
-                'Log Out',
-                '/users/logout',
-                ['class' => 'nav-button login-button']
+                $this->Html->image('logo_leaf.png', [
+                    'alt' => 'Eco Glow Lighting',
+                    'class' => 'logo',
+                ]),
+                '/',
+                ['escape' => false]
             ) ?>
-        <?php else: ?>
+        </div>
+
+        <button
+            class="navbar-toggle"
+            type="button"
+            aria-expanded="false"
+            aria-controls="primary-navigation"
+            aria-label="Open navigation"
+        >
+            <span aria-hidden="true"></span>
+            <span aria-hidden="true"></span>
+            <span aria-hidden="true"></span>
+        </button>
+
+        <div class="navbar-links" id="primary-navigation">
+            <?= $this->Html->link('Services', '/#services') ?>
+            <?= $this->Html->link('Shop', '/products') ?>
+            <?= $this->Html->link('Cart', '/cart') ?>
+            <?= $this->Html->link('About Us', '/#about') ?>
             <?= $this->Html->link(
-                'Log In',
-                '/users/login',
-                ['class' => 'nav-button login-button']
+                'Contact Us',
+                '/enquiries/add',
+                ['class' => 'nav-button contact-button']
             ) ?>
-        <?php endif; ?>
-    </div>
-</nav>
-
-<main class="main container">
-    <?= $this->Flash->render() ?>
-    <?= $this->fetch('content') ?>
-</main>
-
-<?= $this->fetch('script') ?>
-
+            <?php if ($this->request->getAttribute('identity')): ?>
+                <?= $this->Html->link(
+                    'Log Out',
+                    '/users/logout',
+                    ['class' => 'nav-button login-button']
+                ) ?>
+            <?php else: ?>
+                <?= $this->Html->link(
+                    'Log In',
+                    '/users/login',
+                    ['class' => 'nav-button login-button']
+                ) ?>
+            <?php endif; ?>
+        </div>
+    </nav>
+    <main class="main">
+        <div class="container">
+            <?= $this->Flash->render() ?>
+            <?= $this->fetch('content') ?>
+        </div>
+    </main>
+    <footer>
+    </footer>
 </body>
 </html>
