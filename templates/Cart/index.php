@@ -4,57 +4,63 @@
 
 <h1>Shopping Cart</h1>
 
-<?= $this->Form->create() ?>
+<?php if (empty($items)): ?>
+    <div class="empty-cart">
+        <p>Your cart is empty.</p>
 
-<?php if (!empty($items)): ?>
-    <?php foreach ($items as $item): ?>
-        <div>
-            <strong><?= h($item->product->ProductName) ?></strong>
+        <?= $this->Html->link('Continue Shopping', '/products') ?>
+    </div>
+<?php else: ?>
 
-            <div>
-                Qty:
-                <input
-                    type="number"
-                    min="1"
-                    name="qty[<?= (int)$item->CartItemId ?>]"
-                    value="<?= (int)$item->Quantity ?>"
-                >
-            </div>
-        </div>
-    <?php endforeach; ?>
+    <?= $this->Form->create() ?>
 
-    <div>
+    <table class="cart-table">
+        <thead>
+        <tr>
+            <th>Product</th>
+            <th>Qty</th>
+        </tr>
+        </thead>
+        <tbody>
+        <?php foreach ($items as $item): ?>
+            <tr>
+                <td><?= h($item->product->ProductName) ?></td>
+                <td>
+                    <input
+                        type="number"
+                        min="1"
+                        name="qty[<?= (int)$item->CartItemId ?>]"
+                        value="<?= (int)$item->Quantity ?>"
+                    >
+                </td>
+            </tr>
+        <?php endforeach; ?>
+        </tbody>
+    </table>
+
+    <div class="install-box">
         <label>
             <input
                 type="checkbox"
                 name="install_opt_in"
                 value="1"
-                <?= (!empty($cart) && (int)$cart->InstallOptIn === 1) ? 'checked' : '' ?>
+                <?= ((int)($cart->InstallOptIn ?? 0) === 1) ? 'checked' : '' ?>
             >
-            Installation (+ $<?= number_format((float)($cart->InstallFee ?? 200), 2) ?>)
+            Installation (+ $200)
         </label>
     </div>
 
-    <div>
-        Total:
+    <div class="cart-summary">
+        Running Total:
         $<?= number_format((float)$subtotal, 2) ?>
     </div>
 
-    <?= $this->Form->button('Update Cart') ?>
+    <div class="cart-actions">
+        <?= $this->Form->button('Update Cart') ?>
+        <?= $this->Html->link('Continue Shopping', '/products') ?>
+        <?= $this->Html->link('Checkout', '/checkout') ?>
+    </div>
+
+    <?= $this->Form->end() ?>
+
 <?php endif; ?>
-
-<?= $this->Form->end() ?>
-
-<p>
-    <?= $this->Html->link(
-        'Continue Shopping',
-        ['controller' => 'Products', 'action' => 'index']
-    ) ?>
-</p>
-
-<p>
-    <?= $this->Html->link(
-        'Checkout',
-        ['controller' => 'Checkout', 'action' => 'index']
-    ) ?>
-</p>

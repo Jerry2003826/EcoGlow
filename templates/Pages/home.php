@@ -120,7 +120,7 @@ $featuredProducts = [
                 <div class="hero-buttons">
                     <?= $this->Html->link(
                         'Shop all Lighting',
-                        '#shop',
+                        '/products',
                         ['class' => 'home-btn home-btn-primary']
                     ) ?>
 

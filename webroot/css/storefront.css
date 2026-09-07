@@ -1,0 +1,106 @@
+/* webroot/css/storefront.css */
+
+:root {
+    --store-bg: #FBF9F5;
+    --store-green: #124C24;
+    --store-text: #5B5545;
+    --store-accent: #E2925E;
+}
+
+body {
+    background: var(--store-bg);
+    color: var(--store-text);
+}
+
+.button,
+button,
+input[type="submit"] {
+    background: var(--store-green);
+    border-color: var(--store-green);
+    color: #fff;
+}
+
+.button:hover,
+button:hover,
+input[type="submit"]:hover {
+    background: #0C3719;
+    border-color: #0C3719;
+}
+
+.store-toolbar,
+.cart-actions,
+.checkout-actions {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-bottom: 1rem;
+}
+
+.product-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1.5rem;
+}
+
+.product-card,
+.cart-row,
+.receipt-card,
+.checkout-card,
+.empty-cart {
+    background: #fff;
+    border: 1px solid #e8e1d8;
+    border-radius: 12px;
+    padding: 1rem;
+}
+
+.product-card img {
+    width: 100%;
+    height: 220px;
+    object-fit: cover;
+    border-radius: 8px;
+}
+
+.price-tag {
+    color: var(--store-green);
+    font-weight: 700;
+    font-size: 1.2rem;
+}
+
+.cart-summary,
+.receipt-summary {
+    margin-top: 1rem;
+    background: #fff;
+    padding: 1rem;
+    border-radius: 12px;
+}
+
+.install-box {
+    margin: 1rem 0;
+    padding: 1rem;
+    background: #fff7f1;
+    border: 1px solid #f0d0bd;
+}
+
+.store-search {
+    background: #fff;
+    padding: 1rem;
+    border-radius: 12px;
+    margin-bottom: 1rem;
+}
+
+.receipt-table,
+.cart-table {
+    width: 100%;
+}
+
+.receipt-table th,
+.receipt-table td,
+.cart-table th,
+.cart-table td {
+    padding: .5rem;
+}
+
+.empty-cart {
+    text-align: center;
+}

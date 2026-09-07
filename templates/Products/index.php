@@ -1,42 +1,56 @@
 <?php
 // templates/Products/index.php
+
+$this->assign('title', 'Products');
+
+$categoryOptions = ['' => 'All Categories'];
+
+foreach ($categories as $categoryItem) {
+    $categoryOptions[$categoryItem->CategoryId] = $categoryItem->CategoryName;
+}
 ?>
 
-<h1>Products</h1>
+<div class="store-toolbar">
+    <?= $this->Html->link('View Cart', '/cart') ?>
+</div>
 
-<?= $this->Form->create(null, ['type' => 'get']) ?>
-<?= $this->Form->control('q', ['value' => $q ?? '']) ?>
-<?= $this->Form->control('category', ['value' => $category ?? '']) ?>
-<?= $this->Form->button('Search') ?>
-<?= $this->Form->end() ?>
-
-<p>
-    <?= $this->Html->link('View Cart', [
-        'controller' => 'Cart',
-        'action' => 'index',
+<div class="store-search">
+    <?= $this->Form->create(null, ['type' => 'get']) ?>
+    <?= $this->Form->control('q', ['value' => $q ?? '']) ?>
+    <?= $this->Form->control('category', [
+        'options' => $categoryOptions,
+        'value' => $category ?? '',
     ]) ?>
-</p>
+    <?= $this->Form->button('Search') ?>
+    <?= $this->Form->end() ?>
+</div>
 
-<?php foreach ($products as $product): ?>
-    <div>
-        <h3><?= h($product->ProductName) ?></h3>
+<p>Continue shopping and add items to your cart. View Cart anytime.</p>
 
-        <p><?= h($product->Description) ?></p>
-
-        <p>$<?= number_format((float)$product->Price, 2) ?></p>
-
-        <?=
-        $this->Form->create(null)
+<div class="product-grid">
+    <?php foreach ($products as $product): ?>
+        <?php
+        $image = $product->Image ?: (
+            (int)$product->CategoryId === 1
+                ? 'landing/pendants.jpg'
+                : 'landing/wall-light.jpg'
+        );
         ?>
+        <div class="product-card">
+            <?= $this->Html->image($image) ?>
 
-        <input
-            type="hidden"
-            name="product_id"
-            value="<?= (int)$product->ProductId ?>"
-        >
+            <h3><?= h($product->ProductName) ?></h3>
 
-        <?= $this->Form->button('Add To Cart') ?>
+            <p><?= h($product->Description) ?></p>
 
-        <?= $this->Form->end() ?>
-    </div>
-<?php endforeach; ?>
+            <div class="price-tag">
+                $<?= number_format((float)$product->Price, 2) ?>
+            </div>
+
+            <?= $this->Form->create() ?>
+            <?= $this->Form->hidden('product_id', ['value' => $product->ProductId]) ?>
+            <?= $this->Form->button('Add to Cart') ?>
+            <?= $this->Form->end() ?>
+        </div>
+    <?php endforeach; ?>
+</div>

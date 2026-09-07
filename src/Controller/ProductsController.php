@@ -70,11 +70,30 @@ class ProductsController extends AppController
 
             $cartItems->saveOrFail($item);
 
-            return $this->redirect(['controller' => 'Cart', 'action' => 'index']);
+            $this->Flash->success(
+                'Added to cart. Continue shopping or view cart.'
+            );
+
+            return $this->redirect([
+                'action' => 'index',
+                '?' => [
+                    'q' => $q,
+                    'category' => $category,
+                ],
+            ]);
         }
 
         $products = $query->all();
 
-        $this->set(compact('products', 'q', 'category'));
+        $categories = $this->fetchTable('ProductCategories')
+            ->find()
+            ->all();
+
+        $this->set(compact(
+            'products',
+            'q',
+            'category',
+            'categories'
+        ));
     }
 }
