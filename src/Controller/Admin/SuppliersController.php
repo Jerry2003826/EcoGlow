@@ -1,4 +1,5 @@
 <?php
+// src/Controller/Admin/SuppliersController.php
 
 declare(strict_types=1);
 
@@ -9,7 +10,7 @@ use Cake\Http\Exception\ForbiddenException;
 
 class SuppliersController extends AdminController
 {
-    public function index()
+    protected function ensurePermission(): void
     {
         $identity = $this->request->getAttribute('identity');
 
@@ -27,13 +28,20 @@ class SuppliersController extends AdminController
         ) {
             throw new ForbiddenException();
         }
+    }
+
+    public function index()
+    {
+        if ($this->request->getAttribute('identity') === null) {
+            return;
+        }
+
+        $this->ensurePermission();
 
         $suppliers = $this->fetchTable('Suppliers')
             ->find()
             ->contain(['Products'])
-            ->orderBy([
-                'Suppliers.name' => 'ASC',
-            ])
+            ->orderBy(['Suppliers.name' => 'ASC'])
             ->all();
 
         $this->set(compact('suppliers'));
@@ -41,25 +49,47 @@ class SuppliersController extends AdminController
 
     public function view(int|string $id)
     {
-        $identity = $this->request->getAttribute('identity');
-
-        if ($identity === null) {
+        if ($this->request->getAttribute('identity') === null) {
             return;
         }
 
-        $permissionService = new PermissionService();
-
-        if (
-            !$permissionService->hasPermission(
-                (int)$identity->getIdentifier(),
-                'purchasing.manage'
-            )
-        ) {
-            throw new ForbiddenException();
-        }
+        $this->ensurePermission();
 
         $supplier = $this->fetchTable('Suppliers')
             ->get($id, contain: ['Products']);
+
+        $this->set(compact('supplier'));
+    }
+
+    public function edit(int|string $id)
+    {
+        if ($this->request->getAttribute('identity') === null) {
+            return;
+        }
+
+        $this->ensurePermission();
+
+        $suppliers = $this->fetchTable('Suppliers');
+
+        $supplier = $suppliers->get($id, contain: ['Products']);
+
+        if ($this->request->is(['patch', 'post', 'put'])) {
+            $supplier = $suppliers->patchEntity(
+                $supplier,
+                $this->request->getData()
+            );
+
+            if ($suppliers->save($supplier)) {
+                $this->Flash->success('Supplier updated.');
+
+                return $this->redirect([
+                    'action' => 'view',
+                    $supplier->id,
+                ]);
+            }
+
+            $this->Flash->error('Unable to save supplier.');
+        }
 
         $this->set(compact('supplier'));
     }

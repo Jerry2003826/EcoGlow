@@ -1,6 +1,23 @@
 <?php
+// templates/Admin/Quotations/add.php
 
 $this->assign('title', 'Generate Quotation');
+
+$customerOptions = collection($customers)
+    ->combine(
+        'id',
+        fn ($c) => trim(
+            ($c->first_name ?? '') . ' ' . ($c->last_name ?? '')
+        )
+    )
+    ->toArray();
+
+$productVariantOptions = collection($productVariants)
+    ->combine(
+        'id',
+        fn ($v) => $v->sku . ' - ' . $v->name
+    )
+    ->toArray();
 ?>
 
 <h1 class="page-title">Generate Quotation</h1>
@@ -9,13 +26,17 @@ $this->assign('title', 'Generate Quotation');
     <?= $this->Form->create($quotation) ?>
 
     <?= $this->Form->control('customer_id', [
-        'options' => collection($customers)->combine(
-            'id',
-            fn ($customer) => trim(
-                ($customer->first_name ?? '') . ' ' . ($customer->last_name ?? '')
-            )
-        )->toArray(),
+        'options' => $customerOptions,
         'label' => 'Customer',
+    ]) ?>
+
+    <?= $this->Form->control('category', [
+        'options' => [
+            'product_sale' => 'Product Sale',
+            'installation' => 'Installation',
+            'repair' => 'Repair',
+        ],
+        'label' => 'Category',
     ]) ?>
 
     <?= $this->Form->control('status', [
@@ -23,6 +44,7 @@ $this->assign('title', 'Generate Quotation');
             'draft' => 'Draft',
             'issued' => 'Issued',
         ],
+        'label' => 'Status',
     ]) ?>
 
     <?= $this->Form->control('valid_until', [
@@ -36,10 +58,7 @@ $this->assign('title', 'Generate Quotation');
     <?php for ($i = 0; $i < 3; $i++): ?>
         <?= $this->Form->control("items.$i.product_variant_id", [
             'label' => 'Product Variant',
-            'options' => collection($productVariants)->combine(
-                'id',
-                fn ($variant) => $variant->sku . ' - ' . $variant->name
-            )->toArray(),
+            'options' => $productVariantOptions,
             'empty' => true,
         ]) ?>
 
@@ -47,6 +66,7 @@ $this->assign('title', 'Generate Quotation');
             'type' => 'number',
             'min' => 1,
             'value' => 1,
+            'label' => 'Quantity',
         ]) ?>
     <?php endfor; ?>
 

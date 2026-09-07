@@ -1,4 +1,5 @@
 <?php
+// src/Model/Entity/Supplier.php
 
 declare(strict_types=1);
 
@@ -13,6 +14,10 @@ class Supplier extends Entity
         'name' => true,
         'email' => true,
         'phone' => true,
+        'address_line_1' => true,
+        'suburb' => true,
+        'state' => true,
+        'postcode' => true,
         'notes' => true,
         'created' => true,
         'modified' => true,

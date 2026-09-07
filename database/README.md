@@ -32,9 +32,11 @@ patches/20260905_10_seed_standard_staff.sql
 patches/20260905_11_schema_invoices.sql
 patches/20260905_12_seed_invoices.sql
 patches/20260905_13_dest_users_legacy_compat.sql
+patches/20260907_14_alter_suppliers_address.sql
+patches/20260907_15_alter_quotations_category.sql
 ```
 
-dest 必须按顺序跑完 01–13。缺 01–07 时订单 / 报价 / 供应商页会 500。
+dest 必须按顺序跑完 01–15。缺 01–07 时订单 / 报价 / 供应商页会 500。
 
 `20260905_13` 只给 dest 遗留的 `users.username` / `users.user_password` 用。新库按上面「从零装」走，不要跑这一条。
 

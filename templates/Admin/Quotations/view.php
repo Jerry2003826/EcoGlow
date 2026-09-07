@@ -1,4 +1,5 @@
 <?php
+// templates/Admin/Quotations/view.php
 
 use App\Service\Money;
 
@@ -8,12 +9,19 @@ $this->assign('title', $quotation->quotation_number);
 <h1 class="page-title"><?= h($quotation->quotation_number) ?></h1>
 
 <div class="panel-card">
+    <p><strong>Category:</strong> <?= h($quotation->category) ?></p>
     <p><strong>Customer:</strong> <?= h(trim(($quotation->customer->first_name ?? '') . ' ' . ($quotation->customer->last_name ?? ''))) ?></p>
-    <p><strong>Email:</strong> <?= h((string)$quotation->customer->email) ?></p>
-    <p><strong>Phone:</strong> <?= h((string)$quotation->customer->phone) ?></p>
+    <p><strong>Email:</strong> <?= h($quotation->customer->email ?? '') ?></p>
+    <p><strong>Phone:</strong> <?= h($quotation->customer->phone ?? '') ?></p>
     <p><strong>Status:</strong> <?= h($quotation->status) ?></p>
     <p><strong>Valid Until:</strong> <?= h((string)$quotation->valid_until) ?></p>
     <p><strong>Notes:</strong> <?= h((string)$quotation->notes) ?></p>
+
+    <?php if ($quotation->emailed_at): ?>
+        <p><strong>Email sent at:</strong> <?= h((string)$quotation->emailed_at) ?></p>
+    <?php else: ?>
+        <p><strong>Not emailed</strong></p>
+    <?php endif; ?>
 </div>
 
 <div class="panel-card">
@@ -23,8 +31,8 @@ $this->assign('title', $quotation->quotation_number);
             <th>Product</th>
             <th>SKU</th>
             <th>Qty</th>
-            <th>Unit Price</th>
-            <th>Line Total</th>
+            <th>Unit</th>
+            <th>Total</th>
         </tr>
         </thead>
         <tbody>
@@ -39,10 +47,7 @@ $this->assign('title', $quotation->quotation_number);
         <?php endforeach; ?>
         </tbody>
     </table>
-</div>
 
-<div class="panel-card">
-    <p><strong>Subtotal:</strong> <?= h(Money::formatAud((int)$quotation->subtotal_cents)) ?></p>
     <p><strong>GST:</strong> <?= h(Money::formatAud((int)$quotation->tax_cents)) ?></p>
     <p><strong>Total:</strong> <?= h(Money::formatAud((int)$quotation->grand_total_cents)) ?></p>
 

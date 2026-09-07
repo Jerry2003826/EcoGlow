@@ -1,22 +1,26 @@
 <?php
+// templates/Error/error400.php
 
-use Cake\Core\Configure;
+use Cake\Http\Exception\ForbiddenException;
 
-$this->setLayout('error');
+$isForbidden =
+    ($error instanceof ForbiddenException) ||
+    (($error->getCode() ?? 0) === 403) ||
+    ($error->getMessage() === 'Forbidden');
 
-if (Configure::read('debug')) :
-    $this->setLayout('dev_error');
+if ($isForbidden) {
+    $this->setLayout('error');
+    $this->assign('title', 'Access Denied');
+    ?>
+    <h1>Access Denied</h1>
+    <p>You do not have access to this page.</p>
+    <?php
+    return;
+}
 
-    $this->assign('title', $message);
-    $this->assign('templateName', 'error400.php');
+echo $this->element('auto_table_warning');
 
-    $this->start('file');
-    echo $this->element('auto_table_warning');
-    $this->end();
-endif;
+if (isset($message)) {
+    echo '<h1>' . h($message) . '</h1>';
+}
 ?>
-<h2><?= h($message) ?></h2>
-<p class="error">
-    <strong><?= __d('cake', 'Error') ?>: </strong>
-    <?= __d('cake', 'The requested address {0} was not found on this server.', "<strong>'{$url}'</strong>") ?>
-</p>

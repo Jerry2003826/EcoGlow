@@ -1,4 +1,5 @@
 <?php
+// src/Model/Table/CustomersTable.php
 
 declare(strict_types=1);
 
@@ -22,24 +23,36 @@ class CustomersTable extends Table
         ]);
     }
 
+    public function findOrCreateFromContact(array $data)
+    {
+        $customer = $this->find()
+            ->where(['email' => (string)$data['email']])
+            ->first();
+
+        if ($customer) {
+            $customer->first_name = $data['first_name'] ?? $customer->first_name;
+            $customer->phone = $data['phone'] ?? $customer->phone;
+            $customer->address_line_1 = $data['address_line_1'] ?? $customer->address_line_1;
+
+            return $this->saveOrFail($customer);
+        }
+
+        $customer = $this->newEntity([
+            'first_name' => $data['first_name'] ?? '',
+            'email' => $data['email'] ?? '',
+            'phone' => $data['phone'] ?? '',
+            'address_line_1' => $data['address_line_1'] ?? '',
+        ]);
+
+        return $this->saveOrFail($customer);
+    }
+
     public function validationDefault(Validator $validator): Validator
     {
-        $validator->integer('user_id');
-        $validator->allowEmptyString('user_id');
-
+        $validator->email('email');
+        $validator->allowEmptyString('phone');
         $validator->allowEmptyString('first_name');
         $validator->allowEmptyString('last_name');
-        $validator->email('email');
-        $validator->allowEmptyString('email');
-        $validator->allowEmptyString('phone');
-        $validator->allowEmptyString('address_line_1');
-        $validator->allowEmptyString('address_line_2');
-        $validator->allowEmptyString('suburb');
-        $validator->allowEmptyString('state');
-        $validator->allowEmptyString('postcode');
-        $validator->allowEmptyString('country');
-        $validator->integer('age');
-        $validator->allowEmptyString('age');
         $validator->allowEmptyString('company');
         $validator->allowEmptyString('status');
         $validator->allowEmptyString('source');
