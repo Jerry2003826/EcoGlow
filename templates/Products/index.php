@@ -10,9 +10,6 @@ foreach ($categories as $categoryItem) {
 }
 ?>
 
-<div class="store-toolbar">
-    <?= $this->Html->link('View Cart', '/cart') ?>
-</div>
 
 <div class="store-search">
     <?= $this->Form->create(null, ['type' => 'get']) ?>
@@ -33,7 +30,9 @@ foreach ($categories as $categoryItem) {
     <?= $this->Form->end() ?>
 </div>
 
-<p>Continue shopping and add items to your cart. View Cart anytime.</p>
+<div class="store-toolbar">
+    <p>Continue shopping and add items to your cart. View Cart anytime. <?= $this->Html->link('View Cart', '/cart') ?></p>  
+</div>
 
 <div class="product-grid">
     <?php foreach ($products as $product): ?>

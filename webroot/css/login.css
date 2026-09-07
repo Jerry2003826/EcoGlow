@@ -1,55 +1,75 @@
-.login-page {
-    width: 100%;
-    padding-top: 5rem;
+body:has(.login-page) .container,
+body:has(.login-page) .content,
+body:has(.login-page) .main {
+    width: 100% !important;
+    max-width: none !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    margin: 0 !important;
 }
-
-.login {
+.login-page {
+    position: relative;
+    overflow: hidden;
+    height: calc(100vh - 9rem);
+    width: 100%;
     display: flex;
     align-items: center;
-    gap: 60px;
-
+    justify-content: center;
 }
 
-.login-content {
-    flex: 1.25;
-    padding-right: 60px;
-    border-right: #999 solid 0.5px;
-}
 
-.login-content h1 {
-    font-size: 58px;
-    font-weight: 600;
-    margin-bottom: 30px
-}
-
-.login-image {
+.login-background {
+    position: absolute;
+    inset: 0;
     width: 100%;
-    height: 500px;
-    display: flex;
+    height: 100%;
     overflow: hidden;
-    border-radius: 5px;
 }
 
-.login-photo {
+.login-background::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.3); 
+}
+
+.login-background-image {
     display: block;
     width: 100%;
     height: 100%;
     object-fit: cover;
     object-position: center;
+    filter: brightness(40%);
 }
-
+    
 .login-form {
+    z-index: 1;
     display: flex;
     align-items: center;
     justify-content: center;
-    flex: 0.75;
+    width: 100%;
+    padding: 40px 20px;
 }
 
-.login-form form {
+.login-card {
+    background-color: rgb(255, 255, 255);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    border-radius: 12px;
+    max-width: 400px;
+    width: 100%;
+}
+
+.login-card form {
     width: 100%;
     max-width: 420px;
     padding: 40px;
     border-radius: 12px;
+}
+
+.login-card h2 {
+    color: #3F3A2F;
+    text-align: center;
+    padding-top: 20px;
 }
 
 .login-form label {
@@ -80,24 +100,4 @@
 
 .login-form .btn:hover {
     background-color: #3F3A2F;
-}
-
-@media (max-width: 760px) {
-    .login {
-        flex-direction: column;
-        gap: 30px;
-    }
-
-    .login-content {
-        width: 100%;
-        padding-right: 0;
-        border-right: none;
-        text-align: center;
-    }
-
-    .login-image {
-        height: auto;
-        width: 100%;
-        aspect-ratio: 16/9;
-    }
 }

@@ -1,18 +1,12 @@
 <?php
 
 ?>
-<div class="row">
-    <aside class="column">
-        <div class="side-nav">
-            <h4 class="heading"><?= __('Actions') ?></h4>
-            <?= $this->Html->link(__('List Users'), ['action' => 'index'], ['class' => 'side-nav-item']) ?>
-        </div>
-    </aside>
-    <div class="column column-80">
+<div class="row" style="display: flex; justify-content: center; align-items: center; padding: 20px;">
+    <div class="column column-50">
         <div class="users form content">
             <?= $this->Form->create($user) ?>
             <fieldset>
-                <legend><?= __('Sign Up') ?></legend>
+                <legend><?= __('Customer Sign Up') ?></legend>
                 <?php
                     echo $this->Form->control('Username');
                     echo $this->Form->control('Password', ['type' => 'password', 'required' => true]);

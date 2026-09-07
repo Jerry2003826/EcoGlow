@@ -23,22 +23,18 @@ if (is_string($redirect) && $redirect !== '') {
 ?>
 <link rel="stylesheet" href = "/css/login.css" />
 <div class="login-page">
-    <div class="login">
-        <div class="login-content">
-            <h1>Log In</h1>
-
-            <div class ="login-image">
-                <?= $this->Html->image(
-                    'landing/pendants.jpg',
-                    [
-                        'class' => 'login-photo',
-                        'alt' => 'Pendant lights in a modern interior',
-                    ]
-                ) ?>
-            </div>
-        </div>
-
-         <div class="login-form">
+    <div class="login-background">
+        <?= $this->Html->image(
+        'landing/login_picture.jpg',
+        [
+            'class' => 'login-background-image',
+            'alt' => 'Login background image',
+        ]
+    ) ?>
+    </div>
+    <div class="login-form">
+         <div class="login-card">
+             <h2>Log in</h2>
             <?= $this->Flash->render() ?>
             <?= $this->Form->create(null, [
                 'url' => $loginUrl,

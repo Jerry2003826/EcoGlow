@@ -22,6 +22,24 @@ class CartController extends AppController
             );
 
             if ($this->request->is(['post', 'put', 'patch'])) {
+                // Remove item
+                $removeItemId = $this->request->getData('remove_item');
+                if ($removeItemId) {
+                    $item = $this->fetchTable('CartItems')->find()
+                        ->where([
+                            'CartItemId' => (int)$removeItemId,
+                            'CartId' => (int)$cartId,
+                        ])
+                        ->first();
+
+                    if ($item) {
+                        $this->fetchTable('CartItems')->delete($item);
+                    }
+
+                    return $this->redirect(['action' => 'index']);
+                }
+
+
                 $cart->InstallOptIn = (int)$this->request->getData('install_opt_in', 0);
 
                 $this->fetchTable('ShoppingCarts')->save($cart);

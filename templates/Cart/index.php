@@ -33,6 +33,15 @@
                         value="<?= (int)$item->Quantity ?>"
                     >
                 </td>
+                <td>
+                    <button
+                        type="submit"
+                        name="remove_item"
+                        value="<?= (int)$item->CartItemId ?>"
+                    >
+                        Remove
+                    </button>
+                </td>
             </tr>
         <?php endforeach; ?>
         </tbody>
