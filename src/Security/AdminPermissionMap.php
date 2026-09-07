@@ -17,22 +17,17 @@ final class AdminPermissionMap
                 'index' => ['dashboard.view'],
             ],
             'Orders' => [
-                'index' => ['orders.view', 'services.manage'],
+                'index' => ['orders.view'],
                 'view' => ['orders.view'],
-                'booking' => ['services.manage'],
-                'add' => ['orders.create', 'orders.manage'],
-                'addBooking' => ['services.manage'],
-                'updateStatus' => ['orders.manage'],
-                'updateDelivery' => ['orders.manage'],
-                'updateBooking' => ['services.manage'],
+                'updateDelivery' => ['orders.view'],
+                'addRepair' => ['orders.view'],
             ],
             'Inventory' => [
                 'index' => ['inventory.view', 'inventory.adjust'],
             ],
             'Suppliers' => [
-                'index' => ['purchasing.manage'],
-                'view' => ['purchasing.manage'],
-                'edit' => ['purchasing.manage'],
+                'index' => ['suppliers.view'],
+                'view' => ['suppliers.view'],
             ],
             'Customers' => [
                 'index' => ['customers.view', 'customers.edit'],
@@ -44,6 +39,7 @@ final class AdminPermissionMap
                 'view' => ['messages.manage'],
             ],
             'Reports' => [
+                'index' => ['reports.financial'],
                 'financial' => ['reports.financial'],
             ],
             'Quotations' => [
@@ -55,6 +51,16 @@ final class AdminPermissionMap
                 'index' => ['invoices.issue'],
                 'view' => ['invoices.issue'],
                 'add' => ['invoices.issue'],
+                'generate' => ['invoices.issue'],
+            ],
+            'Payments' => [
+                'index' => ['payments.view'],
+            ],
+            'Shipments' => [
+                'index' => ['shipments.view'],
+            ],
+            'Products' => [
+                'index' => ['products.view'],
             ],
             'Access' => [
                 'index' => ['access.manage'],
