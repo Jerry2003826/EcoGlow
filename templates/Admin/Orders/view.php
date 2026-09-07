@@ -1,33 +1,105 @@
 <?php
 // templates/Admin/Orders/view.php
 ?>
-<h1 class="page-title"><?= h($order->order_number) ?></h1>
+
+<h1 class="page-title">
+    Order #<?= h((string)$order->OrderId) ?>
+</h1>
 
 <div class="panel-card">
-    <p><?= h($order->customer?->first_name) ?> <?= h($order->customer?->last_name) ?></p>
-    <p><?= h($order->customer?->email) ?></p>
-    <p><?= h($order->customer?->phone) ?></p>
-    <p><?= h($order->customer?->address_line_1) ?></p>
-    <p><?= h($order->customer?->suburb) ?></p>
-    <p><?= h($order->customer?->state) ?></p>
-    <p><?= h($order->customer?->postcode) ?></p>
-</div>
-
-<?php if ($canManageOrders): ?>
-<div class="panel-card">
-    <?= $this->Form->create() ?>
-    <?= $this->Form->hidden('form_name', ['value' => 'status']) ?>
-    <?= $this->Form->control('status', ['value' => $order->status]) ?>
-    <?= $this->Form->button('Update Status') ?>
-    <?= $this->Form->end() ?>
+    <p><strong>OrderId:</strong> <?= h((string)$order->OrderId) ?></p>
+    <p><strong>Status:</strong> <?= h((string)$order->Status) ?></p>
+    <p><strong>Order Date:</strong> <?= h((string)$order->OrderDate) ?></p>
 </div>
 
 <div class="panel-card">
-    <?= $this->Form->create() ?>
-    <?= $this->Form->hidden('form_name', ['value' => 'delivery']) ?>
-    <?= $this->Form->control('promised_delivery_on', ['value' => $order->promised_delivery_on]) ?>
-    <?= $this->Form->control('delivery_notes', ['value' => $order->delivery_notes]) ?>
-    <?= $this->Form->button('Update Delivery') ?>
-    <?= $this->Form->end() ?>
+    <h2>Guest</h2>
+
+    <p><strong>Name:</strong> <?= h($order->guest->GuestName ?? '') ?></p>
+    <p><strong>Email:</strong> <?= h($order->guest->Email ?? '') ?></p>
+    <p><strong>Address:</strong> <?= h($order->guest->Address ?? '') ?></p>
+    <p><strong>Phone:</strong> <?= h($order->guest->Phone ?? '') ?></p>
+</div>
+
+<div class="panel-card">
+    <h2>Line Items</h2>
+
+    <table class="table admin-table">
+        <thead>
+        <tr>
+            <th>Product</th>
+            <th>Quantity</th>
+            <th>Unit Price</th>
+        </tr>
+        </thead>
+        <tbody>
+        <?php foreach ($order->order_items as $item): ?>
+            <tr>
+                <td><?= h($item->product->ProductName ?? '') ?></td>
+                <td><?= h((string)$item->Quantity) ?></td>
+                <td>$<?= number_format((float)$item->UnitPrice, 2) ?></td>
+            </tr>
+        <?php endforeach; ?>
+        </tbody>
+    </table>
+
+    <?php if (
+        isset($order->shopping_cart) &&
+        (int)($order->shopping_cart->InstallOptIn ?? 0) === 1
+    ): ?>
+        <p>
+            <strong>Installation Fee:</strong>
+            $<?= number_format((float)$order->shopping_cart->InstallFee, 2) ?>
+        </p>
+    <?php endif; ?>
+</div>
+
+<?php if ($payment): ?>
+<div class="panel-card">
+    <h2>Payment</h2>
+
+    <p>
+        <strong>Amount:</strong>
+        $<?= number_format((float)$payment->Amount, 2) ?>
+    </p>
+
+    <p>
+        <strong>Payment Method:</strong>
+        <?= h((string)$payment->PaymentMethod) ?>
+    </p>
 </div>
 <?php endif; ?>
+
+<?php if ($receipt): ?>
+<div class="panel-card">
+    <h2>Receipt</h2>
+
+    <p>
+        <strong>Receipt Number:</strong>
+        <?= h((string)$receipt->ReceiptNumber) ?>
+    </p>
+</div>
+<?php endif; ?>
+
+<?php if ($delivery): ?>
+<div class="panel-card">
+    <h2>Delivery</h2>
+
+    <p>
+        <strong>Address:</strong>
+        <?= h((string)$delivery->DeliveryAddress) ?>
+    </p>
+
+    <p>
+        <strong>Status:</strong>
+        <?= h((string)$delivery->DeliveryStatus) ?>
+    </p>
+</div>
+<?php endif; ?>
+
+<div class="panel-card">
+    <?= $this->Html->link(
+        'Back to Orders',
+        '/admin/orders'
+    ) ?>
+</div>
