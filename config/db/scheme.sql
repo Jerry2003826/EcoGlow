@@ -61,7 +61,6 @@ CREATE TABLE Inventory (
 CREATE TABLE Shopping_Cart (
     CartId INT PRIMARY KEY AUTO_INCREMENT,
     CustomerId INT NOT NULL UNIQUE,
-    CreatedDate DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (CustomerId) REFERENCES Customer(CustomerId)
 );
 
@@ -78,6 +77,7 @@ CREATE TABLE Cart_Item (
 CREATE TABLE Orders (
     OrderNo INT PRIMARY KEY AUTO_INCREMENT,
     CustomerId INT NOT NULL,
+    CartId INT NOT NULL UNIQUE,
     OrderDate DATETIME DEFAULT CURRENT_TIMESTAMP,
     TotalAmount DECIMAL(10,2) NOT NULL DEFAULT 0,
     OrderStatus ENUM(
@@ -88,6 +88,7 @@ CREATE TABLE Orders (
         'cancelled'
     ) DEFAULT 'pending',
     FOREIGN KEY (CustomerId) REFERENCES Customer(CustomerId)
+    FOREIGN KEY (CartId) REFERENCES Shopping_Cart(CartId)
 );
 
 CREATE TABLE Order_Item (
