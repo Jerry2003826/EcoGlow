@@ -32,7 +32,7 @@ try {
     <?= $this->Html->charset() ?>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title><?= h($title) ?> | Eco Glow Admin</title>
-    <?= $this->Html->css(['bootstrap.min', 'fonts', 'admin']) ?>
+    <?= $this->Html->css(['bootstrap.min', 'fonts', 'admin'], ['timestamp' => true]) ?>
 </head>
 <body class="admin-app">
 
