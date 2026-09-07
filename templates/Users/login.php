@@ -21,69 +21,60 @@ if (is_string($redirect) && $redirect !== '') {
     $loginUrl .= '?redirect=' . rawurlencode($redirect);
 }
 ?>
+<link rel="stylesheet" href = "/css/login.css" />
+<div class="login-page">
+    <div class="login">
+        <div class="login-content">
+            <h1>Log In</h1>
 
-<div class="container py-5">
-    <div class="row justify-content-center">
-        <div class="col-md-5">
-
-            <div class="card shadow-sm">
-                <div class="card-body">
-
-                    <h1 class="h3 mb-4">
-                        Employee Login
-                    </h1>
-
-                    <?= $this->Flash->render() ?>
-
-                    <?= $this->Form->create(null, [
-                        'url' => $loginUrl,
-                    ]) ?>
-
-                    <div class="mb-3">
-                        <?= $this->Form->control('email', [
-                            'label' => 'Email',
-                            'required' => true,
-                            'type' => 'email',
-                            'class' => 'form-control',
-                        ]) ?>
-                    </div>
-
-                    <div class="mb-3">
-                        <?= $this->Form->control('password', [
-                            'label' => 'Password',
-                            'required' => true,
-                            'type' => 'password',
-                            'class' => 'form-control',
-                        ]) ?>
-                    </div>
-
-                    <div class="mb-3">
-                        <div
-                            class="cf-turnstile"
-                            data-size="flexible"
-                            data-theme="light"
-                            data-callback="turnstileOnSuccess"
-                            data-error-callback="turnstileOnError"
-                            data-expired-callback="turnstileOnExpired"
-                            data-timeout-callback="turnstileOnTimeout"
-                            data-sitekey="<?= h((string)Configure::read('Captcha.turnstile.siteKey')) ?>">
-                        </div>
-                        <blockquote id="turnstile-message" style="display:none"></blockquote>
-                    </div>
-
-                    <div>
-                        <?= $this->Form->button('Sign In', [
-                            'class' => 'btn btn-primary',
-                        ]) ?>
-                    </div>
-
-                    <?= $this->Form->end() ?>
-
-                </div>
+            <div class ="login-image">
+                <?= $this->Html->image(
+                    'landing/pendants.jpg',
+                    [
+                        'class' => 'login-photo',
+                        'alt' => 'Pendant lights in a modern interior',
+                    ]
+                ) ?>
             </div>
-
         </div>
+
+         <div class="login-form">
+            <?= $this->Flash->render() ?>
+            <?= $this->Form->create(null, [
+                'url' => $loginUrl,
+            ]) ?>
+            <fieldset>
+                <?= $this->Form->control('email', [
+                    'label' => 'Email',
+                    'required' => true,
+                    'type' => 'email',
+                    'class' => 'form-control',
+                ]) ?>
+                <?= $this->Form->control('password', [
+                    'label' => 'Password',
+                    'required' => true,
+                    'type' => 'password',
+                    'class' => 'form-control',
+                ]) ?>
+                <div class="cf-turnstile"
+                    data-size="flexible"
+                    data-theme="light"
+                    data-callback="turnstileOnSuccess"
+                    data-error-callback="turnstileOnError"
+                    data-expired-callback="turnstileOnExpired"
+                    data-timeout-callback="turnstileOnTimeout"
+                    data-sitekey="<?= Configure::read('Captcha.turnstile.siteKey') ?>"
+            ></div>
+            <blockquote id="turnstile-message" style="display:none"></blockquote>
+            </fieldset>
+
+            <?= $this->Form->button('Login', ['class' => 'btn', 'disabled' => true]); ?>
+            <p><?= $this->Html->link('Sign Up', ['action' => 'add']) ?></p>
+            <?= $this->Form->end()?>
+        </div>
+        
     </div>
+
 </div>
 
 <script>
