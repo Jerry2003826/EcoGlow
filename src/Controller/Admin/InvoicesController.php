@@ -24,7 +24,7 @@ class InvoicesController extends AdminController
         $orders = $this->fetchTable('Orders')
             ->find()
             ->contain(['Guests', 'Payments'])
-            ->orderBy(['OrderId' => 'DESC'])
+            ->orderBy(['Orders.OrderId' => 'DESC'])
             ->all();
 
         $this->set(compact('invoices', 'orders'));
