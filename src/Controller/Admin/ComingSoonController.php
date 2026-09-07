@@ -1,4 +1,5 @@
 <?php
+// src/Controller/Admin/ComingSoonController.php
 
 declare(strict_types=1);
 
@@ -9,70 +10,74 @@ class ComingSoonController extends AdminController
     public function index(string $module)
     {
         $definitions = [
-            'orders' => [
-                'Order lifecycle management',
-                'Shipment workflow tracking',
-                'Customer order history',
+            'suppliers' => [
+                'Supplier profile management',
+                'Supplier contact directory',
+                'Supplier performance tracking',
             ],
-            'shipments' => [
-                'Packing management',
-                'Dispatch tracking',
-                'Carrier integrations',
+            'quotations' => [
+                'Quotation drafting workflow',
+                'Quotation approval management',
+                'Quotation customer delivery',
             ],
-            'products' => [
-                'Product catalogue maintenance',
-                'Variant management',
-                'Pricing administration',
+            'access' => [
+                'Role assignment management',
+                'Permission review dashboard',
+                'User access governance',
             ],
             'inventory' => [
-                'Stock adjustments',
-                'Warehouse allocation',
-                'Replenishment planning',
+                'Inventory adjustment tools',
+                'Reorder monitoring',
+                'Stock movement history',
             ],
             'customers' => [
-                'Customer profiles',
-                'Customer communication history',
-                'Customer account insights',
+                'Customer profile maintenance',
+                'Customer interaction history',
+                'Customer service activities',
+            ],
+            'products' => [
+                'Product catalogue editing',
+                'Product image management',
+                'Product availability tracking',
+            ],
+            'shipments' => [
+                'Shipment scheduling',
+                'Carrier tracking updates',
+                'Delivery workflow controls',
             ],
             'invoices' => [
                 'Invoice generation',
-                'Tax invoice history',
-                'Invoice delivery tracking',
+                'Invoice payment tracking',
+                'Invoice export options',
             ],
             'payments' => [
-                'Payment recording',
                 'Payment reconciliation',
-                'Payment audit trail',
+                'Payment history review',
+                'Refund request linkage',
             ],
             'refunds' => [
                 'Refund processing',
-                'Refund approvals',
-                'Refund reporting',
-            ],
-            'reports' => [
-                'Sales reporting',
-                'Financial reporting',
-                'Operational analytics',
+                'Refund approval workflow',
+                'Refund audit history',
             ],
             'messages' => [
-                'Inbox management',
-                'Message assignment',
+                'Customer message inbox',
+                'Message assignment tools',
                 'Response tracking',
             ],
-            'settings' => [
-                'Role administration',
-                'Store configuration',
-                'System preferences',
+            'reports' => [
+                'Sales performance analysis',
+                'Inventory reporting',
+                'Operational KPI dashboards',
             ],
         ];
 
-        $this->set([
-            'module' => $module,
-            'features' => $definitions[$module] ?? [
-                'Future capability one',
-                'Future capability two',
-                'Future capability three',
-            ],
-        ]);
+        $features = $definitions[$module] ?? [
+            ucfirst($module) . ' module administration',
+            ucfirst($module) . ' workflow management',
+            ucfirst($module) . ' reporting and monitoring',
+        ];
+
+        $this->set(compact('module', 'features'));
     }
 }

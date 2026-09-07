@@ -4,28 +4,22 @@
 use Cake\Datasource\ConnectionManager;
 
 $title = (string)$this->fetch('title');
-
 $identity = $this->request->getAttribute('identity');
 
-$email = '';
-$role = '';
-
-if ($identity) {
-    $email = (string)($identity->get('Email') ?? '');
-    $role = (string)($identity->get('UserRole') ?? '');
-}
+$email = (string)($identity?->get('Email') ?? '');
+$role = (string)($identity?->get('UserRole') ?? '');
 
 $lowStockCount = 0;
 
 try {
-    $connection = ConnectionManager::get('default');
-
-    $row = $connection->execute(
-        'SELECT COUNT(*) AS total
-         FROM Inventory i
-         INNER JOIN Product p ON p.ProductId = i.ProductId
-         WHERE i.Quantity <= i.LowStockThreshold'
-    )->fetch('assoc');
+    $row = ConnectionManager::get('default')
+        ->execute(
+            'SELECT COUNT(*) AS total
+             FROM Inventory i
+             INNER JOIN Product p ON p.ProductId = i.ProductId
+             WHERE i.Quantity <= i.LowStockThreshold'
+        )
+        ->fetch('assoc');
 
     $lowStockCount = (int)($row['total'] ?? 0);
 } catch (\Throwable $e) {
@@ -37,26 +31,16 @@ try {
 <head>
     <?= $this->Html->charset() ?>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-
     <title><?= h($title) ?> | Eco Glow Admin</title>
-
     <?= $this->Html->css(['bootstrap.min', 'fonts', 'admin']) ?>
-
-    <?= $this->fetch('meta') ?>
-    <?= $this->fetch('css') ?>
 </head>
 <body class="admin-app">
 
-<?= $this->Html->link(
-    'Skip to main content',
-    '#main-content',
-    ['class' => 'skip-link']
-) ?>
+<?= $this->Html->link('Skip to main content', '#main-content', ['class' => 'skip-link']) ?>
 
 <div class="admin-shell">
-    <?= $this->element('admin/sidebar', [
-        'lowStockCount' => $lowStockCount,
-    ]) ?>
+
+    <?= $this->element('admin/sidebar', ['lowStockCount' => $lowStockCount]) ?>
 
     <div id="admin-page" class="admin-page">
         <header class="admin-topbar">
@@ -65,34 +49,29 @@ try {
                 class="admin-menu-toggle"
                 type="button"
                 aria-controls="admin-sidebar"
-                aria-label="Toggle menu"
-            >
-                ☰
-            </button>
+            >☰</button>
 
-            <div class="admin-breadcrumbs">
-                Admin / <?= h($title) ?>
-            </div>
+            <nav class="admin-breadcrumb" aria-label="Breadcrumb">
+                <ol>
+                    <li>Admin</li>
+                    <li aria-current="page"><?= h($title) ?></li>
+                </ol>
+            </nav>
 
             <div class="admin-user">
                 <div class="admin-user-details">
-                    <div class="admin-user-email">
-                        <?= h($email) ?>
-                    </div>
-
-                    <div class="admin-user-role">
-                        <?= h($role) ?>
-                    </div>
+                    <div class="admin-user-email"><?= h($email) ?></div>
+                    <div class="admin-user-role"><?= h($role) ?></div>
                 </div>
 
-                <span>Low Stock: <?= (int)$lowStockCount ?></span>
+                <span class="admin-low-stock">
+                    Low Stock: <?= (int)$lowStockCount ?>
+                </span>
 
                 <?= $this->Html->link(
                     'Logout',
                     '/logout',
-                    [
-                        'class' => 'btn btn-outline-secondary btn-sm admin-logout',
-                    ]
+                    ['class' => 'btn btn-outline-secondary btn-sm admin-logout']
                 ) ?>
             </div>
         </header>
@@ -102,12 +81,13 @@ try {
             <?= $this->fetch('content') ?>
         </main>
     </div>
+
 </div>
 
 <div id="admin-overlay" class="admin-overlay" hidden></div>
 
 <?= $this->Html->script(['bootstrap.bundle.min', 'admin']) ?>
-
 <?= $this->fetch('script') ?>
+
 </body>
 </html>

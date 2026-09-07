@@ -65,18 +65,14 @@ $transactions = $widgets['transactions'] ?? [];
         <div class="panel-card">
             <h2>Needs Attention</h2>
 
-            <?php if ($lowStockItems): ?>
-                <ul>
-                    <?php foreach ($lowStockItems as $item): ?>
-                        <li>
-                            <?= h($item['name']) ?>
-                            (<?= (int)$item['quantity'] ?>)
-                        </li>
-                    <?php endforeach; ?>
-                </ul>
-            <?php else: ?>
-                <div class="empty-state">No low stock items.</div>
-            <?php endif; ?>
+            <ul class="attention-list">
+                <?php foreach ($lowStockItems as $item): ?>
+                    <li>
+                        <?= h($item['name']) ?>
+                        (<?= (int)$item['quantity'] ?>)
+                    </li>
+                <?php endforeach; ?>
+            </ul>
         </div>
     <?php endif; ?>
 
@@ -86,35 +82,35 @@ $transactions = $widgets['transactions'] ?? [];
 
             <p>
                 Revenue:
-                <strong>
-                    $<?= number_format((float)$financial['revenue'], 2) ?>
-                </strong>
+                $<?= number_format((float)$financial['revenue'], 2) ?>
             </p>
         </div>
 
-        <div class="panel-card">
+        <div class="panel-card panel-wide">
             <h2>Recent Payments</h2>
 
-            <table class="table admin-table">
-                <thead>
-                <tr>
-                    <th>PaymentId</th>
-                    <th>OrderId</th>
-                    <th>Amount</th>
-                    <th>PaymentDate</th>
-                </tr>
-                </thead>
-                <tbody>
-                <?php foreach ($transactions as $transaction): ?>
+            <div class="admin-table-wrap">
+                <table class="table admin-table">
+                    <thead>
                     <tr>
-                        <td><?= (int)$transaction['PaymentId'] ?></td>
-                        <td><?= (int)$transaction['OrderId'] ?></td>
-                        <td>$<?= number_format((float)$transaction['Amount'], 2) ?></td>
-                        <td><?= h((string)$transaction['PaymentDate']) ?></td>
+                        <th>PaymentId</th>
+                        <th>OrderId</th>
+                        <th>Amount</th>
+                        <th>PaymentDate</th>
                     </tr>
-                <?php endforeach; ?>
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                    <?php foreach ($transactions as $transaction): ?>
+                        <tr>
+                            <td><?= (int)$transaction['PaymentId'] ?></td>
+                            <td><?= (int)$transaction['OrderId'] ?></td>
+                            <td>$<?= number_format((float)$transaction['Amount'], 2) ?></td>
+                            <td><?= h((string)$transaction['PaymentDate']) ?></td>
+                        </tr>
+                    <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
         </div>
     <?php endif; ?>
 </div>
