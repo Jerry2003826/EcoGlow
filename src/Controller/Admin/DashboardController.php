@@ -1,4 +1,5 @@
 <?php
+// src/Controller/Admin/DashboardController.php
 
 declare(strict_types=1);
 
@@ -6,7 +7,6 @@ namespace App\Controller\Admin;
 
 use App\Service\PermissionService;
 use Cake\Http\Exception\ForbiddenException;
-use Cake\ORM\TableRegistry;
 
 class DashboardController extends AdminController
 {
@@ -25,106 +25,80 @@ class DashboardController extends AdminController
             throw new ForbiddenException('Forbidden');
         }
 
-        $connection = TableRegistry::getTableLocator()
-            ->get('Users')
-            ->getConnection();
+        $ordersTable = $this->fetchTable('Orders');
+        $paymentsTable = $this->fetchTable('Payments');
+        $inventoryTable = $this->fetchTable('Inventory');
+
+        $today = date('Y-m-d');
 
         $widgets = [];
 
-        if ($permissionService->hasPermission($userId, 'orders.view')) {
-            $widgets['orders'] = $connection
-                ->execute(
-                    "SELECT business_date, orders_total, gross_sales_cents, tax_cents
-                     FROM v_business_dashboard_daily
-                     WHERE business_date = DATE(
-                         COALESCE(
-                             CONVERT_TZ(UTC_TIMESTAMP(), 'UTC', 'Australia/Melbourne'),
-                             UTC_TIMESTAMP()
-                         )
-                     )
-                     LIMIT 1"
-                )
-                ->fetch('assoc') ?: [];
+        $widgets['orders'] = [
+            'orders_total' => $ordersTable->find()
+                ->where([
+                    'DATE(OrderDate) =' => $today,
+                ])
+                ->count(),
+        ];
 
-            $widgets['pendingShipment'] = $this->fetchTable('SalesOrders')
-                ->find('pendingShipment')
-                ->count();
-        }
+        $widgets['pendingShipment'] = $ordersTable->find()
+            ->where([
+                'Status <>' => 'delivered',
+            ])
+            ->count();
 
-        if (
-            $permissionService->hasPermission($userId, 'inventory.view') ||
-            $permissionService->hasPermission($userId, 'inventory.adjust')
-        ) {
-            $widgets['inventory'] = $connection
-                ->execute(
-                    'SELECT COUNT(*) AS total
-                     FROM v_low_stock_items'
-                )
-                ->fetch('assoc') ?: [];
+        if ($permissionService->hasPermission($userId, 'inventory.view')) {
+            $lowStockItems = $inventoryTable->find()
+                ->contain(['Products'])
+                ->all();
 
-            $rows = $connection
-                ->execute(
-                    'SELECT
-                        product_name,
-                        variant_name,
-                        sku,
-                        quantity_available
-                     FROM v_low_stock_items
-                     LIMIT 5'
-                )
-                ->fetchAll('assoc');
+            $filtered = [];
 
-            $widgets['lowStockItems'] = array_map(
-                static function (array $row): array {
-                    $row['name'] =
-                        trim(
-                            (string)$row['product_name'] .
-                            ' ' .
-                            (string)$row['variant_name']
-                        );
+            foreach ($lowStockItems as $item) {
+                if ((int)$item->Quantity <= (int)$item->LowStockThreshold) {
+                    $filtered[] = [
+                        'name' => $item->product->ProductName ?? '',
+                        'quantity' => (int)$item->Quantity,
+                    ];
+                }
+            }
 
-                    return $row;
-                },
-                $rows
-            );
-        }
+            $widgets['inventory'] = [
+                'total' => count($filtered),
+            ];
 
-        if ($permissionService->hasPermission($userId, 'messages.manage')) {
-            $widgets['messages'] = $connection
-                ->execute(
-                    'SELECT COUNT(*) AS total
-                     FROM contact_messages
-                     WHERE is_read = 0'
-                )
-                ->fetch('assoc') ?: [];
+            $widgets['lowStockItems'] = $filtered;
         }
 
         if ($permissionService->hasPermission($userId, 'reports.financial')) {
-            $widgets['financial'] = $connection
-                ->execute(
-                    'SELECT business_date, gross_sales_cents, tax_cents
-                     FROM v_business_dashboard_daily
-                     ORDER BY business_date DESC
-                     LIMIT 1'
-                )
-                ->fetch('assoc') ?: [];
+            $totalRevenue = 0.00;
 
-            $widgets['transactions'] = $connection
-                ->execute(
-                    'SELECT
-                        transaction_type,
-                        reference_number,
-                        amount_cents,
-                        occurred_at
-                     FROM v_recent_transactions
-                     ORDER BY occurred_at DESC
-                     LIMIT 10'
-                )
-                ->fetchAll('assoc');
+            $payments = $paymentsTable->find()
+                ->orderBy([
+                    'PaymentId' => 'DESC',
+                ])
+                ->all();
+
+            foreach ($payments as $payment) {
+                $totalRevenue += (float)$payment->Amount;
+            }
+
+            $widgets['financial'] = [
+                'revenue' => $totalRevenue,
+            ];
+
+            $widgets['transactions'] = [];
+
+            foreach ($payments as $payment) {
+                $widgets['transactions'][] = [
+                    'PaymentId' => $payment->PaymentId,
+                    'Amount' => (float)$payment->Amount,
+                    'PaymentDate' => $payment->PaymentDate ?? null,
+                    'OrderId' => $payment->OrderId,
+                ];
+            }
         }
 
-        $this->set([
-            'widgets' => $widgets,
-        ]);
+        $this->set(compact('widgets'));
     }
 }

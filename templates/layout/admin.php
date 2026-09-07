@@ -1,166 +1,88 @@
 <?php
+// templates/layout/admin.php
 
-use Cake\ORM\TableRegistry;
+use Cake\Datasource\ConnectionManager;
 
 $identity = $this->request->getAttribute('identity');
 
 $email = '';
-$roleName = 'Staff';
-$unreadCount = 0;
-$lowStockCount = 0;
+$role = '';
 
-if ($identity !== null) {
-    $email = (string)($identity->get('email') ?? '');
-    $userId = (int)$identity->getIdentifier();
+if ($identity) {
+    $email = (string)(
+        $identity->get('Email')
+        ?? ($identity->getOriginalData()->Email ?? '')
+    );
 
-    try {
-        $userRoles = TableRegistry::getTableLocator()
-            ->get('UserRoles')
-            ->find()
-            ->contain(['Roles'])
-            ->where([
-                'UserRoles.user_id' => $userId,
-                'UserRoles.revoked_at IS' => null,
-            ])
-            ->all();
-
-        $roleNames = [];
-        foreach ($userRoles as $userRole) {
-            $name = (string)($userRole->role->name ?? '');
-            if ($name !== '') {
-                $roleNames[] = $name;
-            }
-        }
-
-        if ($roleNames !== []) {
-            $roleName = implode(', ', $roleNames);
-        }
-    } catch (\Throwable $exception) {
-        $roleName = (string)(
-            $identity->get('role_name')
-            ?? $identity->get('role_label')
-            ?? 'Staff'
-        );
-    }
-
-    try {
-        $unreadRow = TableRegistry::getTableLocator()
-            ->get('Users')
-            ->getConnection()
-            ->execute(
-                'SELECT COUNT(*) AS total FROM contact_messages WHERE is_read = 0'
-            )
-            ->fetch('assoc');
-        $unreadCount = (int)($unreadRow['total'] ?? 0);
-    } catch (\Throwable $exception) {
-        $unreadCount = 0;
-    }
-
-    try {
-        $lowStockRow = TableRegistry::getTableLocator()
-            ->get('Users')
-            ->getConnection()
-            ->execute(
-                'SELECT COUNT(*) AS total FROM v_low_stock_items'
-            )
-            ->fetch('assoc');
-        $lowStockCount = (int)($lowStockRow['total'] ?? 0);
-    } catch (\Throwable $exception) {
-        $lowStockCount = 0;
-    }
+    $role = (string)(
+        $identity->get('UserRole')
+        ?? ($identity->getOriginalData()->UserRole ?? '')
+    );
 }
 
-$pageTitle = (string)($this->fetch('title') ?: 'Dashboard');
+$lowStockCount = 0;
+
+try {
+    $connection = ConnectionManager::get('default');
+
+    $row = $connection->execute(
+        '
+        SELECT COUNT(*) AS total
+        FROM Inventory i
+        INNER JOIN Product p
+            ON p.ProductId = i.ProductId
+        WHERE i.Quantity <= i.LowStockThreshold
+        '
+    )->fetch('assoc');
+
+    $lowStockCount = (int)($row['total'] ?? 0);
+} catch (\Throwable $exception) {
+    $lowStockCount = 0;
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title><?= h($pageTitle !== '' ? $pageTitle . ' · Eco Glow Admin' : 'Eco Glow Admin') ?></title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title><?= h($this->fetch('title')) ?> | Eco Glow Admin</title>
 
-    <?= $this->Html->css(['bootstrap.min', 'fonts', 'admin']) ?>
+    <?= $this->Html->css('bootstrap.min') ?>
+    <?= $this->Html->css('admin') ?>
+
+    <?= $this->fetch('meta') ?>
+    <?= $this->fetch('css') ?>
+    <?= $this->fetch('script') ?>
 </head>
-<body class="admin-app">
-
-<?= $this->Html->link(
-    'Skip to main content',
-    '#main-content',
-    [
-        'class' => 'skip-link',
-    ]
-) ?>
-
+<body>
 <div class="admin-shell">
+    <aside class="admin-sidebar-wrap">
+        <?= $this->element('admin/sidebar') ?>
+    </aside>
 
-    <?= $this->element('admin/sidebar', [
-        'unreadCount' => $unreadCount,
-        'lowStockCount' => $lowStockCount,
-    ]) ?>
-
-    <div id="admin-page" class="admin-page">
-
+    <main class="admin-main">
         <header class="admin-topbar">
-
-            <button
-                id="admin-menu-toggle"
-                class="admin-menu-toggle"
-                type="button"
-                aria-controls="admin-sidebar"
-                aria-expanded="false"
-                aria-label="Open navigation">
-                ☰
-            </button>
-
-            <div class="admin-breadcrumbs">
-                <nav class="admin-breadcrumb" aria-label="Breadcrumb">
-                    <ol>
-                        <li>Admin</li>
-                        <li aria-current="page"><?= h($pageTitle) ?></li>
-                    </ol>
-                </nav>
+            <div class="admin-topbar-left">
+                <strong>Eco Glow Admin</strong>
             </div>
 
-            <div class="admin-user">
+            <div class="admin-topbar-right">
+                <span><?= h($email) ?></span>
+                <span><?= h($role) ?></span>
+                <span>Low Stock: <?= h((string)$lowStockCount) ?></span>
 
-                <div class="admin-user-details">
-                    <div class="admin-user-email">
-                        <?= h($email) ?>
-                    </div>
-
-                    <div class="admin-user-role">
-                        <?= h($roleName) ?>
-                    </div>
-                </div>
-
-                <?= $this->Form->postLink(
+                <?= $this->Html->link(
                     'Logout',
                     '/logout',
-                    [
-                        'class' => 'btn btn-outline-secondary btn-sm admin-logout',
-                    ]
+                    ['class' => 'btn btn-outline-secondary']
                 ) ?>
-
             </div>
-
         </header>
 
-        <main id="main-content" class="admin-content">
+        <section class="admin-content">
             <?= $this->Flash->render() ?>
             <?= $this->fetch('content') ?>
-        </main>
-
-    </div>
-
+        </section>
+    </main>
 </div>
-
-<div
-    id="admin-overlay"
-    class="admin-overlay"
-    hidden
-    aria-hidden="true"></div>
-
-<?= $this->Html->script(['bootstrap.bundle.min', 'admin']) ?>
-
 </body>
 </html>

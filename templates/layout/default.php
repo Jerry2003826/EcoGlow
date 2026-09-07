@@ -61,7 +61,9 @@ $cakeDescription = 'Eco Glow Lighting';
         ?>
         <?= $this->Html->link('Services', '/#services') ?>
 
-        <?= $this->Html->link('Shop', '/#shop') ?>
+        <?= $this->Html->link('Shop', '/products') ?>
+
+        <?= $this->Html->link('Cart', '/cart') ?>
 
         <?= $this->Html->link('About Us', '/#about') ?>
 

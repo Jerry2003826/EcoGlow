@@ -1,12 +1,17 @@
 <?php
-
-declare(strict_types=1);
+// config/routes.php
 
 use Cake\Routing\Route\DashedRoute;
 use Cake\Routing\RouteBuilder;
 
 return function (RouteBuilder $routes): void {
     $routes->setRouteClass(DashedRoute::class);
+
+    $routes->connect('/', [
+        'controller' => 'Pages',
+        'action' => 'display',
+        'home',
+    ]);
 
     $routes->connect('/login', [
         'controller' => 'Users',
@@ -18,41 +23,53 @@ return function (RouteBuilder $routes): void {
         'action' => 'logout',
     ]);
 
-    $routes->scope('/', function (RouteBuilder $builder): void {
-        $builder->connect('/', [
-            'controller' => 'Pages',
-            'action' => 'display',
-            'home',
-        ]);
+    $routes->connect('/shop', [
+        'controller' => 'Products',
+        'action' => 'index',
+    ]);
 
-        $builder->connect('/shop', [
-            'controller' => 'Pages',
-            'action' => 'display',
-            'home',
-        ]);
+    $routes->connect('/products', [
+        'controller' => 'Products',
+        'action' => 'index',
+    ]);
 
-        $builder->connect('/services', [
-            'controller' => 'Pages',
-            'action' => 'display',
-            'home',
-        ]);
+    $routes->connect('/cart', [
+        'controller' => 'Cart',
+        'action' => 'index',
+    ]);
 
-        $builder->connect('/about', [
-            'controller' => 'Pages',
-            'action' => 'display',
-            'home',
-        ]);
+    $routes->connect('/checkout', [
+        'controller' => 'Checkout',
+        'action' => 'index',
+    ]);
 
-        $builder->fallbacks();
-    });
+    $routes->connect(
+        '/orders/receipt/{id}',
+        [
+            'controller' => 'Orders',
+            'action' => 'receipt',
+        ]
+    )->setPass(['id']);
 
-    $routes->prefix('Admin', function (RouteBuilder $builder): void {
-        $builder->connect('/', [
+    $routes->connect('/services', [
+        'controller' => 'Pages',
+        'action' => 'display',
+        'home',
+    ]);
+
+    $routes->connect('/about', [
+        'controller' => 'Pages',
+        'action' => 'display',
+        'home',
+    ]);
+
+    $routes->prefix('Admin', function (RouteBuilder $routes): void {
+        $routes->connect('/', [
             'controller' => 'Dashboard',
             'action' => 'index',
         ]);
 
-        $builder->connect(
+        $routes->connect(
             '/coming-soon/{module}',
             [
                 'controller' => 'ComingSoon',
@@ -64,6 +81,8 @@ return function (RouteBuilder $routes): void {
         ])
         ->setPass(['module']);
 
-        $builder->fallbacks();
+        $routes->fallbacks();
     });
+
+    $routes->fallbacks();
 };

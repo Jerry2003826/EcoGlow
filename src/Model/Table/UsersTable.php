@@ -1,4 +1,5 @@
 <?php
+// src/Model/Table/UsersTable.php
 
 declare(strict_types=1);
 
@@ -14,40 +15,22 @@ class UsersTable extends Table
     {
         parent::initialize($config);
 
-        $this->setTable('users');
-        $this->setPrimaryKey('id');
-
-        $this->hasMany('UserRoles', [
-            'foreignKey' => 'user_id',
-        ]);
-
-        $this->hasMany('UserPermissionOverrides', [
-            'foreignKey' => 'user_id',
-        ]);
+        $this->setTable('User');
+        $this->setPrimaryKey('UserId');
+        $this->setDisplayField('Email');
     }
 
     public function validationDefault(Validator $validator): Validator
     {
-        $validator
-            ->email('email')
-            ->requirePresence('email', 'create')
-            ->notEmptyString('email');
-
-        $validator
-            ->scalar('password')
-            ->requirePresence('password', 'create')
-            ->notEmptyString('password');
+        $validator->email('Email');
 
         return $validator;
     }
 
-    public function findActiveAuth(
-        SelectQuery $query,
-        array $options
-    ): SelectQuery {
+    public function findActiveAuth(SelectQuery $query): SelectQuery
+    {
         return $query->where([
-            'Users.status' => 'active',
-            'Users.deleted IS' => null,
+            'Status' => 'active',
         ]);
     }
 }

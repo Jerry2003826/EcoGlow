@@ -1,141 +1,87 @@
 <?php
 // templates/Admin/Dashboard/index.php
 
-use App\Service\Money;
-
-$orders = (int)($widgets['orders']['orders_total'] ?? 0);
-$pendingShipment = (int)($widgets['pendingShipment'] ?? 0);
-$lowStock = (int)($widgets['inventory']['total'] ?? 0);
-$messages = (int)($widgets['messages']['total'] ?? 0);
-$lowStockItems = $widgets['lowStockItems'] ?? [];
-$financial = $widgets['financial'] ?? [];
+$orders = $widgets['orders'] ?? null;
+$inventory = $widgets['inventory'] ?? null;
+$financial = $widgets['financial'] ?? null;
 $transactions = $widgets['transactions'] ?? [];
+$lowStockItems = $widgets['lowStockItems'] ?? [];
+$pendingShipment = $widgets['pendingShipment'] ?? null;
 ?>
 
-<section>
-    <h1 class="page-title">Dashboard</h1>
+<h1 class="page-title">Dashboard</h1>
 
-    <?php if ($lowStock > 0): ?>
-        <div class="panel-card">
-            <strong>Low inventory alert:</strong>
-            <?= h((string)$lowStock) ?>
-            product variant(s) are at or below reorder levels.
-            <?= $this->Html->link('View low stock inventory', '/admin/inventory') ?>
-        </div>
+<div class="panel-card">
+    <?php if ($orders): ?>
+        <h2>Orders Today</h2>
+        <p><?= (int)$orders['orders_total'] ?></p>
     <?php endif; ?>
 
-    <div class="dashboard-grid">
-        <div class="stat-card">
-            <div class="stat-label">
-                <?= $this->Html->link('Today\'s Orders', '/admin/orders') ?>
-            </div>
-            <div class="stat-value">
-                <?= h((string)$orders) ?>
-            </div>
-        </div>
+    <?php if ($pendingShipment !== null): ?>
+        <h2>Pending Shipment</h2>
+        <p><?= (int)$pendingShipment ?></p>
+    <?php endif; ?>
+</div>
 
-        <div class="stat-card">
-            <div class="stat-label">
-                <?= $this->Html->link('Pending Shipment', '/admin/orders') ?>
-            </div>
-            <div class="stat-value">
-                <?= h((string)$pendingShipment) ?>
-            </div>
-        </div>
+<?php if ($inventory): ?>
+<div class="panel-card">
+    <h2>Low Inventory Alert</h2>
 
-        <div class="stat-card">
-            <div class="stat-label">
-                <?= $this->Html->link('Low Stock Items', '/admin/inventory') ?>
-            </div>
-            <div class="stat-value">
-                <?= h((string)$lowStock) ?>
-            </div>
-        </div>
+    <p>
+        <?= (int)$inventory['total'] ?>
+        low stock item(s)
+    </p>
 
-        <div class="stat-card">
-            <div class="stat-label">
-                Unread Messages
-            </div>
-            <div class="stat-value">
-                <?= h((string)$messages) ?>
-            </div>
-        </div>
-    </div>
+    <?php if (!empty($lowStockItems)): ?>
+        <ul>
+            <?php foreach ($lowStockItems as $item): ?>
+                <li>
+                    <?= h($item['name']) ?>
+                    (<?= (int)$item['quantity'] ?>)
+                </li>
+            <?php endforeach; ?>
+        </ul>
+    <?php endif; ?>
 
-    <div class="content-grid">
-        <div class="panel-card">
-            <h2>Needs Attention</h2>
+    <?= $this->Html->link('Inventory', [
+        'controller' => 'Inventory',
+        'action' => 'index',
+    ]) ?>
+</div>
+<?php endif; ?>
 
-            <?php if (!empty($lowStockItems)): ?>
-                <ul class="attention-list">
-                    <?php foreach ($lowStockItems as $item): ?>
-                        <li>
-                            <?= h($item['name'] ?? '') ?>
-                            (<?= h($item['sku'] ?? '') ?>)
-                            — <?= h((string)($item['quantity_available'] ?? 0)) ?> on hand
-                        </li>
-                    <?php endforeach; ?>
-                </ul>
-            <?php else: ?>
-                <div class="empty-state">
-                    No items require attention.
-                </div>
-            <?php endif; ?>
-        </div>
+<?php if ($financial): ?>
+<div class="panel-card">
+    <h2>Financial Snapshot</h2>
 
-        <div class="panel-card">
-            <h2>Financial Snapshot</h2>
+    <p>
+        Revenue:
+        $<?= number_format((float)$financial['revenue'], 2) ?>
+    </p>
+</div>
 
-            <p>
-                Gross Sales:
-                <?= h(Money::formatAud((int)($financial['gross_sales_cents'] ?? 0))) ?>
-            </p>
+<div class="panel-card">
+    <h2>Recent Payments</h2>
 
-            <p>
-                Tax:
-                <?= h(Money::formatAud((int)($financial['tax_cents'] ?? 0))) ?>
-            </p>
-        </div>
-        <div class="panel-card">
-            <h2>Messages</h2>
-
-            <p>
-                Unread Messages:
-                <?= h((string)$messages) ?>
-            </p>
-        </div>
-    </div>
-
-    <div class="panel-card">
-        <h2>Recent Transactions</h2>
-
-        <?php if (!empty($transactions)): ?>
-            <table class="table admin-table">
-                <thead>
-                <tr>
-                    <th>Type</th>
-                    <th>Reference</th>
-                    <th>Amount</th>
-                    <th>Occurred</th>
-                </tr>
-                </thead>
-                <tbody>
-                <?php foreach ($transactions as $transaction): ?>
-                    <tr>
-                        <td><?= h($transaction['transaction_type'] ?? '') ?></td>
-                        <td><?= h($transaction['reference_number'] ?? '') ?></td>
-                        <td>
-                            <?= h(Money::formatAud((int)($transaction['amount_cents'] ?? 0))) ?>
-                        </td>
-                        <td><?= h((string)($transaction['occurred_at'] ?? '')) ?></td>
-                    </tr>
-                <?php endforeach; ?>
-                </tbody>
-            </table>
-        <?php else: ?>
-            <div class="empty-state">
-                No recent transactions.
-            </div>
-        <?php endif; ?>
-    </div>
-</section>
+    <table class="table admin-table">
+        <thead>
+        <tr>
+            <th>PaymentId</th>
+            <th>OrderId</th>
+            <th>Amount</th>
+            <th>PaymentDate</th>
+        </tr>
+        </thead>
+        <tbody>
+        <?php foreach ($transactions as $transaction): ?>
+            <tr>
+                <td><?= (int)$transaction['PaymentId'] ?></td>
+                <td><?= (int)$transaction['OrderId'] ?></td>
+                <td>$<?= number_format((float)$transaction['Amount'], 2) ?></td>
+                <td><?= h((string)$transaction['PaymentDate']) ?></td>
+            </tr>
+        <?php endforeach; ?>
+        </tbody>
+    </table>
+</div>
+<?php endif; ?>

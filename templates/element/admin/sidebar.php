@@ -1,179 +1,121 @@
 <?php
+// templates/element/admin/sidebar.php
 
 $currentController = (string)$this->request->getParam('controller');
-$currentModule = (string)($this->request->getParam('pass')[0] ?? '');
-
-$unreadCount = (int)($unreadCount ?? 0);
-$lowStockCount = (int)($lowStockCount ?? 0);
-$dashboardActive = $currentController === 'Dashboard';
-$ordersActive = $currentController === 'Orders';
-$inventoryActive = $currentController === 'Inventory';
-$suppliersActive = $currentController === 'Suppliers';
-$customersActive = $currentController === 'Customers';
-$quotationsActive = $currentController === 'Quotations';
-$invoicesActive = $currentController === 'Invoices';
-$messagesActive = $currentController === 'Messages';
-$accessActive = $currentController === 'Access';
 
 $linkOptions = static function (bool $active): array {
-    $options = [
-        'class' => 'sidebar-link' . ($active ? ' active' : ''),
-        'escape' => false,
+    return [
+        'class' => $active ? 'is-active' : '',
     ];
-
-    if ($active) {
-        $options['aria-current'] = 'page';
-    }
-
-    return $options;
 };
-
-$comingSoonActive = static function (string $module) use ($currentController, $currentModule): bool {
-    return $currentController === 'ComingSoon' && $currentModule === $module;
-};
-
-$messagesLabel = 'Messages';
-if ($unreadCount > 0) {
-    $messagesLabel .= ' <span class="sidebar-badge">' . h((string)$unreadCount) . '</span>';
-}
-
-$inventoryLabel = 'Inventory';
-if ($lowStockCount > 0) {
-    $inventoryLabel .= ' <span class="sidebar-badge">' . h((string)$lowStockCount) . '</span>';
-}
 ?>
 
-<aside
-    id="admin-sidebar"
-    class="admin-sidebar"
-    aria-label="Primary navigation">
+<nav class="admin-sidebar">
+    <div class="sidebar-group">
+        <h3>Main</h3>
 
-    <div class="admin-brand">
-        Eco Glow Lighting
-    </div>
-
-    <div class="admin-sidebar-scroll">
-        <div class="sidebar-group">
-            <div class="sidebar-group-title">
-                Operations
-            </div>
-
-            <?= $this->Html->link(
-                'Dashboard',
-                '/admin',
-                $linkOptions($dashboardActive)
-            ) ?>
-
-            <?= $this->Html->link(
-                'Orders',
-                '/admin/orders',
-                $linkOptions($ordersActive)
-            ) ?>
-
-            <?= $this->Html->link(
-                'Shipments',
-                '/admin/coming-soon/shipments',
-                $linkOptions($comingSoonActive('shipments'))
-            ) ?>
-        </div>
-
-        <div class="sidebar-group">
-            <div class="sidebar-group-title">
-                Catalogue
-            </div>
-
-            <?= $this->Html->link(
-                'Products',
-                '/admin/coming-soon/products',
-                $linkOptions($comingSoonActive('products'))
-            ) ?>
-
-            <?= $this->Html->link(
-                $inventoryLabel,
-                '/admin/inventory',
-                $linkOptions($inventoryActive)
-            ) ?>
-
-            <?= $this->Html->link(
-                'Suppliers',
-                '/admin/suppliers',
-                $linkOptions($suppliersActive)
-            ) ?>
-        </div>
-
-        <div class="sidebar-group">
-            <div class="sidebar-group-title">
-                Customers
-            </div>
-
-            <?= $this->Html->link(
-                'Customers',
-                '/admin/customers',
-                $linkOptions($customersActive)
-            ) ?>
-
-            <?= $this->Html->link(
-                $messagesLabel,
-                '/admin/messages',
-                $linkOptions($messagesActive)
-            ) ?>
-        </div>
-
-        <div class="sidebar-group">
-            <div class="sidebar-group-title">
-                Finance
-            </div>
-
-            <?= $this->Html->link(
-                'Quotations',
-                '/admin/quotations',
-                $linkOptions($quotationsActive)
-            ) ?>
-
-            <?= $this->Html->link(
-                'Invoices',
-                '/admin/invoices',
-                $linkOptions($invoicesActive)
-            ) ?>
-
-            <?= $this->Html->link(
-                'Payments',
-                '/admin/coming-soon/payments',
-                $linkOptions($comingSoonActive('payments'))
-            ) ?>
-
-            <?= $this->Html->link(
-                'Refunds',
-                '/admin/coming-soon/refunds',
-                $linkOptions($comingSoonActive('refunds'))
-            ) ?>
-
-            <?= $this->Html->link(
-                'Reports',
-                '/admin/coming-soon/reports',
-                $linkOptions($comingSoonActive('reports'))
-            ) ?>
-        </div>
-
-        <div class="sidebar-group">
-            <div class="sidebar-group-title">
-                Settings
-            </div>
-
-            <?= $this->Html->link(
-                'Settings',
-                '/admin/access',
-                $linkOptions($accessActive)
-            ) ?>
-        </div>
-    </div>
-
-    <div class="sidebar-footer">
         <?= $this->Html->link(
-            'Back to Storefront',
-            '/',
-            ['class' => 'sidebar-storefront']
+            'Dashboard',
+            '/admin',
+            $linkOptions($currentController === 'Dashboard')
+        ) ?>
+
+        <?= $this->Html->link(
+            'Orders',
+            '/admin/orders',
+            $linkOptions($currentController === 'Orders')
         ) ?>
     </div>
 
-</aside>
+    <div class="sidebar-group">
+        <h3>Operations</h3>
+
+        <?= $this->Html->link(
+            'Inventory',
+            '/admin/coming-soon/inventory',
+            $linkOptions($currentController === 'Inventory')
+        ) ?>
+
+        <?= $this->Html->link(
+            'Suppliers',
+            '/admin/coming-soon/suppliers',
+            $linkOptions($currentController === 'Suppliers')
+        ) ?>
+
+        <?= $this->Html->link(
+            'Customers',
+            '/admin/coming-soon/customers',
+            $linkOptions($currentController === 'Customers')
+        ) ?>
+
+        <?= $this->Html->link(
+            'Products',
+            '/admin/coming-soon/products',
+            $linkOptions($currentController === 'Products')
+        ) ?>
+
+        <?= $this->Html->link(
+            'Shipments',
+            '/admin/coming-soon/shipments',
+            $linkOptions($currentController === 'Shipments')
+        ) ?>
+    </div>
+
+    <div class="sidebar-group">
+        <h3>Sales</h3>
+
+        <?= $this->Html->link(
+            'Quotations',
+            '/admin/coming-soon/quotations',
+            $linkOptions($currentController === 'Quotations')
+        ) ?>
+
+        <?= $this->Html->link(
+            'Invoices',
+            '/admin/coming-soon/invoices',
+            $linkOptions($currentController === 'Invoices')
+        ) ?>
+
+        <?= $this->Html->link(
+            'Payments',
+            '/admin/coming-soon/payments',
+            $linkOptions($currentController === 'Payments')
+        ) ?>
+
+        <?= $this->Html->link(
+            'Refunds',
+            '/admin/coming-soon/refunds',
+            $linkOptions($currentController === 'Refunds')
+        ) ?>
+    </div>
+
+    <div class="sidebar-group">
+        <h3>Communication</h3>
+
+        <?= $this->Html->link(
+            'Messages',
+            '/admin/coming-soon/messages',
+            $linkOptions($currentController === 'Messages')
+        ) ?>
+    </div>
+
+    <div class="sidebar-group">
+        <h3>Reporting</h3>
+
+        <?= $this->Html->link(
+            'Reports',
+            '/admin/coming-soon/reports',
+            $linkOptions($currentController === 'Reports')
+        ) ?>
+    </div>
+
+    <div class="sidebar-group">
+        <h3>Administration</h3>
+
+        <?= $this->Html->link(
+            'Access',
+            '/admin/coming-soon/access',
+            $linkOptions($currentController === 'Access')
+        ) ?>
+    </div>
+</nav>

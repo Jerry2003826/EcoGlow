@@ -1,34 +1,34 @@
 <?php
+// src/Identity/PermissionIdentity.php
 
 declare(strict_types=1);
 
 namespace App\Identity;
 
 use App\Service\PermissionService;
-use Authentication\IdentityInterface as AuthenticationIdentity;
+use Authentication\IdentityInterface as AuthenticationIdentityInterface;
 use Authorization\AuthorizationServiceInterface;
 use Authorization\IdentityDecorator;
-use Authorization\IdentityInterface;
+use Authorization\IdentityInterface as AuthorizationIdentityInterface;
 
-class PermissionIdentity extends IdentityDecorator implements IdentityInterface, AuthenticationIdentity
+class PermissionIdentity extends IdentityDecorator implements
+    AuthorizationIdentityInterface,
+    AuthenticationIdentityInterface
 {
     public function __construct(
         AuthorizationServiceInterface $authorizationService,
         $identity
     ) {
-        parent::__construct(
-            $authorizationService,
-            $identity
-        );
+        parent::__construct($authorizationService, $identity);
     }
 
     public function getIdentifier(): array|string|int|null
     {
-        if (is_object($this->identity) && method_exists($this->identity, 'getIdentifier')) {
-            return $this->identity->getIdentifier();
-        }
+        $data = $this->getOriginalData();
 
-        return $this->identity['id'] ?? null;
+        return $data->UserId
+            ?? $data->id
+            ?? null;
     }
 
     public function hasPermission(string $permissionKey): bool

@@ -1,227 +1,204 @@
-CREATE TABLE User (
-    UserId INT PRIMARY KEY AUTO_INCREMENT,
-    Username VARCHAR(50) NOT NULL UNIQUE,
-    Password VARCHAR(255) NOT NULL,
-    UserRole ENUM('admin', 'staff', 'customer') NOT NULL,
-    CreatedDate DATETIME DEFAULT CURRENT_TIMESTAMP
+-- config/db/scheme.sql
+
+CREATE TABLE `User` (
+    `UserId` INT AUTO_INCREMENT PRIMARY KEY,
+    `Username` VARCHAR(100) NOT NULL,
+    `Email` VARCHAR(100) NOT NULL UNIQUE,
+    `Password` VARCHAR(255) NOT NULL,
+    `UserRole` VARCHAR(50) NOT NULL,
+    `Status` ENUM('active','disabled') NOT NULL DEFAULT 'active',
+    `CreatedDate` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE Customer (
-    CustomerId INT PRIMARY KEY AUTO_INCREMENT,
-    CustomerName VARCHAR(100) NOT NULL,
-    Email VARCHAR(100) NOT NULL UNIQUE,
-    Address VARCHAR(255),
-    Phone VARCHAR(20),
-    UserId INT NOT NULL UNIQUE,
-    FOREIGN KEY (UserId) REFERENCES User(UserId)
+CREATE TABLE `Customer` (
+    `CustomerId` INT AUTO_INCREMENT PRIMARY KEY,
+    `CustomerName` VARCHAR(100) NOT NULL,
+    `Email` VARCHAR(100) NOT NULL,
+    `Address` VARCHAR(255),
+    `Phone` VARCHAR(20)
 );
 
-CREATE TABLE Staff (
-    StaffId INT PRIMARY KEY AUTO_INCREMENT,
-    StaffName VARCHAR(100) NOT NULL,
-    UserId INT NOT NULL UNIQUE,
-    FOREIGN KEY (UserId) REFERENCES User(UserId)
+CREATE TABLE `Guest` (
+    `GuestId` INT AUTO_INCREMENT PRIMARY KEY,
+    `GuestName` VARCHAR(100) NOT NULL,
+    `Email` VARCHAR(100) NOT NULL,
+    `Address` VARCHAR(255),
+    `Phone` VARCHAR(20)
 );
 
-CREATE TABLE Supplier (
-    SupplierId INT PRIMARY KEY AUTO_INCREMENT,
-    SupplierName VARCHAR(100) NOT NULL,
-    Address VARCHAR(255),
-    Phone VARCHAR(20),
-    Email VARCHAR(100)
+CREATE TABLE `Staff` (
+    `StaffId` INT AUTO_INCREMENT PRIMARY KEY,
+    `UserId` INT NOT NULL,
+    `StaffName` VARCHAR(100) NOT NULL,
+    CONSTRAINT `fk_staff_user`
+        FOREIGN KEY (`UserId`) REFERENCES `User`(`UserId`)
 );
 
-CREATE TABLE Product_Category (
-    CategoryId INT PRIMARY KEY AUTO_INCREMENT,
-    Name VARCHAR(100) NOT NULL,
-    Description VARCHAR(255)
+CREATE TABLE `Supplier` (
+    `SupplierId` INT AUTO_INCREMENT PRIMARY KEY,
+    `SupplierName` VARCHAR(100) NOT NULL,
+    `Email` VARCHAR(100),
+    `Phone` VARCHAR(20),
+    `Address` VARCHAR(255)
 );
 
-CREATE TABLE Product (
-    ProductId INT PRIMARY KEY AUTO_INCREMENT,
-    CategoryId INT NOT NULL,
-    SupplierId INT,
-    Name VARCHAR(150) NOT NULL,
-    Description TEXT,
-    Price DECIMAL(10,2) NOT NULL,
-    Image VARCHAR(255),
-    FOREIGN KEY (CategoryId) REFERENCES Product_Category(CategoryId),
-    FOREIGN KEY (SupplierId) REFERENCES Supplier(SupplierId)
+CREATE TABLE `Product_Category` (
+    `CategoryId` INT AUTO_INCREMENT PRIMARY KEY,
+    `CategoryName` VARCHAR(100) NOT NULL
 );
 
-CREATE TABLE Inventory (
-    InventoryId INT PRIMARY KEY AUTO_INCREMENT,
-    ProductId INT NOT NULL UNIQUE,
-    Quantity INT NOT NULL DEFAULT 0,
-    LowStockThreshold INT NOT NULL DEFAULT 5,
-    RecordedDate DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (ProductId) REFERENCES Product(ProductId)
+CREATE TABLE `Product` (
+    `ProductId` INT AUTO_INCREMENT PRIMARY KEY,
+    `CategoryId` INT NOT NULL,
+    `SupplierId` INT,
+    `ProductName` VARCHAR(150) NOT NULL,
+    `Description` TEXT,
+    `Price` DECIMAL(10,2) NOT NULL,
+    `Image` VARCHAR(255),
+    CONSTRAINT `fk_product_category`
+        FOREIGN KEY (`CategoryId`) REFERENCES `Product_Category`(`CategoryId`),
+    CONSTRAINT `fk_product_supplier`
+        FOREIGN KEY (`SupplierId`) REFERENCES `Supplier`(`SupplierId`)
 );
 
-CREATE TABLE Shopping_Cart (
-    CartId INT PRIMARY KEY AUTO_INCREMENT,
-    CustomerId INT NOT NULL UNIQUE,
-    FOREIGN KEY (CustomerId) REFERENCES Customer(CustomerId)
+CREATE TABLE `Inventory` (
+    `InventoryId` INT AUTO_INCREMENT PRIMARY KEY,
+    `ProductId` INT NOT NULL,
+    `Quantity` INT NOT NULL,
+    `LowStockThreshold` INT NOT NULL DEFAULT 5,
+    CONSTRAINT `fk_inventory_product`
+        FOREIGN KEY (`ProductId`) REFERENCES `Product`(`ProductId`)
 );
 
-CREATE TABLE Cart_Item (
-    CartItemId INT PRIMARY KEY AUTO_INCREMENT,
-    CartId INT NOT NULL,
-    ProductId INT NOT NULL,
-    Quantity INT NOT NULL DEFAULT 1,
-    UNIQUE (CartId, ProductId),
-    FOREIGN KEY (CartId) REFERENCES Shopping_Cart(CartId),
-    FOREIGN KEY (ProductId) REFERENCES Product(ProductId)
+CREATE TABLE `Shopping_Cart` (
+    `CartId` INT AUTO_INCREMENT PRIMARY KEY,
+    `CustomerId` INT NULL,
+    `GuestId` INT NULL,
+    `InstallOptIn` TINYINT(1) NOT NULL DEFAULT 0,
+    `InstallFee` DECIMAL(10,2) NOT NULL DEFAULT 200.00,
+    `CreatedAt` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT `fk_cart_customer`
+        FOREIGN KEY (`CustomerId`) REFERENCES `Customer`(`CustomerId`),
+    CONSTRAINT `fk_cart_guest`
+        FOREIGN KEY (`GuestId`) REFERENCES `Guest`(`GuestId`)
 );
 
-CREATE TABLE Orders (
-    OrderNo INT PRIMARY KEY AUTO_INCREMENT,
-    CustomerId INT NOT NULL,
-    CartId INT NOT NULL UNIQUE,
-    OrderDate DATETIME DEFAULT CURRENT_TIMESTAMP,
-    TotalAmount DECIMAL(10,2) NOT NULL DEFAULT 0,
-    OrderStatus ENUM(
-        'pending',
-        'paid',
-        'processing',
-        'completed',
-        'cancelled'
-    ) DEFAULT 'pending',
-    FOREIGN KEY (CustomerId) REFERENCES Customer(CustomerId)
-    FOREIGN KEY (CartId) REFERENCES Shopping_Cart(CartId)
+CREATE TABLE `Cart_Item` (
+    `CartItemId` INT AUTO_INCREMENT PRIMARY KEY,
+    `CartId` INT NOT NULL,
+    `ProductId` INT NOT NULL,
+    `Quantity` INT NOT NULL,
+    CONSTRAINT `fk_cartitem_cart`
+        FOREIGN KEY (`CartId`) REFERENCES `Shopping_Cart`(`CartId`),
+    CONSTRAINT `fk_cartitem_product`
+        FOREIGN KEY (`ProductId`) REFERENCES `Product`(`ProductId`)
 );
 
-CREATE TABLE Order_Item (
-    OrderItemId INT PRIMARY KEY AUTO_INCREMENT,
-    OrderNo INT NOT NULL,
-    ProductId INT NOT NULL,
-    Quantity INT NOT NULL,
-    UnitPrice DECIMAL(10,2) NOT NULL,
-    FOREIGN KEY (OrderNo) REFERENCES Orders(OrderNo),
-    FOREIGN KEY (ProductId) REFERENCES Product(ProductId)
+CREATE TABLE `Orders` (
+    `OrderId` INT AUTO_INCREMENT PRIMARY KEY,
+    `CartId` INT NOT NULL UNIQUE,
+    `CustomerId` INT NULL,
+    `GuestId` INT NULL,
+    `OrderDate` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `Status` VARCHAR(50) NOT NULL,
+    CONSTRAINT `fk_orders_cart`
+        FOREIGN KEY (`CartId`) REFERENCES `Shopping_Cart`(`CartId`),
+    CONSTRAINT `fk_orders_customer`
+        FOREIGN KEY (`CustomerId`) REFERENCES `Customer`(`CustomerId`),
+    CONSTRAINT `fk_orders_guest`
+        FOREIGN KEY (`GuestId`) REFERENCES `Guest`(`GuestId`)
 );
 
-CREATE TABLE Payment (
-    PaymentNo INT PRIMARY KEY AUTO_INCREMENT,
-    OrderNo INT NOT NULL,
-    Amount DECIMAL(10,2) NOT NULL,
-    PaymentStatus ENUM(
-        'pending',
-        'paid',
-        'failed'
-    ) DEFAULT 'pending',
-    StripePaymentIntentId VARCHAR(255) UNIQUE,
-    PaymentDate DATETIME,
-    FOREIGN KEY (OrderNo) REFERENCES Orders(OrderNo)
+CREATE TABLE `Order_Item` (
+    `OrderItemId` INT AUTO_INCREMENT PRIMARY KEY,
+    `OrderId` INT NOT NULL,
+    `ProductId` INT NOT NULL,
+    `Quantity` INT NOT NULL,
+    `UnitPrice` DECIMAL(10,2) NOT NULL,
+    CONSTRAINT `fk_orderitem_order`
+        FOREIGN KEY (`OrderId`) REFERENCES `Orders`(`OrderId`),
+    CONSTRAINT `fk_orderitem_product`
+        FOREIGN KEY (`ProductId`) REFERENCES `Product`(`ProductId`)
 );
 
-CREATE TABLE Receipt (
-    ReceiptNo INT PRIMARY KEY AUTO_INCREMENT,
-    PaymentNo INT NOT NULL UNIQUE,
-    ReceiptDate DATETIME DEFAULT CURRENT_TIMESTAMP,
-    Amount DECIMAL(10,2) NOT NULL,
-    EmailSent BOOLEAN DEFAULT FALSE,
-    FOREIGN KEY (PaymentNo) REFERENCES Payment(PaymentNo)
+CREATE TABLE `Payment` (
+    `PaymentId` INT AUTO_INCREMENT PRIMARY KEY,
+    `OrderId` INT NOT NULL,
+    `Amount` DECIMAL(10,2) NOT NULL,
+    `PaymentMethod` VARCHAR(50),
+    `PaymentDate` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT `fk_payment_order`
+        FOREIGN KEY (`OrderId`) REFERENCES `Orders`(`OrderId`)
 );
 
-CREATE TABLE Service_Request (
-    ServiceId INT PRIMARY KEY AUTO_INCREMENT,
-    CustomerId INT NOT NULL,
-    ServiceType VARCHAR(100) NOT NULL,
-    Description VARCHAR(255),
-    PreferredDate DATE,
-    ServiceStatus ENUM(
-        'requested',
-        'quoted',
-        'accepted',
-        'completed',
-        'cancelled'
-    ) DEFAULT 'requested',
-    CreatedDate DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (CustomerId) REFERENCES Customer(CustomerId)
+CREATE TABLE `Receipt` (
+    `ReceiptId` INT AUTO_INCREMENT PRIMARY KEY,
+    `PaymentId` INT NOT NULL,
+    `ReceiptNumber` VARCHAR(100) NOT NULL,
+    `IssuedDate` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT `fk_receipt_payment`
+        FOREIGN KEY (`PaymentId`) REFERENCES `Payment`(`PaymentId`)
 );
 
-CREATE TABLE Quotation (
-    QuoteId INT PRIMARY KEY AUTO_INCREMENT,
-    ServiceId INT NOT NULL UNIQUE,
-    Description VARCHAR(255),
-    QuoteAmount DECIMAL(10,2) NOT NULL,
-    QuoteDate DATETIME DEFAULT CURRENT_TIMESTAMP,
-    Status ENUM(
-        'pending',
-        'accepted',
-        'rejected'
-    ) DEFAULT 'pending',
-    FOREIGN KEY (ServiceId) REFERENCES Service_Request(ServiceId)
+CREATE TABLE `Service_Request` (
+    `ServiceRequestId` INT AUTO_INCREMENT PRIMARY KEY,
+    `CustomerId` INT,
+    `RequestType` VARCHAR(100),
+    `Description` TEXT,
+    `RequestedDate` DATETIME DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT `fk_service_customer`
+        FOREIGN KEY (`CustomerId`) REFERENCES `Customer`(`CustomerId`)
 );
 
-CREATE TABLE Invoice (
-    InvoiceNo INT PRIMARY KEY AUTO_INCREMENT,
-    QuoteId INT NOT NULL UNIQUE,
-    InvoiceDate DATETIME DEFAULT CURRENT_TIMESTAMP,
-    Amount DECIMAL(10,2) NOT NULL,
-    Status ENUM(
-        'unpaid',
-        'paid'
-    ) DEFAULT 'unpaid',
-    FOREIGN KEY (QuoteId) REFERENCES Quotation(QuoteId)
+CREATE TABLE `Quotation` (
+    `QuotationId` INT AUTO_INCREMENT PRIMARY KEY,
+    `CustomerId` INT,
+    `QuotationDate` DATETIME DEFAULT CURRENT_TIMESTAMP,
+    `TotalAmount` DECIMAL(10,2),
+    CONSTRAINT `fk_quotation_customer`
+        FOREIGN KEY (`CustomerId`) REFERENCES `Customer`(`CustomerId`)
 );
 
-CREATE TABLE Service_Payment (
-    ServicePaymentNo INT PRIMARY KEY AUTO_INCREMENT,
-    InvoiceNo INT NOT NULL UNIQUE,
-    Amount DECIMAL(10,2) NOT NULL,
-    PaymentStatus ENUM(
-        'pending',
-        'paid',
-        'failed'
-    ) DEFAULT 'pending',
-    StripePaymentIntentId VARCHAR(255) UNIQUE,
-    PaymentDate DATETIME,
-    FOREIGN KEY (InvoiceNo) REFERENCES Invoice(InvoiceNo)
+CREATE TABLE `Invoice` (
+    `InvoiceId` INT AUTO_INCREMENT PRIMARY KEY,
+    `OrderId` INT NOT NULL,
+    `InvoiceDate` DATETIME DEFAULT CURRENT_TIMESTAMP,
+    `TotalAmount` DECIMAL(10,2),
+    CONSTRAINT `fk_invoice_order`
+        FOREIGN KEY (`OrderId`) REFERENCES `Orders`(`OrderId`)
 );
 
-CREATE TABLE Service_Receipt (
-    ServiceReceiptNo INT PRIMARY KEY AUTO_INCREMENT,
-    ServicePaymentNo INT NOT NULL UNIQUE,
-    ReceiptDate DATETIME DEFAULT CURRENT_TIMESTAMP,
-    Amount DECIMAL(10,2) NOT NULL,
-    EmailSent BOOLEAN DEFAULT FALSE,
-    FOREIGN KEY (ServicePaymentNo)
-        REFERENCES Service_Payment(ServicePaymentNo)
+CREATE TABLE `Service_Payment` (
+    `ServicePaymentId` INT AUTO_INCREMENT PRIMARY KEY,
+    `ServiceRequestId` INT NOT NULL,
+    `Amount` DECIMAL(10,2) NOT NULL,
+    CONSTRAINT `fk_servicepayment_request`
+        FOREIGN KEY (`ServiceRequestId`) REFERENCES `Service_Request`(`ServiceRequestId`)
 );
 
-CREATE TABLE Enquiry (
-    EnquiryNo INT PRIMARY KEY AUTO_INCREMENT,
-    CustomerId INT NOT NULL,
-    StaffId INT NULL,
-    Subject VARCHAR(150),
-    Message TEXT NOT NULL,
-    Status ENUM(
-        'pending',
-        'in_progress',
-        'replied'
-    ) DEFAULT 'pending',
-    CreatedDate DATETIME DEFAULT CURRENT_TIMESTAMP,
-    Reply TEXT NULL,
-    RepliedDate DATETIME NULL,
-    FOREIGN KEY (CustomerId) REFERENCES Customer(CustomerId),
-    FOREIGN KEY (StaffId) REFERENCES Staff(StaffId)
+CREATE TABLE `Service_Receipt` (
+    `ServiceReceiptId` INT AUTO_INCREMENT PRIMARY KEY,
+    `ServicePaymentId` INT NOT NULL,
+    `ReceiptNumber` VARCHAR(100) NOT NULL,
+    CONSTRAINT `fk_servicereceipt_payment`
+        FOREIGN KEY (`ServicePaymentId`) REFERENCES `Service_Payment`(`ServicePaymentId`)
 );
 
-CREATE TABLE Delivery (
-    DeliveryId INT PRIMARY KEY AUTO_INCREMENT,
-    OrderNo INT NOT NULL UNIQUE,
-    RecipientName VARCHAR(100) NOT NULL,
-    DeliveryAddress VARCHAR(255) NOT NULL,
-    TrackingNumber VARCHAR(100),
-    DeliveryStatus ENUM(
-        'pending',
-        'shipped',
-        'delivered',
-        'cancelled'
-    ) DEFAULT 'pending',
-    ShippedDate DATETIME NULL,
-    DeliveredDate DATETIME NULL,
-    FOREIGN KEY (OrderNo) REFERENCES Orders(OrderNo)
+CREATE TABLE `Enquiry` (
+    `EnquiryId` INT AUTO_INCREMENT PRIMARY KEY,
+    `Name` VARCHAR(100) NOT NULL,
+    `Email` VARCHAR(100) NOT NULL,
+    `Subject` VARCHAR(200),
+    `Message` TEXT,
+    `CreatedDate` DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE `Delivery` (
+    `DeliveryId` INT AUTO_INCREMENT PRIMARY KEY,
+    `OrderId` INT NOT NULL,
+    `DeliveryAddress` VARCHAR(255) NOT NULL,
+    `DeliveryStatus` VARCHAR(50) NOT NULL,
+    `DeliveryDate` DATETIME NULL,
+    CONSTRAINT `fk_delivery_order`
+        FOREIGN KEY (`OrderId`) REFERENCES `Orders`(`OrderId`)
 );
