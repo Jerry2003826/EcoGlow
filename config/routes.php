@@ -22,8 +22,8 @@ return function (RouteBuilder $routes): void {
         ['controller' => 'Orders', 'action' => 'receipt']
     )->setPass(['id']);
 
-    $routes->connect('/services', ['controller' => 'Pages', 'action' => 'display', 'home']);
-    $routes->connect('/about', ['controller' => 'Pages', 'action' => 'display', 'home']);
+    $routes->connect('/services', ['controller' => 'Pages', 'action' => 'display', 'services']);
+    $routes->connect('/about', ['controller' => 'Pages', 'action' => 'display', 'about']);
 
     $routes->prefix('Admin', function (RouteBuilder $routes): void {
         $routes->connect('/', [

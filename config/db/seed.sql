@@ -15,7 +15,7 @@ VALUES
 INSERT INTO `Product`
 (`CategoryId`,`SupplierId`,`ProductName`,`Description`,`Price`,`Image`)
 VALUES
-(1,1,'Ashby Twin Sconce Brass','Decorative wall light',189.00,'ashby-twin-sconce-brass.jpg'),
+(2,1,'Ashby Twin Sconce Brass','Decorative wall light',189.00,'ashby-twin-sconce-brass.jpg'),
 (1,1,'Halden Pendant Oak','Timber pendant light',249.00,'halden-pendant-oak.jpg'),
 (2,2,'Rowan Rotary Dimmer White','Dimmer control',49.00,'rowan-rotary-dimmer-white.jpg'),
 (2,2,'Edison Wall Light Black','Industrial wall light',129.00,'edison-wall-light-black.jpg'),
@@ -70,7 +70,7 @@ VALUES
     1,
     NULL,
     1,
-    'pending'
+    'paid'
 );
 
 INSERT INTO `Order_Item`

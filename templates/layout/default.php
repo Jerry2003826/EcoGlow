@@ -65,10 +65,10 @@ $loadStorefront = in_array(
     </div>
 
     <div id="primary-navigation" class="navbar-links">
-        <?= $this->Html->link('Services', '/#services') ?>
+        <?= $this->Html->link('Services', '/services') ?>
         <?= $this->Html->link('Shop', '/products') ?>
         <?= $this->Html->link('Cart', '/cart') ?>
-        <?= $this->Html->link('About Us', '/#about') ?>
+        <?= $this->Html->link('About Us', '/about') ?>
 
         <?= $this->Html->link(
             'Contact Us',

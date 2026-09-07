@@ -14,6 +14,8 @@ class CheckoutController extends AppController
         $cartId = $session->read('CartId');
 
         if (!$cartId) {
+            $this->Flash->error('Your cart is empty. Add items before checkout.');
+
             return $this->redirect([
                 'controller' => 'Products',
                 'action' => 'index',
@@ -25,96 +27,110 @@ class CheckoutController extends AppController
             contain: ['CartItems.Products']
         );
 
-        if ($this->request->is('post')) {
-            $data = $this->request->getData();
+        $items = $cart->cart_items ?? [];
 
-            $cardNumber = preg_replace('/\s+/', '', (string)$data['card_number']);
+        if (empty($items)) {
+            $this->Flash->error('Your cart is empty. Add items before checkout.');
+
+            return $this->redirect([
+                'controller' => 'Products',
+                'action' => 'index',
+            ]);
+        }
+
+        $productsTotal = 0.00;
+
+        foreach ($items as $item) {
+            $productsTotal += (
+                (float)$item->product->Price * (int)$item->Quantity
+            );
+        }
+
+        $installFee = ((int)$cart->InstallOptIn === 1)
+            ? (float)$cart->InstallFee
+            : 0.00;
+
+        $grandTotal = $productsTotal + $installFee;
+
+        if ($this->request->is('post')) {
+            $cardNumber = preg_replace(
+                '/\s+/',
+                '',
+                (string)$this->request->getData('card_number')
+            );
 
             if ($cardNumber !== '4242424242424242') {
                 $this->Flash->error('Use test card 4242424242424242.');
 
-                $this->set(compact('cart'));
+                $this->set(compact(
+                    'cart',
+                    'items',
+                    'productsTotal',
+                    'installFee',
+                    'grandTotal'
+                ));
 
                 return;
             }
 
             $guest = $this->fetchTable('Guests')->newEntity([
-                'GuestName' => $data['GuestName'],
-                'Email' => $data['Email'],
-                'Address' => $data['Address'],
-                'Phone' => $data['Phone'],
+                'GuestName' => $this->request->getData('GuestName'),
+                'Email' => $this->request->getData('Email'),
+                'Address' => $this->request->getData('Address'),
+                'Phone' => $this->request->getData('Phone'),
             ]);
 
             $this->fetchTable('Guests')->saveOrFail($guest);
 
             $cart->GuestId = $guest->GuestId;
-
             $this->fetchTable('ShoppingCarts')->saveOrFail($cart);
 
-            $ordersTable = $this->fetchTable('Orders');
-
-            $order = $ordersTable->newEntity([
+            $order = $this->fetchTable('Orders')->newEntity([
                 'CartId' => $cart->CartId,
                 'GuestId' => $guest->GuestId,
                 'Status' => 'paid',
             ]);
 
-            $ordersTable->saveOrFail($order);
+            $this->fetchTable('Orders')->saveOrFail($order);
 
-            $orderItemsTable = $this->fetchTable('OrderItems');
+            foreach ($items as $item) {
+                $this->fetchTable('OrderItems')->saveOrFail(
+                    $this->fetchTable('OrderItems')->newEntity([
+                        'OrderId' => $order->OrderId,
+                        'ProductId' => $item->ProductId,
+                        'Quantity' => $item->Quantity,
+                        'UnitPrice' => $item->product->Price,
+                    ])
+                );
 
-            $total = 0;
-
-            foreach ($cart->cart_items as $cartItem) {
-                $line = ((float)$cartItem->product->Price) * (int)$cartItem->Quantity;
-
-                $total += $line;
-
-                $orderItem = $orderItemsTable->newEntity([
-                    'OrderId' => $order->OrderId,
-                    'ProductId' => $cartItem->ProductId,
-                    'Quantity' => $cartItem->Quantity,
-                    'UnitPrice' => $cartItem->product->Price,
-                ]);
-
-                $orderItemsTable->saveOrFail($orderItem);
-            }
-
-            if ((int)$cart->InstallOptIn === 1) {
-                $total += (float)$cart->InstallFee;
-            }
-
-            $inventoryTable = $this->fetchTable('Inventory');
-
-            foreach ($cart->cart_items as $cartItem) {
-                $stock = $inventoryTable
+                $inventory = $this->fetchTable('Inventory')
                     ->find()
-                    ->where(['ProductId' => $cartItem->ProductId])
+                    ->where(['ProductId' => $item->ProductId])
                     ->first();
 
-                if ($stock) {
-                    $stock->Quantity = max(
+                if ($inventory) {
+                    $inventory->Quantity = max(
                         0,
-                        (int)$stock->Quantity - (int)$cartItem->Quantity
+                        (int)$inventory->Quantity - (int)$item->Quantity
                     );
-                    $inventoryTable->save($stock);
+
+                    $this->fetchTable('Inventory')->save($inventory);
                 }
             }
 
-            if ((int)$cart->InstallOptIn === 1) {
-                $this->fetchTable('ServiceRequests')->save(
-                    $this->fetchTable('ServiceRequests')->newEntity([
-                        'RequestType' => 'installation',
-                        'Description' => sprintf(
-                            'Installation for Order #%d. Guest: %s (%s). Address: %s.',
-                            $order->OrderId,
-                            $guest->GuestName,
-                            $guest->Email,
-                            $guest->Address
-                        ),
-                        'RequestedDate' => date('Y-m-d H:i:s', strtotime('+5 days')),
-                    ])
-                );
+            if ($installFee > 0) {
+                $serviceRequest = $this->fetchTable('ServiceRequests')->newEntity([
+                    'RequestType' => 'installation',
+                    'Description' => sprintf(
+                        'Installation for Order %s Guest %s Address %s',
+                        $order->OrderId,
+                        $guest->GuestName,
+                        $guest->Address
+                    ),
+                    'RequestedDate' => date('Y-m-d H:i:s', strtotime('+5 days')),
+                ]);
+
+                $this->fetchTable('ServiceRequests')->save($serviceRequest);
             }
 
             $delivery = $this->fetchTable('Delivery')->newEntity([
@@ -128,7 +144,7 @@ class CheckoutController extends AppController
 
             $payment = $this->fetchTable('Payments')->newEntity([
                 'OrderId' => $order->OrderId,
-                'Amount' => $total,
+                'Amount' => $grandTotal,
                 'PaymentMethod' => 'test-card',
             ]);
 
@@ -150,6 +166,12 @@ class CheckoutController extends AppController
             ]);
         }
 
-        $this->set(compact('cart'));
+        $this->set(compact(
+            'cart',
+            'items',
+            'productsTotal',
+            'installFee',
+            'grandTotal'
+        ));
     }
 }

@@ -64,9 +64,11 @@ try {
                     <div class="admin-user-role"><?= h($role) ?></div>
                 </div>
 
+                <?php if ($role === 'admin'): ?>
                 <span class="admin-low-stock">
                     Low Stock: <?= (int)$lowStockCount ?>
                 </span>
+                <?php endif; ?>
 
                 <?= $this->Html->link(
                     'Logout',
