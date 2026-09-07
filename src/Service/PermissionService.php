@@ -31,6 +31,13 @@ class PermissionService
                 'orders.view',
                 'customers.view',
                 'invoices.issue',
+                'inventory.view',
+                'suppliers.view',
+                'messages.manage',
+                'quotations.manage',
+                'shipments.view',
+                'payments.view',
+                'products.view',
             ], true);
         }
 

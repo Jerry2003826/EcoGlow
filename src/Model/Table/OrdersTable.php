@@ -26,8 +26,23 @@ class OrdersTable extends Table
             'foreignKey' => 'GuestId',
         ]);
 
+        $this->belongsTo('Customers', [
+            'className' => 'Customers',
+            'foreignKey' => 'CustomerId',
+        ]);
+
         $this->hasMany('OrderItems', [
             'className' => 'OrderItems',
+            'foreignKey' => 'OrderId',
+        ]);
+
+        $this->hasOne('Delivery', [
+            'className' => 'Delivery',
+            'foreignKey' => 'OrderId',
+        ]);
+
+        $this->hasOne('Payments', [
+            'className' => 'Payments',
             'foreignKey' => 'OrderId',
         ]);
     }

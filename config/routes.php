@@ -37,16 +37,7 @@ return function (RouteBuilder $routes): void {
         ]);
 
         foreach ([
-            'inventory',
-            'customers',
-            'suppliers',
-            'products',
-            'shipments',
-            'quotations',
-            'invoices',
-            'payments',
             'refunds',
-            'messages',
             'reports',
             'access',
         ] as $module) {

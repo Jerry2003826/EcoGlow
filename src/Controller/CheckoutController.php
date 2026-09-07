@@ -84,10 +84,44 @@ class CheckoutController extends AppController
                 $total += (float)$cart->InstallFee;
             }
 
+            $inventoryTable = $this->fetchTable('Inventory');
+
+            foreach ($cart->cart_items as $cartItem) {
+                $stock = $inventoryTable
+                    ->find()
+                    ->where(['ProductId' => $cartItem->ProductId])
+                    ->first();
+
+                if ($stock) {
+                    $stock->Quantity = max(
+                        0,
+                        (int)$stock->Quantity - (int)$cartItem->Quantity
+                    );
+                    $inventoryTable->save($stock);
+                }
+            }
+
+            if ((int)$cart->InstallOptIn === 1) {
+                $this->fetchTable('ServiceRequests')->save(
+                    $this->fetchTable('ServiceRequests')->newEntity([
+                        'RequestType' => 'installation',
+                        'Description' => sprintf(
+                            'Installation for Order #%d. Guest: %s (%s). Address: %s.',
+                            $order->OrderId,
+                            $guest->GuestName,
+                            $guest->Email,
+                            $guest->Address
+                        ),
+                        'RequestedDate' => date('Y-m-d H:i:s', strtotime('+5 days')),
+                    ])
+                );
+            }
+
             $delivery = $this->fetchTable('Delivery')->newEntity([
                 'OrderId' => $order->OrderId,
                 'DeliveryAddress' => $guest->Address,
                 'DeliveryStatus' => 'scheduled',
+                'DeliveryDate' => date('Y-m-d H:i:s', strtotime('+7 days')),
             ]);
 
             $this->fetchTable('Delivery')->saveOrFail($delivery);

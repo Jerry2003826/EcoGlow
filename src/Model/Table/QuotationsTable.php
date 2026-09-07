@@ -14,28 +14,18 @@ class QuotationsTable extends Table
     {
         parent::initialize($config);
 
-        $this->setTable('quotations');
+        $this->setTable('Quotation');
+        $this->setPrimaryKey('QuotationId');
 
-        $this->belongsTo('Customers');
-
-        $this->hasMany('QuotationItems', [
-            'foreignKey' => 'quotation_id',
-            'saveStrategy' => 'replace',
+        $this->belongsTo('Customers', [
+            'foreignKey' => 'CustomerId',
         ]);
     }
 
     public function validationDefault(Validator $validator): Validator
     {
-        $validator
-            ->notEmptyString('customer_id');
-
-        $validator
-            ->notEmptyString('category')
-            ->inList('category', [
-                'product_sale',
-                'installation',
-                'repair',
-            ]);
+        $validator->notEmptyString('CustomerId');
+        $validator->decimal('TotalAmount')->greaterThanOrEqual('TotalAmount', 0);
 
         return $validator;
     }

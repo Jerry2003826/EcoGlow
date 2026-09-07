@@ -1,26 +1,17 @@
 <?php
-
-use App\Service\Money;
-
 /** @var object $quotation */
 /** @var string $customerName */
-/** @var string $itemsSummary */
 ?>
-Hello <?= $customerName ?>
+Hello <?= $customerName ?>,
 
+Your Eco Glow quotation QT-<?= (int)$quotation->QuotationId ?> is ready.
 
-Your quotation has been issued.
+Total (AUD, GST inclusive): $<?= number_format((float)$quotation->TotalAmount, 2) ?>
 
-Quotation Number: <?= $quotation->quotation_number . PHP_EOL ?>
-
-Items:
-<?= $itemsSummary . PHP_EOL ?>
-
-
-Subtotal: <?= Money::formatAud((int)$quotation->subtotal_cents) . PHP_EOL ?>
-GST: <?= Money::formatAud((int)$quotation->tax_cents) . PHP_EOL ?>
-Total: <?= Money::formatAud((int)$quotation->grand_total_cents) . PHP_EOL ?>
-
+<?php if (!empty($quotation->Notes)): ?>
+Details:
+<?= (string)$quotation->Notes ?>
+<?php endif; ?>
 
 Thank you,
-Eco Glow
+Eco Glow Lighting

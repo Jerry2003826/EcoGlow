@@ -1,27 +1,42 @@
 <?php
+// templates/Admin/Invoices/view.php
 
-use App\Service\Money;
-
-$this->assign('title', $invoice->invoice_number);
-
-$customerName = trim(
-    ($invoice->customer->first_name ?? '') . ' ' .
-    ($invoice->customer->last_name ?? '')
-);
-if ($customerName === '') {
-    $customerName = (string)($invoice->sales_order->guest_name ?? 'Guest');
-}
+$this->assign('title', 'Invoice #' . $invoice->InvoiceId);
 ?>
 
-<h1 class="page-title"><?= h($invoice->invoice_number) ?></h1>
+<div class="panel-card">
+    <h1>Tax invoice #<?= (int)$invoice->InvoiceId ?></h1>
+    <p><strong>Order:</strong> <?= (int)$invoice->OrderId ?></p>
+    <p><strong>Guest:</strong> <?= h($invoice->order->guest->GuestName ?? '') ?></p>
+    <p><strong>Email:</strong> <?= h($invoice->order->guest->Email ?? '') ?></p>
+    <p><strong>Address:</strong> <?= h($invoice->order->guest->Address ?? '') ?></p>
+    <p><strong>Issued:</strong> <?= h((string)$invoice->InvoiceDate) ?></p>
+</div>
 
 <div class="panel-card">
-    <p><strong>Order:</strong> <?= h($invoice->sales_order->order_number ?? '') ?></p>
-    <p><strong>Customer:</strong> <?= h($customerName) ?></p>
-    <p><strong>Category:</strong> <?= h($invoice->source_channel) ?></p>
-    <p><strong>Discount:</strong> <?= h(Money::formatAud((int)$invoice->discount_cents)) ?></p>
-    <p><strong>GST:</strong> <?= h(Money::formatAud((int)$invoice->tax_cents)) ?></p>
-    <p><strong>Total:</strong> <?= h(Money::formatAud((int)$invoice->grand_total_cents)) ?></p>
-
-    <?= $this->Html->link('Back to Invoices', ['action' => 'index']) ?>
+    <h2>Line items</h2>
+    <div class="admin-table-wrap">
+        <table class="table admin-table">
+            <thead>
+            <tr>
+                <th>Product</th>
+                <th>Qty</th>
+                <th>Unit</th>
+            </tr>
+            </thead>
+            <tbody>
+            <?php foreach (($invoice->order->order_items ?? []) as $item): ?>
+                <tr>
+                    <td><?= h($item->product->ProductName ?? '') ?></td>
+                    <td><?= (int)$item->Quantity ?></td>
+                    <td>$<?= number_format((float)$item->UnitPrice, 2) ?></td>
+                </tr>
+            <?php endforeach; ?>
+            </tbody>
+        </table>
+    </div>
+    <p>Amount excluding GST: $<?= number_format((float)$exGst, 2) ?></p>
+    <p>GST (10% inclusive): $<?= number_format((float)$gst, 2) ?></p>
+    <p><strong>Total: $<?= number_format((float)$invoice->TotalAmount, 2) ?></strong></p>
+    <?= $this->Html->link('Back to Invoices', '/admin/invoices', ['class' => 'admin-back-link']) ?>
 </div>

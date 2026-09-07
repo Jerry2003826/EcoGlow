@@ -14,34 +14,21 @@ class SuppliersTable extends Table
     {
         parent::initialize($config);
 
-        $this->setTable('suppliers');
-        $this->setPrimaryKey('id');
-        $this->setDisplayField('name');
+        $this->setTable('Supplier');
+        $this->setPrimaryKey('SupplierId');
+        $this->setDisplayField('SupplierName');
 
-        $this->belongsToMany('Products', [
-            'joinTable' => 'product_suppliers',
-            'foreignKey' => 'supplier_id',
-            'targetForeignKey' => 'product_id',
+        $this->hasMany('Products', [
+            'foreignKey' => 'SupplierId',
         ]);
     }
 
     public function validationDefault(Validator $validator): Validator
     {
-        $validator->scalar('code')->maxLength('code', 40);
-        $validator->requirePresence('code', 'create');
-        $validator->notEmptyString('code');
-
-        $validator->scalar('name')->maxLength('name', 200);
-        $validator->requirePresence('name', 'create');
-        $validator->notEmptyString('name');
-
-        $validator->allowEmptyString('email')->email('email');
-        $validator->allowEmptyString('phone');
-        $validator->allowEmptyString('notes');
-        $validator->allowEmptyString('address_line_1');
-        $validator->allowEmptyString('suburb');
-        $validator->allowEmptyString('state');
-        $validator->allowEmptyString('postcode');
+        $validator->notEmptyString('SupplierName');
+        $validator->allowEmptyString('Email')->email('Email');
+        $validator->allowEmptyString('Phone');
+        $validator->allowEmptyString('Address');
 
         return $validator;
     }

@@ -17,8 +17,12 @@ class ProductsTable extends Table
         $this->setPrimaryKey('ProductId');
 
         $this->belongsTo('ProductCategories', [
-            'className' => 'ProductCategory',
+            'className' => 'ProductCategories',
             'foreignKey' => 'CategoryId',
+        ]);
+
+        $this->belongsTo('Suppliers', [
+            'foreignKey' => 'SupplierId',
         ]);
 
         $this->hasOne('Inventory', [

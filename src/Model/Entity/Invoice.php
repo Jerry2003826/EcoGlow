@@ -1,4 +1,5 @@
 <?php
+// src/Model/Entity/Invoice.php
 
 declare(strict_types=1);
 
@@ -9,7 +10,9 @@ use Cake\ORM\Entity;
 class Invoice extends Entity
 {
     protected array $_accessible = [
-        '*' => true,
-        'id' => false,
+        'OrderId' => true,
+        'InvoiceDate' => true,
+        'TotalAmount' => true,
+        'order' => true,
     ];
 }

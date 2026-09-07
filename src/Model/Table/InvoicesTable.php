@@ -1,4 +1,5 @@
 <?php
+// src/Model/Table/InvoicesTable.php
 
 declare(strict_types=1);
 
@@ -12,9 +13,11 @@ class InvoicesTable extends Table
     {
         parent::initialize($config);
 
-        $this->setTable('invoices');
+        $this->setTable('Invoice');
+        $this->setPrimaryKey('InvoiceId');
 
-        $this->belongsTo('Customers');
-        $this->belongsTo('SalesOrders');
+        $this->belongsTo('Orders', [
+            'foreignKey' => 'OrderId',
+        ]);
     }
 }

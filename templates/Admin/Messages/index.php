@@ -1,44 +1,45 @@
 <?php
+// templates/Admin/Messages/index.php
 
 $this->assign('title', 'Messages');
 ?>
 
 <h1 class="page-title">Messages</h1>
 
-<?php if (count($messages) === 0): ?>
-    <div class="empty-state">
-        No messages found.
-    </div>
-<?php else: ?>
-    <div class="panel-card">
+<div class="panel-card">
+    <p>Enquiries submitted from the public contact form.</p>
+    <div class="admin-table-wrap">
         <table class="table admin-table">
             <thead>
             <tr>
-                <th>Reference</th>
+                <th>EnquiryId</th>
                 <th>Name</th>
                 <th>Email</th>
                 <th>Subject</th>
-                <th>Read</th>
                 <th>Created</th>
             </tr>
             </thead>
             <tbody>
+            <?php if (count($messages) === 0): ?>
+                <tr>
+                    <td colspan="5">No enquiries yet.</td>
+                </tr>
+            <?php endif; ?>
             <?php foreach ($messages as $message): ?>
                 <tr>
                     <td>
                         <?= $this->Html->link(
-                            (string)($message->reference_number ?: $message->id),
-                            ['action' => 'view', $message->id]
+                            (string)$message->EnquiryId,
+                            ['action' => 'view', $message->EnquiryId]
                         ) ?>
                     </td>
-                    <td><?= h($message->name) ?></td>
-                    <td><?= h($message->email) ?></td>
-                    <td><?= h($message->subject) ?></td>
-                    <td><?= $message->is_read ? 'Yes' : 'No' ?></td>
-                    <td><?= h((string)$message->created) ?></td>
+                    <td><?= h($message->Name) ?></td>
+                    <td><?= h($message->Email) ?></td>
+                    <td><?= h($message->Subject) ?></td>
+                    <td><?= h((string)$message->CreatedDate) ?></td>
                 </tr>
             <?php endforeach; ?>
             </tbody>
         </table>
     </div>
-<?php endif; ?>
+</div>

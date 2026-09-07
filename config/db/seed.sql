@@ -109,3 +109,23 @@ VALUES
     1,
     'RCT-1001'
 );
+
+INSERT INTO `Service_Request`
+(`CustomerId`,`RequestType`,`Description`,`RequestedDate`)
+VALUES
+(
+    NULL,
+    'repair',
+    'Guest Mia Walker, 15 Collins Street: pendant flickers after dusk. Book electrician.',
+    DATE_ADD(NOW(), INTERVAL 3 DAY)
+);
+
+INSERT INTO `Enquiry`
+(`Name`,`Email`,`Subject`,`Message`)
+VALUES
+(
+    'Priya Chen',
+    'priya.chen@example.com',
+    'Wall light for hallway',
+    'Please recommend a warm wall light for a narrow Clayton hallway.'
+);

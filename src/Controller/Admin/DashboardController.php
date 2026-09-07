@@ -47,7 +47,10 @@ class DashboardController extends AdminController
             ])
             ->count();
 
-        if ($permissionService->hasPermission($userId, 'inventory.view')) {
+        $user = $this->fetchTable('Users')->get($userId);
+        $isAdmin = $user->UserRole === 'admin';
+
+        if ($isAdmin) {
             $lowStockItems = $inventoryTable->find()
                 ->contain(['Products'])
                 ->all();
@@ -70,7 +73,7 @@ class DashboardController extends AdminController
             $widgets['lowStockItems'] = $filtered;
         }
 
-        if ($permissionService->hasPermission($userId, 'reports.financial')) {
+        if ($isAdmin) {
             $totalRevenue = 0.00;
 
             $payments = $paymentsTable->find()

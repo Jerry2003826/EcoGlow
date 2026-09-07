@@ -46,9 +46,9 @@ $active = static function (bool $isActive): string {
 
             echo $this->Html->link(
                 $inventoryLabel,
-                '/admin/coming-soon/inventory',
+                '/admin/inventory',
                 [
-                    'class' => $active($comingSoonModule === 'inventory'),
+                    'class' => $active($currentController === 'Inventory'),
                     'escape' => false,
                 ]
             );
@@ -56,26 +56,26 @@ $active = static function (bool $isActive): string {
 
             <?= $this->Html->link(
                 'Suppliers',
-                '/admin/coming-soon/suppliers',
-                ['class' => $active($comingSoonModule === 'suppliers')]
+                '/admin/suppliers',
+                ['class' => $active($currentController === 'Suppliers')]
             ) ?>
 
             <?= $this->Html->link(
                 'Customers',
-                '/admin/coming-soon/customers',
-                ['class' => $active($comingSoonModule === 'customers')]
+                '/admin/customers',
+                ['class' => $active($currentController === 'Customers')]
             ) ?>
 
             <?= $this->Html->link(
                 'Products',
-                '/admin/coming-soon/products',
-                ['class' => $active($comingSoonModule === 'products')]
+                '/admin/products',
+                ['class' => $active($currentController === 'Products')]
             ) ?>
 
             <?= $this->Html->link(
                 'Shipments',
-                '/admin/coming-soon/shipments',
-                ['class' => $active($comingSoonModule === 'shipments')]
+                '/admin/shipments',
+                ['class' => $active($currentController === 'Shipments')]
             ) ?>
         </div>
 
@@ -84,20 +84,20 @@ $active = static function (bool $isActive): string {
 
             <?= $this->Html->link(
                 'Quotations',
-                '/admin/coming-soon/quotations',
-                ['class' => $active($comingSoonModule === 'quotations')]
+                '/admin/quotations',
+                ['class' => $active($currentController === 'Quotations')]
             ) ?>
 
             <?= $this->Html->link(
                 'Invoices',
-                '/admin/coming-soon/invoices',
-                ['class' => $active($comingSoonModule === 'invoices')]
+                '/admin/invoices',
+                ['class' => $active($currentController === 'Invoices')]
             ) ?>
 
             <?= $this->Html->link(
                 'Payments',
-                '/admin/coming-soon/payments',
-                ['class' => $active($comingSoonModule === 'payments')]
+                '/admin/payments',
+                ['class' => $active($currentController === 'Payments')]
             ) ?>
 
             <?= $this->Html->link(
@@ -112,8 +112,8 @@ $active = static function (bool $isActive): string {
 
             <?= $this->Html->link(
                 'Messages',
-                '/admin/coming-soon/messages',
-                ['class' => $active($comingSoonModule === 'messages')]
+                '/admin/messages',
+                ['class' => $active($currentController === 'Messages')]
             ) ?>
         </div>
 

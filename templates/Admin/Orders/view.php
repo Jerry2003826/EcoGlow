@@ -6,14 +6,17 @@ $this->assign('title', 'Order #' . $order->OrderId);
 
 <div class="panel-card">
     <h1>Order #<?= h((string)$order->OrderId) ?></h1>
-
     <p><strong>Status:</strong> <?= h($order->Status) ?></p>
     <p><strong>Order Date:</strong> <?= h((string)$order->OrderDate) ?></p>
+    <?php if (!empty($order->shopping_cart) && (int)$order->shopping_cart->InstallOptIn === 1): ?>
+        <p><strong>Type:</strong> Product + installation ($<?= number_format((float)$order->shopping_cart->InstallFee, 2) ?>)</p>
+    <?php else: ?>
+        <p><strong>Type:</strong> Product</p>
+    <?php endif; ?>
 </div>
 
 <div class="panel-card">
     <h2>Guest</h2>
-
     <p><?= h($order->guest->GuestName ?? '') ?></p>
     <p><?= h($order->guest->Email ?? '') ?></p>
     <p><?= h($order->guest->Address ?? '') ?></p>
@@ -22,7 +25,6 @@ $this->assign('title', 'Order #' . $order->OrderId);
 
 <div class="panel-card">
     <h2>Line Items</h2>
-
     <div class="admin-table-wrap">
         <table class="table admin-table">
             <thead>
@@ -43,21 +45,10 @@ $this->assign('title', 'Order #' . $order->OrderId);
             </tbody>
         </table>
     </div>
-
-    <?php if (
-        !empty($order->shopping_cart) &&
-        (int)$order->shopping_cart->InstallOptIn === 1
-    ): ?>
-        <p>
-            <strong>InstallFee:</strong>
-            $<?= number_format((float)$order->shopping_cart->InstallFee, 2) ?>
-        </p>
-    <?php endif; ?>
 </div>
 
 <div class="panel-card">
     <h2>Payment</h2>
-
     <?php if (!empty($payment)): ?>
         <p>Amount: $<?= number_format((float)$payment->Amount, 2) ?></p>
         <p><?= h($payment->PaymentMethod) ?></p>
@@ -66,20 +57,58 @@ $this->assign('title', 'Order #' . $order->OrderId);
 
 <div class="panel-card">
     <h2>Receipt</h2>
-
     <?php if (!empty($receipt)): ?>
         <p><?= h($receipt->ReceiptNumber) ?></p>
     <?php endif; ?>
 </div>
 
 <div class="panel-card">
-    <h2>Delivery</h2>
-
+    <h2>Delivery and booking time</h2>
     <?php if (!empty($delivery)): ?>
-        <p><?= h($delivery->DeliveryAddress) ?></p>
-        <p><?= h($delivery->DeliveryStatus) ?></p>
+        <?= $this->Form->create(null, [
+            'url' => ['action' => 'updateDelivery', $order->OrderId],
+        ]) ?>
+        <?= $this->Form->control('DeliveryAddress', [
+            'label' => 'Delivery address',
+            'value' => $delivery->DeliveryAddress,
+        ]) ?>
+        <?= $this->Form->control('DeliveryStatus', [
+            'label' => 'Delivery status',
+            'value' => $delivery->DeliveryStatus,
+            'options' => [
+                'scheduled' => 'scheduled',
+                'in_transit' => 'in_transit',
+                'delivered' => 'delivered',
+            ],
+        ]) ?>
+        <?= $this->Form->control('DeliveryDate', [
+            'label' => 'Delivery / booking date',
+            'type' => 'datetime-local',
+            'value' => $delivery->DeliveryDate
+                ? date('Y-m-d\TH:i', strtotime((string)$delivery->DeliveryDate))
+                : '',
+        ]) ?>
+        <?= $this->Form->button('Update delivery') ?>
+        <?= $this->Form->end() ?>
+    <?php else: ?>
+        <p>No delivery record.</p>
     <?php endif; ?>
 </div>
+
+<?php if (!empty($services) && count($services) > 0): ?>
+    <div class="panel-card">
+        <h2>Linked service bookings</h2>
+        <?php foreach ($services as $service): ?>
+            <p>
+                <?= h($service->RequestType) ?>
+                at
+                <?= h((string)$service->RequestedDate) ?>
+                —
+                <?= h($service->Description) ?>
+            </p>
+        <?php endforeach; ?>
+    </div>
+<?php endif; ?>
 
 <div class="panel-card">
     <?= $this->Html->link(

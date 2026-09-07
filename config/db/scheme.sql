@@ -155,6 +155,9 @@ CREATE TABLE `Quotation` (
     `CustomerId` INT,
     `QuotationDate` DATETIME DEFAULT CURRENT_TIMESTAMP,
     `TotalAmount` DECIMAL(10,2),
+    `Status` VARCHAR(50) NOT NULL DEFAULT 'issued',
+    `Notes` TEXT,
+    `EmailedAt` DATETIME NULL,
     CONSTRAINT `fk_quotation_customer`
         FOREIGN KEY (`CustomerId`) REFERENCES `Customer`(`CustomerId`)
 );

@@ -1,50 +1,23 @@
 <?php
+// src/Controller/Admin/MessagesController.php
 
 declare(strict_types=1);
 
 namespace App\Controller\Admin;
 
-use App\Service\PermissionService;
-use Cake\Http\Exception\ForbiddenException;
-
 class MessagesController extends AdminController
 {
-    protected function requirePermission(): void
-    {
-        $identity = $this->request->getAttribute('identity');
-
-        if ($identity === null) {
-            return;
-        }
-
-        $permissionService = new PermissionService();
-
-        if (
-            !$permissionService->hasPermission(
-                (int)$identity->getIdentifier(),
-                'messages.manage'
-            )
-        ) {
-            throw new ForbiddenException();
-        }
-    }
-
     public function index()
     {
-        $identity = $this->request->getAttribute('identity');
-
-        if ($identity === null) {
+        if ($this->request->getAttribute('identity') === null) {
             return;
         }
 
-        $this->requirePermission();
+        $this->requirePermission('messages.manage');
 
-        $messages = $this->fetchTable('ContactMessages')
+        $messages = $this->fetchTable('Enquiries')
             ->find()
-            ->orderBy([
-                'ContactMessages.is_read' => 'ASC',
-                'ContactMessages.created' => 'DESC',
-            ])
+            ->orderBy(['EnquiryId' => 'DESC'])
             ->all();
 
         $this->set(compact('messages'));
@@ -52,22 +25,13 @@ class MessagesController extends AdminController
 
     public function view(int|string $id)
     {
-        $identity = $this->request->getAttribute('identity');
-
-        if ($identity === null) {
+        if ($this->request->getAttribute('identity') === null) {
             return;
         }
 
-        $this->requirePermission();
+        $this->requirePermission('messages.manage');
 
-        $messagesTable = $this->fetchTable('ContactMessages');
-
-        $message = $messagesTable->get($id);
-
-        if (!(bool)$message->is_read) {
-            $message->is_read = 1;
-            $messagesTable->save($message);
-        }
+        $message = $this->fetchTable('Enquiries')->get((int)$id);
 
         $this->set(compact('message'));
     }

@@ -41,7 +41,7 @@ $transactions = $widgets['transactions'] ?? [];
             <div class="stat-label">
                 <?= $this->Html->link(
                     'Low Stock Items',
-                    '/admin/coming-soon/inventory'
+                    '/admin/inventory'
                 ) ?>
             </div>
             <div class="stat-value">
