@@ -27,13 +27,15 @@ $cakeDescription = 'Eco Glow Lighting';
     <?= $this->Html->meta('icon', '/img/icon_lamp.svg', ['type' => 'image/svg+xml']) ?>
 
     <?= $this->Html->css(['normalize.min', 'milligram.min', 'fonts', 'cake', 'navbar']) ?>
-
+    
+    
     <?= $this->fetch('meta') ?>
     <?= $this->fetch('css') ?>
+    <?= $this->Html->script('landing', ['defer' => true]) ?>
     <?= $this->fetch('script') ?>
 </head>
 <body>
-    <nav class="navbar">
+    <nav class="navbar" aria-label="Main navigation">
 
     <div class="navbar-brand">
         <a href="<?= $this->Url->build('/')?>">
@@ -41,7 +43,19 @@ $cakeDescription = 'Eco Glow Lighting';
         </a>
     </div>
 
-    <div class="navbar-links">
+    <button
+        class="navbar-toggle"
+        type="button"
+        aria-expanded="false"
+        aria-controls="primary-navigation"
+        aria-label="Open navigation"
+    >
+        <span aria-hidden="true"></span>
+        <span aria-hidden="true"></span>
+        <span aria-hidden="true"></span>
+    </button>
+
+    <div class="navbar-links" id="primary-navigation">
         <?php
             $identity = $this->getRequest()->getAttribute('identity');
         ?>
