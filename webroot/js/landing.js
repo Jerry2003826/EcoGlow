@@ -81,7 +81,7 @@
         window.clearInterval(autoplay);
         autoplay = window.setInterval(function () {
             showSlide(currentSlide + 1);
-        }, 4000);
+        }, 3500);
     }
 
     dots.forEach(function (dot) {

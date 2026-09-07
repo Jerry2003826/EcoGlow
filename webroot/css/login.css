@@ -57,14 +57,14 @@
     font-weight: 600;
 }
 
-.login-form input[type="text"],
+.login-form input[type="email"],
 .login-form input[type="password"] {
     width: 100%;
     padding: 12px 15px;
     border-radius: 6px;
 }
 
-.login-form input[type="text"]:focus,
+.login-form input[type="email"]:focus,
 .login-form input[type="password"]:focus {
     border-color: #5B5545;
 }

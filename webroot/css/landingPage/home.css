@@ -263,16 +263,16 @@
 }
 
 .home-btn-secondary {
-    border-color: var(--home-border);
+    border-color: var(--home-brand);
     color: var(--home-text);
-    background: transparent;
+    background: var(--home-bg-alt);
 }
 
 .home-btn-secondary:hover,
 .home-btn-secondary:focus {
-    border-color: var(--home-brand);
-    color: var(--home-brand);
-    background: var(--home-brand-tint);
+    border-color: var(--home-brand-hover);
+    color: var(--home-text);
+    background: var(--home-bg-alt);
 }
 
 .home-btn:focus-visible {

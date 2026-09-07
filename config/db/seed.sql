@@ -1,5 +1,7 @@
 -- config/db/seed.sql
-
+-- account and password for demo owner and staff users
+-- Owner: admin@ecoglow.local / ChangeMe-EcoGlow-2026-Admin!
+-- Staff: staff403@ecoglow.local / ChangeMe-EcoGlow-2026-Staff!
 INSERT INTO `Product_Category`
 (`CategoryName`)
 VALUES

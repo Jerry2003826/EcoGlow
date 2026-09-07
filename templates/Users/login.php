@@ -69,7 +69,15 @@ if (is_string($redirect) && $redirect !== '') {
             </fieldset>
 
             <?= $this->Form->button('Login', ['class' => 'btn', 'disabled' => true]); ?>
-            <p><?= $this->Html->link('Sign Up', ['action' => 'add']) ?></p>
+            <div class="signup-link">
+                <span>Don't have an account?</span>
+
+                <?= $this->Html->link(
+                    'Sign Up',
+                    ['action' => 'add'],
+                    ['class' => 'signup-button']
+                ) ?>
+            </div>
             <?= $this->Form->end()?>
         </div>
         

@@ -25,6 +25,10 @@ class CustomersTable extends Table
         $this->hasMany('Quotations', [
             'foreignKey' => 'CustomerId',
         ]);
+
+        $this->belongsTo('Users', [
+            'foreignKey' => 'UserId',
+        ]);
     }
 
     public function findOrCreateFromContact(array $data)

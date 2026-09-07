@@ -16,6 +16,7 @@ class User extends Entity
         'UserRole' => true,
         'Username' => true,
         'Status' => true,
+        'customer' => true,
     ];
 
     protected function _setPassword(?string $password): ?string

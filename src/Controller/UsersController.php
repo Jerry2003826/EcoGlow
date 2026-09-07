@@ -66,7 +66,19 @@ class UsersController extends AppController
     {
         $user = $this->Users->newEmptyEntity();
         if ($this->request->is('post')) {
-            $user = $this->Users->patchEntity($user, $this->request->getData());
+            $data = $this->request->getData();
+            $data['UserRole'] = 'customer';
+            $data['customer']['Email'] = $data['Email'] ?? '';
+
+            $user = $this->Users->patchEntity($user, $data, [
+                'fields' => ['Username', 'Email', 'Password', 'UserRole', 'customer'],
+                'associated' => ['Customers']
+            ]);
+            if(empty($data['customer']['CustomerName']) || empty($data['customer']['Email'])) {
+                $this->Flash->error(__('Please fill in all required fields.'));
+                return $this->redirect(['action' => 'add']);
+            } 
+
             if ($this->Users->save($user)) {
                 $this->Flash->success(__('The user has been saved.'));
 

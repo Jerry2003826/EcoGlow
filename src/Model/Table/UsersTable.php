@@ -18,6 +18,8 @@ class UsersTable extends Table
         $this->setTable('User');
         $this->setPrimaryKey('UserId');
         $this->setDisplayField('Email');
+        $this->hasOne('Customers', ['foreignKey' => 'UserId']);
+        $this->hasOne('Staff', ['foreignKey' => 'UserId']);
     }
 
     public function validationDefault(Validator $validator): Validator

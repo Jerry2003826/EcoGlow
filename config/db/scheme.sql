@@ -12,10 +12,13 @@ CREATE TABLE `User` (
 
 CREATE TABLE `Customer` (
     `CustomerId` INT AUTO_INCREMENT PRIMARY KEY,
+    `UserId` INT NOT NULL,
     `CustomerName` VARCHAR(100) NOT NULL,
     `Email` VARCHAR(100) NOT NULL,
     `Address` VARCHAR(255),
-    `Phone` VARCHAR(20)
+    `Phone` VARCHAR(20),
+    CONSTRAINT `fk_customer_user`
+        FOREIGN KEY (`UserId`) REFERENCES `User`(`UserId`)
 );
 
 CREATE TABLE `Guest` (
