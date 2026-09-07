@@ -1,6 +1,14 @@
 <?php
 // templates/element/admin/sidebar.php
 
+$identity = $this->request->getAttribute('identity');
+
+$userRole = '';
+
+if ($identity) {
+    $userRole = (string)($identity->get('UserRole') ?? '');
+}
+
 $currentController = (string)$this->request->getParam('controller');
 $pass = (array)$this->request->getParam('pass');
 
@@ -8,10 +16,24 @@ $comingSoonModule = $currentController === 'ComingSoon'
     ? (string)($pass[0] ?? '')
     : '';
 
-$active = static function (bool $isActive): string {
-    return 'sidebar-link' . ($isActive ? ' active' : '');
+$active = static function (bool $isActive): array {
+    return [
+        'class' => $isActive ? 'sidebar-link active' : 'sidebar-link',
+    ];
 };
+
+$inventoryLabel = 'Inventory';
+
+if (
+    $userRole === 'admin' &&
+    (int)($lowStockCount ?? 0) > 0
+) {
+    $inventoryLabel .= ' <span class="sidebar-badge">' .
+        (int)$lowStockCount .
+        '</span>';
+}
 ?>
+
 <aside id="admin-sidebar" class="admin-sidebar">
     <div class="admin-brand">
         Eco Glow Lighting
@@ -24,58 +46,50 @@ $active = static function (bool $isActive): string {
             <?= $this->Html->link(
                 'Dashboard',
                 '/admin',
-                ['class' => $active($currentController === 'Dashboard')]
+                $active($currentController === 'Dashboard')
             ) ?>
 
             <?= $this->Html->link(
                 'Orders',
                 '/admin/orders',
-                ['class' => $active($currentController === 'Orders')]
+                $active($currentController === 'Orders')
             ) ?>
         </div>
 
         <div class="sidebar-group">
             <div class="sidebar-group-title">Operations</div>
 
-            <?php
-            $inventoryLabel = 'Inventory';
-
-            if (($lowStockCount ?? 0) > 0) {
-                $inventoryLabel .= ' <span class="sidebar-badge">' . (int)$lowStockCount . '</span>';
-            }
-
-            echo $this->Html->link(
+            <?= $this->Html->link(
                 $inventoryLabel,
                 '/admin/inventory',
-                [
-                    'class' => $active($currentController === 'Inventory'),
-                    'escape' => false,
-                ]
-            );
-            ?>
+                array_merge(
+                    $active($currentController === 'Inventory'),
+                    ['escape' => false]
+                )
+            ) ?>
 
             <?= $this->Html->link(
                 'Suppliers',
                 '/admin/suppliers',
-                ['class' => $active($currentController === 'Suppliers')]
+                $active($currentController === 'Suppliers')
             ) ?>
 
             <?= $this->Html->link(
                 'Customers',
                 '/admin/customers',
-                ['class' => $active($currentController === 'Customers')]
+                $active($currentController === 'Customers')
             ) ?>
 
             <?= $this->Html->link(
                 'Products',
                 '/admin/products',
-                ['class' => $active($currentController === 'Products')]
+                $active($currentController === 'Products')
             ) ?>
 
             <?= $this->Html->link(
                 'Shipments',
                 '/admin/shipments',
-                ['class' => $active($currentController === 'Shipments')]
+                $active($currentController === 'Shipments')
             ) ?>
         </div>
 
@@ -85,25 +99,25 @@ $active = static function (bool $isActive): string {
             <?= $this->Html->link(
                 'Quotations',
                 '/admin/quotations',
-                ['class' => $active($currentController === 'Quotations')]
+                $active($currentController === 'Quotations')
             ) ?>
 
             <?= $this->Html->link(
                 'Invoices',
                 '/admin/invoices',
-                ['class' => $active($currentController === 'Invoices')]
+                $active($currentController === 'Invoices')
             ) ?>
 
             <?= $this->Html->link(
                 'Payments',
                 '/admin/payments',
-                ['class' => $active($currentController === 'Payments')]
+                $active($currentController === 'Payments')
             ) ?>
 
             <?= $this->Html->link(
                 'Refunds',
                 '/admin/coming-soon/refunds',
-                ['class' => $active($comingSoonModule === 'refunds')]
+                $active($comingSoonModule === 'refunds')
             ) ?>
         </div>
 
@@ -113,7 +127,7 @@ $active = static function (bool $isActive): string {
             <?= $this->Html->link(
                 'Messages',
                 '/admin/messages',
-                ['class' => $active($currentController === 'Messages')]
+                $active($currentController === 'Messages')
             ) ?>
         </div>
 
@@ -123,7 +137,7 @@ $active = static function (bool $isActive): string {
             <?= $this->Html->link(
                 'Reports',
                 '/admin/coming-soon/reports',
-                ['class' => $active($comingSoonModule === 'reports')]
+                $active($comingSoonModule === 'reports')
             ) ?>
         </div>
 
@@ -133,7 +147,7 @@ $active = static function (bool $isActive): string {
             <?= $this->Html->link(
                 'Access',
                 '/admin/coming-soon/access',
-                ['class' => $active($comingSoonModule === 'access')]
+                $active($comingSoonModule === 'access')
             ) ?>
         </div>
     </div>

@@ -50,7 +50,12 @@ $this->Html->meta([
                 <blockquote id="turnstile-message" style="display:none"></blockquote>
             </fieldset>
 
-            <?= $this->Form->button(__('Submit'), ['class' => 'btn', 'disabled' => true]) ?>
+            <?= $this->Form->button(
+                __('Submit'),
+                [
+                    'class' => 'btn',
+                ]
+            ) ?>
 
             <?= $this->Form->end() ?>
         </div>
@@ -59,28 +64,23 @@ $this->Html->meta([
 
 <script>
     var turnstileMessageBlock = document.querySelector('#turnstile-message');
-    var actionButton = document.querySelector('button.btn');
 
     function turnstileOnSuccess(token) {
         turnstileMessageBlock.style.display = 'none';
-        actionButton.removeAttribute('disabled');
     }
 
     function turnstileOnError(errorCode) {
         turnstileMessageBlock.style.display = 'block';
         turnstileMessageBlock.innerText = "Challenge error. Please refresh the webpage and try again.";
-        actionButton.setAttribute('disabled');
     }
 
     function turnstileOnExpired() {
         turnstileMessageBlock.style.display = 'block';
         turnstileMessageBlock.innerText = "Challenge token expired. Please validate again.";
-        actionButton.setAttribute('disabled');
     }
 
     function turnstileOnTimeout() {
         turnstileMessageBlock.style.display = 'block';
         turnstileMessageBlock.innerText = "Challenge timed out. Please validate again.";
-        actionButton.setAttribute('disabled');
     }
 </script>
