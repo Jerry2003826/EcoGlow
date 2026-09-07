@@ -1,5 +1,7 @@
 <?php
 // templates/Admin/Orders/view.php
+
+$this->assign('title', 'Order #' . $order->OrderId);
 ?>
 
 <h1 class="page-title">
@@ -36,7 +38,7 @@
         <?php foreach ($order->order_items as $item): ?>
             <tr>
                 <td><?= h($item->product->ProductName ?? '') ?></td>
-                <td><?= h((string)$item->Quantity) ?></td>
+                <td><?= (int)$item->Quantity ?></td>
                 <td>$<?= number_format((float)$item->UnitPrice, 2) ?></td>
             </tr>
         <?php endforeach; ?>
@@ -45,7 +47,7 @@
 
     <?php if (
         isset($order->shopping_cart) &&
-        (int)($order->shopping_cart->InstallOptIn ?? 0) === 1
+        (int)$order->shopping_cart->InstallOptIn === 1
     ): ?>
         <p>
             <strong>Installation Fee:</strong>
@@ -54,47 +56,33 @@
     <?php endif; ?>
 </div>
 
-<?php if ($payment): ?>
-<div class="panel-card">
-    <h2>Payment</h2>
+<?php if (!empty($payment)): ?>
+    <div class="panel-card">
+        <h2>Payment</h2>
 
-    <p>
-        <strong>Amount:</strong>
-        $<?= number_format((float)$payment->Amount, 2) ?>
-    </p>
-
-    <p>
-        <strong>Payment Method:</strong>
-        <?= h((string)$payment->PaymentMethod) ?>
-    </p>
-</div>
+        <p><strong>Amount:</strong> $<?= number_format((float)$payment->Amount, 2) ?></p>
+        <p><strong>Method:</strong> <?= h($payment->PaymentMethod) ?></p>
+    </div>
 <?php endif; ?>
 
-<?php if ($receipt): ?>
-<div class="panel-card">
-    <h2>Receipt</h2>
+<?php if (!empty($receipt)): ?>
+    <div class="panel-card">
+        <h2>Receipt</h2>
 
-    <p>
-        <strong>Receipt Number:</strong>
-        <?= h((string)$receipt->ReceiptNumber) ?>
-    </p>
-</div>
+        <p>
+            <strong>Receipt Number:</strong>
+            <?= h($receipt->ReceiptNumber) ?>
+        </p>
+    </div>
 <?php endif; ?>
 
-<?php if ($delivery): ?>
-<div class="panel-card">
-    <h2>Delivery</h2>
+<?php if (!empty($delivery)): ?>
+    <div class="panel-card">
+        <h2>Delivery</h2>
 
-    <p>
-        <strong>Address:</strong>
-        <?= h((string)$delivery->DeliveryAddress) ?>
-    </p>
-
-    <p>
-        <strong>Status:</strong>
-        <?= h((string)$delivery->DeliveryStatus) ?>
-    </p>
-</div>
+        <p><strong>Address:</strong> <?= h($delivery->DeliveryAddress) ?></p>
+        <p><strong>Status:</strong> <?= h($delivery->DeliveryStatus) ?></p>
+    </div>
 <?php endif; ?>
 
 <div class="panel-card">

@@ -8,12 +8,14 @@ $this->assign('title', 'Orders');
 
 <div class="panel-card">
     <?= $this->Form->create(null, ['type' => 'get']) ?>
+
     <?= $this->Form->control('q', [
         'label' => 'Search',
         'value' => $q ?? '',
-        'required' => false,
     ]) ?>
+
     <?= $this->Form->button('Search') ?>
+
     <?= $this->Form->end() ?>
 </div>
 
@@ -45,7 +47,7 @@ $this->assign('title', 'Orders');
                     <td><?= h($order->guest->GuestName ?? '') ?></td>
                     <td><?= h($order->guest->Email ?? '') ?></td>
                     <td><?= h($order->Status ?? '') ?></td>
-                    <td><?= h((string)($order->OrderDate ?? '')) ?></td>
+                    <td><?= h((string)$order->OrderDate) ?></td>
                 </tr>
             <?php endforeach; ?>
             </tbody>

@@ -3,21 +3,16 @@
 
 use Cake\Datasource\ConnectionManager;
 
+$title = (string)$this->fetch('title');
+
 $identity = $this->request->getAttribute('identity');
 
 $email = '';
 $role = '';
 
 if ($identity) {
-    $email = (string)(
-        $identity->get('Email')
-        ?? ($identity->getOriginalData()->Email ?? '')
-    );
-
-    $role = (string)(
-        $identity->get('UserRole')
-        ?? ($identity->getOriginalData()->UserRole ?? '')
-    );
+    $email = (string)($identity->get('Email') ?? '');
+    $role = (string)($identity->get('UserRole') ?? '');
 }
 
 $lowStockCount = 0;
@@ -26,63 +21,93 @@ try {
     $connection = ConnectionManager::get('default');
 
     $row = $connection->execute(
-        '
-        SELECT COUNT(*) AS total
-        FROM Inventory i
-        INNER JOIN Product p
-            ON p.ProductId = i.ProductId
-        WHERE i.Quantity <= i.LowStockThreshold
-        '
+        'SELECT COUNT(*) AS total
+         FROM Inventory i
+         INNER JOIN Product p ON p.ProductId = i.ProductId
+         WHERE i.Quantity <= i.LowStockThreshold'
     )->fetch('assoc');
 
     $lowStockCount = (int)($row['total'] ?? 0);
-} catch (\Throwable $exception) {
+} catch (\Throwable $e) {
     $lowStockCount = 0;
 }
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="utf-8">
-    <title><?= h($this->fetch('title')) ?> | Eco Glow Admin</title>
+    <?= $this->Html->charset() ?>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <?= $this->Html->css('bootstrap.min') ?>
-    <?= $this->Html->css('admin') ?>
+    <title><?= h($title) ?> | Eco Glow Admin</title>
+
+    <?= $this->Html->css(['bootstrap.min', 'fonts', 'admin']) ?>
 
     <?= $this->fetch('meta') ?>
     <?= $this->fetch('css') ?>
-    <?= $this->fetch('script') ?>
 </head>
-<body>
-<div class="admin-shell">
-    <aside class="admin-sidebar-wrap">
-        <?= $this->element('admin/sidebar') ?>
-    </aside>
+<body class="admin-app">
 
-    <main class="admin-main">
+<?= $this->Html->link(
+    'Skip to main content',
+    '#main-content',
+    ['class' => 'skip-link']
+) ?>
+
+<div class="admin-shell">
+    <?= $this->element('admin/sidebar', [
+        'lowStockCount' => $lowStockCount,
+    ]) ?>
+
+    <div id="admin-page" class="admin-page">
         <header class="admin-topbar">
-            <div class="admin-topbar-left">
-                <strong>Eco Glow Admin</strong>
+            <button
+                id="admin-menu-toggle"
+                class="admin-menu-toggle"
+                type="button"
+                aria-controls="admin-sidebar"
+                aria-label="Toggle menu"
+            >
+                ☰
+            </button>
+
+            <div class="admin-breadcrumbs">
+                Admin / <?= h($title) ?>
             </div>
 
-            <div class="admin-topbar-right">
-                <span><?= h($email) ?></span>
-                <span><?= h($role) ?></span>
-                <span>Low Stock: <?= h((string)$lowStockCount) ?></span>
+            <div class="admin-user">
+                <div class="admin-user-details">
+                    <div class="admin-user-email">
+                        <?= h($email) ?>
+                    </div>
+
+                    <div class="admin-user-role">
+                        <?= h($role) ?>
+                    </div>
+                </div>
+
+                <span>Low Stock: <?= (int)$lowStockCount ?></span>
 
                 <?= $this->Html->link(
                     'Logout',
                     '/logout',
-                    ['class' => 'btn btn-outline-secondary']
+                    [
+                        'class' => 'btn btn-outline-secondary btn-sm admin-logout',
+                    ]
                 ) ?>
             </div>
         </header>
 
-        <section class="admin-content">
+        <main id="main-content" class="admin-content">
             <?= $this->Flash->render() ?>
             <?= $this->fetch('content') ?>
-        </section>
-    </main>
+        </main>
+    </div>
 </div>
+
+<div id="admin-overlay" class="admin-overlay" hidden></div>
+
+<?= $this->Html->script(['bootstrap.bundle.min', 'admin']) ?>
+
+<?= $this->fetch('script') ?>
 </body>
 </html>
