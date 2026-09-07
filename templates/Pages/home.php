@@ -7,7 +7,7 @@ $carouselSlides = [
     [
         'image' => 'interior.jpg',
         'title' => 'A brighter space. A warmer welcome.',
-        'description' => 'Layered pendant lighting that gives dining and living spaces a warm, considered glow.',
+        'description' => 'Eco Glow Lighting offers a range of modern lighting solutions for your home, including pendant, wall, table and floor lighting.',
         'button' => 'Explore lighting', 'url' => '#shop',
         'alt' => 'Clear pendant lights hanging in a row',
     ],
