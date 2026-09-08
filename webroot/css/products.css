@@ -28,17 +28,26 @@
 }
 
 .products-banner {
+    position: relative;
+    min-height: 20rem;
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    min-height: 27rem;
-    padding: 5rem max(3rem, calc((100vw - 116rem) / 2));
-    background: var(--products-green);
-    color: #fbf9f5;
+    padding: 4rem 6rem;
+    background-image: url('/img/landing/login_picture.jpg');
+    background-size: cover;
+    background-position: center;
+}
+
+.products-banner::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5); 
 }
 
 .products-banner-content {
     max-width: 62rem;
+    z-index: 1;
 }
 
 .products-eyebrow {
@@ -52,7 +61,7 @@
 }
 
 .products-banner .products-eyebrow {
-    color: #f9e9d7;
+    color: #fff;
 }
 
 .products-banner h1,
@@ -131,7 +140,6 @@
 
 .products-cart-link,
 .products-search-button,
-.products-filter-button,
 .product-action-button {
     padding: 1.1rem 2rem;
     background: var(--products-green);
@@ -140,12 +148,22 @@
 
 .products-cart-link:hover,
 .products-search-button:hover,
-.products-filter-button:hover,
 .product-action-button:hover {
     border-color: var(--products-green-dark);
     background: var(--products-green-dark);
     color: #fff;
 }
+.products-filter-button {
+    padding: 1.1rem 2rem;
+    background: var(--products-paper);
+    color: var(--products-ink);
+}
+.products-filter-button:hover {
+    border-color: var(--products-green-dark);
+    background: var(--products-green-dark);
+    color: #fff;
+}
+
 
 .products-filter-form {
     margin-top: 4rem;
@@ -393,7 +411,7 @@
 
 @media (max-width: 640px) {
     .products-banner {
-        min-height: 31rem;
+        min-height: 20rem;
         padding: 4rem 2rem;
     }
 

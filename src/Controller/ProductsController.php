@@ -20,20 +20,20 @@ class ProductsController extends AppController
         if ($q !== '') {
             $query->where([
                 'OR' => [
-                    'ProductName LIKE' => '%' . $q . '%',
-                    'Description LIKE' => '%' . $q . '%',
+                    'Products.ProductName LIKE' => '%' . $q . '%',
+                    'Products.Description LIKE' => '%' . $q . '%',
                 ],
             ]);
         }
 
         if ($category !== '') {
-            $query->where(['CategoryId' => (int)$category]);
+            $query->where(['Products.CategoryId' => (int)$category]);
         }
 
         $priceFilters = [
-            'under-100' => ['Price <' => 100],
-            '100-250' => ['Price >=' => 100, 'Price <=' => 250],
-            'over-250' => ['Price >' => 250],
+            'under-100' => ['Products.Price <' => 100],
+            '100-250' => ['Products.Price >=' => 100, 'Products.Price <=' => 250],
+            'over-250' => ['Products.Price >' => 250],
         ];
 
         if (isset($priceFilters[$price])) {

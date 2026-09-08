@@ -9,7 +9,7 @@ $this->Html->css('landingPage/home', ['block' => true]);
     <section class="hero">
         <div class="hero-inner">
             <div class="hero-content">
-                <p class="section-eyebrow">Clayton and Melbourne homes</p>
+                <p class="section-eyebrow">Lighting for everyday living</p>
                 <h1>About Eco Glow Lighting</h1>
                 <p>
                     We provide premium decorative lighting, expert advice and
