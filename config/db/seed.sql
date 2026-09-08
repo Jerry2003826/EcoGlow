@@ -131,3 +131,16 @@ VALUES
     'Wall light for hallway',
     'Please recommend a warm wall light for a narrow Clayton hallway.'
 );
+
+UPDATE Product
+SET CategoryId = 2
+WHERE ProductName = 'Ashby Twin Sconce Brass';
+
+UPDATE Orders o
+INNER JOIN Payment p
+    ON p.OrderId = o.OrderId
+SET o.Status = 'paid'
+WHERE o.Status = 'pending';
+
+ALTER TABLE `Shopping_Cart`
+    MODIFY `InstallFee` DECIMAL(10,2) NOT NULL DEFAULT 80.00;
