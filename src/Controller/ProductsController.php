@@ -26,20 +26,31 @@ class ProductsController extends AppController
         }
 
         if ($category !== '') {
-            $query->where([
-                'CategoryId' => (int)$category,
-            ]);
+            $query->where(['CategoryId' => (int)$category]);
         }
 
         if ($this->request->is('post')) {
             $productId = (int)$this->request->getData('product_id');
+
+            $product = $this->fetchTable('Products')->get(
+                $productId,
+                contain: ['Inventory']
+            );
+
+            $stockQty = (int)($product->inventory?->Quantity ?? 0);
+
+            if ($stockQty <= 0) {
+                $this->Flash->error('This item is out of stock.');
+
+                return $this->redirect(['action' => 'index']);
+            }
 
             $cartId = $this->request->getSession()->read('CartId');
 
             if (!$cartId) {
                 $cart = $this->fetchTable('ShoppingCarts')->newEntity([
                     'InstallOptIn' => 0,
-                    'InstallFee' => 200.00,
+                    'InstallFee' => 0.00,
                 ]);
 
                 $this->fetchTable('ShoppingCarts')->saveOrFail($cart);
@@ -51,24 +62,27 @@ class ProductsController extends AppController
 
             $cartItems = $this->fetchTable('CartItems');
 
-            $item = $cartItems->find()
+            $cartItem = $cartItems->find()
                 ->where([
                     'CartId' => $cartId,
                     'ProductId' => $productId,
                 ])
                 ->first();
 
-            if ($item) {
-                $item->Quantity += 1;
+            if ($cartItem) {
+                $cartItem->Quantity = min(
+                    $stockQty,
+                    ((int)$cartItem->Quantity + 1)
+                );
             } else {
-                $item = $cartItems->newEntity([
+                $cartItem = $cartItems->newEntity([
                     'CartId' => $cartId,
                     'ProductId' => $productId,
                     'Quantity' => 1,
                 ]);
             }
 
-            $cartItems->saveOrFail($item);
+            $cartItems->saveOrFail($cartItem);
 
             $this->Flash->success(
                 'Added to cart. Continue shopping or view cart.'

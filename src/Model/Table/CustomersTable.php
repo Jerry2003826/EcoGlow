@@ -62,6 +62,16 @@ class CustomersTable extends Table
         $validator->notEmptyString('CustomerName');
         $validator->email('Email')->notEmptyString('Email');
         $validator->allowEmptyString('Phone');
+        $validator->add('Phone', 'digitsOnly', [
+            'rule' => static function ($value): bool {
+                if ($value === null || $value === '') {
+                    return true;
+                }
+
+                return (bool)preg_match('/^[0-9]+$/', (string)$value);
+            },
+            'message' => 'Phone must contain numbers only.',
+        ]);
         $validator->allowEmptyString('Address');
 
         return $validator;

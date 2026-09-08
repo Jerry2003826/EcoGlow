@@ -65,19 +65,39 @@ class UsersController extends AppController
     public function add()
     {
         $user = $this->Users->newEmptyEntity();
+        $errors = [];
+
         if ($this->request->is('post')) {
             $data = $this->request->getData();
             $data['UserRole'] = 'customer';
             $data['customer']['Email'] = $data['Email'] ?? '';
 
+            if (!empty($data['customer']['Phone'])) {
+                $data['customer']['Phone'] = preg_replace(
+                    '/[^0-9]/',
+                    '',
+                    (string)$data['customer']['Phone']
+                );
+            }
+
             $user = $this->Users->patchEntity($user, $data, [
                 'fields' => ['Username', 'Email', 'Password', 'UserRole', 'customer'],
-                'associated' => ['Customers']
+                'associated' => ['Customers'],
             ]);
-            if(empty($data['customer']['CustomerName']) || empty($data['customer']['Email'])) {
-                $this->Flash->error(__('Please fill in all required fields.'));
-                return $this->redirect(['action' => 'add']);
-            } 
+
+            if (empty($data['customer']['CustomerName'])) {
+                $errors['CustomerName'] = true;
+            }
+
+            if (empty($data['Email'])) {
+                $errors['Email'] = true;
+            }
+
+            if (!empty($errors)) {
+                $this->set(compact('user', 'errors'));
+
+                return;
+            }
 
             if ($this->Users->save($user)) {
                 $this->Flash->success(__('The user has been saved.'));
@@ -86,7 +106,7 @@ class UsersController extends AppController
             }
             $this->Flash->error(__('The user could not be saved. Please, try again.'));
         }
-        $this->set(compact('user'));
+        $this->set(compact('user', 'errors'));
     }
 
     public function edit($id = null)

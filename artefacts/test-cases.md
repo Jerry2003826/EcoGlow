@@ -12,7 +12,7 @@ IDs map to Project Finkel minutes and Trello Iteration 1.
 | TC-5E | US5 receipt | Refresh `/orders/receipt/{id}` | Same guest and totals |
 | TC-6A | US6 dashboard | Place order, open admin dashboard | Orders Today +1; Revenue includes payment |
 | TC-6B | US6 OrderId | Place two guest orders | Distinct integer OrderId values |
-| TC-7A | US7 install | Tick install on cart | +$200 on total and on order view |
+| TC-7A | US7 install | Tick install on cart | +$80 per item on each line and on the order total |
 | TC-8A | US8 staff | Login staff403 | Only Orders Today and Pending Shipment cards |
 | TC-8B | US8 admin | Login admin | Extra Low Stock and Revenue / Recent Payments |
 | TC-51 | US-5.1 | Orders filter Installation and Repair | Install orders listed; repair form writes `Service_Request` |

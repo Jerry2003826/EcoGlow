@@ -57,7 +57,7 @@ VALUES
     NULL,
     1,
     1,
-    200.00
+    80.00
 );
 
 INSERT INTO `Cart_Item`

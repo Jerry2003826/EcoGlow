@@ -78,7 +78,7 @@ CREATE TABLE `Shopping_Cart` (
     `CustomerId` INT NULL,
     `GuestId` INT NULL,
     `InstallOptIn` TINYINT(1) NOT NULL DEFAULT 0,
-    `InstallFee` DECIMAL(10,2) NOT NULL DEFAULT 200.00,
+    `InstallFee` DECIMAL(10,2) NOT NULL DEFAULT 80.00,
     `CreatedAt` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT `fk_cart_customer`
         FOREIGN KEY (`CustomerId`) REFERENCES `Customer`(`CustomerId`),

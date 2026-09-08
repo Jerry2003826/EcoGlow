@@ -1,7 +1,7 @@
 # Eco Glow dest runsheet
 
 Environment: https://dev.u26s2236.iedev.org/  
-Deadline this sheet covers: Tuesday 15:00 (Project Finkel 07/09/26)
+Deadline this sheet covers: Week 6 Thursday (Project Finkel 08/09/26)
 
 ## Accounts
 
@@ -16,7 +16,7 @@ Test card: `4242424242424242` (any future expiry, any CVC). Other numbers must f
 
 1. Open `/` logged out. Confirm olive navbar and landing carousel.
 2. Open Shop `/products`. Search `Ashby`. Filter Wall Lights. Add to cart. Confirm flash and stay on shop.
-3. Open Cart. Tick installation ($200). Confirm running total includes the fee.
+3. Open Cart. Tick installation ($80 per item). Confirm each line shows $80 x qty and the running total updates without an Update Cart button.
 4. Refresh the cart. Cart must still hold the items.
 5. Checkout as guest: name, email, address, phone. Pay with `4111...` first — must reject. Pay with `4242...`.
 6. Receipt shows guest details, lines, install fee, OrderId. Refresh the receipt — it stays.

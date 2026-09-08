@@ -49,10 +49,33 @@ class CheckoutController extends AppController
         $installFee = ((int)$cart->InstallOptIn === 1)
             ? (float)$cart->InstallFee
             : 0.00;
-
         $grandTotal = $productsTotal + $installFee;
 
+        $errors = [];
+
         if ($this->request->is('post')) {
+            $guest = $this->fetchTable('Guests')->newEntity([
+                'GuestName' => $this->request->getData('GuestName'),
+                'Email' => $this->request->getData('Email'),
+                'Address' => $this->request->getData('Address'),
+                'Phone' => $this->request->getData('Phone'),
+            ]);
+
+            $errors = $guest->getErrors();
+
+            if (!empty($errors)) {
+                $this->set(compact(
+                    'cart',
+                    'items',
+                    'productsTotal',
+                    'installFee',
+                    'grandTotal',
+                    'errors'
+                ));
+
+                return;
+            }
+
             $cardNumber = preg_replace(
                 '/\s+/',
                 '',
@@ -67,18 +90,12 @@ class CheckoutController extends AppController
                     'items',
                     'productsTotal',
                     'installFee',
-                    'grandTotal'
+                    'grandTotal',
+                    'errors'
                 ));
 
                 return;
             }
-
-            $guest = $this->fetchTable('Guests')->newEntity([
-                'GuestName' => $this->request->getData('GuestName'),
-                'Email' => $this->request->getData('Email'),
-                'Address' => $this->request->getData('Address'),
-                'Phone' => $this->request->getData('Phone'),
-            ]);
 
             $this->fetchTable('Guests')->saveOrFail($guest);
 
@@ -86,26 +103,28 @@ class CheckoutController extends AppController
             $this->fetchTable('ShoppingCarts')->saveOrFail($cart);
 
             $order = $this->fetchTable('Orders')->newEntity([
-                'CartId' => $cart->CartId,
                 'GuestId' => $guest->GuestId,
+                'CartId' => $cart->CartId,
                 'Status' => 'paid',
             ]);
 
             $this->fetchTable('Orders')->saveOrFail($order);
 
             foreach ($items as $item) {
-                $this->fetchTable('OrderItems')->saveOrFail(
-                    $this->fetchTable('OrderItems')->newEntity([
-                        'OrderId' => $order->OrderId,
-                        'ProductId' => $item->ProductId,
-                        'Quantity' => $item->Quantity,
-                        'UnitPrice' => $item->product->Price,
-                    ])
-                );
+                $orderItem = $this->fetchTable('OrderItems')->newEntity([
+                    'OrderId' => $order->OrderId,
+                    'ProductId' => $item->ProductId,
+                    'Quantity' => $item->Quantity,
+                    'UnitPrice' => $item->product->Price,
+                ]);
+
+                $this->fetchTable('OrderItems')->saveOrFail($orderItem);
 
                 $inventory = $this->fetchTable('Inventory')
                     ->find()
-                    ->where(['ProductId' => $item->ProductId])
+                    ->where([
+                        'ProductId' => $item->ProductId,
+                    ])
                     ->first();
 
                 if ($inventory) {
@@ -127,7 +146,10 @@ class CheckoutController extends AppController
                         $guest->GuestName,
                         $guest->Address
                     ),
-                    'RequestedDate' => date('Y-m-d H:i:s', strtotime('+5 days')),
+                    'RequestedDate' => date(
+                        'Y-m-d H:i:s',
+                        strtotime('+5 days')
+                    ),
                 ]);
 
                 $this->fetchTable('ServiceRequests')->save($serviceRequest);
@@ -137,7 +159,10 @@ class CheckoutController extends AppController
                 'OrderId' => $order->OrderId,
                 'DeliveryAddress' => $guest->Address,
                 'DeliveryStatus' => 'scheduled',
-                'DeliveryDate' => date('Y-m-d H:i:s', strtotime('+7 days')),
+                'DeliveryDate' => date(
+                    'Y-m-d H:i:s',
+                    strtotime('+7 days')
+                ),
             ]);
 
             $this->fetchTable('Delivery')->saveOrFail($delivery);
@@ -171,7 +196,8 @@ class CheckoutController extends AppController
             'items',
             'productsTotal',
             'installFee',
-            'grandTotal'
+            'grandTotal',
+            'errors'
         ));
     }
 }

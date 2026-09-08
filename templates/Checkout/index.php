@@ -16,7 +16,12 @@
         <tbody>
         <?php foreach ($items as $item): ?>
             <tr>
-                <td><?= h($item->product->ProductName) ?></td>
+                <td>
+                    <?= h($item->product->ProductName) ?>
+                    <?php if ((int)$cart->InstallOptIn === 1): ?>
+                        <div>Installation: $80 x <?= (int)$item->Quantity ?></div>
+                    <?php endif; ?>
+                </td>
                 <td><?= (int)$item->Quantity ?></td>
                 <td>$<?= number_format((float)$item->product->Price, 2) ?></td>
             </tr>
@@ -29,17 +34,36 @@
     <p>Grand Total: $<?= number_format($grandTotal, 2) ?></p>
 
     <?= $this->Form->create() ?>
+
+    <?php if (!empty($errors['GuestName'])): ?>
+        <p class="error">Please enter your name.</p>
+    <?php endif; ?>
+
     <?= $this->Form->control('GuestName') ?>
+
+    <?php if (!empty($errors['Email'])): ?>
+        <p class="error">Please enter your email address.</p>
+    <?php endif; ?>
+
     <?= $this->Form->control('Email') ?>
-    <?= $this->Form->control('Address') ?>
-    <?= $this->Form->control('Phone') ?>
+
+    <?= $this->Form->control('Address', [
+        'required' => true,
+    ]) ?>
+
+    <?= $this->Form->control('Phone', [
+        'required' => true,
+        'inputmode' => 'numeric',
+        'pattern' => '[0-9]+',
+    ]) ?>
+
     <?= $this->Form->control('card_number', [
         'label' => 'Test Card Number',
-        'value' => '4242424242424242',
     ]) ?>
 
     <p>Use test card number 4242424242424242</p>
 
     <?= $this->Form->button('Complete Order') ?>
+
     <?= $this->Form->end() ?>
 </div>

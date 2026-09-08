@@ -21,31 +21,40 @@ class OrdersController extends AppController
             ->find()
             ->contain(['Products'])
             ->where([
-                'OrderId' => $id,
+                'OrderId' => $order->OrderId,
             ])
             ->all();
 
-        $cart = $this->fetchTable('ShoppingCarts')->get($order->CartId);
-
-        $subtotal = 0;
+        $productsTotal = 0.00;
 
         foreach ($items as $item) {
-            $subtotal += ((float)$item->UnitPrice * (int)$item->Quantity);
+            $productsTotal += (
+                (float)$item->UnitPrice * (int)$item->Quantity
+            );
         }
 
-        $installFee = ((int)$cart->InstallOptIn === 1)
-            ? (float)$cart->InstallFee
-            : 0.00;
+        $cart = $this->fetchTable('ShoppingCarts')
+            ->find()
+            ->where([
+                'CartId' => $order->CartId,
+            ])
+            ->first();
 
-        $total = $subtotal + $installFee;
+        $installFee = 0.00;
+
+        if ($cart && (int)$cart->InstallOptIn === 1) {
+            $installFee = (float)$cart->InstallFee;
+        }
+
+        $grandTotal = $productsTotal + $installFee;
 
         $this->set(compact(
             'order',
             'guest',
             'items',
-            'subtotal',
+            'productsTotal',
             'installFee',
-            'total'
+            'grandTotal'
         ));
     }
 }

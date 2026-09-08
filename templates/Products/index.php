@@ -10,28 +10,23 @@ foreach ($categories as $categoryItem) {
 }
 ?>
 
+<div class="store-toolbar">
+    <?= $this->Html->link('View Cart', '/cart', ['class' => 'button']) ?>
+</div>
 
 <div class="store-search">
     <?= $this->Form->create(null, ['type' => 'get']) ?>
-
     <?= $this->Form->control('q', [
         'label' => 'Search',
         'value' => $q ?? '',
     ]) ?>
-
     <?= $this->Form->control('category', [
         'label' => 'Category',
         'options' => $categoryOptions,
         'value' => $category ?? '',
     ]) ?>
-
     <?= $this->Form->button('Search') ?>
-
     <?= $this->Form->end() ?>
-</div>
-
-<div class="store-toolbar">
-    <p>Continue shopping and add items to your cart. View Cart anytime. <?= $this->Html->link('View Cart', '/cart') ?></p>  
 </div>
 
 <div class="product-grid">
@@ -40,8 +35,9 @@ foreach ($categories as $categoryItem) {
         $image = ((int)$product->CategoryId === 1)
             ? 'landing/pendants.jpg'
             : 'landing/wall-light.jpg';
-        ?>
 
+        $stockQty = (int)($product->inventory?->Quantity ?? 0);
+        ?>
         <div class="product-card">
             <?= $this->Html->image($image) ?>
 
@@ -53,15 +49,20 @@ foreach ($categories as $categoryItem) {
                 $<?= number_format((float)$product->Price, 2) ?>
             </div>
 
-            <?= $this->Form->create() ?>
+            <p>Available: <?= $stockQty ?></p>
 
-            <?= $this->Form->hidden('product_id', [
-                'value' => $product->ProductId,
-            ]) ?>
-
-            <?= $this->Form->button('Add to Cart') ?>
-
-            <?= $this->Form->end() ?>
+            <?php if ($stockQty > 0): ?>
+                <?= $this->Form->create() ?>
+                <?= $this->Form->hidden('product_id', [
+                    'value' => $product->ProductId,
+                ]) ?>
+                <?= $this->Form->button('Add to Cart') ?>
+                <?= $this->Form->end() ?>
+            <?php else: ?>
+                <div class="out-of-stock">
+                    Out of stock
+                </div>
+            <?php endif; ?>
         </div>
     <?php endforeach; ?>
 </div>

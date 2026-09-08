@@ -16,7 +16,8 @@ $this->Html->css('landingPage/home', ['block' => true]);
                     and ongoing customer support.
                 </p>
                 <p>
-                    Home installation is a fixed $200 fee at checkout.
+                    Professional in-home installation is available at
+                    $80 per item.
                     Repair bookings can be arranged with our staff.
                 </p>
                 <div class="hero-buttons">

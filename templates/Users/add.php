@@ -1,23 +1,37 @@
 <?php
+// templates/Users/add.php
 
+$this->assign('title', 'Create Account');
+$this->Html->css('storefront', ['block' => true, 'timestamp' => true]);
+
+$errors = $errors ?? [];
 ?>
-<div class="row" style="display: flex; justify-content: center; align-items: center; padding: 20px;">
-    <div class="column column-50">
-        <div class="users form content">
-            <?= $this->Form->create($user) ?>
-            <fieldset>
-                <legend><?= __('Customer Sign Up') ?></legend>
-                <?php
-                    echo $this->Form->control('Username');
-                    echo $this->Form->control('Password', ['type' => 'password', 'required' => true]);
-                    echo $this->Form->control('Email', ['type' => 'email']);
-                    echo $this->Form->control('customer.CustomerName', ['label' => 'Full name']);
-                    echo $this->Form->control('customer.Phone');
-                    echo $this->Form->control('customer.Address');
-                ?>
-            </fieldset>
-            <?= $this->Form->button(__('Submit')) ?>
-            <?= $this->Form->end() ?>
-        </div>
-    </div>
+
+<div class="checkout-card signup-card">
+    <h1>Create Account</h1>
+
+    <?php if (!empty($errors['CustomerName'])): ?>
+        <p class="error">Please enter your name.</p>
+    <?php endif; ?>
+
+    <?php if (!empty($errors['Email'])): ?>
+        <p class="error">Please enter your email address.</p>
+    <?php endif; ?>
+
+    <?= $this->Form->create($user) ?>
+
+    <?= $this->Form->control('Username') ?>
+    <?= $this->Form->control('Password', ['type' => 'password', 'required' => true]) ?>
+    <?= $this->Form->control('Email', ['type' => 'email']) ?>
+    <?= $this->Form->control('customer.CustomerName', ['label' => 'Full name']) ?>
+    <?= $this->Form->control('customer.Phone', [
+        'label' => 'Phone',
+        'inputmode' => 'numeric',
+        'pattern' => '[0-9]+',
+    ]) ?>
+    <?= $this->Form->control('customer.Address', ['label' => 'Address']) ?>
+
+    <?= $this->Form->button('Create Account') ?>
+
+    <?= $this->Form->end() ?>
 </div>

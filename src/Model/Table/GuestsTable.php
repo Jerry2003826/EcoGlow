@@ -22,13 +22,26 @@ class GuestsTable extends Table
     public function validationDefault(Validator $validator): Validator
     {
         $validator
-            ->requirePresence('GuestName', 'create')
+            ->requirePresence('GuestName')
             ->notEmptyString('GuestName');
 
         $validator
             ->email('Email')
-            ->requirePresence('Email', 'create')
+            ->requirePresence('Email')
             ->notEmptyString('Email');
+
+        $validator
+            ->requirePresence('Address')
+            ->notEmptyString('Address');
+
+        $validator
+            ->requirePresence('Phone')
+            ->notEmptyString('Phone')
+            ->add('Phone', 'digits', [
+                'rule' => static function ($value): bool {
+                    return (bool)preg_match('/^[0-9]+$/', (string)$value);
+                },
+            ]);
 
         return $validator;
     }

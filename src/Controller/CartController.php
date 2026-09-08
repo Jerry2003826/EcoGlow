@@ -13,42 +13,71 @@ class CartController extends AppController
 
         $cart = null;
         $items = [];
-        $subtotal = 0.0;
+        $grandTotal = 0.00;
 
         if ($cartId) {
             $cart = $this->fetchTable('ShoppingCarts')->get(
                 $cartId,
-                contain: ['CartItems.Products']
+                contain: ['CartItems.Products.Inventory']
             );
 
-            if ($this->request->is(['post', 'put', 'patch'])) {
-                // Remove item
-                $removeItemId = $this->request->getData('remove_item');
-                if ($removeItemId) {
-                    $item = $this->fetchTable('CartItems')->find()
+            if ($this->request->is('post')) {
+                $removedId = (int)$this->request->getData('remove_item');
+
+                if ($removedId) {
+                    $cartItem = $this->fetchTable('CartItems')->find()
                         ->where([
-                            'CartItemId' => (int)$removeItemId,
+                            'CartItemId' => $removedId,
                             'CartId' => (int)$cartId,
                         ])
                         ->first();
 
-                    if ($item) {
-                        $this->fetchTable('CartItems')->delete($item);
+                    if ($cartItem) {
+                        $this->fetchTable('CartItems')->delete($cartItem);
+                    }
+                }
+
+                foreach ((array)$this->request->getData('qty') as $id => $qty) {
+                    if ($removedId && (int)$id === $removedId) {
+                        continue;
                     }
 
-                    return $this->redirect(['action' => 'index']);
+                    $cartItem = $this->fetchTable('CartItems')->get((int)$id);
+
+                    $productRow = $this->fetchTable('Products')->get(
+                        $cartItem->ProductId,
+                        contain: ['Inventory']
+                    );
+                    $stockQty = (int)($productRow->inventory?->Quantity ?? 0);
+
+                    $cartItem->Quantity = max(
+                        1,
+                        min((int)$qty, (int)$stockQty)
+                    );
+
+                    $this->fetchTable('CartItems')->save($cartItem);
                 }
 
+                $cart = $this->fetchTable('ShoppingCarts')->get(
+                    $cartId,
+                    contain: ['CartItems']
+                );
 
-                $cart->InstallOptIn = (int)$this->request->getData('install_opt_in', 0);
+                $cart->InstallOptIn = $this->request->getData(
+                    'install_opt_in'
+                ) ? 1 : 0;
+
+                $qtyTotal = 0;
+
+                foreach ($cart->cart_items as $item) {
+                    $qtyTotal += (int)$item->Quantity;
+                }
+
+                $cart->InstallFee = $cart->InstallOptIn
+                    ? ($qtyTotal * 80)
+                    : 0;
 
                 $this->fetchTable('ShoppingCarts')->save($cart);
-
-                foreach (($this->request->getData('qty') ?? []) as $cartItemId => $qty) {
-                    $item = $this->fetchTable('CartItems')->get((int)$cartItemId);
-                    $item->Quantity = max(1, (int)$qty);
-                    $this->fetchTable('CartItems')->save($item);
-                }
 
                 return $this->redirect(['action' => 'index']);
             }
@@ -56,18 +85,18 @@ class CartController extends AppController
             $items = $cart->cart_items;
 
             foreach ($items as $item) {
-                $subtotal += ((float)$item->product->Price * (int)$item->Quantity);
+                $grandTotal += (float)$item->product->Price * (int)$item->Quantity;
             }
 
             if ((int)$cart->InstallOptIn === 1) {
-                $subtotal += (float)$cart->InstallFee;
+                $grandTotal += (float)$cart->InstallFee;
             }
         }
 
         $this->set(compact(
             'cart',
             'items',
-            'subtotal'
+            'grandTotal'
         ));
     }
 }
