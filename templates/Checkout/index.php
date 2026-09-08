@@ -34,28 +34,44 @@
     <p>Grand Total: $<?= number_format($grandTotal, 2) ?></p>
 
     <?= $this->Form->create() ?>
+    
+    <?php if($customer): ?>
 
-    <?php if (!empty($errors['GuestName'])): ?>
-        <p class="error">Please enter your name.</p>
+        <h3>Customer Information</h3>
+        <p><strong>Name:</strong> <?= h($customer->CustomerName) ?></p>
+        <p><strong>Email:</strong> <?= h($customer->Email) ?></p>
+        <p><strong>Phone:</strong> <?= h($customer->Phone) ?></p>
+        <?= $this->Form->control('Address', [
+            'label' => 'Delivery Address',
+            'value' => $customer->Address,
+            'required' => true,
+        ]) ?>
+
+    <?php else: ?>
+
+        <?php if (!empty($errors['GuestName'])): ?>
+            <p class="error">Please enter your name.</p>
+        <?php endif; ?>
+
+        <?= $this->Form->control('GuestName') ?>
+
+        <?php if (!empty($errors['Email'])): ?>
+            <p class="error">Please enter your email address.</p>
+        <?php endif; ?>
+
+        <?= $this->Form->control('Email') ?>
+
+        <?= $this->Form->control('Address', [
+            'required' => true,
+        ]) ?>
+
+        <?= $this->Form->control('Phone', [
+            'required' => true,
+            'inputmode' => 'numeric',
+            'pattern' => '[0-9]+',
+        ]) ?>
+
     <?php endif; ?>
-
-    <?= $this->Form->control('GuestName') ?>
-
-    <?php if (!empty($errors['Email'])): ?>
-        <p class="error">Please enter your email address.</p>
-    <?php endif; ?>
-
-    <?= $this->Form->control('Email') ?>
-
-    <?= $this->Form->control('Address', [
-        'required' => true,
-    ]) ?>
-
-    <?= $this->Form->control('Phone', [
-        'required' => true,
-        'inputmode' => 'numeric',
-        'pattern' => '[0-9]+',
-    ]) ?>
 
     <?= $this->Form->control('card_number', [
         'label' => 'Test Card Number',

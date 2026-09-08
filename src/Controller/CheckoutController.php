@@ -52,29 +52,48 @@ class CheckoutController extends AppController
         $grandTotal = $productsTotal + $installFee;
 
         $errors = [];
+        $customer = null;
+        $guest = null;
+
+        //Check login status
+        $identity = $this->request->getAttribute('identity');
+        if ($identity) {
+            $userId = $identity->getIdentifier();
+            $customer = $this->fetchTable('Customers')->find()
+                ->where(['UserId' => $userId])
+                ->first();
+
+        }
+
 
         if ($this->request->is('post')) {
-            $guest = $this->fetchTable('Guests')->newEntity([
-                'GuestName' => $this->request->getData('GuestName'),
-                'Email' => $this->request->getData('Email'),
-                'Address' => $this->request->getData('Address'),
-                'Phone' => $this->request->getData('Phone'),
-            ]);
 
-            $errors = $guest->getErrors();
+            if(!$customer) {
+                $guest = $this->fetchTable('Guests')->newEntity([
+                    'GuestName' => $this->request->getData('GuestName'),
+                    'Email' => $this->request->getData('Email'),
+                    'Address' => $this->request->getData('Address'),
+                    'Phone' => $this->request->getData('Phone'),
+                ]);
 
-            if (!empty($errors)) {
-                $this->set(compact(
-                    'cart',
-                    'items',
-                    'productsTotal',
-                    'installFee',
-                    'grandTotal',
-                    'errors'
-                ));
+                $errors = $guest->getErrors();
 
-                return;
+                if (!empty($errors)) {
+                    $this->set(compact(
+                        'cart',
+                        'items',
+                        'productsTotal',
+                        'installFee',
+                        'grandTotal',
+                        'errors'
+                    ));
+
+                    return;
+                }
             }
+            
+
+            
 
             $cardNumber = preg_replace(
                 '/\s+/',
@@ -97,13 +116,24 @@ class CheckoutController extends AppController
                 return;
             }
 
-            $this->fetchTable('Guests')->saveOrFail($guest);
+            if($customer) {
+                $cart->CustomerId = $customer->CustomerId;
+                $cart->GuestId = null;
+                $checkoutName = $customer->CustomerName;
+                $checkoutAddress = (string)$this->request->getData('Address');
+            } else {
+                $this->fetchTable('Guests')->saveOrFail($guest);
+                $cart->GuestId = $guest->GuestId;
+                $cart->CustomerId = null;
+                $checkoutName = $guest->GuestName;
+                $checkoutAddress = $guest->Address;
+            }
 
-            $cart->GuestId = $guest->GuestId;
             $this->fetchTable('ShoppingCarts')->saveOrFail($cart);
 
             $order = $this->fetchTable('Orders')->newEntity([
-                'GuestId' => $guest->GuestId,
+                'CustomerId' => $customer ? $customer->CustomerId : null,
+                'GuestId' => $guest ? $guest->GuestId : null,
                 'CartId' => $cart->CartId,
                 'Status' => 'paid',
             ]);
@@ -143,8 +173,8 @@ class CheckoutController extends AppController
                     'Description' => sprintf(
                         'Installation for Order %s Guest %s Address %s',
                         $order->OrderId,
-                        $guest->GuestName,
-                        $guest->Address
+                        $checkoutName,
+                        $checkoutAddress
                     ),
                     'RequestedDate' => date(
                         'Y-m-d H:i:s',
@@ -157,7 +187,7 @@ class CheckoutController extends AppController
 
             $delivery = $this->fetchTable('Delivery')->newEntity([
                 'OrderId' => $order->OrderId,
-                'DeliveryAddress' => $guest->Address,
+                'DeliveryAddress' => $checkoutAddress,
                 'DeliveryStatus' => 'scheduled',
                 'DeliveryDate' => date(
                     'Y-m-d H:i:s',
@@ -197,7 +227,8 @@ class CheckoutController extends AppController
             'productsTotal',
             'installFee',
             'grandTotal',
-            'errors'
+            'errors',
+            'customer',
         ));
     }
 }

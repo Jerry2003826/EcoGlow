@@ -34,6 +34,13 @@ class UsersController extends AppController
         }
 
         if ($result && $result->isValid()) {
+            $role = $this->request->getAttribute('identity');
+            if($role->UserRole === 'admin') {
+                $target = $this->Authentication->getLoginRedirect() ?? '/admin';
+                return $this->redirect($target);
+            } else {
+                return $this->redirect(['controller' => 'Pages', 'action' => 'display']);
+            }
             $target = $this->Authentication->getLoginRedirect() ?? '/admin';
             return $this->redirect($target);
         }
