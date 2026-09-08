@@ -7,7 +7,11 @@
 <?php if (empty($items)): ?>
     <div class="empty-cart">
         <p>Your cart is empty.</p>
-        <?= $this->Html->link('Continue Shopping', '/products') ?>
+        <?= $this->Html->link(
+            'Continue Shopping',
+            '/products',
+            ['class' => 'button']
+        ) ?>
     </div>
 <?php else: ?>
 
@@ -34,6 +38,7 @@
                 <?= $this->Html->image($image, [
                     'width' => 80,
                     'class' => 'cart-item-thumb',
+                    'alt' => (string)$item->product->ProductName,
                 ]) ?>
                 <div>
                     <?= h($item->product->ProductName) ?>
@@ -100,8 +105,16 @@
 </div>
 
 <div class="cart-actions">
-    <?= $this->Html->link('Continue Shopping', '/products') ?>
-    <?= $this->Html->link('Checkout', '/checkout') ?>
+    <?= $this->Html->link(
+        'Continue Shopping',
+        '/products',
+        ['class' => 'button']
+    ) ?>
+    <?= $this->Html->link(
+        'Checkout',
+        '/checkout',
+        ['class' => 'button']
+    ) ?>
 </div>
 
 <?= $this->Form->end() ?>

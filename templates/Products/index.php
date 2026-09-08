@@ -39,7 +39,9 @@ foreach ($categories as $categoryItem) {
         $stockQty = (int)($product->inventory?->Quantity ?? 0);
         ?>
         <div class="product-card">
-            <?= $this->Html->image($image) ?>
+            <?= $this->Html->image($image, [
+                'alt' => (string)$product->ProductName,
+            ]) ?>
 
             <h3><?= h($product->ProductName) ?></h3>
 

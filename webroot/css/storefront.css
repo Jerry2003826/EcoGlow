@@ -133,6 +133,18 @@ input[type="submit"]:hover {
 }
 
 .signup-card {
-    max-width: 28rem;
-    margin: 2rem auto;
+    max-width: 560px;
+    width: 100%;
+    margin: 3rem auto;
+    padding: 2.4rem;
+}
+
+.install-box label {
+    display: block;
+    white-space: normal;
+}
+
+.cart-actions .button,
+.empty-cart .button {
+    text-decoration: none;
 }

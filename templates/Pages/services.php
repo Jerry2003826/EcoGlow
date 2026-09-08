@@ -33,6 +33,12 @@ $this->Html->css('landingPage/home', ['block' => true]);
                     ) ?>
                 </div>
             </div>
+            <div class="hero-image">
+                <?= $this->Html->image('landing/interior.jpg', [
+                    'class' => 'hero-photo',
+                    'alt' => 'Interior lighting consultation and installation',
+                ]) ?>
+            </div>
         </div>
     </section>
 </div>
