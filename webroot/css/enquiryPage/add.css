@@ -76,10 +76,13 @@ body:has(.add-contact-page) .main {
 
 .contact-form {
     flex: 1.3;
+    background: #fbf9f5;
+    padding: 40px;
+    border-radius: 12px;
 }
 
 .contact-form label {
-    color: #fff;
+    color: #5B5545;
 }
 
 .contact-form input,
@@ -88,12 +91,12 @@ body:has(.add-contact-page) .main {
     padding: 5px;
     margin-bottom: 10px;
     border-radius: 6px;
-    color: #fff;
-    border: 1.5px solid #fff;
+    color: #5B5545;
+    border: 1px solid #5B5545;
 }
 .contact-form input:focus,
 .contact-form textarea:focus {
-    border-color: rgba(255, 255, 255, 0.6);
+    border-color: rgba(91, 85, 69, 0.6);
     outline: none;
 }
 
