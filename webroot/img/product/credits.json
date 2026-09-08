@@ -1,0 +1,11 @@
+{
+  "license": "https://unsplash.com/license",
+  "photos": [
+    {"file": "ashby-twin-sconce-brass.jpg", "photographer": "Rosemary Media", "source": "https://unsplash.com/photos/a-brass-bell-on-a-wall-IobF-Osx0wU"},
+    {"file": "halden-pendant-oak.jpg", "photographer": "Shutter Speed", "source": "https://unsplash.com/photos/a-lamp-hanging-from-a-ceiling-in-a-room-xwyPtCR5mLs"},
+    {"file": "table-lamp.jpg", "photographer": "Calum Lewis", "source": "https://unsplash.com/photos/table-lamp-on-top-of-nightstand-h0j-H2jyFj4"},
+    {"file": "edison-wall-light-black.jpg", "photographer": "Frames For Your Heart", "source": "https://unsplash.com/photos/black-and-silver-metal-pipe-Bk2fE5_HLiY"},
+    {"file": "luna-pendant-gold.jpg", "photographer": "Jean-Philippe Delberghe", "source": "https://unsplash.com/photos/turned-on-pendant-lamps-Ry9WBo3qmoc"},
+    {"file": "arlo-wall-light-white.jpg", "photographer": "Jacek Pobłocki", "source": "https://unsplash.com/photos/white-pendant-lamp-turned-on-in-room-6Qin0S4TOt8"}
+  ]
+}

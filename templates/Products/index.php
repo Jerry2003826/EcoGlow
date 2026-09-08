@@ -32,14 +32,10 @@ foreach ($categories as $categoryItem) {
 <div class="product-grid">
     <?php foreach ($products as $product): ?>
         <?php
-        $image = ((int)$product->CategoryId === 1)
-            ? 'landing/pendants.jpg'
-            : 'landing/wall-light.jpg';
-
         $stockQty = (int)($product->inventory?->Quantity ?? 0);
         ?>
         <div class="product-card">
-            <?= $this->Html->image($image, [
+            <?= $this->Html->image($product->Image, [
                 'alt' => (string)$product->ProductName,
             ]) ?>
 

@@ -17,12 +17,12 @@ VALUES
 INSERT INTO `Product`
 (`CategoryId`,`SupplierId`,`ProductName`,`Description`,`Price`,`Image`)
 VALUES
-(2,1,'Ashby Twin Sconce Brass','Decorative wall light',189.00,'ashby-twin-sconce-brass.jpg'),
-(1,1,'Halden Pendant Oak','Timber pendant light',249.00,'halden-pendant-oak.jpg'),
-(2,2,'Rowan Rotary Dimmer White','Dimmer control',49.00,'rowan-rotary-dimmer-white.jpg'),
-(2,2,'Edison Wall Light Black','Industrial wall light',129.00,'edison-wall-light-black.jpg'),
-(1,1,'Luna Pendant Gold','Modern pendant',219.00,'luna-pendant-gold.jpg'),
-(2,2,'Arlo Wall Light White','Contemporary wall light',99.00,'arlo-wall-light-white.jpg');
+(2,1,'Ashby Twin Sconce Brass','Decorative wall light',189.00,'product/ashby-twin-sconce-brass.jpg'),
+(1,1,'Halden Pendant Oak','Timber pendant light',249.00,'product/halden-pendant-oak.jpg'),
+(2,2,'Linen table lamp','table lamp',49.00,'product/table-lamp.jpg'),
+(2,2,'Edison Wall Light Black','Industrial wall light',129.00,'product/edison-wall-light-black.jpg'),
+(1,1,'Luna Pendant Gold','Modern pendant',219.00,'product/luna-pendant-gold.jpg'),
+(2,2,'Arlo Wall Light White','Contemporary wall light',99.00,'product/arlo-wall-light-white.jpg');
 
 INSERT INTO `Inventory`
 (`ProductId`,`Quantity`,`LowStockThreshold`)
@@ -37,7 +37,7 @@ VALUES
 INSERT INTO `User`
 (`Username`,`Email`,`Password`,`UserRole`,`Status`)
 VALUES
-('admin','$2y$10$3qfNIS3T8eUhc4VZQizawO/E7ATUE6pSRx5FUNqKzAnUGqw157vtG','admin','active'),
+('admin','admin@ecoglow.local','$2y$10$3qfNIS3T8eUhc4VZQizawO/E7ATUE6pSRx5FUNqKzAnUGqw157vtG','admin','active'),
 ('staff','staff@ecoglow.local','$2y$10$AJDWcSl6Ls1gQy1paGznZuVoqwYWvFJ31yKIrNpGWTUds/ucmS3IS','staff','active');
 
 INSERT INTO `Guest`
