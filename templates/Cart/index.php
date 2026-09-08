@@ -28,14 +28,9 @@
     </thead>
     <tbody>
     <?php foreach ($items as $item): ?>
-        <?php
-        $image = ((int)$item->product->CategoryId === 1)
-            ? 'landing/pendants.jpg'
-            : 'landing/wall-light.jpg';
-        ?>
         <tr>
             <td class="cart-item-label">
-                <?= $this->Html->image($image, [
+                <?= $this->Html->image($item->product->Image, [
                     'width' => 80,
                     'class' => 'cart-item-thumb',
                     'alt' => (string)$item->product->ProductName,
