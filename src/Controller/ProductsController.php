@@ -11,10 +11,11 @@ class ProductsController extends AppController
     {
         $q = trim((string)$this->request->getQuery('q'));
         $category = (string)$this->request->getQuery('category');
+        $price = (string)$this->request->getQuery('price');
 
         $query = $this->fetchTable('Products')
             ->find()
-            ->contain(['Inventory']);
+            ->contain(['Inventory', 'ProductCategories']);
 
         if ($q !== '') {
             $query->where([
@@ -27,6 +28,18 @@ class ProductsController extends AppController
 
         if ($category !== '') {
             $query->where(['CategoryId' => (int)$category]);
+        }
+
+        $priceFilters = [
+            'under-100' => ['Price <' => 100],
+            '100-250' => ['Price >=' => 100, 'Price <=' => 250],
+            'over-250' => ['Price >' => 250],
+        ];
+
+        if (isset($priceFilters[$price])) {
+            $query->where($priceFilters[$price]);
+        } else {
+            $price = '';
         }
 
         if ($this->request->is('post')) {
@@ -93,6 +106,7 @@ class ProductsController extends AppController
                 '?' => [
                     'q' => $q,
                     'category' => $category,
+                    'price' => $price,
                 ],
             ]);
         }
@@ -107,6 +121,7 @@ class ProductsController extends AppController
             'products',
             'q',
             'category',
+            'price',
             'categories'
         ));
     }
