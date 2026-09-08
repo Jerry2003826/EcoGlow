@@ -30,7 +30,7 @@ body:has(.login-page) .main {
     content: "";
     position: absolute;
     inset: 0;
-    background: rgba(0, 0, 0, 0.3); 
+    background: rgba(0, 0, 0, 0.4); 
 }
 
 .login-background-image {
@@ -39,7 +39,7 @@ body:has(.login-page) .main {
     height: 100%;
     object-fit: cover;
     object-position: center;
-    filter: brightness(40%);
+    filter: brightness(35%);
 }
     
 .login-form {

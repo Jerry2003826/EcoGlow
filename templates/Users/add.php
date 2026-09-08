@@ -8,7 +8,7 @@ $errors = $errors ?? [];
 ?>
 
 <div class="checkout-card signup-card">
-    <h1>Create Account</h1>
+    <h2>Create Account</h2>
 
     <?php if (!empty($errors['CustomerName'])): ?>
         <p class="error">Please enter your name.</p>

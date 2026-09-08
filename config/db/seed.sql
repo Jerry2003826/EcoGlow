@@ -1,7 +1,7 @@
 -- config/db/seed.sql
 -- account and password for demo owner and staff users
--- Owner: admin@ecoglow.local / ChangeMe-EcoGlow-2026-Admin!
--- Staff: staff403@ecoglow.local / ChangeMe-EcoGlow-2026-Staff!
+-- Owner: admin@ecoglow.local / admin1234
+-- Staff: staff@ecoglow.local / staff1234
 INSERT INTO `Product_Category`
 (`CategoryName`)
 VALUES
@@ -37,8 +37,8 @@ VALUES
 INSERT INTO `User`
 (`Username`,`Email`,`Password`,`UserRole`,`Status`)
 VALUES
-('admin','admin@ecoglow.local','$2y$12$Ez0yPQMwTX7TLVzLGuKoselJ3WA6a/abmBBFyYGIiyaDVjFIvFakm','admin','active'),
-('staff403','staff403@ecoglow.local','$2y$12$m/DzozQcfgYpOgc5cX7UtuC/3E0GBJtvGkoF24NjCl5Av46LtDNvC','staff','active');
+('admin','$2y$10$3qfNIS3T8eUhc4VZQizawO/E7ATUE6pSRx5FUNqKzAnUGqw157vtG','admin','active'),
+('staff','staff@ecoglow.local','$2y$10$AJDWcSl6Ls1gQy1paGznZuVoqwYWvFJ31yKIrNpGWTUds/ucmS3IS','staff','active');
 
 INSERT INTO `Guest`
 (`GuestName`,`Email`,`Address`,`Phone`)

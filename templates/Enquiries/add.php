@@ -19,6 +19,15 @@ $this->Html->meta([
 <link rel="stylesheet" href = "/css/enquiryPage/add.css" />
 
 <div class="add-contact-page">
+    <div class="add-contact-background">
+        <?= $this->Html->image(
+        'landing/login_picture.jpg',
+        [
+            'class' => 'add-contact-background-image',
+            'alt' => 'Add contact background image',
+        ]
+    ) ?>
+    </div>
     <div class="contact">
         <div class="contact-content">
             <h1>Contact Us</h1>
@@ -54,6 +63,7 @@ $this->Html->meta([
                 __('Submit'),
                 [
                     'class' => 'btn',
+                    'disabled' => true,
                 ]
             ) ?>
 
@@ -64,9 +74,11 @@ $this->Html->meta([
 
 <script>
     var turnstileMessageBlock = document.querySelector('#turnstile-message');
+    var actionButton = document.querySelector('button.btn');
 
     function turnstileOnSuccess(token) {
         turnstileMessageBlock.style.display = 'none';
+        actionButton.removeAttribute('disabled');
     }
 
     function turnstileOnError(errorCode) {
