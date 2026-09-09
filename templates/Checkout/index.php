@@ -68,7 +68,8 @@
         <?= $this->Form->control('Phone', [
             'required' => true,
             'inputmode' => 'numeric',
-            'pattern' => '[0-9]+',
+            'pattern' => '04[0-9]{8}',
+            'title' => 'Please enter a valid Australian mobile number starting with 04 followed by 8 digits.',
         ]) ?>
 
     <?php endif; ?>
