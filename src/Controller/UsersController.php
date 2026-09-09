@@ -10,10 +10,41 @@ class UsersController extends AppController
     {
         parent::beforeFilter($event);
 
-        $this->Authentication->allowUnauthenticated(['login']);
 
         $this->Authentication->allowUnauthenticated(['login', 'add']);
         $this->loadComponent('Turnstile');
+
+        $action = $this->request->getParam('action');
+        $identity = $this->request->getAttribute('identity');
+
+        if($action === 'login' || $action === 'add') {
+            return;
+        }
+
+        //If not logged in, stop check the role and allow access to login and signup
+        if (!$identity) {
+            return;
+        }
+
+        //admin and staff can access all actions in userController
+        if($identity->UserRole === 'admin' ||$identity->UserRole === 'staff') {
+            return;
+        }
+        //Cusomer can logout
+        if($action === 'logout') {
+            return;
+        }
+        //Customer can edit their own profile
+        if($action === 'edit') {
+            $id = (int)$this->request->getParam('pass.0');
+            if($id === (int)$identity->UserId) {
+                return;
+            }
+        }
+
+        $this->Flash->error(__('You are not authorized to access that location.'));
+        $event->setResult($this->redirect(['controller' => 'Pages', 'action' => 'display']));
+
     }
 
     public function login()
@@ -38,11 +69,10 @@ class UsersController extends AppController
             if($role->UserRole === 'admin' || $role->UserRole === 'staff') {
                 $target = $this->Authentication->getLoginRedirect() ?? '/admin';
                 return $this->redirect($target);
-            } else {
-                return $this->redirect(['controller' => 'Pages', 'action' => 'display']);
-            }
-            $target = $this->Authentication->getLoginRedirect() ?? '/admin';
-            return $this->redirect($target);
+            } 
+                
+            return $this->redirect(['controller' => 'Pages', 'action' => 'display']);
+             
         }
         if ($this->request->is('post')) {
             $this->Flash->error(__('Invalid username or password'));
