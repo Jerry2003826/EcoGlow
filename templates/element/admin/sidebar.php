@@ -25,7 +25,7 @@ $active = static function (bool $isActive): array {
 $inventoryLabel = 'Inventory';
 
 if (
-    $userRole === 'admin' &&
+    ($userRole === 'admin' || $userRole === 'staff') &&
     (int)($lowStockCount ?? 0) > 0
 ) {
     $inventoryLabel .= ' <span class="sidebar-badge">' .
@@ -36,7 +36,10 @@ if (
 
 <aside id="admin-sidebar" class="admin-sidebar">
     <div class="admin-brand">
-        Eco Glow Lighting
+        <?= $this->Html->link(
+            'Eco Glow Lighting',
+            ['controller' => 'Pages', 'action' => 'display']
+        ) ?>
     </div>
 
     <div class="admin-sidebar-scroll">

@@ -64,7 +64,7 @@ try {
                     <div class="admin-user-role"><?= h($role) ?></div>
                 </div>
 
-                <?php if ($role === 'admin'): ?>
+                <?php if ($role === 'admin' || $role === 'staff'): ?>
                 <span class="admin-low-stock">
                     Low Stock: <?= (int)$lowStockCount ?>
                 </span>
