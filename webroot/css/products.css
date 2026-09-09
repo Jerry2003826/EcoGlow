@@ -16,7 +16,6 @@
 }
 
 .main:has(.products-page) {
-    padding-top: 9rem;
     background: var(--products-bg);
 }
 

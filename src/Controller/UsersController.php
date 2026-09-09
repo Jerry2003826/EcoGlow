@@ -35,7 +35,7 @@ class UsersController extends AppController
 
         if ($result && $result->isValid()) {
             $role = $this->request->getAttribute('identity');
-            if($role->UserRole === 'admin') {
+            if($role->UserRole === 'admin' || $role->UserRole === 'staff') {
                 $target = $this->Authentication->getLoginRedirect() ?? '/admin';
                 return $this->redirect($target);
             } else {
