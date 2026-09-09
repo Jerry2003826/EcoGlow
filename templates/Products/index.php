@@ -15,7 +15,6 @@ foreach ($categories as $categoryItem) {
     <section class="products-banner" aria-labelledby="products-banner-title">
         <div class="products-banner-content">
             <h1 id="products-banner-title">Our Products.</h1>
-            <p>Thoughtful light for considered spaces.</p>
         </div>
     </section>
 
