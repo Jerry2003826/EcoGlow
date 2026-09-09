@@ -12,8 +12,11 @@ class OrdersController extends AppController
         $order = $this->fetchTable('Orders')->get($id);
 
         $guest = null;
+        $customer = null;
 
-        if ($order->GuestId) {
+        if (!empty($order->CustomerId)) {
+            $customer = $this->fetchTable('Customers')->get($order->CustomerId);
+        } elseif (!empty($order->GuestId)) {
             $guest = $this->fetchTable('Guests')->get($order->GuestId);
         }
 
@@ -51,6 +54,7 @@ class OrdersController extends AppController
         $this->set(compact(
             'order',
             'guest',
+            'customer',
             'items',
             'productsTotal',
             'installFee',

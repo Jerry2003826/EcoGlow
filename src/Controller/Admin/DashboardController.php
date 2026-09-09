@@ -47,6 +47,30 @@ class DashboardController extends AdminController
             ])
             ->count();
 
+        $widgets['guestOrdersToday'] = $ordersTable->find()
+            ->where([
+                'DATE(OrderDate) =' => $today,
+                'GuestId IS NOT' => null,
+            ])
+            ->count();
+
+        $widgets['customerOrdersToday'] = $ordersTable->find()
+            ->where([
+                'DATE(OrderDate) =' => $today,
+                'CustomerId IS NOT' => null,
+            ])
+            ->count();
+
+        $recentOrders = $ordersTable
+            ->find()
+            ->contain(['Customers', 'Guests'])
+            ->orderBy([
+                'OrderDate' => 'DESC',
+                'OrderId' => 'DESC',
+            ])
+            ->limit(8)
+            ->all();
+
         $user = $this->fetchTable('Users')->get($userId);
         $isAdmin = $user->UserRole === 'admin';
 
@@ -102,6 +126,6 @@ class DashboardController extends AdminController
             }
         }
 
-        $this->set(compact('widgets'));
+        $this->set(compact('widgets', 'recentOrders'));
     }
 }

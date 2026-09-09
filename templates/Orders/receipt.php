@@ -8,8 +8,14 @@
     <p><strong>OrderId:</strong> <?= h((string)$order->OrderId) ?></p>
     <p><strong>Status:</strong> <?= h((string)$order->Status) ?></p>
 
-    <?php if ($guest): ?>
-        <h2>Customer details</h2>
+    <h2>Buyer details</h2>
+
+    <?php if ($customer): ?>
+        <p><strong>Name:</strong> <?= h($customer->CustomerName) ?></p>
+        <p><strong>Email:</strong> <?= h($customer->Email) ?></p>
+        <p><strong>Address:</strong> <?= h($customer->Address) ?></p>
+        <p><strong>Phone:</strong> <?= h($customer->Phone) ?></p>
+    <?php elseif ($guest): ?>
         <p><strong>Name:</strong> <?= h($guest->GuestName) ?></p>
         <p><strong>Email:</strong> <?= h($guest->Email) ?></p>
         <p><strong>Address:</strong> <?= h($guest->Address) ?></p>

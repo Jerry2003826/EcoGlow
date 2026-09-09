@@ -15,13 +15,23 @@ $this->assign('title', 'Order #' . $order->OrderId);
     <?php endif; ?>
 </div>
 
-<div class="panel-card">
-    <h2>Guest</h2>
-    <p><?= h($order->guest->GuestName ?? '') ?></p>
-    <p><?= h($order->guest->Email ?? '') ?></p>
-    <p><?= h($order->guest->Address ?? '') ?></p>
-    <p><?= h($order->guest->Phone ?? '') ?></p>
-</div>
+<?php if ($order->CustomerId): ?>
+    <div class="panel-card">
+        <h2>Customer</h2>
+        <p><?= h($order->customer->CustomerName ?? '') ?></p>
+        <p><?= h($order->customer->Email ?? '') ?></p>
+        <p><?= h($order->customer->Address ?? '') ?></p>
+        <p><?= h($order->customer->Phone ?? '') ?></p>
+    </div>
+<?php else: ?>
+    <div class="panel-card">
+        <h2>Guest</h2>
+        <p><?= h($order->guest->GuestName ?? '') ?></p>
+        <p><?= h($order->guest->Email ?? '') ?></p>
+        <p><?= h($order->guest->Address ?? '') ?></p>
+        <p><?= h($order->guest->Phone ?? '') ?></p>
+    </div>
+<?php endif; ?>
 
 <div class="panel-card">
     <h2>Line Items</h2>

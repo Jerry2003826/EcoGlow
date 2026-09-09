@@ -41,7 +41,8 @@ $this->assign('title', 'Orders');
                     <tr>
                         <th>OrderId</th>
                         <th>Type</th>
-                        <th>Guest</th>
+                        <th>Buyer type</th>
+                        <th>Buyer</th>
                         <th>Email</th>
                         <th>Status</th>
                         <th>OrderDate</th>
@@ -61,8 +62,21 @@ $this->assign('title', 'Orders');
                                 ) ?>
                             </td>
                             <td><?= $isInstall ? 'Product + installation' : 'Product' ?></td>
-                            <td><?= h($order->guest->GuestName ?? '') ?></td>
-                            <td><?= h($order->guest->Email ?? '') ?></td>
+                            <td><?= $order->CustomerId ? 'Customer' : 'Guest' ?></td>
+                            <td>
+                                <?= h(
+                                    $order->CustomerId
+                                        ? ($order->customer->CustomerName ?? '')
+                                        : ($order->guest->GuestName ?? '')
+                                ) ?>
+                            </td>
+                            <td>
+                                <?= h(
+                                    $order->CustomerId
+                                        ? ($order->customer->Email ?? '')
+                                        : ($order->guest->Email ?? '')
+                                ) ?>
+                            </td>
                             <td><?= h($order->Status ?? '') ?></td>
                             <td><?= h((string)$order->OrderDate) ?></td>
                         </tr>

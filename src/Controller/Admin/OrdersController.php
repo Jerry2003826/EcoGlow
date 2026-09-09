@@ -20,7 +20,7 @@ class OrdersController extends AdminController
 
         $query = $this->fetchTable('Orders')
             ->find()
-            ->contain(['Guests', 'ShoppingCarts'])
+            ->contain(['Customers', 'Guests', 'ShoppingCarts'])
             ->orderBy([
                 'OrderDate' => 'DESC',
                 'OrderId' => 'DESC',
@@ -30,10 +30,14 @@ class OrdersController extends AdminController
 
         if ($q !== '') {
             $orders = $orders->filter(function ($order) use ($q) {
+                $customerName = $order->customer->CustomerName ?? '';
+                $customerEmail = $order->customer->Email ?? '';
                 $guestName = $order->guest->GuestName ?? '';
                 $guestEmail = $order->guest->Email ?? '';
 
                 return str_contains((string)$order->OrderId, $q)
+                    || stripos($customerName, $q) !== false
+                    || stripos($customerEmail, $q) !== false
                     || stripos($guestName, $q) !== false
                     || stripos($guestEmail, $q) !== false;
             });
@@ -85,6 +89,7 @@ class OrdersController extends AdminController
         $order = $this->fetchTable('Orders')->get(
             (int)$id,
             contain: [
+                'Customers',
                 'Guests',
                 'OrderItems.Products',
                 'ShoppingCarts',
