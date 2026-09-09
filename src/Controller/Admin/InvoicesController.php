@@ -17,13 +17,13 @@ class InvoicesController extends AdminController
 
         $invoices = $this->fetchTable('Invoices')
             ->find()
-            ->contain(['Orders.Guests'])
+            ->contain(['Orders.Customers', 'Orders.Guests'])
             ->orderBy(['InvoiceId' => 'DESC'])
             ->all();
 
         $orders = $this->fetchTable('Orders')
             ->find()
-            ->contain(['Guests', 'Payments'])
+            ->contain(['Customers', 'Guests', 'Payments'])
             ->orderBy(['Orders.OrderId' => 'DESC'])
             ->all();
 
@@ -40,7 +40,11 @@ class InvoicesController extends AdminController
 
         $invoice = $this->fetchTable('Invoices')->get(
             (int)$id,
-            contain: ['Orders.Guests', 'Orders.OrderItems.Products']
+            contain: [
+                'Orders.Customers',
+                'Orders.Guests',
+                'Orders.OrderItems.Products',
+            ]
         );
 
         $total = (float)$invoice->TotalAmount;

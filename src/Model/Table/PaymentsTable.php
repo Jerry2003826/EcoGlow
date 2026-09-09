@@ -15,5 +15,10 @@ class PaymentsTable extends Table
 
         $this->setTable('Payment');
         $this->setPrimaryKey('PaymentId');
+
+        $this->belongsTo('Orders', [
+            'className' => 'Orders',
+            'foreignKey' => 'OrderId',
+        ]);
     }
 }

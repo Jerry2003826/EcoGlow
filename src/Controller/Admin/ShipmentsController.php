@@ -17,7 +17,7 @@ class ShipmentsController extends AdminController
 
         $shipments = $this->fetchTable('Delivery')
             ->find()
-            ->contain(['Orders.Guests'])
+            ->contain(['Orders.Customers', 'Orders.Guests'])
             ->orderBy(['DeliveryId' => 'DESC'])
             ->all();
 

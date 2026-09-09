@@ -14,7 +14,8 @@ $this->assign('title', 'Invoices');
             <tr>
                 <th>InvoiceId</th>
                 <th>OrderId</th>
-                <th>Guest</th>
+                <th>Buyer type</th>
+                <th>Buyer</th>
                 <th>Total (GST incl.)</th>
                 <th>Date</th>
             </tr>
@@ -22,10 +23,11 @@ $this->assign('title', 'Invoices');
             <tbody>
             <?php if (count($invoices) === 0): ?>
                 <tr>
-                    <td colspan="5">No invoices yet. Generate one from a paid order below.</td>
+                    <td colspan="6">No invoices yet. Generate one from a paid order below.</td>
                 </tr>
             <?php endif; ?>
             <?php foreach ($invoices as $invoice): ?>
+                <?php $order = $invoice->order; ?>
                 <tr>
                     <td>
                         <?= $this->Html->link(
@@ -34,7 +36,14 @@ $this->assign('title', 'Invoices');
                         ) ?>
                     </td>
                     <td><?= (int)$invoice->OrderId ?></td>
-                    <td><?= h($invoice->order->guest->GuestName ?? '') ?></td>
+                    <td><?= !empty($order?->CustomerId) ? 'Customer' : 'Guest' ?></td>
+                    <td>
+                        <?= h(
+                            !empty($order?->CustomerId)
+                                ? ($order->customer->CustomerName ?? '')
+                                : ($order->guest->GuestName ?? '')
+                        ) ?>
+                    </td>
                     <td>$<?= number_format((float)$invoice->TotalAmount, 2) ?></td>
                     <td><?= h((string)$invoice->InvoiceDate) ?></td>
                 </tr>
@@ -51,7 +60,8 @@ $this->assign('title', 'Invoices');
             <thead>
             <tr>
                 <th>OrderId</th>
-                <th>Guest</th>
+                <th>Buyer type</th>
+                <th>Buyer</th>
                 <th>Status</th>
                 <th></th>
             </tr>
@@ -60,7 +70,14 @@ $this->assign('title', 'Invoices');
             <?php foreach ($orders as $order): ?>
                 <tr>
                     <td><?= (int)$order->OrderId ?></td>
-                    <td><?= h($order->guest->GuestName ?? '') ?></td>
+                    <td><?= !empty($order->CustomerId) ? 'Customer' : 'Guest' ?></td>
+                    <td>
+                        <?= h(
+                            !empty($order->CustomerId)
+                                ? ($order->customer->CustomerName ?? '')
+                                : ($order->guest->GuestName ?? '')
+                        ) ?>
+                    </td>
                     <td><?= h($order->Status) ?></td>
                     <td>
                         <?= $this->Html->link(

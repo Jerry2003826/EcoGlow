@@ -2,16 +2,30 @@
 // templates/Admin/Invoices/view.php
 
 $this->assign('title', 'Invoice #' . $invoice->InvoiceId);
+$order = $invoice->order;
 ?>
 
 <div class="panel-card">
     <h1>Tax invoice #<?= (int)$invoice->InvoiceId ?></h1>
     <p><strong>Order:</strong> <?= (int)$invoice->OrderId ?></p>
-    <p><strong>Guest:</strong> <?= h($invoice->order->guest->GuestName ?? '') ?></p>
-    <p><strong>Email:</strong> <?= h($invoice->order->guest->Email ?? '') ?></p>
-    <p><strong>Address:</strong> <?= h($invoice->order->guest->Address ?? '') ?></p>
     <p><strong>Issued:</strong> <?= h((string)$invoice->InvoiceDate) ?></p>
 </div>
+
+<?php if (!empty($order?->CustomerId)): ?>
+    <div class="panel-card">
+        <h2>Customer</h2>
+        <p><?= h($order->customer->CustomerName ?? '') ?></p>
+        <p><?= h($order->customer->Email ?? '') ?></p>
+        <p><?= h($order->customer->Address ?? '') ?></p>
+    </div>
+<?php else: ?>
+    <div class="panel-card">
+        <h2>Guest</h2>
+        <p><?= h($order->guest->GuestName ?? '') ?></p>
+        <p><?= h($order->guest->Email ?? '') ?></p>
+        <p><?= h($order->guest->Address ?? '') ?></p>
+    </div>
+<?php endif; ?>
 
 <div class="panel-card">
     <h2>Line items</h2>
@@ -25,7 +39,7 @@ $this->assign('title', 'Invoice #' . $invoice->InvoiceId);
             </tr>
             </thead>
             <tbody>
-            <?php foreach (($invoice->order->order_items ?? []) as $item): ?>
+            <?php foreach (($order->order_items ?? []) as $item): ?>
                 <tr>
                     <td><?= h($item->product->ProductName ?? '') ?></td>
                     <td><?= (int)$item->Quantity ?></td>

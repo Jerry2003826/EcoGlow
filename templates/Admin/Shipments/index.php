@@ -13,7 +13,8 @@ $this->assign('title', 'Shipments');
             <tr>
                 <th>DeliveryId</th>
                 <th>OrderId</th>
-                <th>Guest</th>
+                <th>Buyer type</th>
+                <th>Buyer</th>
                 <th>Address</th>
                 <th>Status</th>
                 <th>Date</th>
@@ -21,6 +22,7 @@ $this->assign('title', 'Shipments');
             </thead>
             <tbody>
             <?php foreach ($shipments as $shipment): ?>
+                <?php $order = $shipment->order; ?>
                 <tr>
                     <td><?= (int)$shipment->DeliveryId ?></td>
                     <td>
@@ -29,7 +31,14 @@ $this->assign('title', 'Shipments');
                             ['controller' => 'Orders', 'action' => 'view', $shipment->OrderId]
                         ) ?>
                     </td>
-                    <td><?= h($shipment->order->guest->GuestName ?? '') ?></td>
+                    <td><?= !empty($order?->CustomerId) ? 'Customer' : 'Guest' ?></td>
+                    <td>
+                        <?= h(
+                            !empty($order?->CustomerId)
+                                ? ($order->customer->CustomerName ?? '')
+                                : ($order->guest->GuestName ?? '')
+                        ) ?>
+                    </td>
                     <td><?= h($shipment->DeliveryAddress) ?></td>
                     <td><?= h($shipment->DeliveryStatus) ?></td>
                     <td><?= h((string)$shipment->DeliveryDate) ?></td>

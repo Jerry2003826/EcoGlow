@@ -17,6 +17,7 @@ class PaymentsController extends AdminController
 
         $payments = $this->fetchTable('Payments')
             ->find()
+            ->contain(['Orders.Customers', 'Orders.Guests'])
             ->orderBy(['PaymentId' => 'DESC'])
             ->all();
 

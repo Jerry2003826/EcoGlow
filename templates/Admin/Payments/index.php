@@ -11,8 +11,7 @@ $this->assign('title', 'Payments');
         <table class="table admin-table">
             <thead>
             <tr>
-                <th>PaymentId</th>
-                <th>OrderId</th>
+                <th>Buyer</th>
                 <th>Amount</th>
                 <th>Method</th>
                 <th>Date</th>
@@ -20,12 +19,24 @@ $this->assign('title', 'Payments');
             </thead>
             <tbody>
             <?php foreach ($payments as $payment): ?>
+                <?php
+                $order = $payment->order;
+                $buyerName = '';
+                if ($order) {
+                    $buyerName = !empty($order->CustomerId)
+                        ? (string)($order->customer->CustomerName ?? '')
+                        : (string)($order->guest->GuestName ?? '');
+                }
+                ?>
                 <tr>
-                    <td><?= (int)$payment->PaymentId ?></td>
                     <td>
                         <?= $this->Html->link(
-                            (string)$payment->OrderId,
-                            ['controller' => 'Orders', 'action' => 'view', $payment->OrderId]
+                            $buyerName,
+                            [
+                                'controller' => 'Orders',
+                                'action' => 'view',
+                                $payment->OrderId,
+                            ]
                         ) ?>
                     </td>
                     <td>$<?= number_format((float)$payment->Amount, 2) ?></td>
