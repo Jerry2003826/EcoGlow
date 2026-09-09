@@ -38,7 +38,7 @@ if (
     <div class="admin-brand">
         <?= $this->Html->link(
             'Eco Glow Lighting',
-            ['controller' => 'Pages', 'action' => 'display']
+            '/'
         ) ?>
     </div>
 
