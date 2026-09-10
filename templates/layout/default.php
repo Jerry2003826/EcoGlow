@@ -41,17 +41,6 @@ $loadStorefront = in_array(
 <body>
 
 <nav class="navbar">
-    <button
-        class="navbar-toggle"
-        type="button"
-        aria-controls="primary-navigation"
-        aria-expanded="false"
-        aria-label="Toggle navigation"
-    >
-        <span></span>
-        <span></span>
-        <span></span>
-    </button>
 
     <div class="navbar-brand">
         <?= $this->Html->link(
@@ -63,6 +52,18 @@ $loadStorefront = in_array(
             ['escape' => false]
         ) ?>
     </div>
+
+    <button
+        class="navbar-toggle"
+        type="button"
+        aria-controls="primary-navigation"
+        aria-expanded="false"
+        aria-label="Toggle navigation"
+    >
+        <span></span>
+        <span></span>
+        <span></span>
+    </button>
 
     <div id="primary-navigation" class="navbar-links">
         <?= $this->Html->link('Services', '/services') ?>
