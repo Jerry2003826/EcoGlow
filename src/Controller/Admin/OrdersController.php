@@ -178,6 +178,56 @@ class OrdersController extends AdminController
         return $this->redirect(['action' => 'view', $id]);
     }
 
+    public function updateStatus(int|string $id)
+    {
+        if ($this->request->getAttribute('identity') === null) {
+            return;
+        }
+
+        $this->requirePermission('orders.view');
+        $this->request->allowMethod(['post', 'put', 'patch']);
+
+        $allowed = [
+            'pending',
+            'paid',
+            'processing',
+            'shipped',
+            'delivered',
+            'cancelled',
+        ];
+
+        $newStatus = strtolower(trim((string)$this->request->getData(
+            'Status',
+            $this->request->getData('status', '')
+        )));
+
+        if (!in_array($newStatus, $allowed, true)) {
+            $this->Flash->error('Invalid order status.');
+
+            return $this->redirect(['action' => 'view', $id]);
+        }
+
+        $order = $this->fetchTable('Orders')->get((int)$id);
+        $order->Status = $newStatus;
+        $this->fetchTable('Orders')->saveOrFail($order);
+
+        if ($newStatus === 'delivered') {
+            $delivery = $this->fetchTable('Delivery')
+                ->find()
+                ->where(['OrderId' => $order->OrderId])
+                ->first();
+
+            if ($delivery) {
+                $delivery->DeliveryStatus = 'delivered';
+                $this->fetchTable('Delivery')->save($delivery);
+            }
+        }
+
+        $this->Flash->success('Order status updated.');
+
+        return $this->redirect(['action' => 'view', $id]);
+    }
+
     public function addRepair()
     {
         if ($this->request->getAttribute('identity') === null) {

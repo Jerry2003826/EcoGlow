@@ -20,6 +20,7 @@ final class AdminPermissionMap
                 'index' => ['orders.view'],
                 'view' => ['orders.view'],
                 'updateDelivery' => ['orders.view'],
+                'updateStatus' => ['orders.view'],
                 'addRepair' => ['orders.view'],
             ],
             'Inventory' => [

@@ -6,7 +6,23 @@ $this->assign('title', 'Order #' . $order->OrderId);
 
 <div class="panel-card">
     <h1>Order #<?= h((string)$order->OrderId) ?></h1>
-    <p><strong>Status:</strong> <?= h($order->Status) ?></p>
+    <?= $this->Form->create(null, [
+        'url' => ['action' => 'updateStatus', $order->OrderId],
+    ]) ?>
+    <?= $this->Form->control('Status', [
+        'label' => 'Status',
+        'value' => strtolower((string)$order->Status),
+        'options' => [
+            'pending' => 'pending',
+            'paid' => 'paid',
+            'processing' => 'processing',
+            'shipped' => 'shipped',
+            'delivered' => 'delivered',
+            'cancelled' => 'cancelled',
+        ],
+    ]) ?>
+    <?= $this->Form->button('Update status') ?>
+    <?= $this->Form->end() ?>
     <p><strong>Order Date:</strong> <?= h((string)$order->OrderDate) ?></p>
     <?php if (!empty($order->shopping_cart) && (int)$order->shopping_cart->InstallOptIn === 1): ?>
         <p><strong>Type:</strong> Product + installation ($<?= number_format((float)$order->shopping_cart->InstallFee, 2) ?>)</p>
