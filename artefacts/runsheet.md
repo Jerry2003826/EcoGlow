@@ -7,8 +7,8 @@ Deadline this sheet covers: Week 6 Thursday (Project Finkel 08/09/26)
 
 | Role | Email | Password |
 |---|---|---|
-| Admin | admin@ecoglow.local | ChangeMe-EcoGlow-2026-Admin! |
-| Staff | staff403@ecoglow.local | ChangeMe-EcoGlow-2026-Staff! |
+| Admin | admin@ecoglow.local | admin1234 |
+| Staff | staff@ecoglow.local | staff1234 |
 
 Test card: `4242424242424242` (any future expiry, any CVC). Other numbers must fail.
 

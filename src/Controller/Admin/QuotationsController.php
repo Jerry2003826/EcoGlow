@@ -53,15 +53,31 @@ class QuotationsController extends AdminController
 
         $quotation = $this->fetchTable('Quotations')->newEmptyEntity();
 
-        if ($this->request->is('post')) {
-            $data = $this->request->getData();
+        $customers = $this->fetchTable('Customers')
+            ->find()
+            ->orderBy(['CustomerName' => 'ASC'])
+            ->all();
 
-            $customer = $this->fetchTable('Customers')->findOrCreateFromContact([
-                'CustomerName' => $data['CustomerName'] ?? '',
-                'Email' => $data['Email'] ?? '',
-                'Address' => $data['Address'] ?? '',
-                'Phone' => $data['Phone'] ?? '',
-            ]);
+        if ($this->request->is('post')) {
+            $customerId = (int)$this->request->getData('CustomerId');
+
+            if ($customerId < 1) {
+                $this->Flash->error('Select an existing customer.');
+                $this->set(compact('quotation', 'customers'));
+
+                return;
+            }
+
+            try {
+                $customer = $this->fetchTable('Customers')->get($customerId);
+            } catch (\Throwable $exception) {
+                $this->Flash->error('Select an existing customer.');
+                $this->set(compact('quotation', 'customers'));
+
+                return;
+            }
+
+            $data = $this->request->getData();
 
             $quotation = $this->fetchTable('Quotations')->newEntity([
                 'CustomerId' => $customer->CustomerId,
@@ -106,6 +122,6 @@ class QuotationsController extends AdminController
             $this->Flash->error('Quotation could not be saved.');
         }
 
-        $this->set(compact('quotation'));
+        $this->set(compact('quotation', 'customers'));
     }
 }

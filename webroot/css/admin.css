@@ -317,3 +317,103 @@ body.admin-app {
         margin-left: 0;
     }
 }
+
+.page-lead {
+    margin: 0 0 1.25rem;
+    color: var(--admin-muted);
+    line-height: 1.6;
+}
+
+.admin-form {
+    max-width: 720px;
+}
+
+.admin-form .input {
+    margin-bottom: 1.15rem;
+}
+
+.admin-form label {
+    display: block;
+    margin-bottom: 0.4rem;
+    font-weight: 600;
+}
+
+.admin-form input,
+.admin-form select,
+.admin-form textarea {
+    width: 100%;
+    min-height: 44px;
+    padding: 0.7rem 0.9rem;
+    border: 1px solid var(--admin-border);
+    border-radius: 8px;
+    background: #fff;
+}
+
+.admin-form textarea {
+    min-height: 160px;
+    resize: vertical;
+}
+
+.admin-form input:focus,
+.admin-form select:focus,
+.admin-form textarea:focus {
+    outline: 0;
+    border-color: var(--admin-accent);
+    box-shadow: 0 0 0 3px rgba(226, 146, 94, 0.18);
+}
+
+.form-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.85rem;
+    align-items: center;
+    margin-top: 0.5rem;
+}
+
+.admin-green-button,
+.admin-form button[type="submit"],
+.admin-content a.admin-green-button {
+    display: inline-block;
+    background: var(--admin-green);
+    color: #fff;
+    border: 0;
+    border-radius: 8px;
+    padding: 0.8rem 1.2rem;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.admin-green-button:hover,
+.admin-form button[type="submit"]:hover,
+.admin-content a.admin-green-button:hover {
+    background: var(--admin-green-dark);
+    color: #fff;
+}
+
+.admin-meta {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1rem;
+    margin: 0;
+}
+
+.admin-meta dt {
+    color: var(--admin-muted);
+    font-size: 0.85rem;
+    margin-bottom: 0.25rem;
+}
+
+.admin-meta dd {
+    margin: 0;
+    font-weight: 600;
+}
+
+.panel-card h2 {
+    margin-top: 0;
+    font-size: 1.1rem;
+}
+
+.quotation-notes {
+    margin: 0 0 1rem;
+    white-space: pre-wrap;
+}

@@ -8,7 +8,7 @@ $this->assign('title', 'Quotations');
 
 <div class="panel-card">
     <p>
-        <?= $this->Html->link('Create quotation', '/admin/quotations/add') ?>
+        <?= $this->Html->link('Create quotation', '/admin/quotations/add', ['class' => 'admin-green-button']) ?>
     </p>
     <div class="admin-table-wrap">
         <table class="table admin-table">
