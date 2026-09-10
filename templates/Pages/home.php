@@ -1,7 +1,7 @@
 <?php
 
 $this->assign('title', 'Eco Glow Lighting');
-$this->Html->css('landingPage/home', ['block' => true]);
+$this->Html->css('landingPage/home', ['block' => true, 'timestamp' => true]);
 
 $carouselSlides = [
     [
