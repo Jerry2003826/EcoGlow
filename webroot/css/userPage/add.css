@@ -47,3 +47,20 @@ body:has(.signup-page) .main {
     z-index: 1;
     padding: 40px 40px;
 }
+
+@media (max-width: 760px) {
+    .signup-page {
+        overflow: visible;
+        height: auto;
+        min-height: calc(100vh - 6.4rem);
+        padding: 1.2rem;
+        align-items: flex-start;
+    }
+
+    .signup-card {
+        height: auto;
+        width: 100%;
+        max-width: 100%;
+        padding: 1.6rem 1.2rem;
+    }
+}

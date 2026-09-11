@@ -81,18 +81,33 @@ body:has(.add-contact-page) .main {
     border-radius: 12px;
 }
 
+.contact-form .input {
+    display: block;
+    width: 100%;
+}
+
 .contact-form label {
+    display: block;
+    float: none;
+    width: auto;
     color: #5B5545;
 }
 
 .contact-form input,
 .contact-form textarea {
+    display: block;
     width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
     padding: 5px;
     margin-bottom: 10px;
     border-radius: 6px;
     color: #5B5545;
     border: 1px solid #5B5545;
+}
+
+.contact-form textarea {
+    min-height: 8rem;
 }
 .contact-form input:focus,
 .contact-form textarea:focus {
@@ -111,16 +126,28 @@ body:has(.add-contact-page) .main {
     background-color: #3F3A2F;
 }
 
-@media (max-width: 760px) {
+@media (max-width: 900px) {
     .add-contact-page {
+        overflow: visible;
         height: auto;
         min-height: calc(100vh - 6.4rem);
         padding: 1.6rem 1.2rem 2.4rem;
+        align-items: stretch;
     }
 
     .contact {
         flex-direction: column;
         gap: 20px;
+        width: 100%;
+        max-width: 100%;
+        padding: 20px 0;
+    }
+
+    .contact-content,
+    .contact-form {
+        flex: none;
+        width: 100%;
+        max-width: 100%;
     }
 
     .contact-content {
@@ -131,7 +158,6 @@ body:has(.add-contact-page) .main {
     }
 
     .contact-form {
-        width: 100%;
         padding: 20px;
     }
 

@@ -43,7 +43,10 @@ $this->Html->meta([
                     echo $this->Form->control('Name');
                     echo $this->Form->control('Email');
                     echo $this->Form->control('Subject');
-                    echo $this->Form->control('Message');
+                    echo $this->Form->control('Message', [
+                        'type' => 'textarea',
+                        'rows' => 5,
+                    ]);
                 ?>
 
                 <div

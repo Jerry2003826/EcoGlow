@@ -154,6 +154,42 @@ input[type="submit"]:hover {
     margin-bottom: 1rem;
 }
 
+@media (max-width: 760px) {
+    .receipt-table,
+    .cart-table {
+        display: block;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .checkout-section {
+        padding: 1.15rem;
+    }
+
+    .checkout-section h2 {
+        font-size: 1.4rem;
+    }
+
+    .checkout-card .button,
+    .checkout-actions .button,
+    .cart-actions .button,
+    .store-toolbar .button,
+    .checkout-card button[type="submit"] {
+        width: 100%;
+        text-align: center;
+    }
+
+    .signup-card {
+        margin: 1.5rem auto;
+        padding: 1.4rem;
+    }
+
+    .signup-card button,
+    .signup-card .button {
+        width: 100%;
+    }
+}
+
 .signup-card {
     max-width: 560px;
     width: 100%;

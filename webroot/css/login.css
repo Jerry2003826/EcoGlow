@@ -113,7 +113,19 @@ body:has(.login-page) .main {
 
 @media (max-width: 760px) {
     .login-page {
+        overflow: visible;
         height: auto;
         min-height: calc(100vh - 6.4rem);
+        padding: 1.2rem;
+    }
+
+    .login-card,
+    .login-card form {
+        width: 100%;
+        max-width: 100%;
+    }
+
+    .login-card form {
+        padding: 1.6rem 1.2rem 2rem;
     }
 }

@@ -5,6 +5,8 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Mailer\OrderMailer;
+
 class CheckoutController extends AppController
 {
     public function index()
@@ -243,6 +245,29 @@ class CheckoutController extends AppController
             ]);
 
             $this->fetchTable('Receipts')->saveOrFail($receipt);
+
+            $order = $this->fetchTable('Orders')->get(
+                $order->OrderId,
+                contain: [
+                    'OrderItems.Products',
+                    'Customers',
+                    'Guests',
+                    'Payments',
+                    'ShoppingCarts',
+                ]
+            );
+
+            $confirmEmail = (string)($order->customer->Email
+                ?? $order->guest->Email
+                ?? '');
+
+            if ($confirmEmail !== '') {
+                try {
+                    (new OrderMailer())->send('orderConfirmation', [$order]);
+                } catch (\Throwable $exception) {
+                    $this->log($exception->getMessage());
+                }
+            }
 
             $session->delete('CartId');
 
