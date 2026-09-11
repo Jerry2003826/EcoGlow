@@ -83,6 +83,8 @@ try {
                 class="admin-menu-toggle"
                 type="button"
                 aria-controls="admin-sidebar"
+                aria-expanded="false"
+                aria-label="Open navigation"
             >☰</button>
         </header>
 
@@ -96,7 +98,7 @@ try {
 
 <div id="admin-overlay" class="admin-overlay" hidden></div>
 
-<?= $this->Html->script(['bootstrap.bundle.min', 'admin']) ?>
+<?= $this->Html->script(['bootstrap.bundle.min', 'admin'], ['timestamp' => true]) ?>
 <?= $this->fetch('script') ?>
 
 </body>

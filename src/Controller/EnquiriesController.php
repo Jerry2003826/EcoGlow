@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use Cake\Http\Exception\ForbiddenException;
+
 class EnquiriesController extends AppController
 {
 
@@ -13,6 +15,15 @@ class EnquiriesController extends AppController
         $this->Authentication->allowUnauthenticated(['add']);
 
         $this->loadComponent('Turnstile');
+
+        if ($this->request->getParam('action') !== 'add') {
+            $identity = $this->request->getAttribute('identity');
+            $role = $identity ? (string)$identity->get('UserRole') : '';
+
+            if (!in_array($role, ['admin', 'staff'], true)) {
+                throw new ForbiddenException('You are not authorized to access enquiries.');
+            }
+        }
     }
 
     public function index()
@@ -36,17 +47,17 @@ class EnquiriesController extends AppController
             $enquiry = $this->Enquiries->patchEntity($enquiry, $this->request->getData());
 
             $turnstileToken = $this->request->getData('cf-turnstile-response');
-            if ($turnstileToken) {
-                $turnstileResponse = $this->Turnstile->validateTurnstile($turnstileToken, $this->request->clientIp());
+            $turnstileResponse = is_string($turnstileToken) && trim($turnstileToken) !== ''
+                ? $this->Turnstile->validateTurnstile($turnstileToken, $this->request->clientIp())
+                : ['success' => false];
 
-                if (!$turnstileResponse || !$turnstileResponse['success']) {
-                    $this->log('Turnstile Response Error: ' . json_encode($turnstileResponse));
-                    $this->Flash->error('CAPTCHA challenge failed. Please try again.');
+            if (!$turnstileResponse || !$turnstileResponse['success']) {
+                $this->log('Turnstile Response Error: ' . json_encode($turnstileResponse));
+                $this->Flash->error('CAPTCHA challenge failed. Please try again.');
 
-                    $this->set(compact('enquiry'));
+                $this->set(compact('enquiry'));
 
-                    return $this->render();
-                }
+                return;
             }
 
             if ($this->Enquiries->save($enquiry)) {

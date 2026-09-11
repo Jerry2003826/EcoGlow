@@ -4,6 +4,8 @@ use Cake\Core\Configure;
 
 $this->assign('title', 'Login');
 
+$this->Html->css('login', ['block' => true, 'timestamp' => true]);
+$this->Html->script('turnstile-form', ['block' => true, 'timestamp' => true]);
 $this->Html->script('https://challenges.cloudflare.com/turnstile/v0/api.js', [
     'block' => true,
     'async' => true,
@@ -21,7 +23,6 @@ if (is_string($redirect) && $redirect !== '') {
     $loginUrl .= '?redirect=' . rawurlencode($redirect);
 }
 ?>
-<link rel="stylesheet" href = "/css/login.css" />
 <div class="login-page">
     <div class="login-background">
         <?= $this->Html->image(
@@ -35,7 +36,6 @@ if (is_string($redirect) && $redirect !== '') {
     <div class="login-form">
          <div class="login-card">
              <h2>Log in</h2>
-            <?= $this->Flash->render() ?>
             <?= $this->Form->create(null, [
                 'url' => $loginUrl,
             ]) ?>
@@ -61,7 +61,7 @@ if (is_string($redirect) && $redirect !== '') {
                     data-timeout-callback="turnstileOnTimeout"
                     data-sitekey="<?= Configure::read('Captcha.turnstile.siteKey') ?>"
             ></div>
-            <blockquote id="turnstile-message" style="display:none"></blockquote>
+            <blockquote id="turnstile-message" role="status" aria-live="polite" hidden></blockquote>
             </fieldset>
 
             <?= $this->Form->button('Login', ['class' => 'btn', 'disabled' => true]); ?>
@@ -83,28 +83,3 @@ if (is_string($redirect) && $redirect !== '') {
     </div>
 
 </div>
-
-<script>
-    var turnstileMessageBlock = document.querySelector('#turnstile-message');
-    var actionButton = document.querySelector('button.btn');
-
-    function turnstileOnSuccess(token) {
-        turnstileMessageBlock.style.display = 'none';
-        actionButton.removeAttribute('disabled');
-    }
-
-    function turnstileOnError(errorCode) {
-        turnstileMessageBlock.style.display = 'block';
-        turnstileMessageBlock.innerText = "Challenge error. Please refresh the webpage and try again.";
-    }
-
-    function turnstileOnExpired() {
-        turnstileMessageBlock.style.display = 'block';
-        turnstileMessageBlock.innerText = "Challenge token expired. Please validate again.";
-    }
-
-    function turnstileOnTimeout() {
-        turnstileMessageBlock.style.display = 'block';
-        turnstileMessageBlock.innerText = "Challenge timed out. Please validate again.";
-    }
-</script>

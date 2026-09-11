@@ -2,7 +2,7 @@
 // templates/Pages/about.php
 
 $this->assign('title', 'About Us');
-$this->Html->css('landingPage/home', ['block' => true]);
+$this->Html->css('landingPage/home', ['block' => true, 'timestamp' => true]);
 ?>
 
 <div class="landing-page">

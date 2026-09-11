@@ -6,6 +6,8 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Mailer\OrderMailer;
+use App\Service\CheckoutService;
+use DomainException;
 
 class CheckoutController extends AppController
 {
@@ -41,15 +43,17 @@ class CheckoutController extends AppController
         }
 
         $productsTotal = 0.00;
+        $quantityTotal = 0;
 
         foreach ($items as $item) {
+            $quantityTotal += (int)$item->Quantity;
             $productsTotal += (
                 (float)$item->product->Price * (int)$item->Quantity
             );
         }
 
         $installFee = ((int)$cart->InstallOptIn === 1)
-            ? (float)$cart->InstallFee
+            ? $quantityTotal * 80
             : 0.00;
         $grandTotal = $productsTotal + $installFee;
 
@@ -57,30 +61,37 @@ class CheckoutController extends AppController
         $customer = null;
         $guest = null;
 
-        //Check login status
         $identity = $this->request->getAttribute('identity');
         if ($identity) {
             $userId = $identity->getIdentifier();
             $customer = $this->fetchTable('Customers')->find()
                 ->where(['UserId' => $userId])
                 ->first();
-
         }
 
-
         if ($this->request->is('post')) {
+            $checkoutAddress = trim((string)$this->request->getData('Address'));
 
-            if(!$customer) {
+            if ($checkoutAddress === '') {
+                $errors['Address'] = ['required' => 'Enter a delivery address.'];
+            }
+
+            if (!$customer) {
                 $guest = $this->fetchTable('Guests')->newEntity([
                     'GuestName' => $this->request->getData('GuestName'),
                     'Email' => $this->request->getData('Email'),
-                    'Address' => $this->request->getData('Address'),
+                    'Address' => $checkoutAddress,
                     'Phone' => $this->request->getData('Phone'),
                 ]);
 
-                $errors = $guest->getErrors();
+                $errors = array_merge($errors, $guest->getErrors());
 
                 if (!empty($errors)) {
+                    $this->Flash->error(
+                        isset($errors['Address'])
+                            ? 'Enter a delivery address.'
+                            : 'Check your contact details and try again.'
+                    );
                     $this->set(compact(
                         'cart',
                         'items',
@@ -94,7 +105,6 @@ class CheckoutController extends AppController
                     return;
                 }
             }
-            
 
             $cardNumber = preg_replace(
                 '/\s+/',
@@ -133,7 +143,9 @@ class CheckoutController extends AppController
 
             if (!empty($errors)) {
                 $this->Flash->error(
-                    'Payment Failed. Please check your payment details and try again.'
+                    isset($errors['Address'])
+                        ? 'Enter a delivery address.'
+                        : 'Payment Failed. Please check your payment details and try again.'
                 );
 
                 $this->set(compact(
@@ -149,113 +161,38 @@ class CheckoutController extends AppController
                 return;
             }
 
-            if($customer) {
-                $cart->CustomerId = $customer->CustomerId;
-                $cart->GuestId = null;
-                $checkoutName = $customer->CustomerName;
-                $checkoutAddress = (string)$this->request->getData('Address');
-            } else {
-                $this->fetchTable('Guests')->saveOrFail($guest);
-                $cart->GuestId = $guest->GuestId;
-                $cart->CustomerId = null;
-                $checkoutName = $guest->GuestName;
-                $checkoutAddress = $guest->Address;
+            try {
+                $order = (new CheckoutService())->placeOrder(
+                    (int)$cartId,
+                    $customer,
+                    $guest,
+                    $checkoutAddress
+                );
+            } catch (\Throwable $exception) {
+                $this->Flash->error(
+                    $exception instanceof DomainException
+                        ? $exception->getMessage()
+                        : 'Your order could not be completed. No payment was taken. Please try again.'
+                );
+                $this->log($exception->getMessage());
+                $this->set(compact(
+                    'cart',
+                    'items',
+                    'productsTotal',
+                    'installFee',
+                    'grandTotal',
+                    'errors',
+                    'customer'
+                ));
+
+                return;
             }
 
-            $this->fetchTable('ShoppingCarts')->saveOrFail($cart);
-
-            $order = $this->fetchTable('Orders')->newEntity([
-                'CustomerId' => $customer ? $customer->CustomerId : null,
-                'GuestId' => $guest ? $guest->GuestId : null,
-                'CartId' => $cart->CartId,
-                'Status' => 'paid',
-            ]);
-
-            $this->fetchTable('Orders')->saveOrFail($order);
-
-            foreach ($items as $item) {
-                $orderItem = $this->fetchTable('OrderItems')->newEntity([
-                    'OrderId' => $order->OrderId,
-                    'ProductId' => $item->ProductId,
-                    'Quantity' => $item->Quantity,
-                    'UnitPrice' => $item->product->Price,
-                ]);
-
-                $this->fetchTable('OrderItems')->saveOrFail($orderItem);
-
-                $inventory = $this->fetchTable('Inventory')
-                    ->find()
-                    ->where([
-                        'ProductId' => $item->ProductId,
-                    ])
-                    ->first();
-
-                if ($inventory) {
-                    $inventory->Quantity = max(
-                        0,
-                        (int)$inventory->Quantity - (int)$item->Quantity
-                    );
-
-                    $this->fetchTable('Inventory')->save($inventory);
-                }
+            if (!$order->CustomerId && $order->GuestId) {
+                $session->write('GuestReceiptOrders.' . (int)$order->OrderId, true);
             }
 
-            if ($installFee > 0) {
-                $serviceRequest = $this->fetchTable('ServiceRequests')->newEntity([
-                    'RequestType' => 'installation',
-                    'Description' => sprintf(
-                        'Installation for Order %s Guest %s Address %s',
-                        $order->OrderId,
-                        $checkoutName,
-                        $checkoutAddress
-                    ),
-                    'RequestedDate' => date(
-                        'Y-m-d H:i:s',
-                        strtotime('+5 days')
-                    ),
-                ]);
-
-                $this->fetchTable('ServiceRequests')->save($serviceRequest);
-            }
-
-            $delivery = $this->fetchTable('Delivery')->newEntity([
-                'OrderId' => $order->OrderId,
-                'DeliveryAddress' => $checkoutAddress,
-                'DeliveryStatus' => 'scheduled',
-                'DeliveryDate' => date(
-                    'Y-m-d H:i:s',
-                    strtotime('+7 days')
-                ),
-            ]);
-
-            $this->fetchTable('Delivery')->saveOrFail($delivery);
-
-            $payment = $this->fetchTable('Payments')->newEntity([
-                'OrderId' => $order->OrderId,
-                'Amount' => $grandTotal,
-                'PaymentMethod' => 'test-card',
-            ]);
-
-            $this->fetchTable('Payments')->saveOrFail($payment);
             $this->Flash->success('Payment successful.');
-
-            $receipt = $this->fetchTable('Receipts')->newEntity([
-                'PaymentId' => $payment->PaymentId,
-                'ReceiptNumber' => 'RCT-' . time(),
-            ]);
-
-            $this->fetchTable('Receipts')->saveOrFail($receipt);
-
-            $order = $this->fetchTable('Orders')->get(
-                $order->OrderId,
-                contain: [
-                    'OrderItems.Products',
-                    'Customers',
-                    'Guests',
-                    'Payments',
-                    'ShoppingCarts',
-                ]
-            );
 
             $confirmEmail = (string)($order->customer->Email
                 ?? $order->guest->Email

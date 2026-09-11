@@ -206,3 +206,113 @@ input[type="submit"]:hover {
 .empty-cart .button {
     text-decoration: none;
 }
+
+.account-edit-card {
+    max-width: 68rem;
+    margin: 2.4rem auto;
+    padding: 2.4rem;
+    border: 1px solid #e8e1d8;
+    border-radius: 12px;
+    background: #fffdf9;
+}
+
+.account-edit-card input {
+    background: #fff;
+}
+
+.account-edit-card form {
+    margin-bottom: 0;
+}
+
+.account-edit-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 1.2rem;
+}
+
+.account-edit-actions button {
+    margin: 0;
+}
+
+.user-directory {
+    margin: 2.4rem auto;
+    padding: 2.4rem;
+    border: 1px solid #e8e1d8;
+    border-radius: 12px;
+    background: #fffdf9;
+}
+
+.user-page-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1.6rem;
+}
+
+.user-page-header h1,
+.user-page-header .button {
+    margin: 0;
+}
+
+.user-table-wrap {
+    max-width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.user-actions {
+    display: flex;
+    gap: 0.8rem;
+    white-space: nowrap;
+}
+
+.user-actions a {
+    display: inline-flex;
+    min-height: 4.4rem;
+    align-items: center;
+    color: var(--store-green);
+}
+
+.user-details {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.6rem;
+}
+
+.user-details dt {
+    font-weight: 700;
+}
+
+.user-details dd {
+    margin: 0;
+    overflow-wrap: anywhere;
+}
+
+@media (max-width: 760px) {
+    .account-edit-card {
+        padding: 1.6rem;
+    }
+
+    .user-directory {
+        padding: 1.6rem;
+    }
+
+    .user-page-header .button {
+        width: 100%;
+        height: auto;
+        padding: 1.2rem;
+        line-height: 1.4;
+        white-space: normal;
+    }
+
+    .user-details {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .account-edit-actions button {
+        width: 100%;
+    }
+}

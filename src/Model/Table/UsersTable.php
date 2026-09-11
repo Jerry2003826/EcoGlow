@@ -6,6 +6,7 @@ declare(strict_types=1);
 namespace App\Model\Table;
 
 use Cake\ORM\Query\SelectQuery;
+use Cake\ORM\RulesChecker;
 use Cake\ORM\Table;
 use Cake\Validation\Validator;
 
@@ -34,5 +35,15 @@ class UsersTable extends Table
         return $query->where([
             'Status' => 'active',
         ]);
+    }
+
+    public function buildRules(RulesChecker $rules): RulesChecker
+    {
+        $rules->add($rules->isUnique(['Email']), [
+            'errorField' => 'Email',
+            'message' => 'This email address is already registered. Please use another email or log in.',
+        ]);
+
+        return $rules;
     }
 }

@@ -80,7 +80,7 @@ $this->assign('title', 'Invoices');
                     </td>
                     <td><?= h($order->Status) ?></td>
                     <td>
-                        <?= $this->Html->link(
+                        <?= $this->Form->postLink(
                             'Generate tax invoice',
                             ['action' => 'generate', $order->OrderId]
                         ) ?>

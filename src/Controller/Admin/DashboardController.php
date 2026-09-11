@@ -43,7 +43,7 @@ class DashboardController extends AdminController
 
         $widgets['pendingShipment'] = $ordersTable->find()
             ->where([
-                'Status <>' => 'delivered',
+                'Status IN' => ['pending', 'paid', 'processing', 'shipped'],
             ])
             ->count();
 

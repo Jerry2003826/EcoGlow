@@ -42,13 +42,29 @@ class CartController extends AppController
                         continue;
                     }
 
-                    $cartItem = $this->fetchTable('CartItems')->get((int)$id);
+                    $cartItem = $this->fetchTable('CartItems')->find()
+                        ->where([
+                            'CartItemId' => (int)$id,
+                            'CartId' => (int)$cartId,
+                        ])
+                        ->first();
+
+                    if (!$cartItem) {
+                        continue;
+                    }
 
                     $productRow = $this->fetchTable('Products')->get(
                         $cartItem->ProductId,
                         contain: ['Inventory']
                     );
                     $stockQty = (int)($productRow->inventory?->Quantity ?? 0);
+
+                    if ($stockQty <= 0) {
+                        $this->fetchTable('CartItems')->deleteOrFail($cartItem);
+                        $this->Flash->error('An unavailable item was removed from your cart.');
+
+                        continue;
+                    }
 
                     $cartItem->Quantity = max(
                         1,
@@ -83,12 +99,15 @@ class CartController extends AppController
             }
 
             $items = $cart->cart_items;
+            $quantityTotal = 0;
 
             foreach ($items as $item) {
                 $grandTotal += (float)$item->product->Price * (int)$item->Quantity;
+                $quantityTotal += (int)$item->Quantity;
             }
 
             if ((int)$cart->InstallOptIn === 1) {
+                $cart->InstallFee = $quantityTotal * 80;
                 $grandTotal += (float)$cart->InstallFee;
             }
         }

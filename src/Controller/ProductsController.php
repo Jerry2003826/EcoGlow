@@ -97,6 +97,21 @@ class ProductsController extends AppController
 
             $cartItems->saveOrFail($cartItem);
 
+            $cart = $this->fetchTable('ShoppingCarts')->get(
+                $cartId,
+                contain: ['CartItems']
+            );
+            $quantityTotal = 0;
+
+            foreach ($cart->cart_items as $item) {
+                $quantityTotal += (int)$item->Quantity;
+            }
+
+            $cart->InstallFee = (int)$cart->InstallOptIn === 1
+                ? $quantityTotal * 80
+                : 0;
+            $this->fetchTable('ShoppingCarts')->saveOrFail($cart);
+
             $this->Flash->success(
                 'Added to cart. Continue shopping or view cart.'
             );

@@ -2,7 +2,7 @@
 // templates/Pages/services.php
 
 $this->assign('title', 'Services');
-$this->Html->css('landingPage/home', ['block' => true]);
+$this->Html->css('landingPage/home', ['block' => true, 'timestamp' => true]);
 ?>
 
 <div class="landing-page">

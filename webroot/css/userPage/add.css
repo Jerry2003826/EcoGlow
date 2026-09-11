@@ -9,12 +9,12 @@ body:has(.signup-page) .main {
 }
 .signup-page {
     position: relative;
-    overflow: hidden;
-    height: calc(100vh - 9rem);
+    min-height: calc(100vh - 9rem);
     width: 100%;
     display: flex;
     align-items: center;
     justify-content: center;
+    padding: 3rem 2rem;
 }
 
 
@@ -43,9 +43,36 @@ body:has(.signup-page) .main {
 }
 
 .signup-card {
-    height: 95%;
     z-index: 1;
-    padding: 40px 40px;
+    height: auto;
+    margin: 0;
+    padding: 3.2rem;
+    background: #fffdf9;
+    border: 1px solid #e8e1d8;
+    box-shadow: 0 1rem 3rem rgba(0, 0, 0, 0.16);
+}
+
+.signup-card h2 {
+    margin-bottom: 2.4rem;
+    color: #3f3a2f;
+}
+
+.signup-card label {
+    color: #5b5545;
+}
+
+.signup-card input {
+    background: #fff;
+}
+
+.signup-card form {
+    margin-bottom: 0;
+}
+
+.signup-card button[type="submit"] {
+    width: 100%;
+    min-height: 4.4rem;
+    margin-bottom: 0;
 }
 
 @media (max-width: 760px) {

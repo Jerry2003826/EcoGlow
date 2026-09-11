@@ -117,7 +117,12 @@ class OrdersController extends AdminController
 
         $services = $this->fetchTable('ServiceRequests')
             ->find()
-            ->where(['Description LIKE' => '%Order #' . $order->OrderId . '%'])
+            ->where([
+                'OR' => [
+                    ['Description LIKE' => '%Order #' . $order->OrderId . ' %'],
+                    ['Description LIKE' => '%Order ' . $order->OrderId . ' %'],
+                ],
+            ])
             ->all();
 
         $this->set(compact(

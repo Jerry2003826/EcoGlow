@@ -35,7 +35,10 @@ $this->assign('title', 'Orders');
     <div class="panel-card">
         <h2>Product and installation orders</h2>
         <?php if (empty($orders) || count($orders) === 0): ?>
-            <p>No orders found.</p>
+            <div class="empty-state">
+                <p>No orders match your current search.</p>
+                <?= $this->Html->link('Clear search and filters', '/admin/orders') ?>
+            </div>
         <?php else: ?>
             <div class="admin-table-wrap">
                 <table class="table admin-table">
@@ -98,7 +101,10 @@ $this->assign('title', 'Orders');
     <div class="panel-card">
         <h2>Repair bookings</h2>
         <?php if (empty($repairs) || count($repairs) === 0): ?>
-            <p>No repair bookings yet.</p>
+            <div class="empty-state">
+                <p>No repair bookings match your current search.</p>
+                <?= $this->Html->link('Clear search and filters', '/admin/orders') ?>
+            </div>
         <?php else: ?>
             <div class="admin-table-wrap">
                 <table class="table admin-table">

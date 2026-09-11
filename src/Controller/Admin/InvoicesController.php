@@ -56,6 +56,8 @@ class InvoicesController extends AdminController
 
     public function generate(int|string $orderId)
     {
+        $this->request->allowMethod(['post']);
+
         if ($this->request->getAttribute('identity') === null) {
             return;
         }
@@ -87,6 +89,12 @@ class InvoicesController extends AdminController
             foreach ($order->payments as $payment) {
                 $amount += (float)$payment->Amount;
             }
+        }
+
+        if ($amount <= 0) {
+            $this->Flash->error('An order needs a recorded payment greater than $0 before an invoice can be issued.');
+
+            return $this->redirect(['action' => 'index']);
         }
 
         $invoice = $this->fetchTable('Invoices')->newEntity([

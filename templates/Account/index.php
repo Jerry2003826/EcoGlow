@@ -12,4 +12,10 @@
     <p>
         <?= $this->Html->link('View my orders', '/account/orders') ?>
     </p>
+    <p>
+        <?= $this->Html->link(
+            'Edit login details',
+            '/users/edit/' . (int)$this->request->getAttribute('identity')->get('UserId')
+        ) ?>
+    </p>
 </div>

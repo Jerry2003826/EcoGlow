@@ -3,6 +3,9 @@
 
 use Cake\Core\Configure;
 
+$this->assign('title', 'Contact Us');
+$this->Html->css('enquiryPage/add', ['block' => true, 'timestamp' => true]);
+$this->Html->script('turnstile-form', ['block' => true, 'timestamp' => true]);
 $this->Html->script('https://challenges.cloudflare.com/turnstile/v0/api.js', [
     'block' => true,
     'async' => true,
@@ -15,8 +18,6 @@ $this->Html->meta([
     'rel' => 'preconnect',
 ]);
 ?>
-
-<link rel="stylesheet" href = "/css/enquiryPage/add.css" />
 
 <div class="add-contact-page">
     <div class="add-contact-background">
@@ -51,6 +52,7 @@ $this->Html->meta([
 
                 <div
                     class="cf-turnstile"
+                    data-size="flexible"
                     data-theme="light"
                     data-callback="turnstileOnSuccess"
                     data-error-callback="turnstileOnError"
@@ -59,7 +61,7 @@ $this->Html->meta([
                     data-sitekey="<?= Configure::read('Captcha.turnstile.siteKey') ?>"
                 ></div>
 
-                <blockquote id="turnstile-message" style="display:none"></blockquote>
+                <blockquote id="turnstile-message" role="status" aria-live="polite" hidden></blockquote>
             </fieldset>
 
             <?= $this->Form->button(
@@ -74,28 +76,3 @@ $this->Html->meta([
         </div>
     </div>
 </div>
-
-<script>
-    var turnstileMessageBlock = document.querySelector('#turnstile-message');
-    var actionButton = document.querySelector('button.btn');
-
-    function turnstileOnSuccess(token) {
-        turnstileMessageBlock.style.display = 'none';
-        actionButton.removeAttribute('disabled');
-    }
-
-    function turnstileOnError(errorCode) {
-        turnstileMessageBlock.style.display = 'block';
-        turnstileMessageBlock.innerText = "Challenge error. Please refresh the webpage and try again.";
-    }
-
-    function turnstileOnExpired() {
-        turnstileMessageBlock.style.display = 'block';
-        turnstileMessageBlock.innerText = "Challenge token expired. Please validate again.";
-    }
-
-    function turnstileOnTimeout() {
-        turnstileMessageBlock.style.display = 'block';
-        turnstileMessageBlock.innerText = "Challenge timed out. Please validate again.";
-    }
-</script>

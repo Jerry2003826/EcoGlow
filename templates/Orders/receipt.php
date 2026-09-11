@@ -1,5 +1,9 @@
 <?php
 // templates/Orders/receipt.php
+$deliveryAddress = $order->delivery?->DeliveryAddress
+    ?? $customer?->Address
+    ?? $guest?->Address
+    ?? '';
 ?>
 
 <div class="receipt-card">
@@ -13,12 +17,12 @@
     <?php if ($customer): ?>
         <p><strong>Name:</strong> <?= h($customer->CustomerName) ?></p>
         <p><strong>Email:</strong> <?= h($customer->Email) ?></p>
-        <p><strong>Address:</strong> <?= h($customer->Address) ?></p>
+        <p><strong>Delivery address:</strong> <?= h($deliveryAddress) ?></p>
         <p><strong>Phone:</strong> <?= h($customer->Phone) ?></p>
     <?php elseif ($guest): ?>
         <p><strong>Name:</strong> <?= h($guest->GuestName) ?></p>
         <p><strong>Email:</strong> <?= h($guest->Email) ?></p>
-        <p><strong>Address:</strong> <?= h($guest->Address) ?></p>
+        <p><strong>Delivery address:</strong> <?= h($deliveryAddress) ?></p>
         <p><strong>Phone:</strong> <?= h($guest->Phone) ?></p>
     <?php endif; ?>
 

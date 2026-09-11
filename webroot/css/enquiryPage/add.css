@@ -9,12 +9,18 @@ body:has(.add-contact-page) .main {
 }
 .add-contact-page{
     position: relative;
-    overflow: hidden;
-    height: calc(100vh - 9rem);
+    min-height: calc(100vh - 9rem);
     width: 100%;
     display: flex;
     align-items: center;
     justify-content: center;
+}
+
+.add-contact-page,
+.contact,
+.contact-content,
+.contact-form {
+    box-sizing: border-box;
 }
 
 
@@ -49,16 +55,19 @@ body:has(.add-contact-page) .main {
 }
 
 .contact {
+    position: relative;
     z-index: 1;
     display: flex;
     gap: 80px;
     padding: 60px 20px;
+    min-width: 0;
 }
 
 .contact-content {
     flex: 0.7;
     border-right: #999 solid 1px;
     padding-right: 60px;
+    min-width: 0;
 }
 
 .contact-content h1 {
@@ -79,6 +88,24 @@ body:has(.add-contact-page) .main {
     background: #fbf9f5;
     padding: 40px;
     border-radius: 12px;
+    min-width: 0;
+}
+
+.contact-form fieldset {
+    min-width: 0;
+}
+
+.contact-form .cf-turnstile {
+    margin: 1rem 0 1.6rem;
+}
+
+.contact-form #turnstile-message {
+    margin: 0 0 1.6rem;
+    padding: 1rem;
+    border-left-color: #c28a55;
+    background: #fff5e8;
+    color: #6b491e;
+    font-size: 1.4rem;
 }
 
 .contact-form .input {
@@ -128,6 +155,7 @@ body:has(.add-contact-page) .main {
 
 @media (max-width: 900px) {
     .add-contact-page {
+        display: block;
         overflow: visible;
         height: auto;
         min-height: calc(100vh - 6.4rem);

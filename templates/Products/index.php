@@ -2,7 +2,7 @@
 // templates/Products/index.php
 
 $this->assign('title', 'Products');
-$this->Html->css('products', ['block' => true]);
+$this->Html->css('products', ['block' => true, 'timestamp' => true]);
 
 $categoryOptions = ['' => 'All Categories'];
 
@@ -30,6 +30,7 @@ foreach ($categories as $categoryItem) {
         <div class="products-search">
             <?= $this->Form->control('q', [
                 'label' => false,
+                'aria-label' => 'Search products',
                 'placeholder' => 'Search by name or description',
                 'value' => $q ?? '',
                 'templates' => ['inputContainer' => '<div class="products-search-input">{{content}}</div>'],
@@ -80,6 +81,13 @@ foreach ($categories as $categoryItem) {
     </div>
 
     <div class="product-grid">
+    <?php if (count($products) === 0): ?>
+        <div class="products-empty-state">
+            <h3>No matching products</h3>
+            <p>Try another search term or clear the filters to browse the collection.</p>
+            <?= $this->Html->link('Clear filters', '/products', ['class' => 'products-cart-link']) ?>
+        </div>
+    <?php endif; ?>
     <?php foreach ($products as $product): ?>
         <?php
         $stockQty = (int)($product->inventory?->Quantity ?? 0);

@@ -40,15 +40,14 @@ class UsersController extends AppController
             return;
         }
 
-        //admin and staff can access all actions in userController
-        if($identity->UserRole === 'admin' ||$identity->UserRole === 'staff') {
+        // Only administrators can manage other user accounts.
+        if($identity->UserRole === 'admin') {
             return;
         }
-        //Cusomer can logout
+        // All signed-in users can log out or edit their own profile.
         if($action === 'logout') {
             return;
         }
-        //Customer can edit their own profile
         if($action === 'edit') {
             $id = (int)$this->request->getParam('pass.0');
             if($id === (int)$identity->UserId) {
@@ -66,15 +65,17 @@ class UsersController extends AppController
         $result = $this->Authentication->getResult();
 
         $turnstileToken = $this->request->getData('cf-turnstile-response');
-        if ($this->request->is('post') && $turnstileToken) {
-            $turnstileResponse = $this->Turnstile->validateTurnstile($turnstileToken, $this->request->clientIp());
+        if ($this->request->is('post')) {
+            $turnstileResponse = is_string($turnstileToken) && trim($turnstileToken) !== ''
+                ? $this->Turnstile->validateTurnstile($turnstileToken, $this->request->clientIp())
+                : ['success' => false];
 
             if (!$turnstileResponse || !$turnstileResponse['success']) {
                 $this->log('Turnstile Response Error: ' . json_encode($turnstileResponse));
                 $this->Flash->error('CAPTCHA challenge failed. Please try again.');
                 $this->Authentication->logout();
 
-                return $this->redirect(['controller' => 'Pages', 'action' => 'display']);
+                return $this->redirect(['action' => 'login']);
             }
         }
 
@@ -267,9 +268,49 @@ class UsersController extends AppController
     {
         $user = $this->Users->get($id, contain: []);
         if ($this->request->is(['patch', 'post', 'put'])) {
-            $user = $this->Users->patchEntity($user, $this->request->getData());
-            if ($this->Users->save($user)) {
+            $identity = $this->request->getAttribute('identity');
+            $role = (string)($identity->get('UserRole') ?? '');
+            $fields = ['Username', 'Email', 'Password'];
+
+            if ($role === 'admin') {
+                $fields = array_merge($fields, ['UserRole', 'Status']);
+            }
+
+            $data = $this->request->getData();
+            if (($data['Password'] ?? '') === '') {
+                unset($data['Password']);
+            }
+
+            $user = $this->Users->patchEntity($user, $data, ['fields' => $fields]);
+            if (isset($data['Password']) && strlen((string)$data['Password']) < 8) {
+                $user->setError('Password', 'Password must be at least 8 characters.');
+            }
+
+            $emailChanged = $user->isDirty('Email');
+            $saved = $this->Users->getConnection()->transactional(function () use ($user, $emailChanged): bool {
+                if (!$this->Users->save($user)) {
+                    return false;
+                }
+
+                if ($emailChanged) {
+                    $this->fetchTable('Customers')->updateAll(
+                        ['Email' => $user->Email],
+                        ['UserId' => (int)$user->UserId],
+                    );
+                }
+
+                return true;
+            });
+
+            if ($saved) {
                 $this->Flash->success(__('The user has been saved.'));
+
+                if (!in_array($role, ['admin', 'staff'], true)) {
+                    return $this->redirect('/account');
+                }
+                if ($role === 'staff') {
+                    return $this->redirect('/admin');
+                }
 
                 return $this->redirect(['action' => 'index']);
             }

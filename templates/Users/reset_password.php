@@ -1,7 +1,7 @@
 <?php
 $this->assign('title', 'Reset password');
+$this->Html->css('login', ['block' => true, 'timestamp' => true]);
 ?>
-<link rel="stylesheet" href="/css/login.css" />
 <div class="login-page">
     <div class="login-background">
         <?= $this->Html->image('landing/login_picture.jpg', [
@@ -12,7 +12,6 @@ $this->assign('title', 'Reset password');
     <div class="login-form">
         <div class="login-card">
             <h2>Reset password</h2>
-            <?= $this->Flash->render() ?>
             <?= $this->Form->create() ?>
             <fieldset>
                 <?= $this->Form->control('password', [

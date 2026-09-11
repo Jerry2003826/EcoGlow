@@ -49,6 +49,7 @@ if (
             'Eco Glow Lighting',
             '/'
         ) ?>
+        <button id="admin-menu-close" class="admin-menu-close" type="button" aria-label="Close navigation">×</button>
     </div>
 
     <div class="admin-sidebar-scroll">

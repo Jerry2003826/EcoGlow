@@ -7,6 +7,7 @@
     var sidebar = document.getElementById('admin-sidebar');
     var overlay = document.getElementById('admin-overlay');
     var toggle = document.getElementById('admin-menu-toggle');
+    var closeButton = document.getElementById('admin-menu-close');
     var page = document.getElementById('admin-page');
 
     if (!sidebar || !overlay || !toggle) {
@@ -14,6 +15,7 @@
     }
 
     function openDrawer() {
+        sidebar.inert = false;
         sidebar.classList.add('is-open');
 
         overlay.hidden = false;
@@ -25,10 +27,16 @@
             page.inert = true;
             page.setAttribute('aria-hidden', 'true');
         }
+
+        if (closeButton) {
+            closeButton.focus();
+        }
     }
 
     function closeDrawer() {
+        var wasOpen = sidebar.classList.contains('is-open');
         sidebar.classList.remove('is-open');
+        sidebar.inert = window.innerWidth <= BREAKPOINT;
 
         overlay.hidden = true;
         overlay.setAttribute('aria-hidden', 'true');
@@ -39,10 +47,15 @@
             page.inert = false;
             page.removeAttribute('aria-hidden');
         }
+
+        if (wasOpen && window.innerWidth <= BREAKPOINT) {
+            toggle.focus();
+        }
     }
 
     function handleResize() {
         if (window.innerWidth > BREAKPOINT) {
+            sidebar.inert = false;
             sidebar.classList.remove('is-open');
 
             overlay.hidden = true;
@@ -55,6 +68,7 @@
                 page.removeAttribute('aria-hidden');
             }
         } else {
+            sidebar.inert = !sidebar.classList.contains('is-open');
             if (!sidebar.classList.contains('is-open')) {
                 overlay.hidden = true;
                 overlay.setAttribute('aria-hidden', 'true');
@@ -75,9 +89,31 @@
         closeDrawer();
     });
 
+    if (closeButton) {
+        closeButton.addEventListener('click', closeDrawer);
+    }
+
     document.addEventListener('keydown', function (event) {
+        if (!sidebar.classList.contains('is-open')) {
+            return;
+        }
+
         if (event.key === 'Escape') {
             closeDrawer();
+        }
+
+        if (event.key === 'Tab') {
+            var links = sidebar.querySelectorAll('a[href], button:not([disabled])');
+            var first = links[0];
+            var last = links[links.length - 1];
+
+            if (event.shiftKey && document.activeElement === first) {
+                event.preventDefault();
+                last.focus();
+            } else if (!event.shiftKey && document.activeElement === last) {
+                event.preventDefault();
+                first.focus();
+            }
         }
     });
 
