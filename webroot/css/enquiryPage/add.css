@@ -110,3 +110,26 @@ body:has(.add-contact-page) .main {
 .contact-form .btn:hover {
     background-color: #3F3A2F;
 }
+
+@media (max-width: 760px) {
+    .add-contact-page {
+        height: auto;
+        min-height: calc(100vh - 9rem);
+    }
+
+    .contact {
+        flex-direction: column;
+        gap: 30px;
+    }
+
+    .contact-content {
+        border-right: none;
+        border-bottom: 1px solid #999;
+        padding-right: 0;
+        padding-bottom: 30px;
+    }
+
+    .contact-form {
+        width: 100%;
+    }
+}

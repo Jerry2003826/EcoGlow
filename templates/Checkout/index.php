@@ -49,17 +49,21 @@
 
     <?php else: ?>
 
-        <?php if (!empty($errors['GuestName'])): ?>
-            <p class="error">Please enter your name.</p>
-        <?php endif; ?>
 
-        <?= $this->Form->control('GuestName') ?>
+        <?= $this->Form->control('GuestName', [
+            'required' => true,
+            'pattern' => '[A-Za-z ]+',
+            'title' => 'Please enter letters only.',
+        ]) ?>
 
+        <?= $this->Form->control('Email', [
+            'required' => true,
+            'type' => 'email',
+            'title' => 'Please enter a valid email address (e.g., example@example.com).',
+        ]) ?>
         <?php if (!empty($errors['Email'])): ?>
-            <p class="error">Please enter your email address.</p>
+            <p class="error">Please enter your email address with correct format (e.g., example@example.com).</p>
         <?php endif; ?>
-
-        <?= $this->Form->control('Email') ?>
 
         <?= $this->Form->control('Address', [
             'required' => true,
@@ -76,9 +80,29 @@
 
     <?= $this->Form->control('card_number', [
         'label' => 'Test Card Number',
+        'required' => true,
+        'inputmode' => 'numeric',
+        'pattern' => '[0-9]{16}',
+        'title' => 'Please enter a valid 16-digit test card number.',
     ]) ?>
 
-    <p>Use test card number 4242424242424242</p>
+    <?= $this->Form->control('expiry_date', [
+        'label' => 'Expiry Date',
+        'required' => true,
+        'inputmode' => 'numeric',
+        'pattern' => '(0[1-9]|1[0-2])/[0-9]{2}',
+        'title' => 'Please enter a valid expiry date in MM/YY format.',
+    ]) ?>
+
+    <?= $this->Form->control('cvv', [
+        'label' => 'CVV',
+        'required' => true,
+        'inputmode' => 'numeric',
+        'pattern' => '[0-9]{3}',
+        'maxlength' => 3,
+        'title' => 'Please enter a valid 3-digit CVV.',
+    ]) ?>
+    <p>Use test card number 4242424242424242 and CVV 123 with expiry date 12/31</p>
 
     <?= $this->Form->button('Complete Order') ?>
 

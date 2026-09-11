@@ -253,8 +253,8 @@
 
 .install-box-icon {
     display: grid;
-    width: 2rem;
-    height: 2rem;
+    width: 2.3rem;
+    height: 2.3rem;
     flex: 0 0 auto;
     place-items: center;
     border-radius: 50%;
@@ -274,8 +274,8 @@
 }
 
 .install-box input {
-    width: 1.6rem;
-    height: 1.6rem;
+    width: 2.3rem;
+    height: 2.3rem;
     margin: 0 0 0 auto;
     accent-color: var(--cart-green);
 }

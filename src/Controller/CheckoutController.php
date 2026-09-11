@@ -85,7 +85,8 @@ class CheckoutController extends AppController
                         'productsTotal',
                         'installFee',
                         'grandTotal',
-                        'errors'
+                        'errors',
+                        'customer'
                     ));
 
                     return;
@@ -93,16 +94,31 @@ class CheckoutController extends AppController
             }
             
 
-            
-
             $cardNumber = preg_replace(
                 '/\s+/',
                 '',
                 (string)$this->request->getData('card_number')
             );
+            $cvv = preg_replace(
+                '/\s+/',
+                '',
+                (string)$this->request->getData('cvv')
+            );
 
-            if ($cardNumber !== '4242424242424242') {
-                $this->Flash->error('Use test card 4242424242424242.');
+            $expiryDate = preg_replace(
+                '/\s+/',
+                '',
+                (string)$this->request->getData('expiry_date')
+            );
+
+            if (
+                $cardNumber !== '4242424242424242' ||
+                $cvv !== '123' ||
+                $expiryDate !== '12/31'
+            ) {
+                $this->Flash->error(
+                    'Payment Failed. Please check your payment details and try again.'
+                );
 
                 $this->set(compact(
                     'cart',
@@ -110,7 +126,8 @@ class CheckoutController extends AppController
                     'productsTotal',
                     'installFee',
                     'grandTotal',
-                    'errors'
+                    'errors',
+                    'customer'
                 ));
 
                 return;
@@ -204,6 +221,7 @@ class CheckoutController extends AppController
             ]);
 
             $this->fetchTable('Payments')->saveOrFail($payment);
+            $this->Flash->success('Payment successful.');
 
             $receipt = $this->fetchTable('Receipts')->newEntity([
                 'PaymentId' => $payment->PaymentId,
