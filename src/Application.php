@@ -82,7 +82,31 @@ class Application extends BaseApplication implements
             'queryParam' => 'redirect',
         ]);
 
-        $service->loadAuthenticator('Authentication.Session');
+        // Migrate sessions created before switching to primary-key persistence.
+        $session = $request->getAttribute('session');
+        $storedIdentity = $session?->read('Auth');
+        if (is_array($storedIdentity) || $storedIdentity instanceof \ArrayAccess) {
+            $userId = $storedIdentity['UserId'] ?? null;
+            if (filter_var($userId, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]) !== false) {
+                $session->write('Auth', (int)$userId);
+            } else {
+                $session->delete('Auth');
+            }
+        }
+
+        $service->loadAuthenticator('Authentication.PrimaryKeySession', [
+            'idField' => 'UserId',
+            'identifier' => [
+                'className' => 'Authentication.Token',
+                'tokenField' => 'UserId',
+                'dataField' => 'key',
+                'resolver' => [
+                    'className' => 'Authentication.Orm',
+                    'userModel' => 'Users',
+                    'finder' => 'activeAuth',
+                ],
+            ],
+        ]);
 
         $service->loadAuthenticator('Authentication.Form', [
             'fields' => $fields,

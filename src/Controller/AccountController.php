@@ -58,11 +58,11 @@ class AccountController extends AppController
 
         $orders = $this->fetchTable('Orders')
             ->find()
-            ->where(['CustomerId' => $customer->CustomerId])
+            ->where(['Orders.CustomerId' => $customer->CustomerId])
             ->contain(['OrderItems.Products', 'Payments'])
             ->orderBy([
-                'OrderDate' => 'DESC',
-                'OrderId' => 'DESC',
+                'Orders.OrderDate' => 'DESC',
+                'Orders.OrderId' => 'DESC',
             ])
             ->all();
 
@@ -80,8 +80,8 @@ class AccountController extends AppController
         $order = $this->fetchTable('Orders')
             ->find()
             ->where([
-                'OrderId' => (int)$id,
-                'CustomerId' => $customer->CustomerId,
+                'Orders.OrderId' => (int)$id,
+                'Orders.CustomerId' => $customer->CustomerId,
             ])
             ->contain([
                 'Customers',

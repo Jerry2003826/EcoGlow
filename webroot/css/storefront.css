@@ -291,7 +291,214 @@ input[type="submit"]:hover {
     overflow-wrap: anywhere;
 }
 
+.account-page {
+    max-width: 96rem;
+    margin: 3.2rem auto 6rem;
+    color: #3f3a2f;
+}
+
+.account-heading {
+    margin-bottom: 2.4rem;
+}
+
+.account-heading h1 {
+    margin: 1rem 0 1.2rem;
+    color: #244733;
+    font-size: clamp(3rem, 4vw, 4.2rem);
+    line-height: 1.2;
+}
+
+.account-heading > p:last-child,
+.account-muted {
+    color: #706c60;
+}
+
+.account-eyebrow {
+    margin: 0;
+    color: #446647;
+    font-size: 1.2rem;
+    font-weight: 700;
+    letter-spacing: 0.12rem;
+    text-transform: uppercase;
+}
+
+.account-card {
+    min-width: 0;
+    margin-bottom: 2rem;
+    padding: 2.6rem;
+    border: 1px solid #e2dfd5;
+    border-radius: 12px;
+    background: #fffdf9;
+    box-shadow: 0 0.4rem 1.6rem rgba(38, 55, 40, 0.035);
+    overflow-wrap: anywhere;
+}
+
+.account-card h2 {
+    margin: 0 0 2rem;
+    color: #294b35;
+    font-size: 2.1rem;
+    font-weight: 600;
+}
+
+.account-card p:last-child {
+    margin-bottom: 0;
+}
+
+.account-details {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 2.2rem 3rem;
+    margin: 0;
+}
+
+.account-details dt {
+    margin-bottom: 0.6rem;
+    color: #777166;
+    font-size: 1.3rem;
+    font-weight: 500;
+}
+
+.account-details dd {
+    margin: 0;
+    font-weight: 500;
+    overflow-wrap: anywhere;
+}
+
+.account-actions,
+.account-order-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 1.2rem;
+}
+
+.account-button {
+    display: inline-flex;
+    min-height: 4.6rem;
+    align-items: center;
+    justify-content: center;
+    padding: 1.2rem 2rem;
+    border: 1px solid #124c24;
+    border-radius: 6px;
+    background: #124c24;
+    color: #fff;
+    font-size: 1.4rem;
+    font-weight: 600;
+    line-height: 1.5;
+    text-decoration: none;
+    text-align: center;
+}
+
+.account-button:hover,
+.account-button:focus-visible {
+    background: #0c3719;
+    color: #fff;
+}
+
+.account-button-secondary {
+    background: transparent;
+    color: #124c24;
+}
+
+.account-back-link {
+    display: inline-block;
+    margin-bottom: 1rem;
+    color: #315d3c;
+    font-size: 1.4rem;
+    text-decoration: underline;
+}
+
+.account-table-wrap {
+    max-width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.account-table {
+    width: 100%;
+    margin: 0;
+    font-size: 1.4rem;
+}
+
+.account-table th,
+.account-table td {
+    padding: 1.4rem 1.2rem;
+    vertical-align: middle;
+}
+
+.account-table th {
+    color: #716b5f;
+    font-size: 1.2rem;
+    font-weight: 600;
+}
+
+.account-table a {
+    color: #124c24;
+    font-weight: 600;
+    text-decoration: underline;
+}
+
+.account-table tbody tr:last-child td {
+    border-bottom: 0;
+}
+
+.account-status {
+    display: inline-block;
+    padding: 0.4rem 1rem;
+    border-radius: 20px;
+    background: #eaf0e5;
+    color: #365c35;
+    font-size: 1.2rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.account-order-meta {
+    color: #777166;
+    font-size: 1.4rem;
+}
+
+.account-summary-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 2rem;
+}
+
+.account-amount {
+    margin: 0 0 1rem;
+    color: #124c24;
+    font-size: 2.8rem;
+    font-weight: 600;
+}
+
+.account-empty-state {
+    padding: 2rem 0;
+    text-align: center;
+}
+
 @media (max-width: 760px) {
+    .account-page {
+        margin-top: 2.4rem;
+    }
+
+    .account-card {
+        padding: 1.8rem;
+    }
+
+    .account-details,
+    .account-summary-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .account-summary-grid {
+        gap: 0;
+    }
+
+    .account-actions .account-button,
+    .account-empty-state .account-button {
+        width: 100%;
+    }
+
     .account-edit-card {
         padding: 1.6rem;
     }
