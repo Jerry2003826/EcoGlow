@@ -442,3 +442,22 @@ body.admin-app {
     margin: 0 0 1rem;
     white-space: pre-wrap;
 }
+
+/* Admin/Inventory Status */
+.status-low {
+    display: inline-block;
+    padding: 0.25rem 0.65rem;
+    border-radius: 999px;
+    background: #FDECEC;
+    color: #B42318;
+    font-weight: 600;
+}
+
+.status-ok {
+    display: inline-block;
+    padding: 0.25rem 0.65rem;
+    border-radius: 999px;
+    background: #EAF7EE;
+    color: #187A3D;
+    font-weight: 600;
+}

@@ -27,7 +27,11 @@ $this->assign('title', 'Inventory');
                     <td><?= h($item->product->supplier->SupplierName ?? '') ?></td>
                     <td><?= (int)$item->Quantity ?></td>
                     <td><?= (int)$item->LowStockThreshold ?></td>
-                    <td><?= $low ? 'Low stock' : 'OK' ?></td>
+                    <td>
+                        <span class="<?= $low ? 'status-low' : 'status-ok' ?>">
+                            <?= $low ? 'Low stock' : 'OK' ?>
+                        </span>
+                    </td>
                 </tr>
             <?php endforeach; ?>
             </tbody>
