@@ -16,6 +16,8 @@ class User extends Entity
         'UserRole' => true,
         'Username' => true,
         'Status' => true,
+        'ResetToken' => true,
+        'ResetTokenExpires' => true,
         'customer' => true,
     ];
 

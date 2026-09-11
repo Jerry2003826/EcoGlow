@@ -14,7 +14,7 @@ $this->assign('title', 'Orders');
     ]) ?>
     <?= $this->Form->control('q', [
         'label' => 'Search',
-        'placeholder' => 'Search by order number, customer name, or guest name',
+        'placeholder' => 'order number, name, email',
         'value' => $q ?? '',
     ]) ?>
     <?= $this->Form->control('type', [

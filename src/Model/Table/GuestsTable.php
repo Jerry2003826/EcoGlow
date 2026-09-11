@@ -23,7 +23,13 @@ class GuestsTable extends Table
     {
         $validator
             ->requirePresence('GuestName')
-            ->notEmptyString('GuestName');
+            ->notEmptyString('GuestName')
+            ->add('GuestName', 'lettersOnly', [
+                'rule' => static function ($value): bool {
+                    return (bool)preg_match('/^[A-Za-z ]+$/', (string)$value);
+                },
+                'message' => 'Please enter letters only.',
+            ]);
 
         $validator
             ->email('Email')

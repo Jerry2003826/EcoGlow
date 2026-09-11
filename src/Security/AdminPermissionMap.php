@@ -12,6 +12,7 @@ final class AdminPermissionMap
         $map = [
             'Dashboard' => [
                 'index' => ['dashboard.view'],
+                'updateStock' => ['inventory.adjust'],
             ],
             'ComingSoon' => [
                 'index' => ['dashboard.view'],

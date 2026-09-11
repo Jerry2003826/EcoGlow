@@ -5,10 +5,22 @@ declare(strict_types=1);
 
 namespace App\Controller\Admin;
 
+use Cake\Http\Exception\ForbiddenException;
+
 class ComingSoonController extends AdminController
 {
     public function index(string $module)
     {
+        $identity = $this->request->getAttribute('identity');
+        $role = (string)($identity?->get('UserRole') ?? '');
+
+        if (
+            $role === 'staff'
+            && in_array($module, ['reports', 'access', 'suppliers'], true)
+        ) {
+            throw new ForbiddenException('Forbidden');
+        }
+
         $definitions = [
             'suppliers' => [
                 'Supplier profile management',

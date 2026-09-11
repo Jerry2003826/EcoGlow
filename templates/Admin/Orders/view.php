@@ -34,18 +34,19 @@ $this->assign('title', 'Order #' . $order->OrderId);
 <?php if ($order->CustomerId): ?>
     <div class="panel-card">
         <h2>Customer</h2>
-        <p><?= h($order->customer->CustomerName ?? '') ?></p>
-        <p><?= h($order->customer->Email ?? '') ?></p>
-        <p><?= h($order->customer->Address ?? '') ?></p>
-        <p><?= h($order->customer->Phone ?? '') ?></p>
+        <p><strong>Name:</strong> <?= h($order->customer->CustomerName ?? '') ?></p>
+        <p><strong>Email:</strong> <?= h($order->customer->Email ?? '') ?></p>
+        <p><strong>Address:</strong> <?= h($order->customer->Address ?? '') ?></p>
+        <p><strong>Phone:</strong> <?= h($order->customer->Phone ?? '') ?></p>
     </div>
 <?php else: ?>
     <div class="panel-card">
         <h2>Guest</h2>
-        <p><?= h($order->guest->GuestName ?? '') ?></p>
-        <p><?= h($order->guest->Email ?? '') ?></p>
-        <p><?= h($order->guest->Address ?? '') ?></p>
-        <p><?= h($order->guest->Phone ?? '') ?></p>
+        <p class="page-lead">This order was placed without an account and these are the checkout contact details.</p>
+        <p><strong>Name:</strong> <?= h($order->guest->GuestName ?? '') ?></p>
+        <p><strong>Email:</strong> <?= h($order->guest->Email ?? '') ?></p>
+        <p><strong>Address:</strong> <?= h($order->guest->Address ?? '') ?></p>
+        <p><strong>Phone:</strong> <?= h($order->guest->Phone ?? '') ?></p>
     </div>
 <?php endif; ?>
 

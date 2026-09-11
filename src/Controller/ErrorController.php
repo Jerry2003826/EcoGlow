@@ -35,12 +35,6 @@ class ErrorController extends AppController
         parent::beforeRender($event);
 
         $this->viewBuilder()->setTemplatePath('Error');
-        //Delete when set 'debug' => false in config/app_local.php
-        //Just for review
-        $error = $this->viewBuilder()->getVar('error');
-        if($error && $error->getCode() == 404) {
-            $event->setResult($this->redirect(['controller' => 'Pages', 'action' => 'display']));
-        }
     }
 
     public function afterFilter(EventInterface $event): void

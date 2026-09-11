@@ -2,10 +2,12 @@
 // templates/layout/default.php
 
 $controller = (string)$this->request->getParam('controller');
+$identity = $this->request->getAttribute('identity');
+$role = (string)($identity?->get('UserRole') ?? '');
 
 $loadStorefront = in_array(
     $controller,
-    ['Products', 'Cart', 'Checkout', 'Orders'],
+    ['Products', 'Cart', 'Checkout', 'Orders', 'Account'],
     true
 );
 ?>
@@ -71,13 +73,17 @@ $loadStorefront = in_array(
         <?= $this->Html->link('Cart', '/cart') ?>
         <?= $this->Html->link('About Us', '/about') ?>
 
+        <?php if ($identity && $role !== 'admin' && $role !== 'staff'): ?>
+            <?= $this->Html->link('Account', '/account') ?>
+        <?php endif; ?>
+
         <?= $this->Html->link(
             'Contact Us',
             '/enquiries/add',
             ['class' => 'nav-button contact-button']
         ) ?>
 
-        <?php if ($this->request->getAttribute('identity')): ?>
+        <?php if ($identity): ?>
             <?= $this->Html->link(
                 'Log Out',
                 '/logout',

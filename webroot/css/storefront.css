@@ -47,6 +47,7 @@ input[type="submit"]:hover {
 .cart-row,
 .receipt-card,
 .checkout-card,
+.checkout-section,
 .signup-card,
 .empty-cart {
     background: #fff;
@@ -130,6 +131,27 @@ input[type="submit"]:hover {
     color: #b91c1c;
     font-weight: 600;
     margin-bottom: .5rem;
+}
+
+.checkout-card {
+    background: transparent;
+    border: 0;
+    padding: 0;
+}
+
+.checkout-section {
+    margin-bottom: 1.5rem;
+}
+
+.checkout-section h2 {
+    margin-top: 0;
+}
+
+.checkout-note {
+    background: #f6f9fb;
+    border-left: 4px solid var(--store-green);
+    padding: 0.9rem 1rem;
+    margin-bottom: 1rem;
 }
 
 .signup-card {

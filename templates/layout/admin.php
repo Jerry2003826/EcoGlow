@@ -31,7 +31,7 @@ try {
 <head>
     <?= $this->Html->charset() ?>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title><?= h($title) ?> | Eco Glow Admin</title>
+    <title><?= h($title) ?> | <?= $role === 'staff' ? 'Eco Glow Staff' : 'Eco Glow Admin' ?></title>
     <?= $this->Html->css(['bootstrap.min', 'fonts', 'admin'], ['timestamp' => true]) ?>
 </head>
 <body class="admin-app">
@@ -44,13 +44,6 @@ try {
 
     <div id="admin-page" class="admin-page">
         <header class="admin-topbar">
-            <button
-                id="admin-menu-toggle"
-                class="admin-menu-toggle"
-                type="button"
-                aria-controls="admin-sidebar"
-            >☰</button>
-
             <nav class="admin-breadcrumb" aria-label="Breadcrumb">
                 <ol>
                     <?php if ($role === 'admin'): ?>
@@ -84,6 +77,13 @@ try {
                     ['class' => 'btn btn-outline-secondary btn-sm admin-logout']
                 ) ?>
             </div>
+
+            <button
+                id="admin-menu-toggle"
+                class="admin-menu-toggle"
+                type="button"
+                aria-controls="admin-sidebar"
+            >☰</button>
         </header>
 
         <main id="main-content" class="admin-content">

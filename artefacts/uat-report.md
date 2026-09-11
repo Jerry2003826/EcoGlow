@@ -34,6 +34,10 @@
 3. Refunds / Reports / Access remain Coming Soon (not in this week’s stories).
 4. Product images on shop use category photos; seed filenames are not all in `webroot/img`.
 
+## General feedback
+
+The Iteration 1 build covers guest and customer checkout, staff and admin dashboard access, inventory, and order handling. This section records overall review comments separately from the accept/reject notes used at sign-off.
+
 ## Sign-off
 
 | Name | Role | Sign |

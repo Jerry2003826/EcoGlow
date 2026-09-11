@@ -74,28 +74,27 @@ class DashboardController extends AdminController
         $user = $this->fetchTable('Users')->get($userId);
         $isAdmin = $user->UserRole === 'admin';
 
-        if ($isAdmin) {
-            $lowStockItems = $inventoryTable->find()
-                ->contain(['Products'])
-                ->all();
+        $lowStockItems = $inventoryTable->find()
+            ->contain(['Products'])
+            ->all();
 
-            $filtered = [];
+        $filtered = [];
 
-            foreach ($lowStockItems as $item) {
-                if ((int)$item->Quantity <= (int)$item->LowStockThreshold) {
-                    $filtered[] = [
-                        'name' => $item->product->ProductName ?? '',
-                        'quantity' => (int)$item->Quantity,
-                    ];
-                }
+        foreach ($lowStockItems as $item) {
+            if ((int)$item->Quantity <= (int)$item->LowStockThreshold) {
+                $filtered[] = [
+                    'productId' => (int)$item->ProductId,
+                    'name' => $item->product->ProductName ?? '',
+                    'quantity' => (int)$item->Quantity,
+                ];
             }
-
-            $widgets['inventory'] = [
-                'total' => count($filtered),
-            ];
-
-            $widgets['lowStockItems'] = $filtered;
         }
+
+        $widgets['inventory'] = [
+            'total' => count($filtered),
+        ];
+
+        $widgets['lowStockItems'] = $filtered;
 
         if ($isAdmin) {
             $totalRevenue = 0.00;
@@ -127,5 +126,41 @@ class DashboardController extends AdminController
         }
 
         $this->set(compact('widgets', 'recentOrders'));
+    }
+
+    public function updateStock()
+    {
+        $this->request->allowMethod(['post']);
+        $this->requirePermission('inventory.adjust');
+
+        $productId = (int)$this->request->getData('ProductId');
+        $quantity = (int)$this->request->getData('Quantity');
+
+        if ($quantity < 0) {
+            $this->Flash->error('Quantity cannot be negative.');
+
+            return $this->redirect(['action' => 'index']);
+        }
+
+        $inventory = $this->fetchTable('Inventory')
+            ->find()
+            ->where(['ProductId' => $productId])
+            ->first();
+
+        if (!$inventory) {
+            $this->Flash->error('Inventory item was not found.');
+
+            return $this->redirect(['action' => 'index']);
+        }
+
+        $inventory->Quantity = $quantity;
+
+        if ($this->fetchTable('Inventory')->save($inventory)) {
+            $this->Flash->success('Stock level updated.');
+        } else {
+            $this->Flash->error('Stock level could not be updated.');
+        }
+
+        return $this->redirect(['action' => 'index']);
     }
 }

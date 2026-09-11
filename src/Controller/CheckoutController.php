@@ -111,11 +111,25 @@ class CheckoutController extends AppController
                 (string)$this->request->getData('expiry_date')
             );
 
-            if (
-                $cardNumber !== '4242424242424242' ||
-                $cvv !== '123' ||
-                $expiryDate !== '12/31'
-            ) {
+            if ($cardNumber !== '4242424242424242') {
+                $errors['card_number'] = [
+                    'mismatch' => 'Enter the 16-digit test card number.',
+                ];
+            }
+
+            if ($expiryDate !== '12/31') {
+                $errors['expiry_date'] = [
+                    'mismatch' => 'Enter the test expiry date 12/31.',
+                ];
+            }
+
+            if ($cvv !== '123') {
+                $errors['cvv'] = [
+                    'mismatch' => 'Enter the 3-digit test CVV.',
+                ];
+            }
+
+            if (!empty($errors)) {
                 $this->Flash->error(
                     'Payment Failed. Please check your payment details and try again.'
                 );

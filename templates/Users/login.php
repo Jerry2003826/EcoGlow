@@ -65,6 +65,9 @@ if (is_string($redirect) && $redirect !== '') {
             </fieldset>
 
             <?= $this->Form->button('Login', ['class' => 'btn', 'disabled' => true]); ?>
+            <p class="forgot-link">
+                <a href="/forgot-password">Forgot password?</a>
+            </p>
             <div class="signup-link">
                 <span>Don't have an account?</span>
 

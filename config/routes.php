@@ -11,6 +11,17 @@ return function (RouteBuilder $routes): void {
 
     $routes->connect('/login', ['controller' => 'Users', 'action' => 'login']);
     $routes->connect('/logout', ['controller' => 'Users', 'action' => 'logout']);
+    $routes->connect('/forgot-password', ['controller' => 'Users', 'action' => 'forgotPassword']);
+    $routes->connect(
+        '/reset-password/{token}',
+        ['controller' => 'Users', 'action' => 'resetPassword']
+    )->setPass(['token'])->setPatterns(['token' => '[a-f0-9]{64}']);
+    $routes->connect('/account', ['controller' => 'Account', 'action' => 'index']);
+    $routes->connect('/account/orders', ['controller' => 'Account', 'action' => 'orders']);
+    $routes->connect(
+        '/account/orders/{id}',
+        ['controller' => 'Account', 'action' => 'order']
+    )->setPass(['id'])->setPatterns(['id' => '[0-9]+']);
 
     $routes->connect('/shop', ['controller' => 'Products', 'action' => 'index']);
     $routes->connect('/products', ['controller' => 'Products', 'action' => 'index']);

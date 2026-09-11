@@ -7,6 +7,8 @@ CREATE TABLE `User` (
     `Password` VARCHAR(255) NOT NULL,
     `UserRole` VARCHAR(50) NOT NULL,
     `Status` ENUM('active','disabled') NOT NULL DEFAULT 'active',
+    `ResetToken` VARCHAR(64) NULL,
+    `ResetTokenExpires` DATETIME NULL,
     `CreatedDate` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 

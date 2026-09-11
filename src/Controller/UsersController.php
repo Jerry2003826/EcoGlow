@@ -3,6 +3,9 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use Cake\I18n\DateTime;
+use Cake\Routing\Router;
+
 class UsersController extends AppController
 {
 
@@ -11,13 +14,23 @@ class UsersController extends AppController
         parent::beforeFilter($event);
 
 
-        $this->Authentication->allowUnauthenticated(['login', 'add']);
+        $this->Authentication->allowUnauthenticated([
+            'login',
+            'add',
+            'forgotPassword',
+            'resetPassword',
+        ]);
         $this->loadComponent('Turnstile');
 
         $action = $this->request->getParam('action');
         $identity = $this->request->getAttribute('identity');
 
-        if($action === 'login' || $action === 'add') {
+        if (
+            $action === 'login'
+            || $action === 'add'
+            || $action === 'forgotPassword'
+            || $action === 'resetPassword'
+        ) {
             return;
         }
 
@@ -69,10 +82,10 @@ class UsersController extends AppController
             if($role->UserRole === 'admin' || $role->UserRole === 'staff') {
                 $target = $this->Authentication->getLoginRedirect() ?? '/admin';
                 return $this->redirect($target);
-            } 
-                
-            return $this->redirect(['controller' => 'Pages', 'action' => 'display']);
-             
+            }
+
+            return $this->redirect('/account');
+
         }
         if ($this->request->is('post')) {
             $this->Flash->error(__('Invalid username or password'));
@@ -83,6 +96,105 @@ class UsersController extends AppController
     {
         $this->Authentication->logout();
         return $this->redirect(['controller' => 'Pages', 'action' => 'display']);
+    }
+
+    public function forgotPassword()
+    {
+        if ($this->request->is('post')) {
+            $email = trim((string)$this->request->getData('email'));
+            $user = $this->Users->find()
+                ->where([
+                    'Email' => $email,
+                    'Status' => 'active',
+                ])
+                ->first();
+
+            if ($user) {
+                $token = bin2hex(random_bytes(32));
+                $user->ResetToken = $token;
+                $user->ResetTokenExpires = DateTime::now()->addHours(1);
+                $this->Users->save($user);
+
+                $resetUrl = Router::url([
+                    'controller' => 'Users',
+                    'action' => 'resetPassword',
+                    $token,
+                ], true);
+
+                @mail(
+                    (string)$user->Email,
+                    'Reset your Eco Glow password',
+                    "Use this link to reset your password:\n\n"
+                    . $resetUrl
+                    . "\n\nThis link expires in 1 hour."
+                );
+            }
+
+            $this->Flash->success(
+                'If that email is registered, a reset link has been sent.'
+            );
+
+            return $this->redirect(['action' => 'login']);
+        }
+    }
+
+    public function resetPassword(?string $token = null)
+    {
+        if ($token === null || $token === '') {
+            $this->Flash->error('That reset link is not valid.');
+
+            return $this->redirect(['action' => 'forgotPassword']);
+        }
+
+        $user = $this->Users->find()
+            ->where([
+                'ResetToken' => $token,
+                'Status' => 'active',
+            ])
+            ->first();
+
+        $expired = !$user
+            || empty($user->ResetTokenExpires)
+            || strtotime((string)$user->ResetTokenExpires) < time();
+
+        if ($expired) {
+            $this->Flash->error('That reset link is invalid or has expired.');
+
+            return $this->redirect(['action' => 'forgotPassword']);
+        }
+
+        if ($this->request->is(['post', 'put', 'patch'])) {
+            $password = (string)$this->request->getData('password');
+            $confirm = (string)$this->request->getData('password_confirm');
+
+            if ($password === '' || strlen($password) < 8) {
+                $this->Flash->error('Password must be at least 8 characters.');
+                $this->set(compact('token'));
+
+                return;
+            }
+
+            if ($password !== $confirm) {
+                $this->Flash->error('Passwords do not match.');
+                $this->set(compact('token'));
+
+                return;
+            }
+
+            $user->Password = $password;
+            $user->ResetToken = null;
+            $user->ResetTokenExpires = null;
+
+            if ($this->Users->save($user)) {
+                $this->Flash->success('Your password has been reset. Please log in.');
+
+                return $this->redirect(['action' => 'login']);
+            }
+
+            $this->Flash->error('The password could not be reset. Please try again.');
+        }
+
+        $this->set(compact('token'));
     }
 
     public function index()
