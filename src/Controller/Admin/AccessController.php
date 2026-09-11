@@ -17,6 +17,9 @@ class AccessController extends AdminController
         if ($identity === null) {
             return;
         }
+        if ($identity->get('UserRole') == 'staff') {
+            throw new ForbiddenException('Forbidden');
+        }
 
         $service = new PermissionService();
 
@@ -28,6 +31,15 @@ class AccessController extends AdminController
         }
     }
 
+    public function beforeFilter(\Cake\Event\EventInterface $event): void
+    {
+        parent::beforeFilter($event);
+        $this->requireAccessPermission();
+
+    }
+
+
+
     public function index()
     {
         $identity = $this->request->getAttribute('identity');
@@ -35,8 +47,6 @@ class AccessController extends AdminController
         if ($identity === null) {
             return;
         }
-
-        $this->requireAccessPermission();
 
         $usersTable = $this->fetchTable('Users');
 

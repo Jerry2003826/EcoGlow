@@ -291,6 +291,22 @@ body.admin-app {
 @media (max-width: 1199.98px) {
     #admin-menu-toggle {
         display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 42px;
+        height: 42px;
+        padding: 0;
+        border: 1px solid var(--admin-green-dark);
+        border-radius: 5px;
+        background: var(--admin-green);
+        color: #fff;
+        font-size: 1.4rem;
+        cursor: pointer;
+    }
+
+    #admin-menu-toggle:hover {
+        background: #fff;
+        color: var(--admin-green);
     }
 
     .admin-sidebar {
@@ -303,6 +319,15 @@ body.admin-app {
 
     #admin-page.admin-page {
         margin-left: 0;
+    }
+}
+
+@media (max-width: 760px) {
+    .admin-user-details {
+        display: none;
+    }
+    .admin-breadcrumb {
+        display: none;
     }
 }
 

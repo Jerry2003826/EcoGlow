@@ -71,11 +71,13 @@ if (
                 )
             ) ?>
 
-            <?= $this->Html->link(
-                'Suppliers',
-                '/admin/suppliers',
-                $active($currentController === 'Suppliers')
-            ) ?>
+            <?php if($userRole === 'admin'): ?>
+                <?= $this->Html->link(
+                    'Suppliers',
+                    '/admin/suppliers',
+                    $active($currentController === 'Suppliers')
+                ) ?>
+            <?php endif; ?>
 
             <?= $this->Html->link(
                 'Customers',
@@ -133,26 +135,30 @@ if (
                 $active($currentController === 'Messages')
             ) ?>
         </div>
+        
+        <?php if($userRole === 'admin'): ?>
+            <div class="sidebar-group">
+                <div class="sidebar-group-title">Reporting</div>
 
-        <div class="sidebar-group">
-            <div class="sidebar-group-title">Reporting</div>
+                <?= $this->Html->link(
+                    'Reports',
+                    '/admin/coming-soon/reports',
+                    $active($comingSoonModule === 'reports')
+                ) ?>
+            </div>
+        <?php endif; ?>
+        
+        <?php if($userRole === 'admin'): ?>
+            <div class="sidebar-group">
+                <div class="sidebar-group-title">Administration</div>
 
-            <?= $this->Html->link(
-                'Reports',
-                '/admin/coming-soon/reports',
-                $active($comingSoonModule === 'reports')
-            ) ?>
-        </div>
-
-        <div class="sidebar-group">
-            <div class="sidebar-group-title">Administration</div>
-
-            <?= $this->Html->link(
-                'Access',
-                '/admin/coming-soon/access',
-                $active($comingSoonModule === 'access')
-            ) ?>
-        </div>
+                <?= $this->Html->link(
+                    'Access',
+                    '/admin/coming-soon/access',
+                    $active($comingSoonModule === 'access')
+                ) ?>
+            </div>
+        <?php endif; ?>
     </div>
 
     <div class="sidebar-footer">

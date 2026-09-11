@@ -53,7 +53,16 @@ try {
 
             <nav class="admin-breadcrumb" aria-label="Breadcrumb">
                 <ol>
-                    <li>Admin</li>
+                    <?php if ($role === 'admin'): ?>
+                        <li>
+                            Admin
+                        </li>
+                    <?php else: ?>
+                        <li>
+                            Staff
+                        </li>
+                    <?php endif; ?>
+                    
                     <li aria-current="page"><?= h($title) ?></li>
                 </ol>
             </nav>
@@ -61,7 +70,6 @@ try {
             <div class="admin-user">
                 <div class="admin-user-details">
                     <div class="admin-user-email"><?= h($email) ?></div>
-                    <div class="admin-user-role"><?= h($role) ?></div>
                 </div>
 
                 <?php if ($role === 'admin' || $role === 'staff'): ?>

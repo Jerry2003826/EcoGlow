@@ -121,7 +121,7 @@
 .cart-item-media {
     height: 10rem;
     width: 10rem;
-    padding-right: 5px;
+    margin-right: 5px;
     overflow: hidden;
     border-radius: 5px;
 
@@ -388,7 +388,8 @@
 
     .cart-item-media,
     .cart-item-thumb {
-        height: 12rem;
+        height: 20rem;
+        width: 100%;
     }
 
     .cart-item-heading {
@@ -410,5 +411,39 @@
 
     .install-box {
         align-items: start;
+    }
+
+    /* selector for cart item controls */
+    .cart-item-controls {
+        width: 100%;
+        align-items: start;
+    }
+
+    .quantity-stepper {
+        width: 100%;
+        grid-template-columns: 1fr 1fr 1fr;
+    }
+
+    .quantity-button {
+        width: 100%;
+    }
+    .cart-remove {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        margin: 0;
+        padding: .7rem 1rem;
+        border: 1px solid #8b3e2f;
+        border-radius: 6px;
+        background: transparent;
+        color: #8b3e2f;
+        text-align: center;
+    }
+
+    .cart-remove:hover,
+    .cart-remove:focus {
+        background: #8b3e2f;
+        color: #fff;
     }
 }

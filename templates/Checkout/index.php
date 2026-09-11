@@ -102,8 +102,6 @@
         'maxlength' => 3,
         'title' => 'Please enter a valid 3-digit CVV.',
     ]) ?>
-    <p>Use test card number 4242424242424242 and CVV 123 with expiry date 12/31</p>
-
     <?= $this->Form->button('Complete Order') ?>
 
     <?= $this->Form->end() ?>
