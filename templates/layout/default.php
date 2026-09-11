@@ -44,6 +44,17 @@ $loadStorefront = in_array(
 
 <nav class="navbar">
 
+    <div class="navbar-brand">
+        <?= $this->Html->link(
+            $this->Html->image('logo_leaf.png', [
+                'alt' => 'Eco Glow Lighting',
+                'class' => 'logo',
+            ]),
+            $this->Url->build('/'),
+            ['escape' => false]
+        ) ?>
+    </div>
+
     <button
         class="navbar-toggle"
         type="button"
@@ -55,17 +66,6 @@ $loadStorefront = in_array(
         <span></span>
         <span></span>
     </button>
-
-    <div class="navbar-brand">
-        <?= $this->Html->link(
-            $this->Html->image('logo_leaf.png', [
-                'alt' => 'Eco Glow Lighting',
-                'class' => 'logo',
-            ]),
-            $this->Url->build('/'),
-            ['escape' => false]
-        ) ?>
-    </div>
 
     <div id="primary-navigation" class="navbar-links">
         <?= $this->Html->link('Services', '/services') ?>
