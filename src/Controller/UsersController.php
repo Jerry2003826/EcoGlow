@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use Cake\I18n\DateTime;
+use Cake\Mailer\Mailer;
 use Cake\Routing\Router;
 
 class UsersController extends AppController
@@ -121,13 +122,17 @@ class UsersController extends AppController
                     $token,
                 ], true);
 
-                @mail(
-                    (string)$user->Email,
-                    'Reset your Eco Glow password',
-                    "Use this link to reset your password:\n\n"
-                    . $resetUrl
-                    . "\n\nThis link expires in 1 hour."
-                );
+                try {
+                    (new Mailer('default'))
+                        ->setTo((string)$user->Email)
+                        ->setSubject('Reset your Eco Glow password')
+                        ->deliver(
+                            "Use this link to reset your password:\n\n"
+                            . $resetUrl
+                            . "\n\nThis link expires in 1 hour."
+                        );
+                } catch (\Throwable $e) {
+                }
             }
 
             $this->Flash->success(
