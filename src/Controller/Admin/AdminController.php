@@ -22,9 +22,13 @@ class AdminController extends AppController
     {
         parent::beforeFilter($event);
 
-        if ($this->request->getAttribute('identity') === null) {
+        $identity = $this->request->getAttribute('identity');
+        if ($identity === null) {
             return;
         }
+
+        $permissionService = new PermissionService();
+        $this->set('staffCan', $permissionService->allowedMap((int)$identity->getIdentifier()));
     }
 
     protected function requirePermission(string $permission): void

@@ -50,7 +50,6 @@ return function (RouteBuilder $routes): void {
         foreach ([
             'refunds',
             'reports',
-            'access',
         ] as $module) {
             $routes->connect(
                 '/' . $module,

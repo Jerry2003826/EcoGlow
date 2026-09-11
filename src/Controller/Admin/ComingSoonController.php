@@ -5,20 +5,19 @@ declare(strict_types=1);
 
 namespace App\Controller\Admin;
 
-use Cake\Http\Exception\ForbiddenException;
-
 class ComingSoonController extends AdminController
 {
     public function index(string $module)
     {
-        $identity = $this->request->getAttribute('identity');
-        $role = (string)($identity?->get('UserRole') ?? '');
+        $required = [
+            'reports' => 'reports.view',
+            'access' => 'access.manage',
+            'suppliers' => 'suppliers.view',
+            'refunds' => 'refunds.process',
+        ];
 
-        if (
-            $role === 'staff'
-            && in_array($module, ['reports', 'access', 'suppliers'], true)
-        ) {
-            throw new ForbiddenException('Forbidden');
+        if (isset($required[$module])) {
+            $this->requirePermission($required[$module]);
         }
 
         $definitions = [

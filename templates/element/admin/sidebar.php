@@ -22,10 +22,19 @@ $active = static function (bool $isActive): array {
     ];
 };
 
+$staffCan = $staffCan ?? [];
+$can = static function (string $key) use ($userRole, $staffCan): bool {
+    if ($userRole === 'admin') {
+        return true;
+    }
+
+    return !empty($staffCan[$key]);
+};
+
 $inventoryLabel = 'Inventory';
 
 if (
-    ($userRole === 'admin' || $userRole === 'staff') &&
+    $can('inventory.view') &&
     (int)($lowStockCount ?? 0) > 0
 ) {
     $inventoryLabel .= ' <span class="sidebar-badge">' .
@@ -46,32 +55,38 @@ if (
         <div class="sidebar-group">
             <div class="sidebar-group-title">Main</div>
 
-            <?= $this->Html->link(
-                'Dashboard',
-                '/admin',
-                $active($currentController === 'Dashboard')
-            ) ?>
+            <?php if ($can('dashboard.view')): ?>
+                <?= $this->Html->link(
+                    'Dashboard',
+                    '/admin',
+                    $active($currentController === 'Dashboard')
+                ) ?>
+            <?php endif; ?>
 
-            <?= $this->Html->link(
-                'Orders',
-                '/admin/orders',
-                $active($currentController === 'Orders')
-            ) ?>
+            <?php if ($can('orders.view')): ?>
+                <?= $this->Html->link(
+                    'Orders',
+                    '/admin/orders',
+                    $active($currentController === 'Orders')
+                ) ?>
+            <?php endif; ?>
         </div>
 
         <div class="sidebar-group">
             <div class="sidebar-group-title">Operations</div>
 
-            <?= $this->Html->link(
-                $inventoryLabel,
-                '/admin/inventory',
-                array_merge(
-                    $active($currentController === 'Inventory'),
-                    ['escape' => false]
-                )
-            ) ?>
+            <?php if ($can('inventory.view')): ?>
+                <?= $this->Html->link(
+                    $inventoryLabel,
+                    '/admin/inventory',
+                    array_merge(
+                        $active($currentController === 'Inventory'),
+                        ['escape' => false]
+                    )
+                ) ?>
+            <?php endif; ?>
 
-            <?php if($userRole === 'admin'): ?>
+            <?php if ($can('suppliers.view')): ?>
                 <?= $this->Html->link(
                     'Suppliers',
                     '/admin/suppliers',
@@ -79,64 +94,80 @@ if (
                 ) ?>
             <?php endif; ?>
 
-            <?= $this->Html->link(
-                'Customers',
-                '/admin/customers',
-                $active($currentController === 'Customers')
-            ) ?>
+            <?php if ($can('customers.view')): ?>
+                <?= $this->Html->link(
+                    'Customers',
+                    '/admin/customers',
+                    $active($currentController === 'Customers')
+                ) ?>
+            <?php endif; ?>
 
-            <?= $this->Html->link(
-                'Products',
-                '/admin/products',
-                $active($currentController === 'Products')
-            ) ?>
+            <?php if ($can('products.view')): ?>
+                <?= $this->Html->link(
+                    'Products',
+                    '/admin/products',
+                    $active($currentController === 'Products')
+                ) ?>
+            <?php endif; ?>
 
-            <?= $this->Html->link(
-                'Shipments',
-                '/admin/shipments',
-                $active($currentController === 'Shipments')
-            ) ?>
+            <?php if ($can('shipments.view')): ?>
+                <?= $this->Html->link(
+                    'Shipments',
+                    '/admin/shipments',
+                    $active($currentController === 'Shipments')
+                ) ?>
+            <?php endif; ?>
         </div>
 
         <div class="sidebar-group">
             <div class="sidebar-group-title">Sales</div>
 
-            <?= $this->Html->link(
-                'Quotations',
-                '/admin/quotations',
-                $active($currentController === 'Quotations')
-            ) ?>
+            <?php if ($can('quotations.manage')): ?>
+                <?= $this->Html->link(
+                    'Quotations',
+                    '/admin/quotations',
+                    $active($currentController === 'Quotations')
+                ) ?>
+            <?php endif; ?>
 
-            <?= $this->Html->link(
-                'Invoices',
-                '/admin/invoices',
-                $active($currentController === 'Invoices')
-            ) ?>
+            <?php if ($can('invoices.issue')): ?>
+                <?= $this->Html->link(
+                    'Invoices',
+                    '/admin/invoices',
+                    $active($currentController === 'Invoices')
+                ) ?>
+            <?php endif; ?>
 
-            <?= $this->Html->link(
-                'Payments',
-                '/admin/payments',
-                $active($currentController === 'Payments')
-            ) ?>
+            <?php if ($can('payments.view')): ?>
+                <?= $this->Html->link(
+                    'Payments',
+                    '/admin/payments',
+                    $active($currentController === 'Payments')
+                ) ?>
+            <?php endif; ?>
 
-            <?= $this->Html->link(
-                'Refunds',
-                '/admin/coming-soon/refunds',
-                $active($comingSoonModule === 'refunds')
-            ) ?>
+            <?php if ($can('refunds.process')): ?>
+                <?= $this->Html->link(
+                    'Refunds',
+                    '/admin/coming-soon/refunds',
+                    $active($comingSoonModule === 'refunds')
+                ) ?>
+            <?php endif; ?>
         </div>
 
         <div class="sidebar-group">
             <div class="sidebar-group-title">Communication</div>
 
-            <?= $this->Html->link(
-                'Messages',
-                '/admin/messages',
-                $active($currentController === 'Messages')
-            ) ?>
+            <?php if ($can('messages.manage')): ?>
+                <?= $this->Html->link(
+                    'Messages',
+                    '/admin/messages',
+                    $active($currentController === 'Messages')
+                ) ?>
+            <?php endif; ?>
         </div>
-        
-        <?php if($userRole === 'admin'): ?>
+
+        <?php if ($can('reports.view')): ?>
             <div class="sidebar-group">
                 <div class="sidebar-group-title">Reporting</div>
 
@@ -147,15 +178,15 @@ if (
                 ) ?>
             </div>
         <?php endif; ?>
-        
-        <?php if($userRole === 'admin'): ?>
+
+        <?php if ($can('access.manage')): ?>
             <div class="sidebar-group">
                 <div class="sidebar-group-title">Administration</div>
 
                 <?= $this->Html->link(
                     'Access',
-                    '/admin/coming-soon/access',
-                    $active($comingSoonModule === 'access')
+                    '/admin/access',
+                    $active($currentController === 'Access')
                 ) ?>
             </div>
         <?php endif; ?>

@@ -10,86 +10,73 @@ use Cake\Http\Exception\ForbiddenException;
 
 class AccessController extends AdminController
 {
-    protected function requireAccessPermission(): void
-    {
-        $identity = $this->request->getAttribute('identity');
-
-        if ($identity === null) {
-            return;
-        }
-        if ($identity->get('UserRole') == 'staff') {
-            throw new ForbiddenException('Forbidden');
-        }
-
-        $service = new PermissionService();
-
-        if (!$service->hasPermission(
-            (int)$identity->getIdentifier(),
-            'access.manage'
-        )) {
-            throw new ForbiddenException('Forbidden');
-        }
-    }
-
     public function beforeFilter(\Cake\Event\EventInterface $event): void
     {
         parent::beforeFilter($event);
-        $this->requireAccessPermission();
 
+        $identity = $this->request->getAttribute('identity');
+        if ($identity === null) {
+            return;
+        }
+
+        if ((string)$identity->get('UserRole') !== 'admin') {
+            throw new ForbiddenException('Forbidden');
+        }
     }
-
-
 
     public function index()
     {
         $identity = $this->request->getAttribute('identity');
-
         if ($identity === null) {
             return;
         }
 
+        $service = new PermissionService();
+        $service->ensureTable();
         $usersTable = $this->fetchTable('Users');
 
         if ($this->request->is('post')) {
-            $targetUserId = (int)$this->request->getData('user_id');
-            $roleKey = (string)$this->request->getData('role_key');
+            $form = (string)$this->request->getData('form');
 
-            if ($targetUserId === (int)$identity->getIdentifier()) {
-                $this->Flash->error('You cannot change your own role.');
+            if ($form === 'modules') {
+                $allowed = array_map('strval', (array)$this->request->getData('allowed'));
+                $service->saveStaffModules($allowed);
+                $this->Flash->success('Staff access updated.');
+
                 return $this->redirect(['action' => 'index']);
             }
 
-            $userRoles = $this->fetchTable('UserRoles');
-            $roles = $this->fetchTable('Roles');
+            if ($form === 'role') {
+                $targetUserId = (int)$this->request->getData('UserId');
+                $role = (string)$this->request->getData('UserRole');
 
-            $role = $roles->find()
-                ->where(['role_key' => $roleKey])
-                ->first();
+                if ($targetUserId === (int)$identity->getIdentifier()) {
+                    $this->Flash->error('You cannot change your own role.');
 
-            if ($role) {
-                $userRoles->deleteAll(['user_id' => $targetUserId]);
+                    return $this->redirect(['action' => 'index']);
+                }
 
-                $entity = $userRoles->newEntity([
-                    'user_id' => $targetUserId,
-                    'role_id' => $role->id,
-                ]);
+                if (!in_array($role, ['admin', 'staff', 'customer'], true)) {
+                    $this->Flash->error('That role is not valid.');
 
-                $userRoles->save($entity);
+                    return $this->redirect(['action' => 'index']);
+                }
 
-                $this->Flash->success('Role updated.');
+                $user = $usersTable->get($targetUserId);
+                $user->UserRole = $role;
+                $usersTable->saveOrFail($user);
+                $this->Flash->success('Role updated for ' . (string)$user->Email . '.');
+
+                return $this->redirect(['action' => 'index']);
             }
         }
 
+        $modules = $service->staffModules();
         $users = $usersTable->find()
-            ->contain(['UserRoles.Roles'])
-            ->orderBy(['Users.email' => 'ASC'])
+            ->select(['UserId', 'Username', 'Email', 'UserRole'])
+            ->orderBy(['UserRole' => 'ASC', 'Email' => 'ASC'])
             ->all();
 
-        $roles = $this->fetchTable('Roles')
-            ->find()
-            ->orderBy(['Roles.name' => 'ASC'])
-            ->all();
-
-        $this->set(compact('users', 'roles'));
+        $this->set(compact('modules', 'users'));
     }
 }
