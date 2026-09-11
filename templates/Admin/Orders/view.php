@@ -8,6 +8,7 @@ $this->assign('title', 'Order #' . $order->OrderId);
     <h1>Order #<?= h((string)$order->OrderId) ?></h1>
     <?= $this->Form->create(null, [
         'url' => ['action' => 'updateStatus', $order->OrderId],
+        'class' => 'order-status-form'
     ]) ?>
     <?= $this->Form->control('Status', [
         'label' => 'Status',

@@ -664,9 +664,16 @@ body.admin-app {
 
 .dashboard-stock-form {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: 0.5rem;
     margin: 0.4rem 0 0;
+}
+
+.order-status-form {
+    display: flex;
+    align-items: last baseline;
+    gap: 0.5rem;
+    padding-top: 0.5rem;
 }
 
 .dashboard-stock-form .input {
