@@ -84,7 +84,7 @@ $transactions = $widgets['transactions'] ?? [];
         <table class="table admin-table">
             <thead>
             <tr>
-                <th>OrderId</th>
+                <th>Order Number</th>
                 <th>Buyer type</th>
                 <th>Buyer</th>
                 <th>Status</th>
@@ -97,7 +97,8 @@ $transactions = $widgets['transactions'] ?? [];
                     <td>
                         <?= $this->Html->link(
                             (string)$order->OrderId,
-                            '/admin/orders/view/' . $order->OrderId
+                            '/admin/orders/view/' . $order->OrderId,
+                            ['class' => 'order-link']
                         ) ?>
                     </td>
                     <td><?= $order->CustomerId ? 'Customer' : 'Guest' ?></td>

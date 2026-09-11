@@ -11,8 +11,7 @@ $this->assign('title', 'Shipments');
         <table class="table admin-table">
             <thead>
             <tr>
-                <th>DeliveryId</th>
-                <th>OrderId</th>
+                <th>Delivery Number</th>
                 <th>Buyer type</th>
                 <th>Buyer</th>
                 <th>Address</th>
@@ -25,12 +24,6 @@ $this->assign('title', 'Shipments');
                 <?php $order = $shipment->order; ?>
                 <tr>
                     <td><?= (int)$shipment->DeliveryId ?></td>
-                    <td>
-                        <?= $this->Html->link(
-                            (string)$shipment->OrderId,
-                            ['controller' => 'Orders', 'action' => 'view', $shipment->OrderId]
-                        ) ?>
-                    </td>
                     <td><?= !empty($order?->CustomerId) ? 'Customer' : 'Guest' ?></td>
                     <td>
                         <?= h(

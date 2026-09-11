@@ -8,11 +8,13 @@ $this->assign('title', 'Orders');
 
 <div class="panel-card">
     <?= $this->Form->create(null, [
+        'label' => false,
         'type' => 'get',
         'class' => 'admin-search-form',
     ]) ?>
     <?= $this->Form->control('q', [
         'label' => 'Search',
+        'placeholder' => 'Search by order number, customer name, or guest name',
         'value' => $q ?? '',
     ]) ?>
     <?= $this->Form->control('type', [
@@ -39,7 +41,7 @@ $this->assign('title', 'Orders');
                 <table class="table admin-table">
                     <thead>
                     <tr>
-                        <th>OrderId</th>
+                        <th>Order Number</th>
                         <th>Type</th>
                         <th>Buyer type</th>
                         <th>Buyer</th>
@@ -58,7 +60,11 @@ $this->assign('title', 'Orders');
                             <td>
                                 <?= $this->Html->link(
                                     (string)$order->OrderId,
-                                    ['action' => 'view', $order->OrderId]
+                                    [
+                                        'action' => 'view', 
+                                        $order->OrderId,
+                                    ],
+                                    ['class' => 'order-link']
                                 ) ?>
                             </td>
                             <td><?= $isInstall ? 'Product + installation' : 'Product' ?></td>

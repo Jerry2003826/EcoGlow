@@ -90,6 +90,7 @@ final class AdminPermissionMap
             ],
             'Inventory' => [
                 'index' => ['inventory.view', 'inventory.adjust'],
+                'edit' => ['inventory.adjust'],
                 'adjust' => ['inventory.adjust'],
             ],
         ];

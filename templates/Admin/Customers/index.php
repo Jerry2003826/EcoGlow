@@ -43,7 +43,6 @@ $this->assign('title', 'Customers');
         <table class="table admin-table">
             <thead>
             <tr>
-                <th>GuestId</th>
                 <th>Name</th>
                 <th>Email</th>
                 <th>Phone</th>
@@ -53,7 +52,6 @@ $this->assign('title', 'Customers');
             <tbody>
             <?php foreach ($guests as $guest): ?>
                 <tr>
-                    <td><?= (int)$guest->GuestId ?></td>
                     <td><?= h($guest->GuestName) ?></td>
                     <td><?= h($guest->Email) ?></td>
                     <td><?= h($guest->Phone) ?></td>

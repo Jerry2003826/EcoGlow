@@ -23,7 +23,13 @@ $this->assign('title', 'Inventory');
             <?php foreach ($items as $item): ?>
                 <?php $low = (int)$item->Quantity <= (int)$item->LowStockThreshold; ?>
                 <tr>
-                    <td><?= h($item->product->ProductName ?? '') ?></td>
+                    <td>
+                        <?= $this->Html->link(
+                            $item->product->ProductName ?? '',
+                            ['action' => 'edit', $item->ProductId],
+                            ['class' => 'inventory-product-link']
+                        ) ?>
+                    </td>
                     <td><?= h($item->product->supplier->SupplierName ?? '') ?></td>
                     <td><?= (int)$item->Quantity ?></td>
                     <td><?= (int)$item->LowStockThreshold ?></td>

@@ -32,6 +32,7 @@ class PermissionService
                 'customers.view',
                 'invoices.issue',
                 'inventory.view',
+                'inventory.adjust',
                 'suppliers.view',
                 'messages.manage',
                 'quotations.manage',
