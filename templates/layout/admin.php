@@ -44,6 +44,16 @@ try {
 
     <div id="admin-page" class="admin-page">
         <header class="admin-topbar">
+
+            <button
+                id="admin-menu-toggle"
+                class="admin-menu-toggle"
+                type="button"
+                aria-controls="admin-sidebar"
+                aria-expanded="false"
+                aria-label="Open navigation"
+            >☰</button>
+            
             <nav class="admin-breadcrumb" aria-label="Breadcrumb">
                 <ol>
                     <?php if ($role === 'admin'): ?>
@@ -78,14 +88,6 @@ try {
                 ) ?>
             </div>
 
-            <button
-                id="admin-menu-toggle"
-                class="admin-menu-toggle"
-                type="button"
-                aria-controls="admin-sidebar"
-                aria-expanded="false"
-                aria-label="Open navigation"
-            >☰</button>
         </header>
 
         <main id="main-content" class="admin-content">
