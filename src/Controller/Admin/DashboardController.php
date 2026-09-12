@@ -116,9 +116,22 @@ class DashboardController extends AdminController
             $widgets['transactions'] = [];
 
             foreach ($payments as $payment) {
+
+                $order = $ordersTable->find()
+                    ->contain(['Customers', 'Guests'])
+                    ->where(['OrderId' => $payment->OrderId])
+                    ->first();
+                $buyerName = '';
+
+                if ($order) {
+                    $buyerName = $order->CustomerId ? ($order->customer->CustomerName ?? '') : ($order->guest->GuestName ?? '');
+                }
+
                 $widgets['transactions'][] = [
                     'PaymentId' => $payment->PaymentId,
+                    'BuyerName' => $buyerName,
                     'Amount' => (float)$payment->Amount,
+                    'PaymentMethod' => $payment->PaymentMethod,
                     'PaymentDate' => $payment->PaymentDate ?? null,
                     'OrderId' => $payment->OrderId,
                 ];

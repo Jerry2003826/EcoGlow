@@ -168,9 +168,10 @@ $transactions = $widgets['transactions'] ?? [];
                 <table class="table admin-table">
                     <thead>
                     <tr>
-                        <th>PaymentId</th>
-                        <th>OrderId</th>
+                        <th>Payment Number</th>
+                        <th>Buyer</th>
                         <th>Amount</th>
+                        <th>Payment Method</th>
                         <th>PaymentDate</th>
                     </tr>
                     </thead>
@@ -178,8 +179,9 @@ $transactions = $widgets['transactions'] ?? [];
                     <?php foreach ($transactions as $transaction): ?>
                         <tr>
                             <td><?= (int)$transaction['PaymentId'] ?></td>
-                            <td><?= (int)$transaction['OrderId'] ?></td>
+                            <td><?= h((string)$transaction['BuyerName']) ?></td>
                             <td>$<?= number_format((float)$transaction['Amount'], 2) ?></td>
+                            <td><?= h((string)$transaction['PaymentMethod']) ?></td>
                             <td><?= h((string)$transaction['PaymentDate']) ?></td>
                         </tr>
                     <?php endforeach; ?>
