@@ -21,7 +21,9 @@ $this->assign('title', 'Inventory');
             </thead>
             <tbody>
             <?php foreach ($items as $item): ?>
-                <?php $low = (int)$item->Quantity <= (int)$item->LowStockThreshold; ?>
+                <?php 
+                    $outOfStock = (int)$item->Quantity === 0;
+                    $low = (int)$item->Quantity <= (int)$item->LowStockThreshold; ?>
                 <tr>
                     <td>
                         <?= $this->Html->link(
@@ -34,9 +36,19 @@ $this->assign('title', 'Inventory');
                     <td><?= (int)$item->Quantity ?></td>
                     <td><?= (int)$item->LowStockThreshold ?></td>
                     <td>
-                        <span class="<?= $low ? 'status-low' : 'status-ok' ?>">
-                            <?= $low ? 'Low stock' : 'OK' ?>
-                        </span>
+                        <?php if ($outOfStock): ?>
+                            <span class="status-out-of-stock">
+                                Out of Stock
+                            </span>
+                        <?php elseif ($low): ?>
+                            <span class="status-low">
+                                Low stock
+                            </span>
+                        <?php else: ?>
+                            <span class="status-ok">
+                                In stock
+                            </span>
+                        <?php endif; ?>
                     </td>
                 </tr>
             <?php endforeach; ?>

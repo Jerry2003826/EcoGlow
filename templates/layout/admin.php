@@ -10,6 +10,7 @@ $email = (string)($identity?->get('Email') ?? '');
 $role = (string)($identity?->get('UserRole') ?? '');
 
 $lowStockCount = 0;
+$OutOfStockCount = 0;
 
 try {
     $row = ConnectionManager::get('default')
@@ -17,13 +18,28 @@ try {
             'SELECT COUNT(*) AS total
              FROM Inventory i
              INNER JOIN Product p ON p.ProductId = i.ProductId
-             WHERE i.Quantity <= i.LowStockThreshold'
+             WHERE i.Quantity <= i.LowStockThreshold
+             AND i.Quantity > 0'
         )
         ->fetch('assoc');
 
     $lowStockCount = (int)($row['total'] ?? 0);
 } catch (\Throwable $e) {
     $lowStockCount = 0;
+}
+try {
+    $row = ConnectionManager::get('default')
+        ->execute(
+            'SELECT COUNT(*) AS total
+             FROM Inventory i
+             INNER JOIN Product p ON p.ProductId = i.ProductId
+             WHERE i.Quantity = 0'
+        )
+        ->fetch('assoc');
+
+    $OutOfStockCount = (int)($row['total'] ?? 0);
+} catch (\Throwable $e) {
+    $OutOfStockCount = 0;
 }
 ?>
 <!DOCTYPE html>
@@ -79,7 +95,13 @@ try {
                 <span class="admin-low-stock">
                     Low Stock: <?= (int)$lowStockCount ?>
                 </span>
+
+                <span class="admin-out-of-stock">
+                    Out of Stock: <?= (int)$OutOfStockCount ?>
+                </span>
                 <?php endif; ?>
+
+                
 
                 <?= $this->Html->link(
                     'Logout',

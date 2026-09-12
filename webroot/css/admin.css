@@ -204,6 +204,15 @@ body.admin-app {
     color: #8a4b20;
 }
 
+.admin-out-of-stock {
+    display: inline-block;
+    padding: 0.25rem 0.65rem;
+    border: 1px solid #B42318;
+    border-radius: 999px;
+    background: #FDECEC;
+    color: #B42318;
+}
+
 .admin-content {
     max-width: 1680px;
     padding: 2rem;
@@ -571,7 +580,8 @@ body.admin-app {
 }
 
 .status-low,
-.status-ok {
+.status-ok,
+.status-out-of-stock {
     display: inline-block;
     padding: 0.25rem 0.65rem;
     border-radius: 999px;
@@ -579,13 +589,18 @@ body.admin-app {
 }
 
 .status-low {
-    background: #fdecec;
-    color: #b42318;
+    background: #fff1e7;
+    color: #8a4b20;
 }
 
 .status-ok {
     background: #eaf7ee;
     color: #187a3d;
+}
+
+.status-out-of-stock {
+    background: #FDECEC;
+    color: #B42318;
 }
 
 .admin-content a.order-link,
