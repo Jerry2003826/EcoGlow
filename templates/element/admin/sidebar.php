@@ -33,12 +33,13 @@ $can = static function (string $key) use ($userRole, $staffCan): bool {
 
 $inventoryLabel = 'Inventory';
 
-if (
-    $can('inventory.view') &&
-    (int)($lowStockCount ?? 0) > 0
-) {
+$totalStockAlert =
+    (int)($lowStockCount ?? 0) +
+    (int)($outOfStockCount ?? 0);
+
+if ($can('inventory.view') && $totalStockAlert > 0) {
     $inventoryLabel .= ' <span class="sidebar-badge">' .
-        (int)$lowStockCount .
+        $totalStockAlert .
         '</span>';
 }
 ?>

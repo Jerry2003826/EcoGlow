@@ -10,7 +10,7 @@ $email = (string)($identity?->get('Email') ?? '');
 $role = (string)($identity?->get('UserRole') ?? '');
 
 $lowStockCount = 0;
-$OutOfStockCount = 0;
+$outOfStockCount = 0;
 
 try {
     $row = ConnectionManager::get('default')
@@ -37,9 +37,9 @@ try {
         )
         ->fetch('assoc');
 
-    $OutOfStockCount = (int)($row['total'] ?? 0);
+    $outOfStockCount = (int)($row['total'] ?? 0);
 } catch (\Throwable $e) {
-    $OutOfStockCount = 0;
+    $outOfStockCount = 0;
 }
 ?>
 <!DOCTYPE html>
@@ -56,7 +56,7 @@ try {
 
 <div class="admin-shell">
 
-    <?= $this->element('admin/sidebar', ['lowStockCount' => $lowStockCount]) ?>
+    <?= $this->element('admin/sidebar', ['lowStockCount' => $lowStockCount, 'outOfStockCount' => $outOfStockCount], []) ?>
 
     <div id="admin-page" class="admin-page">
         <header class="admin-topbar">
@@ -97,7 +97,7 @@ try {
                 </span>
 
                 <span class="admin-out-of-stock">
-                    Out of Stock: <?= (int)$OutOfStockCount ?>
+                    Out of Stock: <?= (int)$outOfStockCount ?>
                 </span>
                 <?php endif; ?>
 
