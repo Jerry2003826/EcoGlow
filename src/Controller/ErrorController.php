@@ -35,13 +35,13 @@ class ErrorController extends AppController
         parent::beforeRender($event);
 
         $this->viewBuilder()->setTemplatePath('Error');
-        $error = $this->viewBuilder()->getVar('error');
+        // $error = $this->viewBuilder()->getVar('error');
 
-        if($error && $error->getCode() == 404) {
-            $event->setResult(
-                $this->redirect(['controller' => 'Pages', 'action' => 'display'])
-            );
-        }
+        // if($error && $error->getCode() == 404) {
+        //     $event->setResult(
+        //         $this->redirect(['controller' => 'Pages', 'action' => 'display'])
+        //     );
+        // }
 
     }
 
