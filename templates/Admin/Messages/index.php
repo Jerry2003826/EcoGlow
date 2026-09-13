@@ -1,10 +1,10 @@
 <?php
 // templates/Admin/Messages/index.php
 
-$this->assign('title', 'Messages');
+$this->assign('title', 'Enquiries');
 ?>
 
-<h1 class="page-title">Messages</h1>
+<h1 class="page-title">Enquiries</h1>
 
 <div class="panel-card">
     <p>Enquiries submitted from the public contact form.</p>
