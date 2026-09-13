@@ -162,7 +162,7 @@ if ($can('inventory.view') && $totalStockAlert > 0) {
 
             <?php if ($can('messages.manage')): ?>
                 <?= $this->Html->link(
-                    'Messages',
+                    'Enquiries',
                     '/admin/messages',
                     $active($currentController === 'Messages')
                 ) ?>

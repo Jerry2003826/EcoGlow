@@ -31,7 +31,7 @@ $errors = $errors ?? [];
         <?= $this->Form->create($user) ?>
 
         <?= $this->Form->control('Username') ?>
-        <?= $this->Form->control('Password', ['type' => 'password', 'required' => true]) ?>
+        <?= $this->Form->control('Password', ['type' => 'password', 'required' => true, 'minlength' => 8,]) ?>
         <?= $this->Form->control('Email', ['type' => 'email']) ?>
         <?= $this->Form->control('customer.CustomerName', ['label' => 'Full name']) ?>
         <?= $this->Form->control('customer.Phone', [

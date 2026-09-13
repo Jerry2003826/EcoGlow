@@ -68,6 +68,10 @@ $loadStorefront = in_array(
     </button>
 
     <div id="primary-navigation" class="navbar-links">
+        <?php if ($identity && $role === 'admin' || $role === 'staff'): ?>
+            <?= $this->Html->link('Dashboard', '/admin/dashboard') ?>
+        <?php endif; ?>
+
         <?= $this->Html->link('Services', '/services') ?>
         <?= $this->Html->link('Shop', '/products') ?>
         <?= $this->Html->link('Cart', '/cart') ?>
