@@ -33,7 +33,6 @@ class AccessController extends AdminController
 
         $service = new PermissionService();
         $service->ensureTable();
-        $usersTable = $this->fetchTable('Users');
 
         if ($this->request->is('post')) {
             $form = (string)$this->request->getData('form');
@@ -45,38 +44,10 @@ class AccessController extends AdminController
 
                 return $this->redirect(['action' => 'index']);
             }
-
-            if ($form === 'role') {
-                $targetUserId = (int)$this->request->getData('UserId');
-                $role = (string)$this->request->getData('UserRole');
-
-                if ($targetUserId === (int)$identity->getIdentifier()) {
-                    $this->Flash->error('You cannot change your own role.');
-
-                    return $this->redirect(['action' => 'index']);
-                }
-
-                if (!in_array($role, ['admin', 'staff', 'customer'], true)) {
-                    $this->Flash->error('That role is not valid.');
-
-                    return $this->redirect(['action' => 'index']);
-                }
-
-                $user = $usersTable->get($targetUserId);
-                $user->UserRole = $role;
-                $usersTable->saveOrFail($user);
-                $this->Flash->success('Role updated for ' . (string)$user->Email . '.');
-
-                return $this->redirect(['action' => 'index']);
-            }
         }
 
         $modules = $service->staffModules();
-        $users = $usersTable->find()
-            ->select(['UserId', 'Username', 'Email', 'UserRole'])
-            ->orderBy(['UserRole' => 'ASC', 'Email' => 'ASC'])
-            ->all();
 
-        $this->set(compact('modules', 'users'));
+        $this->set(compact('modules'));
     }
 }

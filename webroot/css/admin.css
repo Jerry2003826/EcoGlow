@@ -712,6 +712,12 @@ body.admin-app {
         padding: 1.25rem 1rem;
     }
 
+    .admin-low-stock,
+    .admin-out-of-stock {
+        font-size: 0.75rem;
+        padding: 0.2rem 0.35rem;
+    }
+
     .admin-topbar {
         padding: 0.85rem 1rem;
     }
