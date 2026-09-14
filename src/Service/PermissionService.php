@@ -101,6 +101,10 @@ class PermissionService
             return false;
         }
 
+        if ($permission === 'dashboard.view') {
+            return true;
+        }
+
         $this->ensureTable();
 
         $row = TableRegistry::getTableLocator()
@@ -131,12 +135,23 @@ class PermissionService
     {
         $this->ensureTable();
 
-        return TableRegistry::getTableLocator()
-            ->get('StaffAccesses')
-            ->find()
-            ->orderBy(['ModuleLabel' => 'ASC'])
-            ->all()
-            ->toList();
+        $modules = [];
+
+        foreach (
+            TableRegistry::getTableLocator()
+                ->get('StaffAccesses')
+                ->find()
+                ->orderBy(['ModuleLabel' => 'ASC'])
+                ->all() as $row
+        ) {
+            if ($row->PermissionKey === 'dashboard.view') {
+                continue;
+            }
+
+            $modules[] = $row;
+        }
+
+        return $modules;
     }
 
     public function staffAllowedKeys(): array
@@ -159,6 +174,12 @@ class PermissionService
         $table = TableRegistry::getTableLocator()->get('StaffAccesses');
 
         foreach ($table->find()->all() as $row) {
+            if ($row->PermissionKey === 'dashboard.view') {
+                $row->Allowed = 1;
+                $table->save($row);
+                continue;
+            }
+
             $row->Allowed = in_array($row->PermissionKey, $allowed, true) ? 1 : 0;
             $table->save($row);
         }

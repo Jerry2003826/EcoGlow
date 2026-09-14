@@ -40,9 +40,7 @@ $loadStorefront = in_array(
 
     <?= $this->Html->script('landing', ['defer' => true]) ?>
 </head>
-<body>
-
-<nav class="navbar">
+<body><nav class="navbar">
 
     <div class="navbar-brand">
         <?= $this->Html->link(
@@ -101,9 +99,7 @@ $loadStorefront = in_array(
             ) ?>
         <?php endif; ?>
     </div>
-</nav>
-
-<main class="main">
+</nav><main class="main">
     <div class="container">
         <?= $this->Flash->render() ?>
         <?= $this->fetch('content') ?>

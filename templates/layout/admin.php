@@ -1,6 +1,7 @@
 <?php
 // templates/layout/admin.php
 
+use App\Service\PermissionService;
 use Cake\Datasource\ConnectionManager;
 
 $title = (string)$this->fetch('title');
@@ -9,37 +10,49 @@ $identity = $this->request->getAttribute('identity');
 $email = (string)($identity?->get('Email') ?? '');
 $role = (string)($identity?->get('UserRole') ?? '');
 
+$showInventorySummary = false;
 $lowStockCount = 0;
 $outOfStockCount = 0;
 
-try {
-    $row = ConnectionManager::get('default')
-        ->execute(
-            'SELECT COUNT(*) AS total
-             FROM Inventory i
-             INNER JOIN Product p ON p.ProductId = i.ProductId
-             WHERE i.Quantity <= i.LowStockThreshold
-             AND i.Quantity > 0'
-        )
-        ->fetch('assoc');
-
-    $lowStockCount = (int)($row['total'] ?? 0);
-} catch (\Throwable $e) {
-    $lowStockCount = 0;
+if ($identity && ($role === 'admin' || $role === 'staff')) {
+    $permissionService = new PermissionService();
+    $showInventorySummary = $permissionService->hasPermission(
+        (int)$identity->getIdentifier(),
+        'inventory.view'
+    );
 }
-try {
-    $row = ConnectionManager::get('default')
-        ->execute(
-            'SELECT COUNT(*) AS total
-             FROM Inventory i
-             INNER JOIN Product p ON p.ProductId = i.ProductId
-             WHERE i.Quantity = 0'
-        )
-        ->fetch('assoc');
 
-    $outOfStockCount = (int)($row['total'] ?? 0);
-} catch (\Throwable $e) {
-    $outOfStockCount = 0;
+if ($showInventorySummary) {
+    try {
+        $row = ConnectionManager::get('default')
+            ->execute(
+                'SELECT COUNT(*) AS total
+                 FROM Inventory i
+                 INNER JOIN Product p ON p.ProductId = i.ProductId
+                 WHERE i.Quantity <= i.LowStockThreshold
+                 AND i.Quantity > 0'
+            )
+            ->fetch('assoc');
+
+        $lowStockCount = (int)($row['total'] ?? 0);
+    } catch (\Throwable $e) {
+        $lowStockCount = 0;
+    }
+
+    try {
+        $row = ConnectionManager::get('default')
+            ->execute(
+                'SELECT COUNT(*) AS total
+                 FROM Inventory i
+                 INNER JOIN Product p ON p.ProductId = i.ProductId
+                 WHERE i.Quantity = 0'
+            )
+            ->fetch('assoc');
+
+        $outOfStockCount = (int)($row['total'] ?? 0);
+    } catch (\Throwable $e) {
+        $outOfStockCount = 0;
+    }
 }
 ?>
 <!DOCTYPE html>
@@ -91,7 +104,7 @@ try {
                     <div class="admin-user-email"><?= h($email) ?></div>
                 </div>
 
-                <?php if ($role === 'admin' || $role === 'staff'): ?>
+                <?php if ($showInventorySummary): ?>
                 <span class="admin-low-stock">
                     Low Stock: <?= (int)$lowStockCount ?>
                 </span>

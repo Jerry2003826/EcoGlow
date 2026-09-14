@@ -57,7 +57,7 @@ if ($can('inventory.view') && $totalStockAlert > 0) {
         <div class="sidebar-group">
             <div class="sidebar-group-title">Main</div>
 
-            <?php if ($can('dashboard.view')): ?>
+            <?php if ($userRole === 'admin' || $userRole === 'staff'): ?>
                 <?= $this->Html->link(
                     'Dashboard',
                     '/admin',

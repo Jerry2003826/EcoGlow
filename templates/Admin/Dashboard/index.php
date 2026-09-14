@@ -59,25 +59,28 @@ $transactions = $widgets['transactions'] ?? [];
         </div>
     <?php endif; ?>
 
-    <div class="stat-card">
-        <div class="stat-label">
-            <?= $this->Html->link('Guest Orders Today', '/admin/orders') ?>
+    <?php if ($orders): ?>
+        <div class="stat-card">
+            <div class="stat-label">
+                <?= $this->Html->link('Guest Orders Today', '/admin/orders') ?>
+            </div>
+            <div class="stat-value">
+                <?= (int)($widgets['guestOrdersToday'] ?? 0) ?>
+            </div>
         </div>
-        <div class="stat-value">
-            <?= (int)($widgets['guestOrdersToday'] ?? 0) ?>
-        </div>
-    </div>
 
-    <div class="stat-card">
-        <div class="stat-label">
-            <?= $this->Html->link('Customer Orders Today', '/admin/orders') ?>
+        <div class="stat-card">
+            <div class="stat-label">
+                <?= $this->Html->link('Customer Orders Today', '/admin/orders') ?>
+            </div>
+            <div class="stat-value">
+                <?= (int)($widgets['customerOrdersToday'] ?? 0) ?>
+            </div>
         </div>
-        <div class="stat-value">
-            <?= (int)($widgets['customerOrdersToday'] ?? 0) ?>
-        </div>
-    </div>
+    <?php endif; ?>
 </div>
 
+<?php if ($orders): ?>
 <div class="panel-card">
     <h2>Recent Orders</h2>
     <div class="admin-table-wrap">
@@ -117,6 +120,7 @@ $transactions = $widgets['transactions'] ?? [];
         </table>
     </div>
 </div>
+<?php endif; ?>
 
 <div class="content-grid">
     <?php if ($inventory): ?>

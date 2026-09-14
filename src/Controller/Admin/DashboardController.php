@@ -6,7 +6,6 @@ declare(strict_types=1);
 namespace App\Controller\Admin;
 
 use App\Service\PermissionService;
-use Cake\Http\Exception\ForbiddenException;
 
 class DashboardController extends AdminController
 {
@@ -21,10 +20,6 @@ class DashboardController extends AdminController
         $permissionService = new PermissionService();
         $userId = (int)$identity->getIdentifier();
 
-        if (!$permissionService->hasPermission($userId, 'dashboard.view')) {
-            throw new ForbiddenException('Forbidden');
-        }
-
         $ordersTable = $this->fetchTable('Orders');
         $paymentsTable = $this->fetchTable('Payments');
         $inventoryTable = $this->fetchTable('Inventory');
@@ -32,69 +27,76 @@ class DashboardController extends AdminController
         $today = date('Y-m-d');
 
         $widgets = [];
-
-        $widgets['orders'] = [
-            'orders_total' => $ordersTable->find()
-                ->where([
-                    'DATE(OrderDate) =' => $today,
-                ])
-                ->count(),
-        ];
-
-        $widgets['pendingShipment'] = $ordersTable->find()
-            ->where([
-                'Status IN' => ['pending', 'paid', 'processing', 'shipped'],
-            ])
-            ->count();
-
-        $widgets['guestOrdersToday'] = $ordersTable->find()
-            ->where([
-                'DATE(OrderDate) =' => $today,
-                'GuestId IS NOT' => null,
-            ])
-            ->count();
-
-        $widgets['customerOrdersToday'] = $ordersTable->find()
-            ->where([
-                'DATE(OrderDate) =' => $today,
-                'CustomerId IS NOT' => null,
-            ])
-            ->count();
-
-        $recentOrders = $ordersTable
-            ->find()
-            ->contain(['Customers', 'Guests'])
-            ->orderBy([
-                'OrderDate' => 'DESC',
-                'OrderId' => 'DESC',
-            ])
-            ->limit(8)
-            ->all();
+        $recentOrders = [];
 
         $user = $this->fetchTable('Users')->get($userId);
         $isAdmin = $user->UserRole === 'admin';
 
-        $lowStockItems = $inventoryTable->find()
-            ->contain(['Products'])
-            ->all();
+        if ($permissionService->hasPermission($userId, 'orders.view')) {
+            $widgets['orders'] = [
+                'orders_total' => $ordersTable->find()
+                    ->where([
+                        'DATE(OrderDate) =' => $today,
+                    ])
+                    ->count(),
+            ];
 
-        $filtered = [];
+            $widgets['guestOrdersToday'] = $ordersTable->find()
+                ->where([
+                    'DATE(OrderDate) =' => $today,
+                    'GuestId IS NOT' => null,
+                ])
+                ->count();
 
-        foreach ($lowStockItems as $item) {
-            if ((int)$item->Quantity <= (int)$item->LowStockThreshold) {
-                $filtered[] = [
-                    'productId' => (int)$item->ProductId,
-                    'name' => $item->product->ProductName ?? '',
-                    'quantity' => (int)$item->Quantity,
-                ];
-            }
+            $widgets['customerOrdersToday'] = $ordersTable->find()
+                ->where([
+                    'DATE(OrderDate) =' => $today,
+                    'CustomerId IS NOT' => null,
+                ])
+                ->count();
+
+            $recentOrders = $ordersTable
+                ->find()
+                ->contain(['Customers', 'Guests'])
+                ->orderBy([
+                    'OrderDate' => 'DESC',
+                    'OrderId' => 'DESC',
+                ])
+                ->limit(8)
+                ->all();
         }
 
-        $widgets['inventory'] = [
-            'total' => count($filtered),
-        ];
+        if ($permissionService->hasPermission($userId, 'shipments.view')) {
+            $widgets['pendingShipment'] = $ordersTable->find()
+                ->where([
+                    'Status IN' => ['pending', 'paid', 'processing', 'shipped'],
+                ])
+                ->count();
+        }
 
-        $widgets['lowStockItems'] = $filtered;
+        if ($permissionService->hasPermission($userId, 'inventory.view')) {
+            $lowStockItems = $inventoryTable->find()
+                ->contain(['Products'])
+                ->all();
+
+            $filtered = [];
+
+            foreach ($lowStockItems as $item) {
+                if ((int)$item->Quantity <= (int)$item->LowStockThreshold) {
+                    $filtered[] = [
+                        'productId' => (int)$item->ProductId,
+                        'name' => $item->product->ProductName ?? '',
+                        'quantity' => (int)$item->Quantity,
+                    ];
+                }
+            }
+
+            $widgets['inventory'] = [
+                'total' => count($filtered),
+            ];
+
+            $widgets['lowStockItems'] = $filtered;
+        }
 
         if ($isAdmin) {
             $totalRevenue = 0.00;
