@@ -25,5 +25,5 @@ $this->assign('title', 'Edit Inventory');
     <?= $this->Form->button('Save Inventory') ?>
     <?= $this->Form->end() ?>
 
-    <?= $this->Html->link('Back to Inventory', ['action' => 'index']) ?>
+    <?= $this->Html->link('Back to Inventory', ['action' => 'index'], ['class' => 'inventory-edit-link']) ?>
 </div>

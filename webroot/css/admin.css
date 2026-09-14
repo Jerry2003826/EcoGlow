@@ -806,3 +806,8 @@ body.admin-app {
         margin-left: 0;
     }
 }
+
+.inventory-edit-link {
+    display: inline-block;
+    margin-top: 0.5rem;
+}
