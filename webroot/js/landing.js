@@ -35,6 +35,38 @@
         document.addEventListener('keydown', function (event) {
             if (event.key === 'Escape') {
                 closeMenu();
+                closeAccountMenu();
+            }
+        });
+    }
+
+    var accountMenu = document.querySelector('.nav-account');
+    var accountToggle = document.querySelector('.nav-account-toggle');
+    var accountPanel = document.querySelector('.nav-account-menu');
+
+    function closeAccountMenu() {
+        if (!accountMenu || !accountToggle || !accountPanel) {
+            return;
+        }
+
+        accountMenu.classList.remove('is-open');
+        accountToggle.setAttribute('aria-expanded', 'false');
+        accountToggle.setAttribute('aria-label', 'Open account menu');
+        accountPanel.hidden = true;
+    }
+
+    if (accountMenu && accountToggle && accountPanel) {
+        accountToggle.addEventListener('click', function (event) {
+            event.stopPropagation();
+            var isOpen = accountMenu.classList.toggle('is-open');
+            accountToggle.setAttribute('aria-expanded', String(isOpen));
+            accountToggle.setAttribute('aria-label', isOpen ? 'Close account menu' : 'Open account menu');
+            accountPanel.hidden = !isOpen;
+        });
+
+        document.addEventListener('click', function (event) {
+            if (!accountMenu.contains(event.target)) {
+                closeAccountMenu();
             }
         });
     }

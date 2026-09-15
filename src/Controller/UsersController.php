@@ -86,7 +86,7 @@ class UsersController extends AppController
                 return $this->redirect($target);
             }
 
-            return $this->redirect('/account');
+            return $this->redirect('/');
 
         }
         if ($this->request->is('post')) {

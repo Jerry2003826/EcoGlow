@@ -415,6 +415,10 @@ body.admin-app {
     background: #fbfdfc;
 }
 
+.admin-table tbody tr.admin-clickable-row {
+    cursor: pointer;
+}
+
 .attention-list {
     margin: 0.25rem 0 0;
     padding-left: 1.25rem;

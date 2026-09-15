@@ -33,7 +33,10 @@ $this->assign('title', 'Inventory');
                     $outOfStock = $quantity === 0;
                     $low = $quantity <= $threshold;
                 ?>
-                <tr>
+                <tr
+                    class="admin-clickable-row"
+                    data-href="/admin/products/edit/<?= (int)$product->ProductId ?>"
+                >
                     <td><?= h($product->ProductName) ?></td>
                     <td><?= h($product->product_category->CategoryName ?? '') ?></td>
                     <td><?= h($product->supplier->SupplierName ?? '') ?></td>

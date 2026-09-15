@@ -121,3 +121,21 @@
 
     handleResize();
 })();
+
+(function () {
+    'use strict';
+
+    document.querySelectorAll('tr[data-href]').forEach(function (row) {
+        row.addEventListener('click', function (event) {
+            if (event.target.closest('a, button, form, input, label')) {
+                return;
+            }
+
+            var href = row.getAttribute('data-href');
+
+            if (href) {
+                window.location.href = href;
+            }
+        });
+    });
+})();
