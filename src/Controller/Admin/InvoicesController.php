@@ -100,6 +100,8 @@ class InvoicesController extends AdminController
         $invoice = $this->fetchTable('Invoices')->newEntity([
             'OrderId' => $order->OrderId,
             'TotalAmount' => $amount,
+            'InvoiceDate' => (new \DateTime('now', new \DateTimeZone('Australia/Melbourne')))
+                ->format('Y-m-d H:i:s'),
         ]);
 
         $saved = $this->fetchTable('Invoices')->saveOrFail($invoice);

@@ -45,7 +45,13 @@ $this->assign('title', 'Invoices');
                         ) ?>
                     </td>
                     <td>$<?= number_format((float)$invoice->TotalAmount, 2) ?></td>
-                    <td><?= h((string)$invoice->InvoiceDate) ?></td>
+                    <td>
+                        <?= h(
+                            $invoice->InvoiceDate
+                                ? date('d/m/Y g:ia', strtotime((string)$invoice->InvoiceDate))
+                                : ''
+                        ) ?>
+                    </td>
                 </tr>
             <?php endforeach; ?>
             </tbody>

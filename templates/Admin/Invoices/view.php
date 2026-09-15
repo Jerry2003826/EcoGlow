@@ -8,7 +8,13 @@ $order = $invoice->order;
 <div class="panel-card">
     <h1>Tax invoice #<?= (int)$invoice->InvoiceId ?></h1>
     <p><strong>Order:</strong> <?= (int)$invoice->OrderId ?></p>
-    <p><strong>Issued:</strong> <?= h((string)$invoice->InvoiceDate) ?></p>
+    <p><strong>Issued:</strong>
+        <?= h(
+            $invoice->InvoiceDate
+                ? date('d/m/Y g:ia', strtotime((string)$invoice->InvoiceDate))
+                : ''
+        ) ?>
+    </p>
 </div>
 
 <?php if (!empty($order?->CustomerId)): ?>

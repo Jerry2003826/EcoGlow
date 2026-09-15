@@ -22,8 +22,22 @@ $this->assign('title', 'Suppliers');
             <?php foreach ($suppliers as $supplier): ?>
                 <tr>
                     <td><?= h($supplier->SupplierName) ?></td>
-                    <td><?= h($supplier->Email) ?></td>
-                    <td><?= h($supplier->Phone) ?></td>
+                    <td>
+                        <?php if (!empty($supplier->Email)): ?>
+                            <?= $this->Html->link(
+                                (string)$supplier->Email,
+                                'mailto:' . $supplier->Email
+                            ) ?>
+                        <?php endif; ?>
+                    </td>
+                    <td>
+                        <?php if (!empty($supplier->Phone)): ?>
+                            <?= $this->Html->link(
+                                (string)$supplier->Phone,
+                                'tel:' . preg_replace('/\s+/', '', (string)$supplier->Phone)
+                            ) ?>
+                        <?php endif; ?>
+                    </td>
                     <td><?= h($supplier->Address) ?></td>
                     <td><?= count($supplier->products ?? []) ?></td>
                 </tr>
@@ -31,4 +45,34 @@ $this->assign('title', 'Suppliers');
             </tbody>
         </table>
     </div>
+</div>
+
+<div class="panel-card">
+    <h2>Contact supplier</h2>
+
+    <?= $this->Form->create(null, [
+        'url' => ['action' => 'contact'],
+        'class' => 'admin-form',
+    ]) ?>
+
+    <?= $this->Form->control('supplier_id', [
+        'label' => 'Supplier',
+        'options' => $supplierOptions ?? [],
+        'required' => true,
+    ]) ?>
+
+    <?= $this->Form->control('subject', [
+        'label' => 'Subject',
+        'required' => true,
+    ]) ?>
+
+    <?= $this->Form->control('message', [
+        'label' => 'Message',
+        'type' => 'textarea',
+        'rows' => 8,
+        'required' => true,
+    ]) ?>
+
+    <?= $this->Form->button('Send Email') ?>
+    <?= $this->Form->end() ?>
 </div>
