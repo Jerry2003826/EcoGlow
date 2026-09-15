@@ -31,6 +31,7 @@ final class AdminPermissionMap
             'Suppliers' => [
                 'index' => ['suppliers.view'],
                 'view' => ['suppliers.view'],
+                'contact' => ['suppliers.view'],
             ],
             'Customers' => [
                 'index' => ['customers.view', 'customers.edit'],
