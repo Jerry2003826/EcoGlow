@@ -25,7 +25,7 @@ final class AdminPermissionMap
                 'addRepair' => ['orders.view'],
             ],
             'Inventory' => [
-                'index' => ['inventory.view', 'inventory.adjust'],
+                'index' => ['inventory.view', 'inventory.adjust', 'products.view'],
                 'edit' => ['inventory.adjust'],
                 'addCategory' => ['inventory.adjust'],
                 'deleteCategory' => ['inventory.adjust'],
@@ -71,7 +71,7 @@ final class AdminPermissionMap
                 'edit' => ['shipments.view'],
             ],
             'Products' => [
-                'index' => ['products.view'],
+                'index' => ['products.view', 'inventory.view', 'inventory.adjust'],
                 'add' => ['products.view'],
                 'edit' => ['products.view'],
                 'delete' => ['products.view'],

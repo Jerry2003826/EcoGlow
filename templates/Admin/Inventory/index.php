@@ -16,28 +16,30 @@ $this->assign('title', 'Inventory');
             <thead>
             <tr>
                 <th>Product</th>
+                <th>Category</th>
                 <th>Supplier</th>
+                <th>Price</th>
                 <th>On hand</th>
                 <th>Low stock at</th>
                 <th>Status</th>
+                <th></th>
             </tr>
             </thead>
             <tbody>
-            <?php foreach ($items as $item): ?>
+            <?php foreach (($products ?? []) as $product): ?>
                 <?php
-                    $outOfStock = (int)$item->Quantity === 0;
-                    $low = (int)$item->Quantity <= (int)$item->LowStockThreshold; ?>
+                    $quantity = (int)($product->inventory->Quantity ?? 0);
+                    $threshold = (int)($product->inventory->LowStockThreshold ?? 0);
+                    $outOfStock = $quantity === 0;
+                    $low = $quantity <= $threshold;
+                ?>
                 <tr>
-                    <td>
-                        <?= $this->Html->link(
-                            $item->product->ProductName ?? '',
-                            ['action' => 'edit', $item->ProductId],
-                            ['class' => 'inventory-product-link']
-                        ) ?>
-                    </td>
-                    <td><?= h($item->product->supplier->SupplierName ?? '') ?></td>
-                    <td><?= (int)$item->Quantity ?></td>
-                    <td><?= (int)$item->LowStockThreshold ?></td>
+                    <td><?= h($product->ProductName) ?></td>
+                    <td><?= h($product->product_category->CategoryName ?? '') ?></td>
+                    <td><?= h($product->supplier->SupplierName ?? '') ?></td>
+                    <td>$<?= number_format((float)$product->Price, 2) ?></td>
+                    <td><?= $quantity ?></td>
+                    <td><?= $threshold ?></td>
                     <td>
                         <?php if ($outOfStock): ?>
                             <span class="status-out-of-stock">
@@ -52,6 +54,21 @@ $this->assign('title', 'Inventory');
                                 In stock
                             </span>
                         <?php endif; ?>
+                    </td>
+                    <td>
+                        <?= $this->Html->link(
+                            'Edit',
+                            '/admin/products/edit/' . (int)$product->ProductId
+                        ) ?>
+                        <?= $this->Html->link(
+                            'Stock',
+                            ['action' => 'edit', $product->ProductId]
+                        ) ?>
+                        <?= $this->Form->postLink(
+                            'Delete',
+                            '/admin/products/delete/' . (int)$product->ProductId,
+                            ['confirm' => 'Delete this product?']
+                        ) ?>
                     </td>
                 </tr>
             <?php endforeach; ?>

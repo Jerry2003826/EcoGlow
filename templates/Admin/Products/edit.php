@@ -41,7 +41,7 @@ $this->assign('title', 'Edit Product');
     ]) ?>
     <div class="form-actions">
         <?= $this->Form->button('Update', ['class' => 'admin-green-button']) ?>
-        <?= $this->Html->link('Back to Products', ['action' => 'index'], ['class' => 'admin-back-link']) ?>
+        <?= $this->Html->link('Back to Inventory', '/admin/inventory', ['class' => 'admin-back-link']) ?>
     </div>
     <?= $this->Form->end() ?>
 </div>

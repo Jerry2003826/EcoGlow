@@ -77,12 +77,15 @@ if ($can('inventory.view') && $totalStockAlert > 0) {
         <div class="sidebar-group">
             <div class="sidebar-group-title">Operations</div>
 
-            <?php if ($can('inventory.view')): ?>
+            <?php if ($can('inventory.view') || $can('products.view')): ?>
                 <?= $this->Html->link(
                     $inventoryLabel,
                     '/admin/inventory',
                     array_merge(
-                        $active($currentController === 'Inventory'),
+                        $active(
+                            $currentController === 'Inventory'
+                            || $currentController === 'Products'
+                        ),
                         ['escape' => false]
                     )
                 ) ?>
@@ -101,14 +104,6 @@ if ($can('inventory.view') && $totalStockAlert > 0) {
                     'Customers',
                     '/admin/customers',
                     $active($currentController === 'Customers')
-                ) ?>
-            <?php endif; ?>
-
-            <?php if ($can('products.view')): ?>
-                <?= $this->Html->link(
-                    'Products',
-                    '/admin/products',
-                    $active($currentController === 'Products')
                 ) ?>
             <?php endif; ?>
 

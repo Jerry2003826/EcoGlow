@@ -13,10 +13,10 @@ class InventoryController extends AdminController
             return;
         }
 
-        $items = $this->fetchTable('Inventory')
+        $products = $this->fetchTable('Products')
             ->find()
-            ->contain(['Products.Suppliers'])
-            ->orderBy(['Inventory.Quantity' => 'ASC'])
+            ->contain(['ProductCategories', 'Suppliers', 'Inventory'])
+            ->orderBy(['ProductName' => 'ASC'])
             ->all();
 
         $categories = $this->fetchTable('ProductCategories')
@@ -25,7 +25,7 @@ class InventoryController extends AdminController
             ->orderBy(['CategoryName' => 'ASC'])
             ->all();
 
-        $this->set(compact('items', 'categories'));
+        $this->set(compact('products', 'categories'));
     }
 
     public function edit($id = null)

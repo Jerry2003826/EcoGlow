@@ -13,15 +13,7 @@ class ProductsController extends AdminController
             return;
         }
 
-        $this->requirePermission('products.view');
-
-        $products = $this->fetchTable('Products')
-            ->find()
-            ->contain(['ProductCategories', 'Suppliers', 'Inventory'])
-            ->orderBy(['ProductName' => 'ASC'])
-            ->all();
-
-        $this->set(compact('products'));
+        return $this->redirect('/admin/inventory');
     }
 
     public function add()
@@ -55,7 +47,7 @@ class ProductsController extends AdminController
 
                 $this->Flash->success('Product saved.');
 
-                return $this->redirect(['action' => 'index']);
+                return $this->redirect('/admin/inventory');
             }
 
             $this->Flash->error('The product could not be saved.');
@@ -82,7 +74,7 @@ class ProductsController extends AdminController
             if ($productsTable->save($product)) {
                 $this->Flash->success('Product updated.');
 
-                return $this->redirect(['action' => 'index']);
+                return $this->redirect('/admin/inventory');
             }
 
             $this->Flash->error('The product could not be updated.');
@@ -110,7 +102,7 @@ class ProductsController extends AdminController
         if ($orderItem) {
             $this->Flash->error('Product cannot be deleted while it appears on an order.');
 
-            return $this->redirect(['action' => 'index']);
+            return $this->redirect('/admin/inventory');
         }
 
         $product = $this->fetchTable('Products')->get((int)$id);
@@ -129,7 +121,7 @@ class ProductsController extends AdminController
             $this->Flash->error('The product could not be deleted.');
         }
 
-        return $this->redirect(['action' => 'index']);
+        return $this->redirect('/admin/inventory');
     }
 
     private function setProductFormLists(): void
