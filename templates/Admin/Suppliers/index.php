@@ -5,6 +5,9 @@ $this->assign('title', 'Suppliers');
 ?>
 
 <h1 class="page-title">Suppliers</h1>
+<p class="page-lead">
+    <?= $this->Html->link('Add supplier', ['action' => 'add'], ['class' => 'admin-green-button']) ?>
+</p>
 
 <div class="panel-card">
     <div class="admin-table-wrap">
@@ -16,6 +19,7 @@ $this->assign('title', 'Suppliers');
                 <th>Phone</th>
                 <th>Address</th>
                 <th>Products</th>
+                <th></th>
             </tr>
             </thead>
             <tbody>
@@ -40,6 +44,17 @@ $this->assign('title', 'Suppliers');
                     </td>
                     <td><?= h($supplier->Address) ?></td>
                     <td><?= count($supplier->products ?? []) ?></td>
+                    <td>
+                        <?= $this->Html->link(
+                            'Edit',
+                            ['action' => 'edit', $supplier->SupplierId]
+                        ) ?>
+                        <?= $this->Form->postLink(
+                            'Delete',
+                            ['action' => 'delete', $supplier->SupplierId],
+                            ['confirm' => 'Delete this supplier?']
+                        ) ?>
+                    </td>
                 </tr>
             <?php endforeach; ?>
             </tbody>

@@ -1,4 +1,5 @@
 <?php
+// templates/Admin/Inventory/edit.php
 
 $this->assign('title', 'Edit Inventory');
 ?>
@@ -8,7 +9,7 @@ $this->assign('title', 'Edit Inventory');
 <div class="panel-card">
     <p><strong>Product:</strong> <?= h($inventory->product->ProductName ?? '') ?></p>
 
-    <?= $this->Form->create($inventory)?>
+    <?= $this->Form->create($inventory, ['class' => 'admin-form']) ?>
     <?= $this->Form->control('Quantity', [
         'label' => 'On hand',
         'type' => 'number',
@@ -22,8 +23,9 @@ $this->assign('title', 'Edit Inventory');
         'min' => 1,
         'step' => 1,
     ]) ?>
-    <?= $this->Form->button('Save Inventory') ?>
+    <div class="form-actions">
+        <?= $this->Form->button('Save Inventory', ['class' => 'admin-green-button']) ?>
+        <?= $this->Html->link('Back to Inventory', ['action' => 'index'], ['class' => 'admin-back-link']) ?>
+    </div>
     <?= $this->Form->end() ?>
-
-    <?= $this->Html->link('Back to Inventory', ['action' => 'index'], ['class' => 'inventory-edit-link']) ?>
 </div>

@@ -17,6 +17,7 @@ $this->assign('title', 'Shipments');
                 <th>Address</th>
                 <th>Status</th>
                 <th>Date</th>
+                <th></th>
             </tr>
             </thead>
             <tbody>
@@ -35,6 +36,12 @@ $this->assign('title', 'Shipments');
                     <td><?= h($shipment->DeliveryAddress) ?></td>
                     <td><?= h($shipment->DeliveryStatus) ?></td>
                     <td><?= h((string)$shipment->DeliveryDate) ?></td>
+                    <td>
+                        <?= $this->Html->link(
+                            'Edit',
+                            ['action' => 'edit', $shipment->DeliveryId]
+                        ) ?>
+                    </td>
                 </tr>
             <?php endforeach; ?>
             </tbody>

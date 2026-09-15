@@ -5,6 +5,9 @@ $this->assign('title', 'Inventory');
 ?>
 
 <h1 class="page-title">Inventory</h1>
+<p class="page-lead">
+    <?= $this->Html->link('Add product', '/admin/products/add', ['class' => 'admin-green-button']) ?>
+</p>
 
 <div class="panel-card">
     <p>Products at or below the low-stock threshold are highlighted.</p>
@@ -21,7 +24,7 @@ $this->assign('title', 'Inventory');
             </thead>
             <tbody>
             <?php foreach ($items as $item): ?>
-                <?php 
+                <?php
                     $outOfStock = (int)$item->Quantity === 0;
                     $low = (int)$item->Quantity <= (int)$item->LowStockThreshold; ?>
                 <tr>
@@ -55,4 +58,46 @@ $this->assign('title', 'Inventory');
             </tbody>
         </table>
     </div>
+</div>
+
+<div class="panel-card">
+    <h2>Product categories</h2>
+    <div class="admin-table-wrap">
+        <table class="table admin-table">
+            <thead>
+            <tr>
+                <th>Category</th>
+                <th>Products</th>
+                <th></th>
+            </tr>
+            </thead>
+            <tbody>
+            <?php foreach (($categories ?? []) as $category): ?>
+                <tr>
+                    <td><?= h($category->CategoryName) ?></td>
+                    <td><?= count($category->products ?? []) ?></td>
+                    <td>
+                        <?= $this->Form->postLink(
+                            'Delete',
+                            ['action' => 'deleteCategory', $category->CategoryId],
+                            ['confirm' => 'Delete this category?']
+                        ) ?>
+                    </td>
+                </tr>
+            <?php endforeach; ?>
+            </tbody>
+        </table>
+    </div>
+
+    <h2>Add category</h2>
+    <?= $this->Form->create(null, [
+        'url' => ['action' => 'addCategory'],
+        'class' => 'admin-form',
+    ]) ?>
+    <?= $this->Form->control('CategoryName', [
+        'label' => 'Category name',
+        'required' => true,
+    ]) ?>
+    <?= $this->Form->button('Save category', ['class' => 'admin-green-button']) ?>
+    <?= $this->Form->end() ?>
 </div>

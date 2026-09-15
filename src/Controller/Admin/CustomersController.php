@@ -27,4 +27,60 @@ class CustomersController extends AdminController
 
         $this->set(compact('customers', 'guests'));
     }
+
+    public function edit(int|string $id)
+    {
+        if ($this->request->getAttribute('identity') === null) {
+            return;
+        }
+
+        $this->requirePermission('customers.edit');
+
+        $table = $this->fetchTable('Customers');
+        $customer = $table->get((int)$id);
+
+        if ($this->request->is(['post', 'put', 'patch'])) {
+            $customer = $table->patchEntity($customer, $this->request->getData(), [
+                'fields' => ['CustomerName', 'Email', 'Address', 'Phone'],
+            ]);
+
+            if ($table->save($customer)) {
+                $this->Flash->success('Customer updated.');
+
+                return $this->redirect(['action' => 'index']);
+            }
+
+            $this->Flash->error('The customer could not be updated.');
+        }
+
+        $this->set(compact('customer'));
+    }
+
+    public function editGuest(int|string $id)
+    {
+        if ($this->request->getAttribute('identity') === null) {
+            return;
+        }
+
+        $this->requirePermission('customers.edit');
+
+        $table = $this->fetchTable('Guests');
+        $guest = $table->get((int)$id);
+
+        if ($this->request->is(['post', 'put', 'patch'])) {
+            $guest = $table->patchEntity($guest, $this->request->getData(), [
+                'fields' => ['GuestName', 'Email', 'Address', 'Phone'],
+            ]);
+
+            if ($table->save($guest)) {
+                $this->Flash->success('Guest updated.');
+
+                return $this->redirect(['action' => 'index']);
+            }
+
+            $this->Flash->error('The guest could not be updated.');
+        }
+
+        $this->set(compact('guest'));
+    }
 }

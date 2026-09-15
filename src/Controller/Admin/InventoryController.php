@@ -19,7 +19,13 @@ class InventoryController extends AdminController
             ->orderBy(['Inventory.Quantity' => 'ASC'])
             ->all();
 
-        $this->set(compact('items'));
+        $categories = $this->fetchTable('ProductCategories')
+            ->find()
+            ->contain(['Products'])
+            ->orderBy(['CategoryName' => 'ASC'])
+            ->all();
+
+        $this->set(compact('items', 'categories'));
     }
 
     public function edit($id = null)
@@ -50,5 +56,59 @@ class InventoryController extends AdminController
         }
 
         $this->set(compact('inventory'));
+    }
+
+    public function addCategory()
+    {
+        $this->request->allowMethod(['post']);
+
+        if ($this->request->getAttribute('identity') === null) {
+            return;
+        }
+
+        $this->requirePermission('inventory.adjust');
+
+        $table = $this->fetchTable('ProductCategories');
+        $category = $table->newEntity([
+            'CategoryName' => trim((string)$this->request->getData('CategoryName')),
+        ]);
+
+        if ($table->save($category)) {
+            $this->Flash->success('Category saved.');
+        } else {
+            $this->Flash->error('The category could not be saved.');
+        }
+
+        return $this->redirect(['action' => 'index']);
+    }
+
+    public function deleteCategory(int|string $id)
+    {
+        $this->request->allowMethod(['post', 'delete']);
+
+        if ($this->request->getAttribute('identity') === null) {
+            return;
+        }
+
+        $this->requirePermission('inventory.adjust');
+
+        $category = $this->fetchTable('ProductCategories')->get(
+            (int)$id,
+            contain: ['Products']
+        );
+
+        if (!empty($category->products)) {
+            $this->Flash->error('Category cannot be deleted while products exist.');
+
+            return $this->redirect(['action' => 'index']);
+        }
+
+        if ($this->fetchTable('ProductCategories')->delete($category)) {
+            $this->Flash->success('Category deleted.');
+        } else {
+            $this->Flash->error('The category could not be deleted.');
+        }
+
+        return $this->redirect(['action' => 'index']);
     }
 }

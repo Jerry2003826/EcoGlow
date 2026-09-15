@@ -6,6 +6,7 @@ declare(strict_types=1);
 namespace App\Model\Table;
 
 use Cake\ORM\Table;
+use Cake\Validation\Validator;
 
 class InventoryTable extends Table
 {
@@ -19,5 +20,18 @@ class InventoryTable extends Table
         $this->belongsTo('Products', [
             'foreignKey' => 'ProductId',
         ]);
+    }
+
+    public function validationDefault(Validator $validator): Validator
+    {
+        $validator
+            ->integer('Quantity')
+            ->notEmptyString('Quantity');
+
+        $validator
+            ->integer('LowStockThreshold')
+            ->notEmptyString('LowStockThreshold');
+
+        return $validator;
     }
 }

@@ -27,16 +27,22 @@ final class AdminPermissionMap
             'Inventory' => [
                 'index' => ['inventory.view', 'inventory.adjust'],
                 'edit' => ['inventory.adjust'],
+                'addCategory' => ['inventory.adjust'],
+                'deleteCategory' => ['inventory.adjust'],
             ],
             'Suppliers' => [
                 'index' => ['suppliers.view'],
                 'view' => ['suppliers.view'],
                 'contact' => ['suppliers.view'],
+                'add' => ['suppliers.view'],
+                'edit' => ['suppliers.view'],
+                'delete' => ['suppliers.view'],
             ],
             'Customers' => [
                 'index' => ['customers.view', 'customers.edit'],
                 'view' => ['customers.view', 'customers.edit'],
                 'edit' => ['customers.edit'],
+                'editGuest' => ['customers.edit'],
             ],
             'Messages' => [
                 'index' => ['messages.manage'],
@@ -62,9 +68,13 @@ final class AdminPermissionMap
             ],
             'Shipments' => [
                 'index' => ['shipments.view'],
+                'edit' => ['shipments.view'],
             ],
             'Products' => [
                 'index' => ['products.view'],
+                'add' => ['products.view'],
+                'edit' => ['products.view'],
+                'delete' => ['products.view'],
             ],
             'Access' => [
                 'index' => ['access.manage'],

@@ -16,12 +16,13 @@ $this->assign('title', 'Customers');
                 <th>Email</th>
                 <th>Phone</th>
                 <th>Address</th>
+                <th></th>
             </tr>
             </thead>
             <tbody>
             <?php if (count($customers) === 0): ?>
                 <tr>
-                    <td colspan="4">No registered customers yet. Guests appear below.</td>
+                    <td colspan="5">No registered customers yet. Guests appear below.</td>
                 </tr>
             <?php endif; ?>
             <?php foreach ($customers as $customer): ?>
@@ -30,6 +31,12 @@ $this->assign('title', 'Customers');
                     <td><?= h($customer->Email) ?></td>
                     <td><?= h($customer->Phone) ?></td>
                     <td><?= h($customer->Address) ?></td>
+                    <td>
+                        <?= $this->Html->link(
+                            'Edit',
+                            ['action' => 'edit', $customer->CustomerId]
+                        ) ?>
+                    </td>
                 </tr>
             <?php endforeach; ?>
             </tbody>
@@ -47,6 +54,7 @@ $this->assign('title', 'Customers');
                 <th>Email</th>
                 <th>Phone</th>
                 <th>Address</th>
+                <th></th>
             </tr>
             </thead>
             <tbody>
@@ -56,6 +64,12 @@ $this->assign('title', 'Customers');
                     <td><?= h($guest->Email) ?></td>
                     <td><?= h($guest->Phone) ?></td>
                     <td><?= h($guest->Address) ?></td>
+                    <td>
+                        <?= $this->Html->link(
+                            'Edit',
+                            ['action' => 'editGuest', $guest->GuestId]
+                        ) ?>
+                    </td>
                 </tr>
             <?php endforeach; ?>
             </tbody>
