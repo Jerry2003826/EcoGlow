@@ -28,7 +28,10 @@ $this->assign('title', 'Quotations');
                 </tr>
             <?php endif; ?>
             <?php foreach ($quotations as $quotation): ?>
-                <tr>
+                <tr
+                    class="admin-clickable-row"
+                    data-href="/admin/quotations/view/<?= (int)$quotation->QuotationId ?>"
+                >
                     <td>
                         <?= $this->Html->link(
                             'QT-' . $quotation->QuotationId,

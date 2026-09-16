@@ -37,7 +37,13 @@ $this->assign('title', 'Shipments');
                     </td>
                     <td><?= h($shipment->DeliveryAddress) ?></td>
                     <td><?= h($shipment->DeliveryStatus) ?></td>
-                    <td><?= h((string)$shipment->DeliveryDate) ?></td>
+                    <td>
+                        <?= $shipment->DeliveryDate
+                            ? $shipment->DeliveryDate->format('d/m/Y H:i')
+                            : ''
+                        ?>
+                    </td>
+                    
                 </tr>
             <?php endforeach; ?>
             </tbody>

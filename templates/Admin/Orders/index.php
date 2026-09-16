@@ -64,14 +64,7 @@ $this->assign('title', 'Orders');
                             data-href="/admin/orders/view/<?= (int)$order->OrderId ?>"
                         >
                             <td>
-                                <?= $this->Html->link(
-                                    (string)$order->OrderId,
-                                    [
-                                        'action' => 'view', 
-                                        $order->OrderId,
-                                    ],
-                                    ['class' => 'order-link']
-                                ) ?>
+                                <?= (string)$order->OrderId ?>
                             </td>
                             <td><?= $isInstall ? 'Product + installation' : 'Product' ?></td>
                             <td><?= $order->CustomerId ? 'Customer' : 'Guest' ?></td>
@@ -90,7 +83,13 @@ $this->assign('title', 'Orders');
                                 ) ?>
                             </td>
                             <td><?= h($order->Status ?? '') ?></td>
-                            <td><?= h((string)$order->OrderDate) ?></td>
+                            <td>
+                                <?= $order->OrderDate
+                                    ? $order->OrderDate->format('d/m/Y H:i')
+                                    : ''
+                                ?>
+                            </td>
+                            
                         </tr>
                     <?php endforeach; ?>
                     </tbody>
@@ -124,7 +123,12 @@ $this->assign('title', 'Orders');
                         <tr>
                             <td><?= (int)$repair->ServiceRequestId ?></td>
                             <td><?= h($repair->RequestType) ?></td>
-                            <td><?= h((string)$repair->RequestedDate) ?></td>
+                            <td>
+                                <?= $repair->RequestedDate
+                                    ? $repair->RequestedDate->format('d/m/Y H:i')
+                                    : ''
+                                ?>
+                            </td>
                             <td><?= h($repair->Description) ?></td>
                         </tr>
                     <?php endforeach; ?>

@@ -30,18 +30,16 @@ $this->assign('title', 'Payments');
                 ?>
                 <tr>
                     <td>
-                        <?= $this->Html->link(
-                            $buyerName,
-                            [
-                                'controller' => 'Orders',
-                                'action' => 'view',
-                                $payment->OrderId,
-                            ]
-                        ) ?>
+                        <?= $buyerName?>
                     </td>
                     <td>$<?= number_format((float)$payment->Amount, 2) ?></td>
                     <td><?= h($payment->PaymentMethod) ?></td>
-                    <td><?= h((string)$payment->PaymentDate) ?></td>
+                    <td>
+                        <?= $payment->PaymentDate
+                            ? $payment->PaymentDate->format('d/m/Y H:i')
+                            : ''
+                        ?>
+                    </td>
                 </tr>
             <?php endforeach; ?>
             </tbody>

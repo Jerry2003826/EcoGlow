@@ -37,7 +37,7 @@ $profileUrl = in_array($role, ['admin', 'staff'], true) ? '/admin' : '/account';
 
         <?php if (in_array($role, ['staff'], true)): ?>
             <?= $this->Html->link(
-                'Admin Portal',
+                'Staff Portal',
                 '/admin',
                 ['class' => 'nav-account-profile']
             ) ?>

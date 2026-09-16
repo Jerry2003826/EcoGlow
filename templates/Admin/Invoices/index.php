@@ -28,7 +28,10 @@ $this->assign('title', 'Invoices');
             <?php endif; ?>
             <?php foreach ($invoices as $invoice): ?>
                 <?php $order = $invoice->order; ?>
-                <tr>
+                <tr
+                    class="admin-clickable-row"
+                    data-href="/admin/invoices/view/<?= (int)$invoice->InvoiceId ?>"
+                >
                     <td>
                         <?= $this->Html->link(
                             (string)$invoice->InvoiceId,

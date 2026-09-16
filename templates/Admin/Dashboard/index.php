@@ -82,13 +82,12 @@ $transactions = $widgets['transactions'] ?? [];
             </thead>
             <tbody>
             <?php foreach ($recentOrders ?? [] as $order): ?>
-                <tr>
+                <tr
+                    class="admin-clickable-row"
+                    data-href="/admin/orders/view/<?= (int)$order->OrderId ?>"
+                >
                     <td>
-                        <?= $this->Html->link(
-                            (string)$order->OrderId,
-                            '/admin/orders/view/' . $order->OrderId,
-                            ['class' => 'order-link']
-                        ) ?>
+                        <?=(string)$order->OrderId?>
                     </td>
                     <td><?= $order->CustomerId ? 'Customer' : 'Guest' ?></td>
                     <td>

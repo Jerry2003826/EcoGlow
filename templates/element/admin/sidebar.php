@@ -142,14 +142,6 @@ if ($can('inventory.view') && $totalStockAlert > 0) {
                     $active($currentController === 'Payments')
                 ) ?>
             <?php endif; ?>
-
-            <?php if ($can('refunds.process')): ?>
-                <?= $this->Html->link(
-                    'Refunds',
-                    '/admin/coming-soon/refunds',
-                    $active($comingSoonModule === 'refunds')
-                ) ?>
-            <?php endif; ?>
         </div>
 
         <div class="sidebar-group">

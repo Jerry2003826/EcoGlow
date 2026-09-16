@@ -36,7 +36,12 @@ $this->assign('title', 'Enquiries');
                     <td><?= h($message->Name) ?></td>
                     <td><?= h($message->Email) ?></td>
                     <td><?= h($message->Subject) ?></td>
-                    <td><?= h((string)$message->CreatedDate) ?></td>
+                    <td>
+                        <?= $message->CreatedDate
+                            ? $message->CreatedDate->format('d/m/Y H:i')
+                            : ''
+                        ?>
+                    </td>
                 </tr>
             <?php endforeach; ?>
             </tbody>
