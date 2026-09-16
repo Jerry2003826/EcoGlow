@@ -19,12 +19,15 @@ $this->assign('title', 'Suppliers');
                 <th>Phone</th>
                 <th>Address</th>
                 <th>Products</th>
-                <th></th>
+                <th>Action</th>
             </tr>
             </thead>
             <tbody>
             <?php foreach ($suppliers as $supplier): ?>
-                <tr>
+                <tr
+                    class="admin-clickable-row"
+                    data-href="/admin/suppliers/edit/<?= (int)$supplier->SupplierId ?>"
+                >
                     <td><?= h($supplier->SupplierName) ?></td>
                     <td>
                         <?php if (!empty($supplier->Email)): ?>
@@ -45,14 +48,10 @@ $this->assign('title', 'Suppliers');
                     <td><?= h($supplier->Address) ?></td>
                     <td><?= count($supplier->products ?? []) ?></td>
                     <td>
-                        <?= $this->Html->link(
-                            'Edit',
-                            ['action' => 'edit', $supplier->SupplierId]
-                        ) ?>
                         <?= $this->Form->postLink(
                             'Delete',
                             ['action' => 'delete', $supplier->SupplierId],
-                            ['confirm' => 'Delete this supplier?']
+                            ['confirm' => 'Delete this supplier?', 'class' => 'admin-delete-link']
                         ) ?>
                     </td>
                 </tr>

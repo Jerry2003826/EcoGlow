@@ -59,7 +59,10 @@ $this->assign('title', 'Orders');
                         $isInstall = !empty($order->shopping_cart)
                             && (int)$order->shopping_cart->InstallOptIn === 1;
                         ?>
-                        <tr>
+                        <tr
+                            class="admin-clickable-row"
+                            data-href="/admin/orders/view/<?= (int)$order->OrderId ?>"
+                        >
                             <td>
                                 <?= $this->Html->link(
                                     (string)$order->OrderId,

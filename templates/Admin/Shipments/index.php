@@ -17,13 +17,15 @@ $this->assign('title', 'Shipments');
                 <th>Address</th>
                 <th>Status</th>
                 <th>Date</th>
-                <th></th>
             </tr>
             </thead>
             <tbody>
             <?php foreach ($shipments as $shipment): ?>
                 <?php $order = $shipment->order; ?>
-                <tr>
+                <tr
+                    class="admin-clickable-row"
+                    data-href="/admin/shipments/edit/<?= (int)$shipment->DeliveryId ?>"
+                >
                     <td><?= (int)$shipment->DeliveryId ?></td>
                     <td><?= !empty($order?->CustomerId) ? 'Customer' : 'Guest' ?></td>
                     <td>
@@ -36,12 +38,6 @@ $this->assign('title', 'Shipments');
                     <td><?= h($shipment->DeliveryAddress) ?></td>
                     <td><?= h($shipment->DeliveryStatus) ?></td>
                     <td><?= h((string)$shipment->DeliveryDate) ?></td>
-                    <td>
-                        <?= $this->Html->link(
-                            'Edit',
-                            ['action' => 'edit', $shipment->DeliveryId]
-                        ) ?>
-                    </td>
                 </tr>
             <?php endforeach; ?>
             </tbody>

@@ -16,7 +16,6 @@ $this->assign('title', 'Customers');
                 <th>Email</th>
                 <th>Phone</th>
                 <th>Address</th>
-                <th></th>
             </tr>
             </thead>
             <tbody>
@@ -26,17 +25,14 @@ $this->assign('title', 'Customers');
                 </tr>
             <?php endif; ?>
             <?php foreach ($customers as $customer): ?>
-                <tr>
+                <tr
+                    class="admin-clickable-row"
+                    data-href="/admin/customers/edit/<?= (int)$customer->CustomerId ?>"
+                >
                     <td><?= h($customer->CustomerName) ?></td>
                     <td><?= h($customer->Email) ?></td>
                     <td><?= h($customer->Phone) ?></td>
                     <td><?= h($customer->Address) ?></td>
-                    <td>
-                        <?= $this->Html->link(
-                            'Edit',
-                            ['action' => 'edit', $customer->CustomerId]
-                        ) ?>
-                    </td>
                 </tr>
             <?php endforeach; ?>
             </tbody>
@@ -54,22 +50,18 @@ $this->assign('title', 'Customers');
                 <th>Email</th>
                 <th>Phone</th>
                 <th>Address</th>
-                <th></th>
             </tr>
             </thead>
             <tbody>
             <?php foreach ($guests as $guest): ?>
-                <tr>
+                <tr
+                    class="admin-clickable-row"
+                    data-href="/admin/customers/editGuest/<?= (int)$guest->GuestId ?>"
+                >
                     <td><?= h($guest->GuestName) ?></td>
                     <td><?= h($guest->Email) ?></td>
                     <td><?= h($guest->Phone) ?></td>
                     <td><?= h($guest->Address) ?></td>
-                    <td>
-                        <?= $this->Html->link(
-                            'Edit',
-                            ['action' => 'editGuest', $guest->GuestId]
-                        ) ?>
-                    </td>
                 </tr>
             <?php endforeach; ?>
             </tbody>
