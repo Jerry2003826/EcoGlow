@@ -213,6 +213,69 @@ body.admin-app {
     color: #B42318;
 }
 
+.admin-user .nav-account {
+    position: relative;
+}
+
+.admin-user .nav-account-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.4rem;
+    height: 2.4rem;
+    margin: 0;
+    padding: 0;
+    border: 1px solid var(--admin-green);
+    border-radius: 50%;
+    background: #fff;
+    color: var(--admin-green);
+}
+
+.admin-user .nav-account-toggle svg {
+    width: 1.3rem;
+    height: 1.3rem;
+}
+
+.admin-user .nav-account-toggle:hover,
+.admin-user .nav-account-toggle:focus-visible,
+.admin-user .nav-account.is-open .nav-account-toggle {
+    background: var(--admin-green);
+    color: #fff;
+}
+
+.admin-user .nav-account-menu {
+    position: absolute;
+    top: calc(100% + 0.6rem);
+    right: 0;
+    z-index: 40;
+    min-width: 14rem;
+    padding: 0.4rem 0;
+    border: 1px solid var(--admin-border);
+    border-radius: 8px;
+    background: #fff;
+    box-shadow: var(--admin-shadow);
+}
+
+.admin-user .nav-account-menu a {
+    display: block;
+    padding: 0.7rem 1rem;
+    color: var(--admin-text);
+    text-decoration: none;
+}
+
+.admin-user .nav-account-hi {
+    font-weight: 700;
+}
+
+.admin-user .nav-account-signout {
+    border-top: 1px solid var(--admin-border);
+}
+
+.admin-user .nav-account-menu a:hover,
+.admin-user .nav-account-menu a:focus-visible {
+    background: var(--admin-surface-muted);
+}
+
 .admin-content {
     max-width: 1680px;
     padding: 2rem;

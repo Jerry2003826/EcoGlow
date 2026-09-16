@@ -81,39 +81,8 @@ $loadStorefront = in_array(
             ['class' => 'nav-button contact-button']
         ) ?>
 
-        <?php if ($identity && $role !== 'admin' && $role !== 'staff'): ?>
-            <div class="nav-account">
-                <button
-                    class="nav-account-toggle"
-                    type="button"
-                    aria-expanded="false"
-                    aria-controls="nav-account-menu"
-                    aria-label="Open account menu"
-                >
-                    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                        <circle cx="12" cy="8" r="3.2" fill="none" stroke="currentColor" stroke-width="1.6"></circle>
-                        <path d="M5.2 18.6c1.4-3 3.8-4.6 6.8-4.6s5.4 1.6 6.8 4.6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"></path>
-                    </svg>
-                </button>
-                <div id="nav-account-menu" class="nav-account-menu" hidden>
-                    <?= $this->Html->link(
-                        'Hi ' . (string)($identity->get('Username') ?? 'there'),
-                        '/account',
-                        ['class' => 'nav-account-hi']
-                    ) ?>
-                    <?= $this->Html->link(
-                        'Sign out',
-                        '/logout',
-                        ['class' => 'nav-account-signout']
-                    ) ?>
-                </div>
-            </div>
-        <?php elseif ($identity): ?>
-            <?= $this->Html->link(
-                'Log Out',
-                '/logout',
-                ['class' => 'nav-button login-button']
-            ) ?>
+        <?php if ($identity): ?>
+            <?= $this->element('account_menu') ?>
         <?php else: ?>
             <?= $this->Html->link(
                 'Log In',

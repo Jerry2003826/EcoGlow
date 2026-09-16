@@ -116,11 +116,7 @@ if ($showInventorySummary) {
 
                 
 
-                <?= $this->Html->link(
-                    'Logout',
-                    '/logout',
-                    ['class' => 'btn btn-outline-secondary btn-sm admin-logout']
-                ) ?>
+                <?= $this->element('account_menu') ?>
             </div>
 
         </header>
