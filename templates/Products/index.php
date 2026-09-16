@@ -23,7 +23,6 @@ foreach ($categories as $categoryItem) {
             <p class="products-eyebrow">The collection</p>
             <h2>Lighting with presence.</h2>
         </div>
-        <?= $this->Html->link('View Cart', '/cart', ['class' => 'products-cart-link']) ?>
     </div>
 
     <?= $this->Form->create(null, ['type' => 'get', 'class' => 'products-filter-form']) ?>
