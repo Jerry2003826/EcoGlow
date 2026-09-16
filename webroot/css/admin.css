@@ -485,6 +485,15 @@ body.admin-app {
 
 .admin-table tbody tr.admin-clickable-row {
     cursor: pointer;
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
+    transform-origin: center;
+}
+
+.admin-table tbody tr.admin-clickable-row:hover {
+    transform: scale(1.005);
+    box-shadow: 0 4px 12px rgba(24, 55, 40, 0.12);
+    position: relative;
+    z-index: 2;
 }
 
 .attention-list {
@@ -882,4 +891,42 @@ body.admin-app {
 .inventory-edit-link {
     display: inline-block;
     margin-top: 0.5rem;
+}
+.admin-action-link {
+    color: var(--admin-green) !important;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.admin-action-link:hover {
+    text-decoration: underline;
+}
+
+.admin-delete-link {
+    margin-left: 0.6rem;
+    color: #B42318 !important;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.admin-delete-link:hover {
+    text-decoration: underline;
+}
+
+.admin-category-form {
+    display: flex;
+    align-items:last baseline;
+    gap: 0.8rem;
+    max-width: 720px;
+}
+
+.admin-category-form .input {
+    flex: 1;
+    margin-bottom: 0;
+}
+
+.admin-category-form button {
+    flex-shrink: 0;
+    margin: 0;
+    min-height: 44px;
 }

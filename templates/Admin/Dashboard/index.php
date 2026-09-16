@@ -36,20 +36,6 @@ $transactions = $widgets['transactions'] ?? [];
         </div>
     <?php endif; ?>
 
-    <?php if ($inventory): ?>
-        <div class="stat-card">
-            <div class="stat-label">
-                <?= $this->Html->link(
-                    'Low Stock Items',
-                    '/admin/inventory'
-                ) ?>
-            </div>
-            <div class="stat-value">
-                <?= (int)$inventory['total'] ?>
-            </div>
-        </div>
-    <?php endif; ?>
-
     <?php if ($financial): ?>
         <div class="stat-card">
             <div class="stat-label">Revenue</div>
@@ -123,48 +109,8 @@ $transactions = $widgets['transactions'] ?? [];
 <?php endif; ?>
 
 <div class="content-grid">
-    <?php if ($inventory): ?>
-        <div class="panel-card needs-attention-card">
-            <h2>Needs Attention</h2>
-
-            <ul class="attention-list">
-                <?php foreach ($lowStockItems as $item): ?>
-                    <li>
-                        <span>
-                            <?= h($item['name']) ?>
-                            (<?= (int)$item['quantity'] ?>)
-                        </span>
-                        <?= $this->Form->create(null, [
-                            'url' => '/admin/dashboard/update-stock',
-                            'class' => 'dashboard-stock-form',
-                        ]) ?>
-                        <?= $this->Form->hidden('ProductId', [
-                            'value' => (int)$item['productId'],
-                        ]) ?>
-                        <?= $this->Form->control('Quantity', [
-                            'label' => false,
-                            'type' => 'number',
-                            'min' => 0,
-                            'value' => (int)$item['quantity'],
-                        ]) ?>
-                        <?= $this->Form->button('Update') ?>
-                        <?= $this->Form->end() ?>
-                    </li>
-                <?php endforeach; ?>
-            </ul>
-        </div>
-    <?php endif; ?>
 
     <?php if ($financial): ?>
-        <div class="panel-card">
-            <h2>Financial Snapshot</h2>
-
-            <p>
-                Revenue:
-                $<?= number_format((float)$financial['revenue'], 2) ?>
-            </p>
-        </div>
-
         <div class="panel-card panel-wide">
             <h2>Recent Payments</h2>
 

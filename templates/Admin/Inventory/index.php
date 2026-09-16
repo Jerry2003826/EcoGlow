@@ -22,7 +22,7 @@ $this->assign('title', 'Inventory');
                 <th>On hand</th>
                 <th>Low stock at</th>
                 <th>Status</th>
-                <th></th>
+                <th>Action</th>
             </tr>
             </thead>
             <tbody>
@@ -60,17 +60,14 @@ $this->assign('title', 'Inventory');
                     </td>
                     <td>
                         <?= $this->Html->link(
-                            'Edit',
-                            '/admin/products/edit/' . (int)$product->ProductId
-                        ) ?>
-                        <?= $this->Html->link(
                             'Stock',
-                            ['action' => 'edit', $product->ProductId]
+                            ['action' => 'edit', $product->ProductId],
+                            ['class' => 'admin-action-link']
                         ) ?>
                         <?= $this->Form->postLink(
                             'Delete',
                             '/admin/products/delete/' . (int)$product->ProductId,
-                            ['confirm' => 'Delete this product?']
+                            ['confirm' => 'Delete this product?', 'class' => 'admin-delete-link']
                         ) ?>
                     </td>
                 </tr>
@@ -100,7 +97,7 @@ $this->assign('title', 'Inventory');
                         <?= $this->Form->postLink(
                             'Delete',
                             ['action' => 'deleteCategory', $category->CategoryId],
-                            ['confirm' => 'Delete this category?']
+                            ['confirm' => 'Delete this category?', 'class' => 'admin-delete-link']
                         ) ?>
                     </td>
                 </tr>
@@ -108,16 +105,25 @@ $this->assign('title', 'Inventory');
             </tbody>
         </table>
     </div>
+</div>
 
+<div class="panel-card">
     <h2>Add category</h2>
+
     <?= $this->Form->create(null, [
         'url' => ['action' => 'addCategory'],
-        'class' => 'admin-form',
+        'class' => 'admin-category-form',
     ]) ?>
+
     <?= $this->Form->control('CategoryName', [
         'label' => 'Category name',
         'required' => true,
     ]) ?>
-    <?= $this->Form->button('Save category', ['class' => 'admin-green-button']) ?>
+
+    <?= $this->Form->button(
+        'Save category',
+        ['class' => 'admin-green-button']
+    ) ?>
+
     <?= $this->Form->end() ?>
 </div>
