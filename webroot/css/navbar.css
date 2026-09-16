@@ -167,7 +167,20 @@ body {
 }
 
 .navbar-links .nav-account-hi {
+    display: block;
+    padding: 1rem 1.4rem;
+    color: #3f3a2f;
+    font-size: 1.5rem;
     font-weight: 700;
+    cursor: default;
+}
+
+.navbar-links .nav-account-profile {
+    border-top: 0.1rem solid rgba(63, 58, 47, 0.15);
+    display: block;
+    padding: 1rem 1.4rem;
+    color: #3f3a2f;
+    font-size: 1.5rem;
 }
 
 .navbar-links .nav-account-signout {
@@ -175,7 +188,9 @@ body {
 }
 
 .navbar-links .nav-account-menu a:hover,
-.navbar-links .nav-account-menu a:focus-visible {
+.navbar-links .nav-account-menu a:focus-visible,
+.navbar-links .nav-account-signout:hover,
+.navbar-links .nav-account-signout:focus-visible {
     background: #e8e1d2;
 }
 

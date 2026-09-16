@@ -25,11 +25,14 @@ $profileUrl = in_array($role, ['admin', 'staff'], true) ? '/admin' : '/account';
         </svg>
     </button>
     <div id="nav-account-menu" class="nav-account-menu" hidden>
-        <?= $this->Html->link(
-            'Hi ' . $username,
+        <span class="nav-account-hi">Hi <?= h($username) ?></span>
+        
+        <!-- <?= $this->Html->link(
+            'My Profile',
             $profileUrl,
-            ['class' => 'nav-account-hi']
-        ) ?>
+            ['class' => 'nav-account-profile']
+        ) ?> -->
+        
         <?= $this->Html->link(
             'Sign out',
             '/logout',

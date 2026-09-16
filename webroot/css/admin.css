@@ -264,7 +264,12 @@ body.admin-app {
 }
 
 .admin-user .nav-account-hi {
+    display: block;
+    padding: 0.7rem 1rem;
+    color: var(--admin-text);
+    font-size: 0.9rem;
     font-weight: 700;
+    cursor: default;
 }
 
 .admin-user .nav-account-signout {
