@@ -7,7 +7,7 @@ $this->assign('title', 'Edit Product');
 <h1 class="page-title">Edit Product</h1>
 
 <div class="panel-card">
-    <?= $this->Form->create($product, ['class' => 'admin-form']) ?>
+    <?= $this->Form->create($product, ['class' => 'admin-form', 'type' => 'file']) ?>
     <?= $this->Form->control('ProductName', [
         'label' => 'Product name',
         'required' => true,
@@ -36,8 +36,9 @@ $this->assign('title', 'Edit Product');
         'required' => true,
     ]) ?>
     <?= $this->Form->control('Image', [
-        'label' => 'Image path',
-        'placeholder' => 'product/ashby-twin-sconce-brass.jpg',
+        'label' => 'Product image (optional)',
+        'type' => 'file',
+        'accept' => '.jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp',
     ]) ?>
     <div class="form-actions">
         <?= $this->Form->button('Update', ['class' => 'admin-green-button']) ?>
