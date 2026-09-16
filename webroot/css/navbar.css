@@ -216,7 +216,7 @@ body {
     }
 
     .navbar-brand .logo {
-        height: 4.8rem;
+        height: 7rem;
     }
 
     .navbar-toggle {
@@ -264,6 +264,33 @@ body {
         min-width: 0;
         margin-top: 0.8rem;
         box-shadow: none;
+    }
+    .nav-cart-wrapper {
+        position: relative;
+        display: inline-flex;
+        width: fit-content;
+        margin: 0.8rem 0;
+    }
+
+    .navbar-links .nav-cart-link {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: auto;
+        padding: 0;
+    }
+
+    .nav-cart-icon {
+        width: 3rem;
+        height: 3rem;
+        display: block;
+    }
+
+    .nav-cart-count {
+        position: absolute;
+        top: -0.45rem;
+        right: -0.55rem;
+        z-index: 2;
     }
 }
 
