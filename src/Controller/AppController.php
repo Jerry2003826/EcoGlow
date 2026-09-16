@@ -22,6 +22,22 @@ class AppController extends Controller
     {
         parent::beforeFilter($event);
 
+        $cartCount = 0;
+        $cartId = $this->request->getSession()->read('CartId');
+
+        if ($cartId) {
+            $cartItems = $this->fetchTable('CartItems')
+                ->find()
+                ->where(['CartId' => (int)$cartId])
+                ->all();
+
+            foreach ($cartItems as $item) {
+                $cartCount += (int)$item->Quantity;
+            }
+        }
+
+        $this->set(compact('cartCount'));
+
         $prefix = (string)$this->request->getParam('prefix');
         $controller = (string)$this->request->getParam('controller');
 

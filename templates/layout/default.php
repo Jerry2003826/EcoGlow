@@ -11,6 +11,7 @@ $loadStorefront = in_array(
     true
 );
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -69,7 +70,6 @@ $loadStorefront = in_array(
 
         <?= $this->Html->link('Services', '/services') ?>
         <?= $this->Html->link('Shop', '/products') ?>
-        <?= $this->Html->link('Cart', '/cart') ?>
         <?= $this->Html->link('About Us', '/about') ?>
 
         <?= $this->Html->link(
@@ -87,6 +87,22 @@ $loadStorefront = in_array(
                 ['class' => 'nav-button login-button']
             ) ?>
         <?php endif; ?>
+        <div class="nav-cart-wrapper">
+            <?= $this->Html->link(
+                $this->Html->image('shopping_cart.png', [
+                    'alt' => 'Shopping Cart',
+                    'class' => 'nav-cart-icon',
+                ]),
+                '/cart',
+                ['class' => 'nav-cart-link', 'escape' => false]
+            ) ?>
+
+            <?php if ($cartCount > 0): ?>
+                <span class="nav-cart-count">
+                    <?= $cartCount ?>
+                </span>
+            <?php endif; ?>
+        </div>
     </div>
 </nav><main class="main">
     <div class="container">

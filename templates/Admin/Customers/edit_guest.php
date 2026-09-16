@@ -19,9 +19,15 @@ $this->assign('title', 'Edit Guest');
     ]) ?>
     <?= $this->Form->control('Phone', [
         'label' => 'Phone',
+        'required' => true,
+        'inputmode' => 'numeric',
+        'pattern' => '04[0-9]{8}',
+        'maxlength' => 10,
+        'title' => 'Please enter a 10-digit Australian mobile number starting with 04',
     ]) ?>
     <?= $this->Form->control('Address', [
         'label' => 'Address',
+        'required' => true,
     ]) ?>
     <div class="form-actions">
         <?= $this->Form->button('Update', ['class' => 'admin-green-button']) ?>

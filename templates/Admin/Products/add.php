@@ -22,11 +22,13 @@ $this->assign('title', 'Add Product');
         'label' => 'Supplier',
         'options' => $suppliers ?? [],
         'empty' => 'Select a supplier',
+        'required' => true,
     ]) ?>
     <?= $this->Form->control('Description', [
         'label' => 'Description',
         'type' => 'textarea',
         'rows' => 4,
+        'required' => true,
     ]) ?>
     <?= $this->Form->control('Price', [
         'label' => 'Price',
