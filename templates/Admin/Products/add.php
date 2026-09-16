@@ -39,6 +39,7 @@ $this->assign('title', 'Add Product');
         'label' => 'Product image',
         'type' => 'file',
         'accept' => '.jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp',
+        'required' => true,
     ]) ?>
     <div class="form-actions">
         <?= $this->Form->button('Save', ['class' => 'admin-green-button']) ?>

@@ -27,12 +27,22 @@ $profileUrl = in_array($role, ['admin', 'staff'], true) ? '/admin' : '/account';
     <div id="nav-account-menu" class="nav-account-menu" hidden>
         <span class="nav-account-hi">Hi <?= h($username) ?></span>
         
-        <!-- <?= $this->Html->link(
-            'My Profile',
-            $profileUrl,
-            ['class' => 'nav-account-profile']
-        ) ?> -->
-        
+        <?php if (in_array($role, ['admin'], true)): ?>
+            <?= $this->Html->link(
+                'Admin Portal',
+                '/admin',
+                ['class' => 'nav-account-profile']
+            ) ?>
+        <?php endif; ?>
+
+        <?php if (in_array($role, ['staff'], true)): ?>
+            <?= $this->Html->link(
+                'Admin Portal',
+                '/admin',
+                ['class' => 'nav-account-profile']
+            ) ?>
+        <?php endif; ?>
+
         <?= $this->Html->link(
             'Sign out',
             '/logout',
