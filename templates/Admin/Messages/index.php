@@ -34,7 +34,14 @@ $this->assign('title', 'Enquiries');
                         ) ?>
                     </td>
                     <td><?= h($message->Name) ?></td>
-                    <td><?= h($message->Email) ?></td>
+                    <td>
+                        <?php if (!empty($message->Email)): ?>
+                            <?= $this->Html->link(
+                                (string)$message->Email,
+                                'mailto:' . $message->Email
+                            ) ?>
+                        <?php endif; ?>
+                    </td>
                     <td><?= h($message->Subject) ?></td>
                     <td>
                         <?= $message->CreatedDate
@@ -47,4 +54,34 @@ $this->assign('title', 'Enquiries');
             </tbody>
         </table>
     </div>
+</div>
+
+<div class="panel-card">
+    <h2>Contact enquirer</h2>
+
+    <?= $this->Form->create(null, [
+        'url' => ['action' => 'contact'],
+        'class' => 'admin-form',
+    ]) ?>
+
+    <?= $this->Form->control('enquiry_id', [
+        'label' => 'Enquiry',
+        'options' => $enquiryOptions ?? [],
+        'required' => true,
+    ]) ?>
+
+    <?= $this->Form->control('subject', [
+        'label' => 'Subject',
+        'required' => true,
+    ]) ?>
+
+    <?= $this->Form->control('message', [
+        'label' => 'Message',
+        'type' => 'textarea',
+        'rows' => 8,
+        'required' => true,
+    ]) ?>
+
+    <?= $this->Form->button('Send Email') ?>
+    <?= $this->Form->end() ?>
 </div>

@@ -7,7 +7,14 @@ $this->assign('title', 'Enquiry #' . $message->EnquiryId);
 <div class="panel-card">
     <h1>Enquiry #<?= (int)$message->EnquiryId ?></h1>
     <p><strong>Name:</strong> <?= h($message->Name) ?></p>
-    <p><strong>Email:</strong> <?= h($message->Email) ?></p>
+    <p><strong>Email:</strong>
+        <?php if (!empty($message->Email)): ?>
+            <?= $this->Html->link(
+                (string)$message->Email,
+                'mailto:' . $message->Email
+            ) ?>
+        <?php endif; ?>
+    </p>
     <p><strong>Subject:</strong> <?= h($message->Subject) ?></p>
     <p><strong>Created:</strong> <?= h((string)$message->CreatedDate) ?></p>
     <p><?= nl2br(h((string)$message->Message)) ?></p>
