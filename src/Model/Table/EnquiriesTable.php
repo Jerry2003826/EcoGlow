@@ -24,6 +24,10 @@ class EnquiriesTable extends Table
         $validator->notEmptyString('Name');
         $validator->email('Email')->notEmptyString('Email');
         $validator->notEmptyString('Message');
+        $validator
+            ->scalar('Status')
+            ->inList('Status', ['New', 'Pending', 'Resolved'])
+            ->allowEmptyString('Status');
 
         return $validator;
     }

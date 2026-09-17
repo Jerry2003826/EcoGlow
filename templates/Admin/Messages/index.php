@@ -16,17 +16,29 @@ $this->assign('title', 'Enquiries');
                 <th>Name</th>
                 <th>Email</th>
                 <th>Subject</th>
+                <th>Status</th>
                 <th>Created</th>
             </tr>
             </thead>
             <tbody>
             <?php if (count($messages) === 0): ?>
                 <tr>
-                    <td colspan="5">No enquiries yet.</td>
+                    <td colspan="6">No enquiries yet.</td>
                 </tr>
             <?php endif; ?>
             <?php foreach ($messages as $message): ?>
-                <tr>
+                <?php
+                    $status = (string)($message->Status ?? 'New');
+                    $statusClass = match ($status) {
+                        'Pending' => 'status-pending',
+                        'Resolved' => 'status-resolved',
+                        default => 'status-new',
+                    };
+                ?>
+                <tr
+                    class="admin-clickable-row"
+                    data-href="/admin/messages/view/<?= (int)$message->EnquiryId ?>"
+                >
                     <td>
                         <?= $this->Html->link(
                             (string)$message->EnquiryId,
@@ -43,6 +55,9 @@ $this->assign('title', 'Enquiries');
                         <?php endif; ?>
                     </td>
                     <td><?= h($message->Subject) ?></td>
+                    <td>
+                        <span class="<?= h($statusClass) ?>"><?= h($status) ?></span>
+                    </td>
                     <td>
                         <?= $message->CreatedDate
                             ? $message->CreatedDate->format('d/m/Y H:i')

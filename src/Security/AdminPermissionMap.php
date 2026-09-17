@@ -48,6 +48,7 @@ final class AdminPermissionMap
                 'index' => ['messages.manage'],
                 'view' => ['messages.manage'],
                 'contact' => ['messages.manage'],
+                'updateStatus' => ['messages.manage'],
             ],
             'Reports' => [
                 'index' => ['reports.financial'],

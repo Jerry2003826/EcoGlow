@@ -198,7 +198,8 @@ CREATE TABLE `Enquiry` (
     `Email` VARCHAR(100) NOT NULL,
     `Subject` VARCHAR(200),
     `Message` TEXT,
-    `CreatedDate` DATETIME DEFAULT CURRENT_TIMESTAMP
+    `CreatedDate` DATETIME DEFAULT CURRENT_TIMESTAMP,
+    `Status` VARCHAR(50) NOT NULL DEFAULT 'New'
 );
 
 CREATE TABLE `Delivery` (

@@ -45,6 +45,7 @@ class EnquiriesController extends AppController
         $enquiry = $this->Enquiries->newEmptyEntity();
         if ($this->request->is('post')) {
             $enquiry = $this->Enquiries->patchEntity($enquiry, $this->request->getData());
+            $enquiry->Status = 'New';
 
             $turnstileToken = $this->request->getData('cf-turnstile-response');
             $turnstileResponse = is_string($turnstileToken) && trim($turnstileToken) !== ''

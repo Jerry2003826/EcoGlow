@@ -98,4 +98,33 @@ class MessagesController extends AdminController
 
         return $this->redirect(['action' => 'index']);
     }
+
+    public function updateStatus(int|string $id)
+    {
+        if ($this->request->getAttribute('identity') === null) {
+            return;
+        }
+
+        $this->requirePermission('messages.manage');
+        $this->request->allowMethod(['post', 'put', 'patch']);
+
+        $allowed = ['New', 'Pending', 'Resolved'];
+        $newStatus = trim((string)$this->request->getData(
+            'Status',
+            $this->request->getData('status', '')
+        ));
+
+        if (!in_array($newStatus, $allowed, true)) {
+            $this->Flash->error('Invalid enquiry status.');
+
+            return $this->redirect(['action' => 'view', $id]);
+        }
+
+        $enquiry = $this->fetchTable('Enquiries')->get((int)$id);
+        $enquiry->Status = $newStatus;
+        $this->fetchTable('Enquiries')->saveOrFail($enquiry);
+        $this->Flash->success('Enquiry status updated.');
+
+        return $this->redirect(['action' => 'view', $id]);
+    }
 }

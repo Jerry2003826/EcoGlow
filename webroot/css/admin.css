@@ -684,6 +684,30 @@ body.admin-app {
     color: #B42318;
 }
 
+.status-new,
+.status-pending,
+.status-resolved {
+    display: inline-block;
+    padding: 0.25rem 0.65rem;
+    border-radius: 999px;
+    font-weight: 600;
+}
+
+.status-new {
+    background: #dbeafe;
+    color: #1d4ed8;
+}
+
+.status-pending {
+    background: #fff1e7;
+    color: #8a4b20;
+}
+
+.status-resolved {
+    background: #eaf7ee;
+    color: #187a3d;
+}
+
 .admin-content a.order-link,
 .admin-content a.inventory-product-link {
     display: inline-block;
