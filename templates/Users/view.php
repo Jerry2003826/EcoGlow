@@ -1,40 +1,20 @@
 <?php
-/**
- * @var \App\View\AppView $this
- * @var \App\Model\Entity\User $user
- */
+$this->assign('title', 'User account');
+$this->Html->css('storefront', ['block' => true, 'timestamp' => true]);
 ?>
-<div class="row">
-    <aside class="column">
-        <div class="side-nav">
-            <h4 class="heading"><?= __('Actions') ?></h4>
-            <?= $this->Html->link(__('Edit User'), ['action' => 'edit', $user->id], ['class' => 'side-nav-item']) ?>
-            <?= $this->Form->postLink(__('Delete User'), ['action' => 'delete', $user->id], ['confirm' => __('Are you sure you want to delete # {0}?', $user->id), 'class' => 'side-nav-item']) ?>
-            <?= $this->Html->link(__('List Users'), ['action' => 'index'], ['class' => 'side-nav-item']) ?>
-            <?= $this->Html->link(__('New User'), ['action' => 'add'], ['class' => 'side-nav-item']) ?>
-        </div>
-    </aside>
-    <div class="column column-80">
-        <div class="users view content">
-            <h3><?= h($user->username) ?></h3>
-            <table>
-                <tr>
-                    <th><?= __('Username') ?></th>
-                    <td><?= h($user->username) ?></td>
-                </tr>
-                <tr>
-                    <th><?= __('User Password') ?></th>
-                    <td><?= h($user->user_password) ?></td>
-                </tr>
-                <tr>
-                    <th><?= __('User Role') ?></th>
-                    <td><?= h($user->user_role) ?></td>
-                </tr>
-                <tr>
-                    <th><?= __('Id') ?></th>
-                    <td><?= $this->Number->format($user->id) ?></td>
-                </tr>
-            </table>
-        </div>
+
+<div class="account-edit-card">
+    <h1>User account</h1>
+    <dl class="user-details">
+        <div><dt>ID</dt><dd><?= (int)$user->UserId ?></dd></div>
+        <div><dt>Username</dt><dd><?= h($user->Username) ?></dd></div>
+        <div><dt>Email</dt><dd><?= h($user->Email) ?></dd></div>
+        <div><dt>Role</dt><dd><?= h(ucfirst((string)$user->UserRole)) ?></dd></div>
+        <div><dt>Status</dt><dd><?= h(ucfirst((string)$user->Status)) ?></dd></div>
+    </dl>
+    <p>To deactivate this account, choose Edit account and change its Status to Disabled.</p>
+    <div class="account-edit-actions">
+        <?= $this->Html->link('Edit account', ['action' => 'edit', $user->UserId], ['class' => 'button']) ?>
+        <?= $this->Html->link('Back to users', ['action' => 'index']) ?>
     </div>
 </div>

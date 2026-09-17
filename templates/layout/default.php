@@ -1,80 +1,117 @@
 <?php
-/**
- * CakePHP(tm) : Rapid Development Framework (https://cakephp.org)
- * Copyright (c) Cake Software Foundation, Inc. (https://cakefoundation.org)
- *
- * Licensed under The MIT License
- * For full copyright and license information, please see the LICENSE.txt
- * Redistributions of files must retain the above copyright notice.
- *
- * @copyright     Copyright (c) Cake Software Foundation, Inc. (https://cakefoundation.org)
- * @link          https://cakephp.org CakePHP(tm) Project
- * @since         0.10.0
- * @license       https://opensource.org/licenses/mit-license.php MIT License
- * @var \App\View\AppView $this
- */
+// templates/layout/default.php
 
-$cakeDescription = 'Eco Glow Lighting';
+$controller = (string)$this->request->getParam('controller');
+$identity = $this->request->getAttribute('identity');
+$role = (string)($identity?->get('UserRole') ?? '');
+
+$loadStorefront = in_array(
+    $controller,
+    ['Products', 'Cart', 'Checkout', 'Orders', 'Account'],
+    true
+);
 ?>
+
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <?= $this->Html->charset() ?>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>
-        <?= $cakeDescription ?>
-    </title>
-    <?= $this->Html->meta('icon') ?>
 
-    <?= $this->Html->css(['normalize.min', 'milligram.min', 'fonts', 'cake', 'navbar']) ?>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>Eco Glow Lighting</title>
+
+    <?= $this->Html->meta(
+        'icon',
+        '/img/icon_lamp.svg',
+        ['type' => 'image/svg+xml']
+    ) ?>
+
+    <?=
+    $this->Html->css(
+        $loadStorefront
+            ? ['normalize.min', 'milligram.min', 'fonts', 'cake', 'navbar', 'storefront']
+            : ['normalize.min', 'milligram.min', 'fonts', 'cake', 'navbar'],
+        ['timestamp' => true]
+    )
+    ?>
 
     <?= $this->fetch('meta') ?>
     <?= $this->fetch('css') ?>
-    <?= $this->fetch('script') ?>
+
+    <?= $this->Html->script('landing', ['defer' => true]) ?>
 </head>
-<body>
-    <nav class="navbar">
+<body><nav class="navbar">
 
     <div class="navbar-brand">
         <?= $this->Html->link(
-            'Eco Glow Lighting',
-            '/'
+            $this->Html->image('logo_leaf.png', [
+                'alt' => 'Eco Glow Lighting',
+                'class' => 'logo',
+            ]),
+            $this->Url->build('/'),
+            ['escape' => false]
         ) ?>
     </div>
 
-    <div class="navbar-links">
-        <?php 
-            $identity = $this->getRequest()->getAttribute('identity'); 
-        ?>
-        <?= $this->Html->link('Services', '#services') ?>
+    <button
+        class="navbar-toggle"
+        type="button"
+        aria-controls="primary-navigation"
+        aria-expanded="false"
+        aria-label="Toggle navigation"
+    >
+        <span></span>
+        <span></span>
+        <span></span>
+    </button>
 
-        <?= $this->Html->link('Shop', '#shop') ?>
+    <div id="primary-navigation" class="navbar-links">
 
-        <?= $this->Html->link('About Us', '#about') ?>
+        <?= $this->Html->link('Services', '/services') ?>
+        <?= $this->Html->link('Shop', '/products') ?>
+        <?= $this->Html->link('About Us', '/about') ?>
 
-        <?= $this->Html->link('Contact Us', '/enquiries/add',
+        <?= $this->Html->link(
+            'Contact Us',
+            '/enquiries/add',
             ['class' => 'nav-button contact-button']
         ) ?>
-        <?php if ($identity): ?>
-            <?= $this->Html->link('Log Out', '/users/logout',
-            ['class' => 'nav-button login-button']
-            )?>
 
+        <?php if ($identity): ?>
+            <?= $this->element('account_menu') ?>
         <?php else: ?>
-            <?= $this->Html->link('Log In', '/users/login',
-            ['class' => 'nav-button login-button']
+            <?= $this->Html->link(
+                'Log In',
+                '/login',
+                ['class' => 'nav-button login-button']
             ) ?>
         <?php endif; ?>
+        <div class="nav-cart-wrapper">
+            <?= $this->Html->link(
+                $this->Html->image('shopping_cart.png', [
+                    'alt' => 'Shopping Cart',
+                    'class' => 'nav-cart-icon',
+                ]),
+                '/cart',
+                ['class' => 'nav-cart-link', 'escape' => false]
+            ) ?>
 
-    </div>
-</nav>
-    <main class="main">
-        <div class="container">
-            <?= $this->Flash->render() ?>
-            <?= $this->fetch('content') ?>
+            <?php if ($cartCount > 0): ?>
+                <span class="nav-cart-count">
+                    <?= $cartCount ?>
+                </span>
+            <?php endif; ?>
         </div>
-    </main>
-    <footer>
-    </footer>
+    </div>
+</nav><main class="main">
+    <div class="container">
+        <?= $this->Flash->render() ?>
+        <?= $this->fetch('content') ?>
+    </div>
+</main>
+
+<?= $this->fetch('script') ?>
+
 </body>
 </html>

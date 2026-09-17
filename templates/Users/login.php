@@ -2,6 +2,10 @@
 
 use Cake\Core\Configure;
 
+$this->assign('title', 'Login');
+
+$this->Html->css('login', ['block' => true, 'timestamp' => true]);
+$this->Html->script('turnstile-form', ['block' => true, 'timestamp' => true]);
 $this->Html->script('https://challenges.cloudflare.com/turnstile/v0/api.js', [
     'block' => true,
     'async' => true,
@@ -12,28 +16,42 @@ $this->Html->meta([
     'link' => 'https://challenges.cloudflare.com',
     'rel' => 'preconnect',
 ]);
+
+$loginUrl = '/login';
+$redirect = $this->request->getQuery('redirect');
+if (is_string($redirect) && $redirect !== '') {
+    $loginUrl .= '?redirect=' . rawurlencode($redirect);
+}
 ?>
-
-<link rel="stylesheet" href = "/css/login.css" />
-
 <div class="login-page">
-    <div class="login">
-        <div class="login-content">
-            <h1>Log In</h1>
-
-            <div class ="login-image">
-                <div class="image-placeholder">
-                    Image
-                </div>
-            </div>
-        </div>
-
-         <div class="login-form">
-            <?= $this->Flash->render() ?>
-            <?= $this->Form->create() ?>
+    <div class="login-background">
+        <?= $this->Html->image(
+        'landing/login_picture.jpg',
+        [
+            'class' => 'login-background-image',
+            'alt' => 'Login background image',
+        ]
+    ) ?>
+    </div>
+    <div class="login-form">
+         <div class="login-card">
+             <h2>Log in</h2>
+            <?= $this->Form->create(null, [
+                'url' => $loginUrl,
+            ]) ?>
             <fieldset>
-                <?= $this->Form->control('username', ['required' => true]) ?>
-                <?= $this->Form->control('user_password', ['label' => 'Password', 'type' => 'password', 'required' => true]) ?>
+                <?= $this->Form->control('email', [
+                    'label' => 'Email',
+                    'required' => true,
+                    'type' => 'email',
+                    'class' => 'form-control',
+                ]) ?>
+                <?= $this->Form->control('password', [
+                    'label' => 'Password',
+                    'required' => true,
+                    'type' => 'password',
+                    'class' => 'form-control',
+                ]) ?>
                 <div class="cf-turnstile"
                     data-size="flexible"
                     data-theme="light"
@@ -43,42 +61,25 @@ $this->Html->meta([
                     data-timeout-callback="turnstileOnTimeout"
                     data-sitekey="<?= Configure::read('Captcha.turnstile.siteKey') ?>"
             ></div>
-            <blockquote id="turnstile-message" style="display:none"></blockquote>
+            <blockquote id="turnstile-message" role="status" aria-live="polite" hidden></blockquote>
             </fieldset>
 
             <?= $this->Form->button('Login', ['class' => 'btn', 'disabled' => true]); ?>
+            <p class="forgot-link">
+                <a href="/forgot-password">Forgot password?</a>
+            </p>
+            <div class="signup-link">
+                <span>Don't have an account?</span>
+
+                <?= $this->Html->link(
+                    'Sign Up',
+                    ['action' => 'add'],
+                    ['class' => 'signup-button']
+                ) ?>
+            </div>
             <?= $this->Form->end()?>
         </div>
         
     </div>
 
 </div>
-
-<script>
-    // Callbacks for Turnstile. Login button is disabled until Turnstile passes.
-    var turnstileMessageBlock = document.querySelector('#turnstile-message');
-    var actionButton = document.querySelector('button.btn');
-
-    function turnstileOnSuccess(token) {
-        turnstileMessageBlock.style.display = 'none';
-        actionButton.removeAttribute('disabled');
-    }
-
-    function turnstileOnError(errorCode) {
-        turnstileMessageBlock.style.display = 'block';
-        turnstileMessageBlock.innerText = "Challenge error. Please refresh the webpage and try again.";
-        actionButton.setAttribute('disabled');
-    }
-
-    function turnstileOnExpired() {
-        turnstileMessageBlock.style.display = 'block';
-        turnstileMessageBlock.innerText = "Challenge token expired. Please validate again.";
-        actionButton.setAttribute('disabled');
-    }
-
-    function turnstileOnTimeout() {
-        turnstileMessageBlock.style.display = 'block';
-        turnstileMessageBlock.innerText = "Challenge timed out. Please validate again.";
-        actionButton.setAttribute('disabled');
-    }
-</script>

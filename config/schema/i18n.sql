@@ -16,3 +16,4 @@ CREATE TABLE i18n (
     UNIQUE INDEX I18N_LOCALE_FIELD(locale, model, foreign_key, field),
     INDEX I18N_FIELD(model, foreign_key, field)
 );
+

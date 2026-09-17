@@ -3,30 +3,29 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
-/**
- * Enquiries Controller
- *
- * @property \App\Model\Table\EnquiriesTable $Enquiries
- */
+use Cake\Http\Exception\ForbiddenException;
+
 class EnquiriesController extends AppController
 {
 
-    // in src/Controller/AppController.php
     public function beforeFilter(\Cake\Event\EventInterface $event): void
     {
         parent::beforeFilter($event);
-        // for all controllers in our application, make index and view
-        // actions public, skipping the authentication check
+
         $this->Authentication->allowUnauthenticated(['add']);
 
         $this->loadComponent('Turnstile');
+
+        if ($this->request->getParam('action') !== 'add') {
+            $identity = $this->request->getAttribute('identity');
+            $role = $identity ? (string)$identity->get('UserRole') : '';
+
+            if (!in_array($role, ['admin', 'staff'], true)) {
+                throw new ForbiddenException('You are not authorized to access enquiries.');
+            }
+        }
     }
 
-    /**
-     * Index method
-     *
-     * @return \Cake\Http\Response|null|void Renders view
-     */
     public function index()
     {
         $query = $this->Enquiries->find();
@@ -35,43 +34,33 @@ class EnquiriesController extends AppController
         $this->set(compact('enquiries'));
     }
 
-    /**
-     * View method
-     *
-     * @param string|null $id Enquiry id.
-     * @return \Cake\Http\Response|null|void Renders view
-     * @throws \Cake\Datasource\Exception\RecordNotFoundException When record not found.
-     */
     public function view($id = null)
     {
         $enquiry = $this->Enquiries->get($id, contain: []);
         $this->set(compact('enquiry'));
     }
 
-    /**
-     * Add method
-     *
-     * @return \Cake\Http\Response|null|void Redirects on successful add, renders view otherwise.
-     */
     public function add()
     {
         $enquiry = $this->Enquiries->newEmptyEntity();
         if ($this->request->is('post')) {
             $enquiry = $this->Enquiries->patchEntity($enquiry, $this->request->getData());
+            $enquiry->Status = 'New';
+            $enquiry->CreatedDate = (new \DateTime('now', new \DateTimeZone('Australia/Melbourne')))
+                ->format('Y-m-d H:i:s');
 
-            // Validate Turnstile response with CloudFlare
             $turnstileToken = $this->request->getData('cf-turnstile-response');
-            if ($turnstileToken) {
-                $turnstileResponse = $this->Turnstile->validateTurnstile($turnstileToken, $this->request->clientIp());
-                // On failed validation, send user back to reset password page and try again
-                if (!$turnstileResponse || !$turnstileResponse['success']) {
-                    $this->log('Turnstile Response Error: ' . json_encode($turnstileResponse));
-                    $this->Flash->error('CAPTCHA challenge failed. Please try again.');
+            $turnstileResponse = is_string($turnstileToken) && trim($turnstileToken) !== ''
+                ? $this->Turnstile->validateTurnstile($turnstileToken, $this->request->clientIp())
+                : ['success' => false];
 
-                    $this->set(compact('enquiry')); // Need to return the $user entity so the form is autofilled
+            if (!$turnstileResponse || !$turnstileResponse['success']) {
+                $this->log('Turnstile Response Error: ' . json_encode($turnstileResponse));
+                $this->Flash->error('CAPTCHA challenge failed. Please try again.');
 
-                    return $this->render(); // Skip the rest of the controller and render the view
-                }
+                $this->set(compact('enquiry'));
+
+                return;
             }
 
             if ($this->Enquiries->save($enquiry)) {
@@ -84,13 +73,6 @@ class EnquiriesController extends AppController
         $this->set(compact('enquiry'));
     }
 
-    /**
-     * Edit method
-     *
-     * @param string|null $id Enquiry id.
-     * @return \Cake\Http\Response|null|void Redirects on successful edit, renders view otherwise.
-     * @throws \Cake\Datasource\Exception\RecordNotFoundException When record not found.
-     */
     public function edit($id = null)
     {
         $enquiry = $this->Enquiries->get($id, contain: []);
@@ -106,13 +88,6 @@ class EnquiriesController extends AppController
         $this->set(compact('enquiry'));
     }
 
-    /**
-     * Delete method
-     *
-     * @param string|null $id Enquiry id.
-     * @return \Cake\Http\Response|null Redirects to index.
-     * @throws \Cake\Datasource\Exception\RecordNotFoundException When record not found.
-     */
     public function delete($id = null)
     {
         $this->request->allowMethod(['post', 'delete']);

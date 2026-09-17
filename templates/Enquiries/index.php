@@ -1,8 +1,5 @@
 <?php
-/**
- * @var \App\View\AppView $this
- * @var iterable<\App\Model\Entity\Enquiry> $enquiries
- */
+
 ?>
 <div class="enquiries index content" style="margin-top: 100px;">
     <h3><?= __('Enquiries') ?></h3>

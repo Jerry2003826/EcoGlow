@@ -3,67 +3,205 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
-/**
- * Users Controller
- *
- * @property \App\Model\Table\UsersTable $Users
- */
+use Cake\I18n\DateTime;
+use Cake\Mailer\Mailer;
+use Cake\Routing\Router;
+
 class UsersController extends AppController
 {
-    /**
-     * Index method
-     *
-     * @return \Cake\Http\Response|null|void Renders view
-     */
 
-    // src/Controller/UsersController.php
     public function beforeFilter(\Cake\Event\EventInterface $event): void
     {
         parent::beforeFilter($event);
-        // Configure the login action to not require authentication, preventing
-        // the infinite redirect loop issue
-        $this->Authentication->allowUnauthenticated(['login']);
-        // In UsersController::beforeFilter()
-        $this->Authentication->allowUnauthenticated(['login', 'add']);
+
+
+        $this->Authentication->allowUnauthenticated([
+            'login',
+            'add',
+            'forgotPassword',
+            'resetPassword',
+        ]);
         $this->loadComponent('Turnstile');
+
+        $action = $this->request->getParam('action');
+        $identity = $this->request->getAttribute('identity');
+
+        if (
+            $action === 'login'
+            || $action === 'add'
+            || $action === 'forgotPassword'
+            || $action === 'resetPassword'
+        ) {
+            return;
+        }
+
+        //If not logged in, stop check the role and allow access to login and signup
+        if (!$identity) {
+            return;
+        }
+
+        // Only administrators can manage other user accounts.
+        if($identity->UserRole === 'admin') {
+            return;
+        }
+        // All signed-in users can log out or edit their own profile.
+        if($action === 'logout') {
+            return;
+        }
+        if($action === 'edit') {
+            $id = (int)$this->request->getParam('pass.0');
+            if($id === (int)$identity->UserId) {
+                return;
+            }
+        }
+
+        $this->Flash->error(__('You are not authorized to access that location.'));
+        $event->setResult($this->redirect(['controller' => 'Pages', 'action' => 'display']));
+
     }
 
     public function login()
     {
         $result = $this->Authentication->getResult();
-        // If the user is logged in send them away.
+
         $turnstileToken = $this->request->getData('cf-turnstile-response');
-        if ($this->request->is('post') && $turnstileToken) {
-            $turnstileResponse = $this->Turnstile->validateTurnstile($turnstileToken, $this->request->clientIp());
-            // On failed validation, log the user out of the system to prevent access
+        if ($this->request->is('post')) {
+            $turnstileResponse = is_string($turnstileToken) && trim($turnstileToken) !== ''
+                ? $this->Turnstile->validateTurnstile($turnstileToken, $this->request->clientIp())
+                : ['success' => false];
+
             if (!$turnstileResponse || !$turnstileResponse['success']) {
                 $this->log('Turnstile Response Error: ' . json_encode($turnstileResponse));
                 $this->Flash->error('CAPTCHA challenge failed. Please try again.');
                 $this->Authentication->logout();
 
-                return $this->redirect(['controller' => 'Pages', 'action' => 'display']);
+                return $this->redirect(['action' => 'login']);
             }
         }
 
         if ($result && $result->isValid()) {
-            $target = $this->Authentication->getLoginRedirect() ?? [
-                'controller' => 'Enquiries',
-                'action' => 'index',
-            ];
-            return $this->redirect($target);
+            $role = $this->request->getAttribute('identity');
+            if($role->UserRole === 'admin' || $role->UserRole === 'staff') {
+                $target = $this->Authentication->getLoginRedirect() ?? '/admin';
+                return $this->redirect($target);
+            }
+
+            return $this->redirect('/');
+
         }
         if ($this->request->is('post')) {
             $this->Flash->error(__('Invalid username or password'));
         }
     }
 
-    // in src/Controller/UsersController.php
     public function logout()
     {
         $this->Authentication->logout();
         return $this->redirect(['controller' => 'Pages', 'action' => 'display']);
     }
 
+    public function forgotPassword()
+    {
+        if ($this->request->is('post')) {
+            $email = trim((string)$this->request->getData('email'));
+            $user = $this->Users->find()
+                ->where([
+                    'Email' => $email,
+                    'Status' => 'active',
+                ])
+                ->first();
+
+            if ($user) {
+                $token = bin2hex(random_bytes(32));
+                $user->ResetToken = $token;
+                $user->ResetTokenExpires = DateTime::now()->addHours(1);
+                $this->Users->save($user);
+
+                $resetUrl = Router::url([
+                    'controller' => 'Users',
+                    'action' => 'resetPassword',
+                    $token,
+                ], true);
+
+                try {
+                    (new Mailer('default'))
+                        ->setTo((string)$user->Email)
+                        ->setSubject('Reset your Eco Glow password')
+                        ->deliver(
+                            "Use this link to reset your password:\n\n"
+                            . $resetUrl
+                            . "\n\nThis link expires in 1 hour."
+                        );
+                } catch (\Throwable $e) {
+                }
+            }
+
+            $this->Flash->success(
+                'If that email is registered, a reset link has been sent.'
+            );
+
+            return $this->redirect(['action' => 'login']);
+        }
+    }
+
+    public function resetPassword(?string $token = null)
+    {
+        if ($token === null || $token === '') {
+            $this->Flash->error('That reset link is not valid.');
+
+            return $this->redirect(['action' => 'forgotPassword']);
+        }
+
+        $user = $this->Users->find()
+            ->where([
+                'ResetToken' => $token,
+                'Status' => 'active',
+            ])
+            ->first();
+
+        $expired = !$user
+            || empty($user->ResetTokenExpires)
+            || strtotime((string)$user->ResetTokenExpires) < time();
+
+        if ($expired) {
+            $this->Flash->error('That reset link is invalid or has expired.');
+
+            return $this->redirect(['action' => 'forgotPassword']);
+        }
+
+        if ($this->request->is(['post', 'put', 'patch'])) {
+            $password = (string)$this->request->getData('password');
+            $confirm = (string)$this->request->getData('password_confirm');
+
+            if ($password === '' || strlen($password) < 8) {
+                $this->Flash->error('Password must be at least 8 characters.');
+                $this->set(compact('token'));
+
+                return;
+            }
+
+            if ($password !== $confirm) {
+                $this->Flash->error('Passwords do not match.');
+                $this->set(compact('token'));
+
+                return;
+            }
+
+            $user->Password = $password;
+            $user->ResetToken = null;
+            $user->ResetTokenExpires = null;
+
+            if ($this->Users->save($user)) {
+                $this->Flash->success('Your password has been reset. Please log in.');
+
+                return $this->redirect(['action' => 'login']);
+            }
+
+            $this->Flash->error('The password could not be reset. Please try again.');
+        }
+
+        $this->set(compact('token'));
+    }
 
     public function index()
     {
@@ -73,53 +211,106 @@ class UsersController extends AppController
         $this->set(compact('users'));
     }
 
-    /**
-     * View method
-     *
-     * @param string|null $id User id.
-     * @return \Cake\Http\Response|null|void Renders view
-     * @throws \Cake\Datasource\Exception\RecordNotFoundException When record not found.
-     */
     public function view($id = null)
     {
         $user = $this->Users->get($id, contain: []);
         $this->set(compact('user'));
     }
 
-    /**
-     * Add method
-     *
-     * @return \Cake\Http\Response|null|void Redirects on successful add, renders view otherwise.
-     */
     public function add()
     {
         $user = $this->Users->newEmptyEntity();
+        $errors = [];
+
         if ($this->request->is('post')) {
-            $user = $this->Users->patchEntity($user, $this->request->getData());
+            $data = $this->request->getData();
+            $data['UserRole'] = 'customer';
+            $data['customer']['Email'] = $data['Email'] ?? '';
+
+            if (!empty($data['customer']['Phone'])) {
+                $data['customer']['Phone'] = preg_replace(
+                    '/[^0-9]/',
+                    '',
+                    (string)$data['customer']['Phone']
+                );
+            }
+
+            $user = $this->Users->patchEntity($user, $data, [
+                'fields' => ['Username', 'Email', 'Password', 'UserRole', 'customer'],
+                'associated' => ['Customers'],
+            ]);
+
+            if (empty($data['customer']['CustomerName'])) {
+                $errors['CustomerName'] = true;
+            }
+
+            if (empty($data['Email'])) {
+                $errors['Email'] = true;
+            }
+
+            if (!empty($errors)) {
+                $this->set(compact('user', 'errors'));
+
+                return;
+            }
+
             if ($this->Users->save($user)) {
                 $this->Flash->success(__('The user has been saved.'));
 
-                return $this->redirect(['action' => 'index']);
+                return $this->redirect(['action' => 'login']);
             }
             $this->Flash->error(__('The user could not be saved. Please, try again.'));
         }
-        $this->set(compact('user'));
+        $this->set(compact('user', 'errors'));
     }
 
-    /**
-     * Edit method
-     *
-     * @param string|null $id User id.
-     * @return \Cake\Http\Response|null|void Redirects on successful edit, renders view otherwise.
-     * @throws \Cake\Datasource\Exception\RecordNotFoundException When record not found.
-     */
     public function edit($id = null)
     {
         $user = $this->Users->get($id, contain: []);
         if ($this->request->is(['patch', 'post', 'put'])) {
-            $user = $this->Users->patchEntity($user, $this->request->getData());
-            if ($this->Users->save($user)) {
+            $identity = $this->request->getAttribute('identity');
+            $role = (string)($identity->get('UserRole') ?? '');
+            $fields = ['Username', 'Email', 'Password'];
+
+            if ($role === 'admin') {
+                $fields = array_merge($fields, ['UserRole', 'Status']);
+            }
+
+            $data = $this->request->getData();
+            if (($data['Password'] ?? '') === '') {
+                unset($data['Password']);
+            }
+
+            $user = $this->Users->patchEntity($user, $data, ['fields' => $fields]);
+            if (isset($data['Password']) && strlen((string)$data['Password']) < 8) {
+                $user->setError('Password', 'Password must be at least 8 characters.');
+            }
+
+            $emailChanged = $user->isDirty('Email');
+            $saved = $this->Users->getConnection()->transactional(function () use ($user, $emailChanged): bool {
+                if (!$this->Users->save($user)) {
+                    return false;
+                }
+
+                if ($emailChanged) {
+                    $this->fetchTable('Customers')->updateAll(
+                        ['Email' => $user->Email],
+                        ['UserId' => (int)$user->UserId],
+                    );
+                }
+
+                return true;
+            });
+
+            if ($saved) {
                 $this->Flash->success(__('The user has been saved.'));
+
+                if (!in_array($role, ['admin', 'staff'], true)) {
+                    return $this->redirect('/account');
+                }
+                if ($role === 'staff') {
+                    return $this->redirect('/admin');
+                }
 
                 return $this->redirect(['action' => 'index']);
             }
@@ -128,13 +319,6 @@ class UsersController extends AppController
         $this->set(compact('user'));
     }
 
-    /**
-     * Delete method
-     *
-     * @param string|null $id User id.
-     * @return \Cake\Http\Response|null Redirects to index.
-     * @throws \Cake\Datasource\Exception\RecordNotFoundException When record not found.
-     */
     public function delete($id = null)
     {
         $this->request->allowMethod(['post', 'delete']);

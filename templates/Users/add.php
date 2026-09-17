@@ -1,29 +1,49 @@
 <?php
-/**
- * @var \App\View\AppView $this
- * @var \App\Model\Entity\User $user
- */
+// templates/Users/add.php
+
+$this->assign('title', 'Create Account');
+$this->Html->css('storefront', ['block' => true, 'timestamp' => true]);
+$this->Html->css('userPage/add', ['block' => true, 'timestamp' => true]);
+$errors = $errors ?? [];
 ?>
-<div class="row">
-    <aside class="column">
-        <div class="side-nav">
-            <h4 class="heading"><?= __('Actions') ?></h4>
-            <?= $this->Html->link(__('List Users'), ['action' => 'index'], ['class' => 'side-nav-item']) ?>
-        </div>
-    </aside>
-    <div class="column column-80">
-        <div class="users form content">
-            <?= $this->Form->create($user) ?>
-            <fieldset>
-                <legend><?= __('Add User') ?></legend>
-                <?php
-                    echo $this->Form->control('username');
-                    echo $this->Form->control('user_password');
-                    echo $this->Form->control('user_role');
-                ?>
-            </fieldset>
-            <?= $this->Form->button(__('Submit')) ?>
-            <?= $this->Form->end() ?>
-        </div>
+
+<div class="signup-page">
+    <div class="signup-background">
+        <?= $this->Html->image(
+        'landing/login_picture.jpg',
+        [
+            'class' => 'signup-background-image',
+            'alt' => 'Signup background image',
+        ]
+    ) ?>
+    </div>
+    <div class="checkout-card signup-card">
+        <h2>Create Account</h2>
+
+        <?php if (!empty($errors['CustomerName'])): ?>
+            <p class="error">Please enter your name.</p>
+        <?php endif; ?>
+
+        <?php if (!empty($errors['Email'])): ?>
+            <p class="error">Please enter your email address.</p>
+        <?php endif; ?>
+
+        <?= $this->Form->create($user) ?>
+
+        <?= $this->Form->control('Username') ?>
+        <?= $this->Form->control('Password', ['type' => 'password', 'required' => true, 'minlength' => 8,]) ?>
+        <?= $this->Form->control('Email', ['type' => 'email']) ?>
+        <?= $this->Form->control('customer.CustomerName', ['label' => 'Full name']) ?>
+        <?= $this->Form->control('customer.Phone', [
+            'label' => 'Phone',
+            'type' => 'tel',
+            'inputmode' => 'numeric',
+            'pattern' => '04[0-9]{8}',
+        ]) ?>
+        <?= $this->Form->control('customer.Address', ['label' => 'Address']) ?>
+
+        <?= $this->Form->button('Create Account') ?>
+
+        <?= $this->Form->end() ?>
     </div>
 </div>
