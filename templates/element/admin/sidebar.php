@@ -156,6 +156,18 @@ if ($can('inventory.view') && $totalStockAlert > 0) {
             <?php endif; ?>
         </div>
 
+        <?php if ($can('content.manage')): ?>
+            <div class="sidebar-group">
+                <div class="sidebar-group-title">Website</div>
+
+                <?= $this->Html->link(
+                    'Landing page',
+                    '/admin/content',
+                    $active($currentController === 'Content')
+                ) ?>
+            </div>
+        <?php endif; ?>
+
         <?php if ($can('reports.view')): ?>
             <div class="sidebar-group">
                 <div class="sidebar-group-title">Reporting</div>
