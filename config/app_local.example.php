@@ -52,4 +52,13 @@ return [
             'secretKey' => '1x0000000000000000000000000000000AA',
         ],
     ],
+
+    /*
+     * AI chatbot (DeepSeek, OpenAI-compatible). Leave apiKey empty to disable.
+     */
+    'Chatbot' => [
+        'apiKey' => env('CHATBOT_API_KEY', ''),
+        'endpoint' => env('CHATBOT_ENDPOINT', 'https://api.deepseek.com/chat/completions'),
+        'model' => env('CHATBOT_MODEL', 'deepseek-chat'),
+    ],
 ];
