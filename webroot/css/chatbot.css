@@ -81,6 +81,7 @@
 
 .chatbot-title {
     margin: 0;
+    color: #ffffff;
     font-family: "Raleway", sans-serif;
     font-size: 18px;
     line-height: 1.2;
@@ -119,7 +120,7 @@
     font-size: 14px;
     line-height: 1.45;
     word-wrap: break-word;
-    white-space: pre-wrap;
+    white-space: pre-line;
 }
 
 .chatbot-message-user {
