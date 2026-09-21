@@ -97,6 +97,13 @@ final class AdminPermissionMap
                 'moveBlock' => ['content.manage'],
                 'toggleBlock' => ['content.manage'],
             ],
+            'Chatbot' => [
+                'index' => ['chatbot.manage'],
+                'add' => ['chatbot.manage'],
+                'edit' => ['chatbot.manage'],
+                'delete' => ['chatbot.manage'],
+                'toggle' => ['chatbot.manage'],
+            ],
         ];
 
         return $map[$controller][$action] ?? [];

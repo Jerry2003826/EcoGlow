@@ -48,6 +48,7 @@ class PermissionService
             'reports.view' => 'Reports',
             'access.manage' => 'Access',
             'content.manage' => 'Landing page content',
+            'chatbot.manage' => 'Chatbot FAQs',
         ];
     }
 
@@ -87,7 +88,7 @@ class PermissionService
 
         if ($count === 0) {
             foreach ($this->permissionMap() as $key => $label) {
-                if ($key === 'access.manage' || $key === 'content.manage') {
+                if ($key === 'access.manage' || $key === 'content.manage' || $key === 'chatbot.manage') {
                     continue;
                 }
 

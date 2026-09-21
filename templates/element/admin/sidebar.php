@@ -156,15 +156,25 @@ if ($can('inventory.view') && $totalStockAlert > 0) {
             <?php endif; ?>
         </div>
 
-        <?php if ($can('content.manage')): ?>
+        <?php if ($can('content.manage') || $can('chatbot.manage')): ?>
             <div class="sidebar-group">
                 <div class="sidebar-group-title">Website</div>
 
-                <?= $this->Html->link(
-                    'Landing page',
-                    '/admin/content',
-                    $active($currentController === 'Content')
-                ) ?>
+                <?php if ($can('content.manage')): ?>
+                    <?= $this->Html->link(
+                        'Landing page',
+                        '/admin/content',
+                        $active($currentController === 'Content')
+                    ) ?>
+                <?php endif; ?>
+
+                <?php if ($can('chatbot.manage')): ?>
+                    <?= $this->Html->link(
+                        'Chatbot FAQs',
+                        '/admin/chatbot',
+                        $active($currentController === 'Chatbot')
+                    ) ?>
+                <?php endif; ?>
             </div>
         <?php endif; ?>
 
