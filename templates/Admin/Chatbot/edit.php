@@ -24,8 +24,9 @@ $this->assign('title', 'Edit FAQ');
     <?= $this->Form->control('SortOrder', [
         'type' => 'number',
         'label' => 'Display order',
-        'help' => 'Lower numbers appear first.',
     ]) ?>
+
+    <p class="content-field-hint">Lower numbers appear first.</p>
 
     <?= $this->Form->control('IsActive', [
         'type' => 'checkbox',

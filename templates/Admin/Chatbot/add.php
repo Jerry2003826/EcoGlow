@@ -25,8 +25,9 @@ $this->assign('title', 'Add FAQ');
         'type' => 'number',
         'label' => 'Display order',
         'default' => 0,
-        'help' => 'Lower numbers appear first.',
     ]) ?>
+
+    <p class="content-field-hint">Lower numbers appear first.</p>
 
     <?= $this->Form->control('IsActive', [
         'type' => 'checkbox',
