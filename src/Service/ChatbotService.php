@@ -129,7 +129,8 @@ class ChatbotService
             '- If you do not know the answer, say so and suggest contacting the team via /enquiries/add.',
             '- Do not discuss competitors.',
             '- Do not promise products, stock, prices, or services that are not present in the provided catalogue.',
-            '- Do not output Markdown tables.',
+            '- Reply in plain text only. Do not use Markdown formatting such as **bold**, headings, or tables.',
+            '- For lists, start each item on a new line with a simple dash.',
         ]);
 
         return implode("\n\n", $sections);
