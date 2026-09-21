@@ -16,6 +16,7 @@ declare(strict_types=1);
  */
 namespace App\Controller;
 
+use App\Service\LandingContentService;
 use Cake\Core\Configure;
 use Cake\Http\Exception\ForbiddenException;
 use Cake\Http\Exception\NotFoundException;
@@ -24,7 +25,14 @@ use Cake\View\Exception\MissingTemplateException;
 
 class PagesController extends AppController
 {
-
+    /**
+     * Render a static page template.
+     *
+     * The home page also receives CMS text and blocks from LandingContentService.
+     *
+     * @param string ...$path Template path segments.
+     * @return \Cake\Http\Response|null
+     */
     public function display(string ...$path): ?Response
     {
         if (!$path) {
@@ -43,6 +51,15 @@ class PagesController extends AppController
         }
         $this->set(compact('page', 'subpage'));
 
+        if ($path[0] === 'home') {
+            $landing = new LandingContentService();
+            $this->set([
+                'landingTexts' => $landing->textMap(),
+                'carouselBlocks' => $landing->blocks('carousel'),
+                'featureBlocks' => $landing->blocks('feature'),
+            ]);
+        }
+
         try {
             return $this->render(implode('/', $path));
         } catch (MissingTemplateException $exception) {
@@ -53,8 +70,12 @@ class PagesController extends AppController
         }
     }
 
+    /**
+     * Unused action. The storefront route uses display('home').
+     *
+     * @return void
+     */
     public function home()
     {
-
     }
 }

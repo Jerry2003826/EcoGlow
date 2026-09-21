@@ -3,86 +3,37 @@
 $this->assign('title', 'Eco Glow Lighting');
 $this->Html->css('landingPage/home', ['block' => true, 'timestamp' => true]);
 
-$carouselSlides = [
-    [
-        'image' => 'interior.jpg',
-        'title' => 'A brighter space. A warmer welcome.',
-        'description' => 'Eco Glow Lighting offers a range of modern lighting solutions for your home, including pendant, wall, table and floor lighting.',
-        'button' => 'Explore lighting', 'url' => '#shop',
-        'alt' => 'Clear pendant lights hanging in a row',
-    ],
-    [
-        'image' => 'opal-lamp.jpg',
-        'title' => 'Great lighting starts with a conversation',
-        'description' => 'Get in touch with our team to discuss your lighting needs.',
-        'button' => 'Talk to our team', 
-        'url' => ['controller' => 'Enquiries', 'action' => 'add'],
-        'alt' => 'Opal table lamp on a side table in a living room',
-    ],
-    [
-        'image' => 'pendants.jpg',
-        'title' => 'Lighting for every space',
-        'description' => 'Explore our range of pendant, wall, table and floor lighting for your home.',
-        'button' => 'View our products', 'url' => '/products',
-        'alt' => 'Pendant lights in a modern interior',
-    ],
-];
-
-$featuredProducts = [
-    [
-        'name' => 'Pendant Lights',
-        'description' => 'Ceiling-mounted and pendant lighting for indoor spaces.',
-        'alt' => 'Oak pendant light above a dining table',
-    ],
-    [
-        'name' => 'Table Lamps',
-        'description' => 'A simple table lamp with a natural linen shade, ideal for bedside tables and reading corners.',
-        'alt' => 'Linen table lamp on a side table',
-    ],
-    [
-        'name' => 'Wall Lights',
-        'description' => 'Wall-mounted lighting for indoor and decorative use.',
-        'alt' => 'Brass wall light mounted on an interior wall',
-    ],
-    [
-        'name' => 'Floor Lamps',
-        'description' => 'Freestanding lighting for living and reading areas.',
-        'alt' => 'Dome floor lamp beside an armchair',
-    ],
-    [
-        'name' => 'Outdoor Lights',
-        'description' => 'Weather-resistant lighting for gardens and outdoor areas.',
-        'alt' => 'Outdoor lights in a garden setting',
-    ],
-    [
-        'name' => 'Smart Lights',
-        'description' => 'An energy-efficient smart globe with adjustable brightness for a flexible home lighting setup.',
-        'alt' => 'Smart LED light globe',
-    ],
-];
+$landingTexts = $landingTexts ?? [];
+$carouselBlocks = $carouselBlocks ?? [];
+$featureBlocks = $featureBlocks ?? [];
 ?>
 
 <div class="landing-page">
+    <?php if ($carouselBlocks !== []) : ?>
     <section class="home-carousel" aria-label="Featured lighting" data-carousel>
         <div class="carousel-track">
-            <?php foreach ($carouselSlides as $index => $slide): ?>
+            <?php foreach ($carouselBlocks as $index => $slide) : ?>
                 <article
                     class="carousel-slide<?= $index === 0 ? ' is-active' : '' ?>"
                     data-slide
                     aria-hidden="<?= $index === 0 ? 'false' : 'true' ?>"
                 >
                     <?= $this->Html->image(
-                        'landing/' . $slide['image'],
+                        $slide->ImagePath,
                         [
-                            'alt' => h($slide['alt']),
+                            'alt' => $slide->AltText,
                             'class' => 'carousel-image',
-                        ]
+                        ],
                     ) ?>
                     <div class="carousel-caption">
-                        <p class="section-eyebrow">Featured collection</p>
-                        <h2><?= h($slide['title']) ?></h2>
-                        <p><?= h($slide['description']) ?></p>
-                        <?= $this->Html->link($slide['button'], $slide['url'], ['class' => 'home-btn home-btn-light']) ?>
+                        <p class="section-eyebrow"><?= h($landingTexts['carousel.eyebrow'] ?? '') ?></p>
+                        <h2><?= h($slide->Title) ?></h2>
+                        <p><?= h($slide->Description) ?></p>
+                        <?= $this->Html->link(
+                            $slide->ButtonLabel,
+                            $slide->ButtonUrl,
+                            ['class' => 'home-btn home-btn-light'],
+                        ) ?>
                     </div>
                 </article>
             <?php endforeach; ?>
@@ -90,7 +41,7 @@ $featuredProducts = [
 
         <div class="carousel-footer">
             <div class="carousel-dots" role="tablist" aria-label="Choose featured slide">
-                <?php foreach ($carouselSlides as $index => $slide): ?>
+                <?php foreach ($carouselBlocks as $index => $slide) : ?>
                     <button
                         class="carousel-dot<?= $index === 0 ? ' is-active' : '' ?>"
                         type="button"
@@ -103,45 +54,45 @@ $featuredProducts = [
             </div>
         </div>
     </section>
+    <?php endif; ?>
 
     <section class="hero" id="about" aria-labelledby="hero-title">
         <div class="hero-inner">
             <div class="hero-content">
-                <p class="section-eyebrow">Lighting for everyday living</p>
+                <p class="section-eyebrow"><?= h($landingTexts['hero.eyebrow'] ?? '') ?></p>
 
-                <h1 id="hero-title">All things Lighting.</h1>
+                <h1 id="hero-title"><?= h($landingTexts['hero.title'] ?? '') ?></h1>
 
                 <p>
-                    Eco Glow Lighting offers modern lighting fixtures
-                    and smart home solutions designed to make your
-                    home feel brighter and better.
+                    <?= h($landingTexts['hero.body1'] ?? '') ?>
                 </p>
 
                 <p>
-                    Enquire about our installation and repair services,
-                    or explore our featured lighting range below.
+                    <?= h($landingTexts['hero.body2'] ?? '') ?>
                 </p>
 
                 <div class="hero-buttons">
                     <?= $this->Html->link(
-                        'Shop all Lighting',
-                        '/products',
-                        ['class' => 'home-btn home-btn-primary']
+                        $landingTexts['hero.button_primary_label'] ?? '',
+                        $landingTexts['hero.button_primary_url'] ?? '/products',
+                        ['class' => 'home-btn home-btn-primary'],
                     ) ?>
 
                     <?= $this->Html->link(
-                        'Make an Enquiry',
-                        ['controller' => 'Enquiries', 'action' => 'add'],
-                        ['class' => 'home-btn home-btn-secondary']
+                        $landingTexts['hero.button_secondary_label'] ?? '',
+                        $landingTexts['hero.button_secondary_url'] ?? '/enquiries/add',
+                        ['class' => 'home-btn home-btn-secondary'],
                     ) ?>
                 </div>
             </div>
             <div class="hero-image">
-                <?= $this->Html->image('landing/pendants.jpg',
-                [
-                    'class' => 'hero-photo',
-                    'alt' => 'Pendant lights in a modern interior',
-                ]) ?>
+                <?= $this->Html->image(
+                    $landingTexts['hero.image'] ?? 'landing/pendants.jpg',
+                    [
+                        'class' => 'hero-photo',
+                        'alt' => $landingTexts['hero.image_alt'] ?? '',
+                    ],
+                ) ?>
             </div>
         </div>            
     </section>
@@ -154,75 +105,65 @@ $featuredProducts = [
         <div class="products-inner">
             <div class="section-heading">
                 <div>
-                    <p class="section-eyebrow">Our Product Range</p>
+                    <p class="section-eyebrow"><?= h($landingTexts['products.eyebrow'] ?? '') ?></p>
 
                     <h2 id="featured-products-title">
-                        Lighting for every space
+                        <?= h($landingTexts['products.title'] ?? '') ?>
                     </h2>
                 </div>
 
                 <p class="section-description">
-                    Explore warm, practical and energy-efficient lighting
-                    selected for modern Australian homes.
+                    <?= h($landingTexts['products.description'] ?? '') ?>
                 </p>
             </div>
 
+            <?php if ($featureBlocks !== []) : ?>
             <div class="product-list">
-                <?php foreach ($featuredProducts as $product): ?>
+                <?php foreach ($featureBlocks as $product) : ?>
                     <article class="product-card">
                         <div class="product-card-image">
                             <?= $this->Html->image(
-                                'landing/' . [
-                                    'interior.jpg',
-                                    'table-lamp.jpg',
-                                    'wall-light.jpg',
-                                    'floor-lamp.jpg',
-                                    'outdoor-lighting.jpg',
-                                    'globe.jpg',
-                                ][array_search($product['name'], array_column($featuredProducts, 'name'), true)],
-                                ['alt' => h($product['alt'])]
+                                $product->ImagePath,
+                                ['alt' => $product->AltText],
                             ) ?>
                         </div>
 
                         <div class="product-card-content">
-                            <h3><?= h($product['name']) ?></h3>
+                            <h3><?= h($product->Title) ?></h3>
 
-                            <p><?= h($product['description']) ?></p>
+                            <p><?= h($product->Description) ?></p>
 
                             <?= $this->Html->link(
-                                'Ask about this light',
-                                [
-                                    'controller' => 'Enquiries',
-                                    'action' => 'add',
-                                ],
-                                ['class' => 'product-card-link']
+                                $product->ButtonLabel,
+                                $product->ButtonUrl,
+                                ['class' => 'product-card-link'],
                             ) ?>
                         </div>
                     </article>
                 <?php endforeach; ?>
             </div>
+            <?php endif; ?>
         </div>
     </section>
 
     <section class="home-service" id="services" aria-labelledby="home-service-title">
         <div class="home-service-inner">
             <div class="home-service-content">
-                <p class="section-eyebrow">Installation and repairs</p>
+                <p class="section-eyebrow"><?= h($landingTexts['service.eyebrow'] ?? '') ?></p>
 
                 <h2 id="home-service-title">
-                    Need help with your lighting?
+                    <?= h($landingTexts['service.title'] ?? '') ?>
                 </h2>
 
                 <p>
-                    Talk to us about product selection, installation,
-                    replacements and lighting repairs for your home.
+                    <?= h($landingTexts['service.body'] ?? '') ?>
                 </p>
             </div>
 
             <?= $this->Html->link(
-                'Contact us',
-                ['controller' => 'Enquiries', 'action' => 'add'],
-                ['class' => 'home-btn home-btn-light']
+                $landingTexts['service.button_label'] ?? '',
+                $landingTexts['service.button_url'] ?? '/enquiries/add',
+                ['class' => 'home-btn home-btn-light'],
             ) ?>
         </div>
     </section>
