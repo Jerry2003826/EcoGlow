@@ -18,6 +18,7 @@ $loadStorefront = in_array(
     <?= $this->Html->charset() ?>
 
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrfToken" content="<?= h($this->request->getAttribute('csrfToken')) ?>">
 
     <title>Eco Glow Lighting</title>
 
@@ -30,8 +31,8 @@ $loadStorefront = in_array(
     <?=
     $this->Html->css(
         $loadStorefront
-            ? ['normalize.min', 'milligram.min', 'fonts', 'cake', 'navbar', 'storefront']
-            : ['normalize.min', 'milligram.min', 'fonts', 'cake', 'navbar'],
+            ? ['normalize.min', 'milligram.min', 'fonts', 'cake', 'navbar', 'storefront', 'chatbot']
+            : ['normalize.min', 'milligram.min', 'fonts', 'cake', 'navbar', 'chatbot'],
         ['timestamp' => true]
     )
     ?>
@@ -40,6 +41,7 @@ $loadStorefront = in_array(
     <?= $this->fetch('css') ?>
 
     <?= $this->Html->script('landing', ['defer' => true]) ?>
+    <?= $this->Html->script('chatbot', ['defer' => true]) ?>
 </head>
 <body><nav class="navbar">
 
@@ -110,6 +112,7 @@ $loadStorefront = in_array(
         <?= $this->fetch('content') ?>
     </div>
 </main>
+<?= $this->element('chatbot') ?>
 
 <?= $this->fetch('script') ?>
 
