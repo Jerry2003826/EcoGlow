@@ -1,12 +1,18 @@
 <?php
 // src/Security/AdminPermissionMap.php
-
 declare(strict_types=1);
 
 namespace App\Security;
 
 final class AdminPermissionMap
 {
+    /**
+     * Return the permission keys required for an admin controller action.
+     *
+     * @param string $controller Controller name.
+     * @param string $action Action name.
+     * @return array<int, string>
+     */
     public static function permissionsFor(string $controller, string $action): array
     {
         $map = [
@@ -81,6 +87,15 @@ final class AdminPermissionMap
             'Access' => [
                 'index' => ['access.manage'],
                 'updateRole' => ['access.manage'],
+            ],
+            'Content' => [
+                'index' => ['content.manage'],
+                'saveText' => ['content.manage'],
+                'addBlock' => ['content.manage'],
+                'editBlock' => ['content.manage'],
+                'deleteBlock' => ['content.manage'],
+                'moveBlock' => ['content.manage'],
+                'toggleBlock' => ['content.manage'],
             ],
         ];
 
