@@ -72,9 +72,7 @@
             role="log"
             aria-live="polite"
         >
-            <div class="chatbot-message chatbot-message-assistant">
-                Hi! I'm the Eco Glow assistant. How can I help you today?
-            </div>
+            <div class="chatbot-message chatbot-message-assistant">Hi! I'm the Eco Glow assistant. How can I help you today?</div>
         </div>
 
         <p

@@ -8,11 +8,19 @@
     display: flex;
     align-items: center;
     gap: 8px;
+    height: auto;
+    margin: 0;
     padding: 12px 18px;
     border: none;
     border-radius: 999px;
     background: #124c24;
     color: #ffffff;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: normal;
+    line-height: 1.2;
+    text-transform: none;
+    white-space: nowrap;
     cursor: pointer;
     box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18);
     transition: background-color 0.2s ease;
@@ -96,12 +104,37 @@
 
 .chatbot-reset,
 .chatbot-close {
+    height: auto;
+    margin: 0;
     padding: 6px 10px;
     border: 1px solid rgba(255, 255, 255, 0.85);
     border-radius: 8px;
     background: transparent;
     color: #ffffff;
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: normal;
+    line-height: 1.2;
+    text-transform: none;
+    white-space: nowrap;
     cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.chatbot-reset:hover,
+.chatbot-reset:focus,
+.chatbot-close:hover,
+.chatbot-close:focus {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: #ffffff;
+    color: #ffffff;
+    outline: 0;
+}
+
+.chatbot-close {
+    padding: 2px 10px;
+    font-size: 20px;
+    line-height: 1;
 }
 
 .chatbot-messages {
@@ -170,8 +203,10 @@
 
 .chatbot-input {
     flex: 1;
+    height: auto;
     min-height: 42px;
     max-height: 120px;
+    margin: 0;
     padding: 10px;
     border: 1px solid #c9bca9;
     border-radius: 10px;
@@ -180,19 +215,29 @@
     color: #2f2e2c;
     font: inherit;
     font-size: 14px;
+    line-height: 1.4;
 }
 
 .chatbot-input:focus {
+    border-color: #124c24;
     outline: 2px solid #124c24;
     outline-offset: 1px;
 }
 
 .chatbot-send {
-    padding: 10px 16px;
+    height: 42px;
+    margin: 0;
+    padding: 0 16px;
     border: none;
     border-radius: 10px;
     background: #124c24;
     color: #ffffff;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: normal;
+    line-height: 42px;
+    text-transform: none;
+    white-space: nowrap;
     cursor: pointer;
 }
 
