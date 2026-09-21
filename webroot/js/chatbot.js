@@ -44,6 +44,11 @@
 
     function updateTextareaHeight() {
         input.style.height = 'auto';
+
+        if (input.scrollHeight === 0) {
+            return;
+        }
+
         input.style.height = Math.min(input.scrollHeight, 120) + 'px';
     }
 
@@ -51,6 +56,7 @@
         panel.hidden = false;
         toggleButton.setAttribute('aria-expanded', 'true');
         toggleButton.setAttribute('aria-label', 'Close chat assistant');
+        updateTextareaHeight();
         input.focus();
         scrollMessages();
     }
