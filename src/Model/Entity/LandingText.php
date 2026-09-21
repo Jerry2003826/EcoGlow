@@ -9,6 +9,7 @@ use Cake\ORM\Entity;
 class LandingText extends Entity
 {
     protected array $_accessible = [
+        'PageKey' => true,
         'TextKey' => true,
         'TextValue' => true,
         'FieldLabel' => true,

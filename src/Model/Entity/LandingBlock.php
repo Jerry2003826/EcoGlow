@@ -9,6 +9,7 @@ use Cake\ORM\Entity;
 class LandingBlock extends Entity
 {
     protected array $_accessible = [
+        'PageKey' => true,
         'BlockType' => true,
         'SortOrder' => true,
         'Title' => true,

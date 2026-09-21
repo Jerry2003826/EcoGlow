@@ -35,6 +35,11 @@ class LandingBlockTable extends Table
     public function validationDefault(Validator $validator): Validator
     {
         $validator
+            ->scalar('PageKey')
+            ->maxLength('PageKey', 50)
+            ->notEmptyString('PageKey');
+
+        $validator
             ->scalar('BlockType')
             ->requirePresence('BlockType', 'create')
             ->notEmptyString('BlockType')

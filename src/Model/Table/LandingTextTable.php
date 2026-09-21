@@ -35,6 +35,11 @@ class LandingTextTable extends Table
     public function validationDefault(Validator $validator): Validator
     {
         $validator
+            ->scalar('PageKey')
+            ->maxLength('PageKey', 50)
+            ->notEmptyString('PageKey');
+
+        $validator
             ->scalar('TextKey')
             ->maxLength('TextKey', 100)
             ->requirePresence('TextKey', 'create')
