@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-use Migrations\AbstractMigration;
+use Migrations\BaseMigration;
 
-final class CreateRbacTables extends AbstractMigration
+final class CreateRbacTables extends BaseMigration
 {
     public function change(): void
     {
@@ -87,7 +87,7 @@ final class CreateRbacTables extends AbstractMigration
             )
             ->create();
 
-        $this->table('user_roles', ['id' => false, 'primary_key' => ['id']])
+        $userRoles = $this->table('user_roles', ['id' => false, 'primary_key' => ['id']])
             ->addColumn('id', 'biginteger', [
                 'identity' => true,
                 'signed' => false,
@@ -121,15 +121,6 @@ final class CreateRbacTables extends AbstractMigration
             ->addIndex(['user_id'])
             ->addIndex(['role_id'])
             ->addForeignKey(
-                'user_id',
-                'users',
-                'id',
-                [
-                    'delete' => 'CASCADE',
-                    'update' => 'CASCADE',
-                ]
-            )
-            ->addForeignKey(
                 'role_id',
                 'roles',
                 'id',
@@ -137,10 +128,26 @@ final class CreateRbacTables extends AbstractMigration
                     'delete' => 'CASCADE',
                     'update' => 'CASCADE',
                 ]
-            )
-            ->create();
+            );
 
-        $this->table('user_permission_overrides', ['id' => false, 'primary_key' => ['id']])
+        // This migration does not create `users`. CakePHP's test Migrator drops
+        // existing tables first, so the FK can only be added when that table
+        // already exists (e.g. a full application schema).
+        if ($this->hasTable('users')) {
+            $userRoles->addForeignKey(
+                'user_id',
+                'users',
+                'id',
+                [
+                    'delete' => 'CASCADE',
+                    'update' => 'CASCADE',
+                ]
+            );
+        }
+
+        $userRoles->create();
+
+        $overrides = $this->table('user_permission_overrides', ['id' => false, 'primary_key' => ['id']])
             ->addColumn('id', 'biginteger', [
                 'identity' => true,
                 'signed' => false,
@@ -168,15 +175,6 @@ final class CreateRbacTables extends AbstractMigration
                 ['unique' => true]
             )
             ->addForeignKey(
-                'user_id',
-                'users',
-                'id',
-                [
-                    'delete' => 'CASCADE',
-                    'update' => 'CASCADE',
-                ]
-            )
-            ->addForeignKey(
                 'permission_id',
                 'permissions',
                 'id',
@@ -184,7 +182,20 @@ final class CreateRbacTables extends AbstractMigration
                     'delete' => 'CASCADE',
                     'update' => 'CASCADE',
                 ]
-            )
-            ->create();
+            );
+
+        if ($this->hasTable('users')) {
+            $overrides->addForeignKey(
+                'user_id',
+                'users',
+                'id',
+                [
+                    'delete' => 'CASCADE',
+                    'update' => 'CASCADE',
+                ]
+            );
+        }
+
+        $overrides->create();
     }
 }
